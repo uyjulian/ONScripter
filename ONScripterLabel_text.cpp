@@ -32,6 +32,7 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x48 ) || \
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x49 ) || \
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x76 ) || \
+          ( *(x) == (char)0x81 && *((x)+1) == (char)0x78 ) || \
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x5b ) )
 
 void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect )
