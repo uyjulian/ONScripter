@@ -41,7 +41,6 @@
 #endif
 
 #define MINIMUM_TIMER_RESOLUTION 1
-#define MAX_SAVE_FILE 20
 #define MAX_TEXT_BUFFER 10
 
 typedef unsigned char uchar3[3];
@@ -272,8 +271,8 @@ protected:
         char sjis_day[5];
         char sjis_hour[5];
         char sjis_minute[5];
-    } save_file_info[MAX_SAVE_FILE];
-    unsigned int  num_save_file;
+    };
+    unsigned int num_save_file;
     char *save_menu_name;
     char *load_menu_name;
     char *save_item_name;

@@ -496,8 +496,9 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             return;
         }
         else if ( ( !getenter_flag  && event->keysym.sym == SDLK_RETURN ) ||
-                  ( !useescspc_flag && event->keysym.sym == SDLK_SPACE  ) ){
-            if ( event->keysym.sym == SDLK_RETURN ){
+                  ( (spclclk_flag || !useescspc_flag) && event->keysym.sym == SDLK_SPACE  ) ){
+            if ( event->keysym.sym == SDLK_RETURN ||
+                 spclclk_flag && event->keysym.sym == SDLK_SPACE ){
                 current_button_state.button = current_over_button;
                 volatile_button_state.button = current_over_button;
                 if ( event->type == SDL_KEYDOWN )
@@ -530,7 +531,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( useescspc_flag && event->keysym.sym == SDLK_ESCAPE ){
             current_button_state.button  = -10;
         }
-        else if ( useescspc_flag && event->keysym.sym == SDLK_SPACE ){
+        else if ( !spclclk_flag && useescspc_flag && event->keysym.sym == SDLK_SPACE ){
             current_button_state.button  = -11;
         }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){

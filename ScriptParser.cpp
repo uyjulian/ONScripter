@@ -206,10 +206,6 @@ ScriptParser::ScriptParser( char *path )
     memcpy( save_item_name, DEFAULT_SAVE_ITEM_NAME, strlen( DEFAULT_SAVE_ITEM_NAME ) + 1 );
 
     num_save_file = 9;
-    for ( i=0 ; i<MAX_SAVE_FILE ; i++ ){
-        save_file_info[i].valid = false;
-        getSJISFromInteger( save_file_info[i].sjis_no, i+1 );
-    }
 
     /* ---------------------------------------- */
     /* Text related variables */

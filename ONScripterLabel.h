@@ -90,6 +90,7 @@ public:
     int systemcallCommand();
     int stopCommand();
     int spstrCommand();
+    int spclclkCommand();
     int spbtnCommand();
     int skipoffCommand();
     int sevolCommand();
@@ -148,6 +149,7 @@ public:
     int getcursorCommand();
     int getcselnumCommand();
     int gameCommand();
+    int fileexistCommand();
     int exbtnCommand();
     int erasetextwindowCommand();
     int endCommand();
@@ -290,13 +292,13 @@ private:
         bool down_flag;
     } current_button_state, volatile_button_state, last_mouse_state, shelter_mouse_state;
 
-    typedef enum { NORMAL_BUTTON        = 0,
-                   SPRITE_BUTTON        = 1,
-                   EX_SPRITE_BUTTON     = 2,
-                   CUSTOM_SELECT_BUTTON = 3
-    } BUTTON_TYPE;
-
     struct ButtonLink{
+        typedef enum { NORMAL_BUTTON        = 0,
+                       SPRITE_BUTTON        = 1,
+                       EX_SPRITE_BUTTON     = 2,
+                       CUSTOM_SELECT_BUTTON = 3
+        } BUTTON_TYPE;
+
         struct ButtonLink *next;
         BUTTON_TYPE button_type;
         int no;
@@ -328,6 +330,7 @@ private:
     bool getfunction_flag;
     bool getenter_flag;
     bool getcursor_flag;
+    bool spclclk_flag;
 
     void resetSentenceFont();
     void deleteButtonLink();
@@ -510,7 +513,7 @@ private:
     int shelter_event_mode;
     struct TextBuffer *shelter_text_buffer;
     
-    void searchSaveFiles( int no = -1 );
+    void searchSaveFile( SaveFileInfo &info, int no );
     int loadSaveFile( int no );
     int saveSaveFile( int no );
     void setupLookbackButton();

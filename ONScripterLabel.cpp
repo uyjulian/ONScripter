@@ -56,6 +56,7 @@ static struct FuncLUT{
     {"systemcall",   &ONScripterLabel::systemcallCommand},
     {"stop",   &ONScripterLabel::stopCommand},
     {"spstr",   &ONScripterLabel::spstrCommand},
+    {"spclclk",   &ONScripterLabel::spclclkCommand},
     {"spbtn",   &ONScripterLabel::spbtnCommand},
     {"skipoff",   &ONScripterLabel::skipoffCommand},
     {"sevol",   &ONScripterLabel::sevolCommand},
@@ -125,6 +126,7 @@ static struct FuncLUT{
     {"getcselnum", &ONScripterLabel::getcselnumCommand},
     {"getbtntimer", &ONScripterLabel::gettimerCommand},
     {"game", &ONScripterLabel::gameCommand},
+    {"fileexist", &ONScripterLabel::fileexistCommand},
     {"existspbtn", &ONScripterLabel::spbtnCommand},
     {"exbtn_d", &ONScripterLabel::exbtnCommand},
     {"exbtn", &ONScripterLabel::exbtnCommand},
@@ -308,7 +310,8 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     getfunction_flag = false;
     getenter_flag = false;
     getcursor_flag = false;
-
+    spclclk_flag = false;
+    
     tmp_save_fp = NULL;
     saveon_flag = true;
     
@@ -537,13 +540,12 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         DirtyRect dirty = dirty_rect;
         dirty_rect.clear();
         if ( event_mode & WAIT_BUTTON_MODE && current_over_button != 0 ){
-            if ( current_button_link->button_type == SPRITE_BUTTON || 
-                 current_button_link->button_type == EX_SPRITE_BUTTON ){
-                sprite_info[ current_button_link->sprite_no ].current_cell = 0;
-                refreshSurface( text_surface, &current_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-            }
-            else if ( current_button_link->no_selected_surface ){
+            if ( current_button_link->no_selected_surface ){
                 SDL_BlitSurface( current_button_link->no_selected_surface, NULL, text_surface, &current_button_link->image_rect );
+            }
+            if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
+                 current_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                sprite_info[ current_button_link->sprite_no ].current_cell = 0;
             }
             dirty_rect.add( current_button_link->image_rect );
         }
@@ -559,17 +561,13 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                         playWave( selectvoice_file_name[SELECTVOICE_OVER], false, DEFAULT_WAVE_CHANNEL );
                 }
 
-                if ( ( p_button_link->button_type == NORMAL_BUTTON ||
-                       p_button_link->button_type == CUSTOM_SELECT_BUTTON ) &&
-                     p_button_link->selected_surface ){
+                if ( p_button_link->selected_surface ){
                     SDL_BlitSurface( p_button_link->selected_surface, NULL, text_surface, &p_button_link->image_rect );
                 }
-                else if ( p_button_link->button_type == SPRITE_BUTTON || 
-                          p_button_link->button_type == EX_SPRITE_BUTTON ){
+                if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
+                     p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                     sprite_info[ p_button_link->sprite_no ].current_cell = 1;
-                    //SDL_BlitSurface( p_button_link->selected_surface, NULL, text_surface, &p_button_link->image_rect );
-                    refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-                    if ( p_button_link->button_type == EX_SPRITE_BUTTON ){
+                    if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                         decodeExbtnControl( text_surface, p_button_link->exbtn_ctl );
                     }
                 }
@@ -1452,6 +1450,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
     int num = 0, sprite_no = -1;
     bool active_flag = false;
     bool first_flag = true;
+    bool sound_flag = false;
 
     while( *ctl_str ){
         if ( *ctl_str == 'C' ){
@@ -1466,6 +1465,10 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             num = 0;
             sprite_no = -1;
         }
+        else if ( *ctl_str == 'S' ){
+            if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
+            sound_flag = true;
+        }
         else if ( *ctl_str == ',' ){
             sprite_no = num;
             num = 0;
@@ -1476,7 +1479,13 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
         first_flag = false;
         ctl_str++;
     }
-    if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
+
+    if ( sound_flag ){
+        /* not implemented */
+    }
+    else if ( !first_flag ){
+        refreshSprite( surface, sprite_no, active_flag, num );
+    }
 }
 
 void ONScripterLabel::setBackground( SDL_Surface *surface, SDL_Rect *clip )

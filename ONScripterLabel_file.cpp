@@ -39,78 +39,66 @@
 
 #define READ_LENGTH 4096
 
-void ONScripterLabel::searchSaveFiles( int no )
+void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
 {
-    unsigned int i, start, end;
     char file_name[256];
 
-    if ( no == -1 ){
-        start = 0;
-        end = num_save_file;
-    }
-    else{
-        start = no;
-        end = no+1;
-    }
-    
-    for ( i=start ; i<end ; i++ ){
-
 #if defined(LINUX) || defined(MACOSX)
-        sprintf( file_name, "%ssave%d.dat", archive_path, i+1 );
-        struct stat buf;
-        struct tm *tm;
-        if ( stat( file_name, &buf ) != 0 ){
-            save_file_info[i].valid = false;
-            continue;
-        }
-        tm = localtime( &buf.st_mtime );
-        
-        save_file_info[i].month  = tm->tm_mon + 1;
-        save_file_info[i].day    = tm->tm_mday;
-        save_file_info[i].hour   = tm->tm_hour;
-        save_file_info[i].minute = tm->tm_min;
-#elif defined(WIN32)
-        sprintf( file_name, "%ssave%d.dat", archive_path, i+1 );
-        HANDLE  handle;
-        FILETIME    tm, ltm;
-        SYSTEMTIME  stm;
-
-        handle = CreateFile( file_name, GENERIC_READ, 0, NULL,
-                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
-        if ( handle == INVALID_HANDLE_VALUE ){
-            save_file_info[i].valid = false;
-            continue;
-        }
-            
-        GetFileTime( handle, NULL, NULL, &tm );
-        FileTimeToLocalFileTime( &tm, &ltm );
-        FileTimeToSystemTime( &ltm, &stm );
-        CloseHandle( handle );
-
-        save_file_info[i].month  = stm.wMonth;
-        save_file_info[i].day    = stm.wDay;
-        save_file_info[i].hour   = stm.wHour;
-        save_file_info[i].minute = stm.wMinute;
-#else
-        sprintf( file_name, "save%d.dat", i+1 );
-        FILE *fp;
-        if ( (fp = fopen( file_name, "rb" )) == NULL ){
-            save_file_info[i].valid = false;
-            continue;
-        }
-        fclose( fp );
-
-        save_file_info[i].month  = 1;
-        save_file_info[i].day    = 1;
-        save_file_info[i].hour   = 0;
-        save_file_info[i].minute = 0;
-#endif
-        save_file_info[i].valid = true;
-        getSJISFromInteger( save_file_info[i].sjis_month,  save_file_info[i].month );
-        getSJISFromInteger( save_file_info[i].sjis_day,    save_file_info[i].day );
-        getSJISFromInteger( save_file_info[i].sjis_hour,   save_file_info[i].hour );
-        getSJISFromInteger( save_file_info[i].sjis_minute, save_file_info[i].minute );
+    sprintf( file_name, "%ssave%d.dat", archive_path, no );
+    struct stat buf;
+    struct tm *tm;
+    if ( stat( file_name, &buf ) != 0 ){
+        save_file_info.valid = false;
+        return;
     }
+    tm = localtime( &buf.st_mtime );
+        
+    save_file_info.month  = tm->tm_mon + 1;
+    save_file_info.day    = tm->tm_mday;
+    save_file_info.hour   = tm->tm_hour;
+    save_file_info.minute = tm->tm_min;
+#elif defined(WIN32)
+    sprintf( file_name, "%ssave%d.dat", archive_path, no );
+    HANDLE  handle;
+    FILETIME    tm, ltm;
+    SYSTEMTIME  stm;
+
+    handle = CreateFile( file_name, GENERIC_READ, 0, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    if ( handle == INVALID_HANDLE_VALUE ){
+        save_file_info.valid = false;
+        return;
+    }
+            
+    GetFileTime( handle, NULL, NULL, &tm );
+    FileTimeToLocalFileTime( &tm, &ltm );
+    FileTimeToSystemTime( &ltm, &stm );
+    CloseHandle( handle );
+
+    save_file_info.month  = stm.wMonth;
+    save_file_info.day    = stm.wDay;
+    save_file_info.hour   = stm.wHour;
+    save_file_info.minute = stm.wMinute;
+#else
+    sprintf( file_name, "save%d.dat", no );
+    FILE *fp;
+    if ( (fp = fopen( file_name, "rb" )) == NULL ){
+        save_file_info.valid = false;
+        continue;
+    }
+    fclose( fp );
+
+    save_file_info.month  = 1;
+    save_file_info.day    = 1;
+    save_file_info.hour   = 0;
+    save_file_info.minute = 0;
+#endif
+    save_file_info.valid = true;
+    getSJISFromInteger( save_file_info.sjis_no,     no );
+    getSJISFromInteger( save_file_info.sjis_month,  save_file_info.month );
+    getSJISFromInteger( save_file_info.sjis_day,    save_file_info.day );
+    getSJISFromInteger( save_file_info.sjis_hour,   save_file_info.hour );
+    getSJISFromInteger( save_file_info.sjis_minute, save_file_info.minute );
 }
 
 int ONScripterLabel::loadSaveFile( int no )

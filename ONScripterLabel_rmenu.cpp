@@ -220,13 +220,16 @@ void ONScripterLabel::executeWindowErase()
 
 void ONScripterLabel::executeSystemLoad()
 {
+    SaveFileInfo save_file_info;
+    
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
 
         if ( current_button_state.button == 0 ) return;
         event_mode = IDLE_EVENT_MODE;
 
         if ( current_button_state.button > 0 ){
-            if ( !save_file_info[current_button_state.button-1].valid ){
+            searchSaveFile( save_file_info, current_button_state.button );
+            if ( !save_file_info.valid ){
                 event_mode  = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
                 refreshMouseOverButton();
                 return;
@@ -243,8 +246,6 @@ void ONScripterLabel::executeSystemLoad()
         }
     }
     else{
-        searchSaveFiles();
-    
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
         dirty_rect.fill( screen_width, screen_height );
@@ -255,32 +256,32 @@ void ONScripterLabel::executeSystemLoad()
         drawString( load_menu_name, system_font.color, &system_font, true, text_surface );
         system_font.xy[1] += 2;
         
-        int counter = 1;
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
 
-        for ( unsigned int i=0 ; i<num_save_file ; i++ ){
+        for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
+            searchSaveFile( save_file_info, i );
             system_font.xy[0] = (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2;
 
-            if ( save_file_info[i].valid ){
+            if ( save_file_info.valid ){
                 sprintf( buffer, "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
                          save_item_name,
-                         save_file_info[i].sjis_no,
-                         save_file_info[i].sjis_month,
-                         save_file_info[i].sjis_day,
-                         save_file_info[i].sjis_hour,
-                         save_file_info[i].sjis_minute );
+                         save_file_info.sjis_no,
+                         save_file_info.sjis_month,
+                         save_file_info.sjis_day,
+                         save_file_info.sjis_hour,
+                         save_file_info.sjis_minute );
                 nofile_flag = false;
             }
             else{
                 sprintf( buffer, "%s%s@||||||||||||",
                          save_item_name,
-                         save_file_info[i].sjis_no );
+                         save_file_info.sjis_no );
                 nofile_flag = true;
             }
             last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
             last_button_link = last_button_link->next;
-            last_button_link->no = counter++;
+            last_button_link->no = i;
             flush( &last_button_link->image_rect );
         }
         delete[] buffer;
@@ -310,8 +311,6 @@ void ONScripterLabel::executeSystemSave()
         leaveSystemCall();
     }
     else{
-        searchSaveFiles();
-
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
         dirty_rect.fill( screen_width, screen_height );
@@ -322,32 +321,33 @@ void ONScripterLabel::executeSystemSave()
         drawString( save_menu_name, system_font.color, &system_font, true, text_surface );
         system_font.xy[1] += 2;
         
-        int counter = 1;
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
     
-        for ( unsigned int i=0 ; i<num_save_file ; i++ ){
+        for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
+            SaveFileInfo save_file_info;
+            searchSaveFile( save_file_info, i );
             system_font.xy[0] = (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2;
 
-            if ( save_file_info[i].valid ){
+            if ( save_file_info.valid ){
                 sprintf( buffer, "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
                          save_item_name,
-                         save_file_info[i].sjis_no,
-                         save_file_info[i].sjis_month,
-                         save_file_info[i].sjis_day,
-                         save_file_info[i].sjis_hour,
-                         save_file_info[i].sjis_minute );
+                         save_file_info.sjis_no,
+                         save_file_info.sjis_month,
+                         save_file_info.sjis_day,
+                         save_file_info.sjis_hour,
+                         save_file_info.sjis_minute );
                 nofile_flag = false;
             }
             else{
                 sprintf( buffer, "%s%s@||||||||||||",
                          save_item_name,
-                         save_file_info[i].sjis_no );
+                         save_file_info.sjis_no );
                 nofile_flag = true;
             }
             last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
             last_button_link = last_button_link->next;
-            last_button_link->no = counter++;
+            last_button_link->no = i;
             flush( &last_button_link->image_rect );
         }
         delete[] buffer;
@@ -408,10 +408,13 @@ void ONScripterLabel::executeSystemYesNo()
         dirty_rect.fill( screen_width, screen_height );
         flush();
 
-        if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD )
+        if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD ){
+            SaveFileInfo save_file_info;
+            searchSaveFile( save_file_info, yesno_selected_file_no );
             sprintf( name, "%s%s", 
                      save_item_name,
-                     save_file_info[yesno_selected_file_no-1].sjis_no );
+                     save_file_info.sjis_no );
+        }
             
         if ( yesno_caller == SYSTEM_SAVE )
             strcat( name, "‚ÉƒZ[ƒu‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H" );
@@ -460,7 +463,6 @@ void ONScripterLabel::setupLookbackButton()
         last_button_link->next = new ButtonLink();
         last_button_link = last_button_link->next;
     
-        last_button_link->button_type = NORMAL_BUTTON;
         last_button_link->no = 1;
         last_button_link->select_rect.x = sentence_font_info.pos.x;
         last_button_link->select_rect.y = sentence_font_info.pos.y;
@@ -530,7 +532,6 @@ void ONScripterLabel::setupLookbackButton()
         last_button_link->next = new ButtonLink();
         last_button_link = last_button_link->next;
     
-        last_button_link->button_type = NORMAL_BUTTON;
         last_button_link->no = 2;
         last_button_link->select_rect.x = sentence_font_info.pos.x;
         last_button_link->select_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h*2/3;
