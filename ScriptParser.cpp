@@ -156,6 +156,8 @@ ScriptParser::ScriptParser()
     load_menu_name = NULL;
     save_item_name = NULL;
 
+    load_str_size = 128;
+    load_str_buffer = new char[load_str_size];
     text_buffer = NULL;
     
     /* ---------------------------------------- */
@@ -177,6 +179,7 @@ ScriptParser::~ScriptParser()
     if (save_menu_name) delete[] save_menu_name;
     if (load_menu_name) delete[] load_menu_name;
     if (save_item_name) delete[] save_item_name;
+    delete[] load_str_buffer;
 }
 
 void ScriptParser::reset()
@@ -512,26 +515,26 @@ void ScriptParser::saveStr( FILE *fp, char *str )
     fputc( 0, fp );
 }
 
-#define INITIAL_LOAD_STR 128
 void ScriptParser::loadStr( FILE *fp, char **str )
 {
-    int counter = 0, counter_max = INITIAL_LOAD_STR;
-    char *p_buffer = new char[counter_max];
-    
-    while( (p_buffer[ counter++ ] = fgetc( fp )) != '\0' ){
-        if ( counter >= counter_max ){
-            char *p_buffer2 = p_buffer;
-            p_buffer = new char[ counter_max + INITIAL_LOAD_STR ];
-            memcpy( p_buffer, p_buffer2, counter_max );
-            delete[] p_buffer2;
-            counter_max += INITIAL_LOAD_STR;
+    int counter = 0, ch;
+
+    while ((ch = fgetc(fp)) != EOF){
+        if (counter >= load_str_size){
+            char *buf = load_str_buffer;
+            load_str_buffer = new char[load_str_size*2];
+            memcpy(load_str_buffer, buf, load_str_size);
+            delete[] buf;
+            load_str_size *= 2;
         }
+        load_str_buffer[counter++] = ch;
+        if (ch == 0) break;
     }
-    if (counter == 1)
+
+    if (ch == EOF || counter == 1)
         *str = NULL;
     else
-        setStr( str, p_buffer );
-    delete[] p_buffer;
+        setStr(str, load_str_buffer);
 }
 
 void ScriptParser::saveVariables( FILE *fp, int from, int to )

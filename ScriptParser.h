@@ -2,7 +2,7 @@
  * 
  *  ScriptParser.h - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -400,6 +400,8 @@ protected:
         };
     } root_rmenu_link;
     unsigned int rmenu_link_num, rmenu_link_width;
+    int  load_str_size;
+    char *load_str_buffer;
 
     void deleteRMenuLink();
     int getSystemCallNo( const char *buffer );

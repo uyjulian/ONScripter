@@ -1228,6 +1228,8 @@ void ONScripterLabel::loadEnvData()
         loadInt( fp, &i );
         if (i == 1) draw_one_page_flag = true;
         loadStr( fp, &default_env_font );
+        if (default_env_font == NULL)
+            setStr(&default_env_font, DEFAULT_ENV_FONT);
         loadInt( fp, &i );
         if (i == 0) cdaudio_on_flag = false;
         loadStr( fp, &default_cdrom_drive );
