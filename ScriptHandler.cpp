@@ -108,18 +108,14 @@ char *ScriptHandler::getNext()
     return next_script;
 }
 
-void ScriptHandler::pushCurrent( char *pos, bool reread_flag )
+void ScriptHandler::pushCurrent( char *pos )
 {
     StackInfo *info = new StackInfo( current_script );
 
     last_stack_info->next = info;
     last_stack_info = last_stack_info->next;
 
-    current_script = pos;
-    if ( reread_flag ) 
-        rereadToken();
-    else
-        next_script = pos;
+    next_script = pos;
 }
 
 void ScriptHandler::popCurrent()

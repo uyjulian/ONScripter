@@ -201,7 +201,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             anim->num_of_cells = 0;
             if ( buffer[0] == '/' ){
                 buffer++;
-                script_h.pushCurrent( buffer, false );
+                script_h.pushCurrent( buffer );
                 anim->font_size_xy[0] = script_h.readInt();
                 anim->font_size_xy[1] = script_h.readInt();
                 anim->font_pitch = script_h.readInt() + anim->font_size_xy[0];
@@ -229,8 +229,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             anim->trans_mode = AnimationInfo::TRANS_MASK;
             buffer++;
             script_h.pushCurrent( buffer );
-            const char *buf = script_h.readStr( true );
-            setStr( &anim->mask_file_name, buf );
+            setStr( &anim->mask_file_name, script_h.getStringBuffer() );
             buffer = script_h.getNext();
             script_h.popCurrent();
         }

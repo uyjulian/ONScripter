@@ -468,7 +468,7 @@ int ONScripterLabel::selectCommand()
         const char *buf = script_h.getStringBuffer();
         int count = 0;
         while(1){
-            printf("sel [%s] comma %d\n", buf, comma_flag  );
+            //printf("sel [%s] comma %d\n", buf, comma_flag  );
             if ( buf[0] != 0x0a && comma_flag == true ){
                 comma_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
                 count++;
@@ -477,12 +477,12 @@ int ONScripterLabel::selectCommand()
                     if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
                     link = new SelectLink();
                     setStr( &link->text, buf );
-                    printf("Select text %s\n", link->text);
+                    //printf("Select text %s\n", link->text);
                 }
                 if ( select_mode == SELECT_NUM_MODE || !(count % 2) ){
                     if ( select_mode != SELECT_NUM_MODE )
                         setStr( &link->label, buf+1 );
-                    printf("Select label %s\n", link->label );
+                    //printf("Select label %s\n", link->label );
                     last_select_link->next = link;
                     last_select_link = last_select_link->next;
                 }

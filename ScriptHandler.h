@@ -78,7 +78,7 @@ public:
     char *getCurrent();
     void setCurrent( char *pos, bool reread_flag=true );
     char *getNext();
-    void pushCurrent( char *pos, bool reread_flag=true );
+    void pushCurrent( char *pos );
     void popCurrent();
     char *getStringBuffer();
 

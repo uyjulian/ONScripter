@@ -288,6 +288,7 @@ ScriptParser::ScriptParser( char *path )
     
     current_mode = DEFINE_MODE;
     script_h.pushCurrent( "effect 1,1" );
+    script_h.readToken();
     effectCommand();
     script_h.popCurrent();
     //current_mode = NORMAL_MODE;

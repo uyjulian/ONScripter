@@ -518,7 +518,7 @@ int ONScripterLabel::saveSaveFile( int no )
         fputc( 0, fp );
         saveInt( fp, info->current_line );
 
-        script_h.pushCurrent( info->label_info.start_address, false );
+        script_h.pushCurrent( info->label_info.start_address );
         script_h.skipLine( info->current_line );
         saveInt( fp, info->current_script - script_h.getCurrent() );
         script_h.popCurrent();
