@@ -261,7 +261,7 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
 
 int ONScripterLabel::clickWait( char *out_text )
 {
-    if ( skip_flag || draw_one_page_flag ){
+    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
         clickstr_state = CLICK_NONE;
         if ( out_text ){
             drawChar( out_text, &sentence_font, false, text_surface );
@@ -310,9 +310,9 @@ int ONScripterLabel::clickNewPage( char *out_text )
 {
     clickstr_state = CLICK_NEWPAGE;
     if ( out_text ) drawChar( out_text, &sentence_font, false, text_surface );
-    if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ) flush();
+    if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 || ctrl_pressed_status ) flush();
     
-    if ( skip_flag ){
+    if ( skip_flag || ctrl_pressed_status ){
         event_mode = WAIT_SLEEP_MODE;
         advancePhase();
     }
@@ -446,7 +446,7 @@ int ONScripterLabel::textCommand()
             return clickNewPage( out_text );
         }
         else{
-            if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ){
+            if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 || ctrl_pressed_status ){
                 drawChar( out_text, &sentence_font, false, text_surface );
                 string_buffer_offset += 2;
                 return RET_CONTINUE_NOREAD;
@@ -504,7 +504,7 @@ int ONScripterLabel::textCommand()
                 t = t*10 + script_h.getStringBuffer()[ string_buffer_offset ] - '0';
                 string_buffer_offset++;
             }
-            if ( skip_flag || draw_one_page_flag ){
+            if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
                 return RET_CONTINUE_NOREAD;
             }
             else{
@@ -534,7 +534,7 @@ int ONScripterLabel::textCommand()
     }
     else{
         bool flush_flag = true;
-        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0)
+        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 || ctrl_pressed_status )
             flush_flag = false;
         out_text[0] = ch;
         drawChar( out_text, &sentence_font, flush_flag, text_surface );
@@ -543,7 +543,7 @@ int ONScripterLabel::textCommand()
             out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
             drawChar( out_text, &sentence_font, flush_flag, text_surface );
         }
-        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0){
+        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ) string_buffer_offset++;
             string_buffer_offset++;
             return RET_CONTINUE_NOREAD;

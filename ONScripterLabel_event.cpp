@@ -375,6 +375,56 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
     }
 }
 
+void ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
+{
+    switch ( event->keysym.sym ) {
+      case SDLK_RCTRL:
+        ctrl_pressed_status  |= 0x01;
+        goto ctrl_pressed;
+      case SDLK_LCTRL:
+        ctrl_pressed_status  |= 0x02;
+        goto ctrl_pressed;
+      case SDLK_RSHIFT:
+        shift_pressed_status |= 0x01;
+        break;
+      case SDLK_LSHIFT:
+        shift_pressed_status |= 0x02;
+        break;
+      default:
+        break;
+    }
+
+    return;
+
+  ctrl_pressed:
+    current_button_state.button  = 0;
+    volatile_button_state.button = 0;
+    playClickVoice();
+    stopAnimation( clickstr_state );
+    advancePhase();
+    return;
+}
+
+void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
+{
+    switch ( event->keysym.sym ) {
+      case SDLK_RCTRL:
+        ctrl_pressed_status  &= ~0x01;
+        break;
+      case SDLK_LCTRL:
+        ctrl_pressed_status  &= ~0x02;
+        break;
+      case SDLK_RSHIFT:
+        shift_pressed_status &= ~0x01;
+        break;
+      case SDLK_LSHIFT:
+        shift_pressed_status &= ~0x02;
+        break;
+      default:
+        break;
+    }
+}
+
 void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
@@ -397,6 +447,9 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
              ( ( !getcursor_flag && event->keysym.sym == SDLK_LEFT ) ||
                event->keysym.sym == SDLK_s ) )
             skip_flag = false;
+    }
+    if ( shift_pressed_status && event->keysym.sym == SDLK_q && current_mode == NORMAL_MODE ){
+        endCommand();
     }
 
     if ( trap_flag && (event->keysym.sym == SDLK_RETURN ||
@@ -670,8 +723,10 @@ int ONScripterLabel::eventLoop()
             break;
 
           case SDL_KEYDOWN:
+            keyDownEvent( (SDL_KeyboardEvent*)&event );
             if ( !btndown_flag ) break;
           case SDL_KEYUP:
+            keyUpEvent( (SDL_KeyboardEvent*)&event );
             keyPressEvent( (SDL_KeyboardEvent*)&event );
             break;
 

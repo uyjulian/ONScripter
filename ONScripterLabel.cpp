@@ -324,6 +324,8 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     skip_flag = false;
     draw_one_page_flag = false;
     key_pressed_flag = false;
+    shift_pressed_status = 0;
+    ctrl_pressed_status = 0;
     display_mode = NORMAL_DISPLAY_MODE;
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;

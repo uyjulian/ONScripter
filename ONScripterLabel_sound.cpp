@@ -71,6 +71,18 @@ int ONScripterLabel::playMIDI()
 
     char *music_cmd = getenv( "MUSIC_CMD" );
 
+#if defined(EXTERNAL_MIDI_PROGRAM)
+    FILE *com_file;
+    if ( midi_play_once_flag ){
+        if( (com_file = fopen("playonce_midi", "wb")) != NULL )
+            fclose(com_file);
+    }
+    else{
+        if( (com_file = fopen("play_midi", "wb")) != NULL )
+            fclose(com_file);
+    }
+#endif
+
 #if defined(LINUX)
     signal( SIGCHLD, midiCallback );
     if ( music_cmd ) midi_looping = 0;
@@ -261,6 +273,11 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( midi_info ){
+#if defined(EXTERNAL_MIDI_PROGRAM)
+        FILE *com_file;
+        if( (com_file = fopen("stop_midi", "wb")) != NULL )
+            fclose(com_file);
+#endif
         midi_play_once_flag = true;
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );

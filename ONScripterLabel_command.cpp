@@ -677,6 +677,7 @@ int ONScripterLabel::resetCommand()
         script_h.str_variables[i] = NULL;
     }
 
+    clearCurrentTextBuffer();
     tateyoko_mode = 0;
     sentence_font.xy[0] = 0;
     sentence_font.xy[1] = 0;

@@ -6,7 +6,7 @@
 
 INCS = `sdl-config --cflags` `smpeg-config --cflags`
 LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime
-DEFS = -DMACOSX
+DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM
 
 EXESUFFIX =
 OBJSUFFIX = .o

@@ -470,7 +470,12 @@ int ScriptParser::menusetwindowCommand()
     menu_font.is_shadow       = script_h.readInt()?true:false;
 
     const char *buf = script_h.readStr();
-    readColor( &menu_font.window_color, buf );
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+        readColor( &menu_font.window_color, buf );
+    }
+    else{
+        menu_font.window_color[0] = menu_font.window_color[1] = menu_font.window_color[2] = 0x99;
+    }
 
     return RET_CONTINUE;
 }
@@ -1027,8 +1032,7 @@ int ScriptParser::arcCommand()
         script_h.cBR = new SarReader( archive_path );
     }
     if ( script_h.cBR->open( buf2 ) ){
-        fprintf( stderr, " *** failed to open archive %s ...  ***\n", buf2 );
-        exit(-1);
+        fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
     }
     delete[] buf2;
     

@@ -623,7 +623,7 @@ int ScriptParser::readEffect( EffectLink *effect )
 
 FILE *ScriptParser::fopen(const char *path, const char *mode)
 {
-    char * file_name = new char[strlen(archive_path)+strlen(path)+1];
+    char *file_name = new char[strlen(archive_path)+strlen(path)+1];
     sprintf( file_name, "%s%s", archive_path, path );
 
     FILE *fp = ::fopen( file_name, mode );

@@ -12,7 +12,8 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Mar. 16, 2003<br>
+Last updated: Mar. 23, 2003<br>
+3月18日発売の<A HREF="http://www.enterbrain.co.jp/techwin/linux/index.html">Linux Power</A>に、αβεさんよる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -36,8 +37,8 @@ href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">ダウンロード</a>
 HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
-<P>現在はベータ版<A HREF="onscripter-beta-20030316.tar.gz">onscripter-beta-20030316.tar.gz</A>を配布しております。<br>
-(一つ前のベータ版<A HREF="onscripter-beta-20030306.tar.gz">onscripter-beta-20030306.tar.gz</A>)<br>
+<P>現在はベータ版<A HREF="onscripter-beta-20030323.tar.gz">onscripter-beta-20030323.tar.gz</A>を配布しております。<br>
+(一つ前のベータ版<A HREF="onscripter-beta-20030316.tar.gz">onscripter-beta-20030316.tar.gz</A>)<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20021218.tar.gz">onscripter-beta-exp20021218.tar.gz</A>。問題がなければベータ版になります)<br>-->
 </P>
 
@@ -207,6 +208,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
 
 <OL>
+  <LI> (<FONT color="#ff0000">高</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
   <LI> (<FONT color="#ff0000">高</FONT>)windowback の挙動がおかしいのを直す
   <LI> (<FONT color="#ff8800">中</FONT>)btndown + btnwait でマウスのドラッグに対応させる。
   <LI> (<FONT color="#ff8800">中</FONT>)雪をスムーズに降らせる
@@ -267,6 +269,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td> f </td><td>Full screen mode と Window mode の切り替え</td></tr>
 <tr><td> z </td><td>--edit オプションを指定して起動したときに、音量及び変数変更モードに入る</td></tr>
 <tr><td> 1, 2, 3 </td><td>文字の描画速度を変更</td></tr>
+<tr><td> Shift + q </td><td>終了（end コマンドを発行）</td></tr>
 </table>
 
 <P>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画している最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任意のタイミングで s キーにより通常の状態に戻すことができます。</P>
@@ -412,7 +415,7 @@ cd/track14.mp3<BR>
   <DD> <A HREF="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</A>をダウンロードして c:\ 以下に展開してください。
        これをしなくても MIDI が鳴ったと思っていたのですが、こうしないと落ちるようです。
   <DT> Mac OS X の場合。
-  <DD> 上の Unix系でソフトウェア音源で演奏する場合に準じてください。（当方未確認）
+  <DD> <A HREF="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</A>（かつらさん）のバイナリに添付されている外部プログラムを利用して演奏が可能です。（当方未確認）
   <DT> Unix系(動作確認は Linux)で外部 MIDI 音源を利用して演奏する場合。
   <DD> playmidi 等の外部音源を使用できる MIDI player をインストールし、環境変数 MUSIC_CMD を設定してください。（例 MUSIC_CMD=/usr/bin/playmidi）<br>
        当方では、シリアル接続で外部音源を繋ぎ、MUSIC_CMD に '/usr/bin/midiplay -q -o /dev/ttyS0' を設定して動作確認をしています。<br>

@@ -63,6 +63,8 @@ public:
     bool skip_flag;
     bool draw_one_page_flag;
     bool key_pressed_flag;
+    int shift_pressed_status;
+    int ctrl_pressed_status;
     
     int  eventLoop();
 
@@ -193,6 +195,8 @@ protected:
     int variable_edit_sign;
     
     void variableEditMode( SDL_KeyboardEvent *event );
+    void keyDownEvent( SDL_KeyboardEvent *event );
+    void keyUpEvent( SDL_KeyboardEvent *event );
     void keyPressEvent( SDL_KeyboardEvent *event );
     void mousePressEvent( SDL_MouseButtonEvent *event );
     void mouseMoveEvent( SDL_MouseMotionEvent *event );
