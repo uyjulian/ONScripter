@@ -72,8 +72,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             refreshSurface( effect_dst_surface,
                             NULL,
                             isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-            if ( isTextVisible() )
-                restoreTextBuffer( effect_dst_surface );
             break;
         }
 

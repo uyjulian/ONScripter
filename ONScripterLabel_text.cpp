@@ -224,7 +224,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     if ( rect ) *rect = clipped_rect;
 }
 
-void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
+void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip )
 {
     int i;
     char out_text[3] = { '\0','\0','\0' };
@@ -243,15 +243,13 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
         else{
             if ( !(out_text[0] & 0x80) ){
                 out_text[1] = '\0';
-                drawChar( out_text, &f_info, false, surface, false );
+                drawChar( out_text, &f_info, false, surface, false, clip );
                 f_info.xy[0]--;
             }
             out_text[1] = current_text_buffer->buffer[ i * 2 + 1];
         }
-        drawChar( out_text, &f_info, false, surface );
+        drawChar( out_text, &f_info, false, surface, true, clip );
     }
-
-    sentence_font.ttf_font = f_info.ttf_font;
 }
 
 int ONScripterLabel::clickWait( char *out_text )

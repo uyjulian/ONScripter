@@ -631,7 +631,7 @@ void ONScripterLabel::executeSystemLookback()
         color[i] = sentence_font.color[i];
         sentence_font.color[i] = lookback_color[i];
     }
-    restoreTextBuffer();
+    restoreTextBuffer( text_surface );
     for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
     setupLookbackButton();
     refreshMouseOverButton();

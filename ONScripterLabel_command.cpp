@@ -135,7 +135,6 @@ int ONScripterLabel::textonCommand()
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
         refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
-        restoreTextBuffer();
         dirty_rect.fill( screen_width, screen_height );
         flush();
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
@@ -737,7 +736,6 @@ int ONScripterLabel::repaintCommand()
 {
     refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
     refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-    restoreTextBuffer();
     dirty_rect.fill( screen_width, screen_height );
     flush();
     
@@ -1843,7 +1841,6 @@ int ONScripterLabel::btnwaitCommand()
         refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
 
         if ( isTextVisible() ){
-            restoreTextBuffer();
             display_mode = next_display_mode = TEXT_DISPLAY_MODE;
         }
 
@@ -1853,7 +1850,7 @@ int ONScripterLabel::btnwaitCommand()
         p_button_link = root_button_link.next;
         while ( p_button_link ){
             if ( p_button_link->button_type == ButtonLink::CUSTOM_SELECT_BUTTON ){
-            
+                
                 f_info.xy[0] = f_info.xy[1] = 0;
                 f_info.num_xy[1] = 1;
                 f_info.top_xy[0] = p_button_link->image_rect.x * screen_ratio2 / screen_ratio1;
@@ -1883,7 +1880,6 @@ int ONScripterLabel::btnwaitCommand()
             dirty_rect.add( p_button_link->image_rect );
             p_button_link = p_button_link->next;
         }
-        sentence_font.ttf_font = f_info.ttf_font;
         flush();
         
         refreshMouseOverButton();

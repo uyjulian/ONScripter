@@ -373,7 +373,6 @@ int ONScripterLabel::loadSaveFile( int no )
 
     refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
     refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
-    restoreTextBuffer();
     dirty_rect.fill( screen_width, screen_height );
     flush();
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;

@@ -902,7 +902,6 @@ int ONScripterLabel::enterTextDisplayMode( int ret_wait )
             next_display_mode = TEXT_DISPLAY_MODE;
             refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
             refreshSurface( effect_dst_surface, NULL, REFRESH_SHADOW_MODE );
-            restoreTextBuffer( effect_dst_surface );
             dirty_rect.add( sentence_font_info.pos );
 
             int ret = setEffect( window_effect.effect );
@@ -1376,7 +1375,10 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         }
     }
 
-    if ( refresh_mode & REFRESH_SHADOW_MODE && windowback_flag ) shadowTextDisplay( surface, surface, clip );
+    if ( refresh_mode & REFRESH_SHADOW_MODE && windowback_flag ){
+        shadowTextDisplay( surface, surface, clip );
+        restoreTextBuffer( surface, clip );
+    }
 
     if ( !all_sprite_hide_flag ){
         if ( refresh_mode & REFRESH_SAYA_MODE )
@@ -1403,7 +1405,10 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         }
     }
 
-    if ( refresh_mode & REFRESH_SHADOW_MODE && !windowback_flag ) shadowTextDisplay( surface, surface, clip );
+    if ( refresh_mode & REFRESH_SHADOW_MODE && !windowback_flag ){
+        shadowTextDisplay( surface, surface, clip );
+        restoreTextBuffer( surface, clip );
+    }
     
     if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
     if ( monocro_flag ) makeMonochromeSurface( surface, clip );
