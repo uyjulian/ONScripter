@@ -219,7 +219,16 @@ int ONScripterLabel::talCommand()
     if ( ret != RET_NOMATCH ) return ret;
     
     char loc = script_h.readLabel()[0];
-    int trans = script_h.readInt();
+    int no = -1, trans = 0;
+    if      ( loc == 'l' ) no = 0;
+    else if ( loc == 'c' ) no = 1;
+    else if ( loc == 'r' ) no = 2;
+
+    if (no >= 0){
+        trans = script_h.readInt();
+        if      (trans > 256) trans = 256;
+        else if (trans < 0  ) trans = 0;
+    }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -227,16 +236,10 @@ int ONScripterLabel::talCommand()
         else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
     }
     else{
-        int no = 0;
-        if      ( loc == 'l' ) no = 0;
-        else if ( loc == 'c' ) no = 1;
-        else if ( loc == 'r' ) no = 2;
-
-        if      ( trans > 256 ) trans = 256;
-        else if ( trans < 0   ) trans = 0;
-
-        tachi_info[ no ].trans = trans;
-        dirty_rect.add( tachi_info[ no ].pos );
+        if (no >= 0){
+            tachi_info[ no ].trans = trans;
+            dirty_rect.add( tachi_info[ no ].pos );
+        }
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -1280,7 +1283,13 @@ int ONScripterLabel::ldCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     char loc = script_h.readLabel()[0];
-    const char *buf = script_h.readStr();
+    int no = -1;
+    if      (loc == 'l') no = 0;
+    else if (loc == 'c') no = 1;
+    else if (loc == 'r') no = 2;
+
+    const char *buf = NULL;
+    if (no >= 0) buf = script_h.readStr();
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -1288,20 +1297,17 @@ int ONScripterLabel::ldCommand()
         else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
     }
     else{
-        int no = 0;
-        if      ( loc == 'l' ) no = 0;
-        else if ( loc == 'c' ) no = 1;
-        else if ( loc == 'r' ) no = 2;
-        
-        dirty_rect.add( tachi_info[ no ].pos );
-        tachi_info[ no ].setImageName( buf );
-        parseTaggedString( &tachi_info[ no ] );
-        setupAnimationInfo( &tachi_info[ no ] );
-        if ( tachi_info[ no ].image_surface ){
-            tachi_info[ no ].visible = true;
-            tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
-            tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
+        if (no >= 0){
             dirty_rect.add( tachi_info[ no ].pos );
+            tachi_info[ no ].setImageName( buf );
+            parseTaggedString( &tachi_info[ no ] );
+            setupAnimationInfo( &tachi_info[ no ] );
+            if ( tachi_info[ no ].image_surface ){
+                tachi_info[ no ].visible = true;
+                tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
+                tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
+                dirty_rect.add( tachi_info[ no ].pos );
+            }
         }
 
         readEffect( &tmp_effect );
@@ -1417,10 +1423,11 @@ int ONScripterLabel::humanorderCommand()
     
     const char *buf = script_h.readStr();
     int i;
-    for ( i=0 ; i<3 ; i++ ){
-        if      ( buf[i] == 'l' ) human_order[i] = 0;
-        else if ( buf[i] == 'c' ) human_order[i] = 1;
-        else if ( buf[i] == 'r' ) human_order[i] = 2;
+    for (i=0 ; i<3 ; i++){
+        if      (buf[i] == 'l') human_order[i] = 0;
+        else if (buf[i] == 'c') human_order[i] = 1;
+        else if (buf[i] == 'r') human_order[i] = 2;
+        else                    human_order[i] = -1;
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){

@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -313,7 +313,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
     }
 
     for ( i=0 ; i<3 ; i++ ){
-        if ( tachi_info[human_order[2-i]].image_surface ){
+        if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
             drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip, refresh_mode );
         }
     }
