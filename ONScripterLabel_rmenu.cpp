@@ -440,8 +440,6 @@ void ONScripterLabel::executeSystemYesNo()
 void ONScripterLabel::setupLookbackButton()
 {
     AnimationInfo *info[2];
-    SDL_Rect rect;
-    int offset;
 
     deleteButtonLink();
     
@@ -460,7 +458,7 @@ void ONScripterLabel::setupLookbackButton()
 
         if ( lookback_sp[0] >= 0 ){
             info[0] = &sprite_info[ lookback_sp[0] ];
-            info[0]->current_cell = 0;
+            info[0]->setCell(0);
             info[1] = &sprite_info[ lookback_sp[0] ];
             button->image_rect.x = sprite_info[ lookback_sp[0] ].pos.x;
             button->image_rect.y = sprite_info[ lookback_sp[0] ].pos.y;
@@ -482,18 +480,11 @@ void ONScripterLabel::setupLookbackButton()
                                       32, rmask, gmask, bmask, amask );
             SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 
-            offset = (info[0]->pos.w + info[0]->alpha_offset) * info[0]->current_cell;
-            rect.x = rect.y = 0;
-            rect.w = info[0]->pos.w;
-            rect.h = info[0]->pos.h;
-            alphaBlend( button->selected_surface, rect,
-                        accumulation_surface, button->image_rect.x, button->image_rect.y,
-                        info[0]->image_surface, offset, 0,
-                        info[0]->mask_surface, info[0]->alpha_offset,
-                        info[0]->trans_mode );
+            info[0]->blendOnSurface( button->selected_surface, 0, 0,
+                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
         }
 
-        if ( lookback_sp[0] >= 0 ) info[1]->current_cell = 1;
+        if ( lookback_sp[0] >= 0 ) info[1]->setCell(1);
 
         if ( info[1]->image_surface ){
             button->no_selected_surface =
@@ -501,16 +492,9 @@ void ONScripterLabel::setupLookbackButton()
                                       info[1]->pos.w, info[1]->pos.h,
                                       32, rmask, gmask, bmask, amask );
             SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        
-            offset = (info[1]->pos.w + info[1]->alpha_offset) * info[1]->current_cell;
-            rect.x = rect.y = 0;
-            rect.w = info[1]->pos.w;
-            rect.h = info[1]->pos.h;
-            alphaBlend( button->no_selected_surface, rect,
-                        accumulation_surface, button->image_rect.x, button->image_rect.y,
-                        info[1]->image_surface, offset, 0,
-                        info[1]->mask_surface, info[1]->alpha_offset,
-                        info[1]->trans_mode );
+            
+            info[1]->blendOnSurface( button->no_selected_surface, 0, 0,
+                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
             SDL_BlitSurface( button->no_selected_surface, NULL, accumulation_surface, &button->image_rect );
         }
     }
@@ -529,7 +513,7 @@ void ONScripterLabel::setupLookbackButton()
 
         if ( lookback_sp[1] >= 0 ){
             info[0] = &sprite_info[ lookback_sp[1] ];
-            info[0]->current_cell = 0;
+            info[0]->setCell(0);
             info[1] = &sprite_info[ lookback_sp[1] ];
             button->image_rect.x = sprite_info[ lookback_sp[1] ].pos.x;
             button->image_rect.y = sprite_info[ lookback_sp[1] ].pos.y;
@@ -551,18 +535,11 @@ void ONScripterLabel::setupLookbackButton()
                                       32, rmask, gmask, bmask, amask );
             SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 
-            offset = (info[0]->pos.w + info[0]->alpha_offset) * info[0]->current_cell;
-            rect.x = rect.y = 0;
-            rect.w = info[0]->pos.w;
-            rect.h = info[0]->pos.h;
-            alphaBlend( button->selected_surface, rect,
-                        accumulation_surface, button->image_rect.x, button->image_rect.y,
-                        info[0]->image_surface, offset, 0,
-                        info[0]->mask_surface, info[0]->alpha_offset,
-                        info[0]->trans_mode );
+            info[0]->blendOnSurface( button->selected_surface, 0, 0,
+                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
         }
 
-        if ( lookback_sp[1] >= 0 ) info[1]->current_cell = 1;
+        if ( lookback_sp[1] >= 0 ) info[1]->setCell(1);
 
         if ( info[1]->image_surface ){
             button->no_selected_surface =
@@ -571,15 +548,8 @@ void ONScripterLabel::setupLookbackButton()
                                       32, rmask, gmask, bmask, amask );
             SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         
-            offset = (info[1]->pos.w + info[1]->alpha_offset) * info[1]->current_cell;
-            rect.x = rect.y = 0;
-            rect.w = info[1]->pos.w;
-            rect.h = info[1]->pos.h;
-            alphaBlend( button->no_selected_surface, rect,
-                        accumulation_surface, button->image_rect.x, button->image_rect.y,
-                        info[1]->image_surface, offset, 0,
-                        info[1]->mask_surface, info[1]->alpha_offset,
-                        info[1]->trans_mode );
+            info[1]->blendOnSurface( button->no_selected_surface, 0, 0,
+                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
             SDL_BlitSurface( button->no_selected_surface, NULL, accumulation_surface, &button->image_rect );
         }
     }

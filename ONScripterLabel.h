@@ -172,6 +172,14 @@ public:
     int dwavestopCommand();
     int dwaveCommand();
     int dvCommand();
+    int drawtextCommand();
+    int drawsp2Command();
+    int drawspCommand();
+    int drawfillCommand();
+    int drawclearCommand();
+    int drawbg2Command();
+    int drawbgCommand();
+    int drawCommand();
     int delayCommand();
     int cspCommand();
     int cselgotoCommand();
@@ -406,8 +414,6 @@ private:
     AnimationInfo bg_info;
     EFFECT_IMAGE bg_effect_image; // This is no longer used. Remove it later.
 
-    void setBackground( SDL_Surface *surface, SDL_Rect *clip=NULL );
-
     /* ---------------------------------------- */
     /* Tachi-e related variables */
     /* 0 ... left, 1 ... center, 2 ... right */
@@ -432,10 +438,6 @@ private:
     };
     AnimationInfo cursor_info[2];
 
-    int proceedAnimation();
-    int estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
-    void resetRemainingTime( int t );
-    void stopAnimation( int click );
     void loadCursor( int no, const char *str, int x, int y, bool abs_flag = false );
     void saveAll();
     void loadEnvData();
@@ -462,15 +464,15 @@ private:
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
 
-    SDL_Surface *rotateSurface90CW(SDL_Surface *surface);
+    bool isTextVisible();
+    
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool text_cache_flag, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL );
     void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, bool text_cache_flag );
-    int clickWait( char *out_text );
-    int clickNewPage( char *out_text );
-    int textCommand();
-    bool isTextVisible();
+    int  clickWait( char *out_text );
+    int  clickNewPage( char *out_text );
+    int  textCommand();
     
     /* ---------------------------------------- */
     /* Effect related variables */
@@ -568,52 +570,68 @@ private:
     void newPage( bool next_flag );
     
     void deleteLabelLink();
-    void blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect );
     void flush( SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushSub( SDL_Rect &rect );
     void executeLabel();
-    int parseLine();
-    void parseTaggedString( AnimationInfo *anim );
-    void setupAnimationInfo( AnimationInfo *anim );
-    int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
-    int shiftRect( SDL_Rect &dst, SDL_Rect &clip );
-    void alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
-                     SDL_Surface *src1_surface, int x1, int y1,
-                     SDL_Surface *src2_surface, int x2, int y2,
-                     SDL_Surface *mask_surface, int x3,
-                     int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL, uchar3 *direct_color=NULL );
-    int enterTextDisplayMode( int ret_wait = RET_WAIT );
-    int resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     SDL_Surface *loadImage( char *file_name );
+    int parseLine();
+    int shiftRect( SDL_Rect &dst, SDL_Rect &clip );
+    int enterTextDisplayMode( int ret_wait = RET_WAIT );
 
+    void mouseOverCheck( int x, int y );
+    
+    /* ---------------------------------------- */
+    /* Animation */
+    int  proceedAnimation();
+    int  estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
+    void resetRemainingTime( int t );
+    void setupAnimationInfo( AnimationInfo *anim );
+    void parseTaggedString( AnimationInfo *anim );
     void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip );
+    void stopAnimation( int click );
+    
+    /* ---------------------------------------- */
+    /* File I/O */
+    void searchSaveFile( SaveFileInfo &info, int no );
+    int  loadSaveFile( int no );
+    void saveMagicNumber( FILE *fp );
+    void saveSaveFileFromTmpFile( FILE *fp );
+    int  saveSaveFile( int no );
+
+    int  loadSaveFile2( FILE *fp, int file_version );
+    void saveSaveFile2( FILE *fp );
+    
+    /* ---------------------------------------- */
+    /* Image processing */
+    void blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect );
+    int  resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
+    int  doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
+    void shiftCursorOnButton( int diff );
+    void alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
+                     SDL_Surface *src1_surface,
+                     SDL_Surface *src2_surface, int x2, int y2,
+                     SDL_Surface *mask_surface,
+                     int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL, uchar3 *direct_color=NULL );
     void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
     void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL, FontInfo *info=NULL );
     void refreshSurfaceParameters();
     void refreshSurface( SDL_Surface *surface, SDL_Rect *clip=NULL, int refresh_mode = REFRESH_NORMAL_MODE );
-    void mouseOverCheck( int x, int y );
-    void shiftCursorOnButton( int diff );
-    
+    void createBackground();
+    void setBackground( SDL_Surface *surface, SDL_Rect *clip=NULL );
+    SDL_Surface *rotateSurface90CW(SDL_Surface *surface);
+
     /* ---------------------------------------- */
-    /* System call related method */
+    /* rmenu and system call */
     bool system_menu_enter_flag;
     int  system_menu_mode;
 
-    int shelter_event_mode;
+    int  shelter_event_mode;
     struct TextBuffer *cached_text_buffer;
     
-    void searchSaveFile( SaveFileInfo &info, int no );
-    int loadSaveFile( int no );
-    void saveMagicNumber( FILE *fp );
-    void saveSaveFileFromTmpFile( FILE *fp );
-    int saveSaveFile( int no );
-    int loadSaveFile2( FILE *fp, int file_version );
-    void saveSaveFile2( FILE *fp );
-    void setupLookbackButton();
-
     void enterSystemCall();
     void leaveSystemCall( bool restore_flag = true );
     void executeSystemCall();
+    
     void executeSystemMenu();
     void executeSystemSkip();
     void executeSystemReset();
@@ -621,6 +639,7 @@ private:
     void executeSystemLoad();
     void executeSystemSave();
     void executeSystemYesNo();
+    void setupLookbackButton();
     void executeSystemLookback();
 };
 

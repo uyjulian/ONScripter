@@ -537,12 +537,19 @@ void ScriptParser::errorAndExit( const char *str, const char *reason )
     exit(-1);
 }
 
-void ScriptParser::setStr( char **dst, const char *src )
+void ScriptParser::setStr( char **dst, const char *src, int num )
 {
     if ( *dst ) delete[] *dst;
     if ( src ){
-        *dst = new char[ strlen( src ) + 1 ];
-        strcpy( *dst, src );
+        if (num >= 0){
+            *dst = new char[ num + 1 ];
+            memcpy( *dst, src, num );
+            (*dst)[num] = '\0';
+        }
+        else{
+            *dst = new char[ strlen( src ) + 1 ];
+            strcpy( *dst, src );
+        }
     }
     else
         *dst = NULL;

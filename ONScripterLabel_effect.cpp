@@ -214,9 +214,10 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.w = screen_width;
         dst_rect.h = screen_height;
         alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface, 0, 0,
+                    effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    NULL, 0, AnimationInfo::TRANS_COPY, height, &dirty_rect.bounding_box );
+                    NULL, AnimationInfo::TRANS_COPY, height, &dirty_rect.bounding_box );
+        //printf("height %d (%d %d %d %d)\n", height, dirty_rect.bounding_box.x, dirty_rect.bounding_box.y, dirty_rect.bounding_box.w, dirty_rect.bounding_box.h);
         break;
         
       case 11: // Left scroll
@@ -308,9 +309,9 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.w = screen_width;
         dst_rect.h = screen_height;
         alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface, 0, 0,
+                    effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, 0, AnimationInfo::TRANS_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
+                    effect->anim.image_surface, AnimationInfo::TRANS_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
         break;
 
       case 16: // Mosaic out
@@ -326,9 +327,9 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.w = screen_width;
         dst_rect.h = screen_height;
         alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface, 0, 0,
+                    effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, 0, AnimationInfo::TRANS_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
+                    effect->anim.image_surface, AnimationInfo::TRANS_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
         break;
 
       case (CUSTOM_EFFECT_NO + 0 ): // quakey

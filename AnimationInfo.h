@@ -89,6 +89,13 @@ public:
     void removeTag();
 
     bool proceedAnimation();
+
+    void setCell(int cell);
+    void blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
+                         SDL_Surface *src_surface, int src_x, int src_y,
+                         SDL_Rect *clip=NULL,
+                         int alpha=256, int scale_x=100, int scale_y=100, int rot=0,
+                         bool do_interpolation=false );
 };
 
 #endif // __ANIMATION_INFO_H__

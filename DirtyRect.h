@@ -33,7 +33,7 @@ struct DirtyRect
     DirtyRect& operator =( const DirtyRect &d );
     ~DirtyRect();
     
-    void add( SDL_Rect &src );
+    void add( SDL_Rect src );
     void clear();
     void fill( int w, int h );
 

@@ -106,26 +106,8 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 
     // load background surface
     bg_info.remove();
-    bg_effect_image = COLOR_EFFECT_IMAGE;
     loadStr( fp, &bg_info.file_name );
-    if ( !strcmp( bg_info.file_name, "white" ) ){
-        bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
-    }
-    else if ( !strcmp( bg_info.file_name, "black" ) ){
-        bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
-    }
-    else{
-        if ( bg_info.file_name[0] == '#' ){
-            readColor( &bg_info.color, bg_info.file_name );
-        }
-        else{
-            bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
-            setStr( &bg_info.image_name, bg_info.file_name );
-            parseTaggedString( &bg_info );
-            setupAnimationInfo( &bg_info );
-            bg_effect_image = BG_EFFECT_IMAGE;
-        }
-    }
+    createBackground();
 
     for ( i=0 ; i<3 ; i++ ){
         tachi_info[i].remove();

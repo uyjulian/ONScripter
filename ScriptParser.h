@@ -203,7 +203,7 @@ protected:
     char *version_str;
     int underline_value;
 
-    void setStr( char **dst, const char *src );
+    void setStr( char **dst, const char *src, int num=-1 );
     
     void gosubReal( const char *label, bool textgosub_flag, char *current );
 

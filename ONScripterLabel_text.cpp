@@ -46,31 +46,6 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
 #define IS_TRANSLATION_REQUIRED(x)	\
         ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
 
-SDL_Surface *ONScripterLabel::rotateSurface90CW(SDL_Surface *surface)
-{
-    if ( surface == NULL ) return NULL;
-    
-    SDL_Surface *tmp = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, surface->h, surface->w, 32, rmask, gmask, bmask, amask );
-        
-    SDL_LockSurface( surface );
-    SDL_LockSurface( tmp );
-
-    Uint32 *src = (Uint32 *)surface->pixels;
-    for (int i=0 ; i<surface->h ; i++){
-        Uint32 *dst = (Uint32 *)tmp->pixels + surface->h - i - 1;
-        for (int j=0 ; j<surface->w ; j++){
-            *dst = *src++;
-            dst += surface->h;
-        }
-    }
-        
-    SDL_UnlockSurface( tmp );
-    SDL_UnlockSurface( surface );
-        
-    SDL_FreeSurface( surface );
-    return tmp;
-}
-
 void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
@@ -119,18 +94,16 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
             src_rect.x = src_rect.y = 0;
             SDL_Surface *tmp2_surface = tmp_surface;
             if ( text_cache_flag ){
-                alphaBlend( text_surface, dst_rect,
-                            text_surface, dst_rect.x, dst_rect.y,
+                alphaBlend( text_surface, dst_rect, text_surface,
                             tmp_surface, 0, 0,
-                            NULL, 0, AnimationInfo::TRANS_ALPHA_MULTIPLE, 255, clip );
+                            NULL, AnimationInfo::TRANS_ALPHA_MULTIPLE, 256, clip );
                 src_rect.x = dst_rect.x;
                 src_rect.y = dst_rect.y;
                 tmp2_surface = text_surface;
             }
-            alphaBlend( dst_surface, dst_rect,
-                        dst_surface,  dst_rect.x, dst_rect.y,
+            alphaBlend( dst_surface, dst_rect, dst_surface,
                         tmp2_surface, src_rect.x, src_rect.y,
-                        NULL, src_rect.x, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
+                        NULL, AnimationInfo::TRANS_ALPHA_PRESERVE, 256, clip );
         }
         SDL_FreeSurface( tmp_surface );
     }
@@ -257,10 +230,9 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, b
             rect.h = screen_height;
         }
     
-        alphaBlend( surface, rect,
-                    surface, rect.x, rect.y,
+        alphaBlend( surface, rect, surface,
                     text_surface, rect.x, rect.y,
-                    NULL, rect.x, AnimationInfo::TRANS_ALPHA_PRESERVE );
+                    NULL, AnimationInfo::TRANS_ALPHA_PRESERVE );
     }
     else{
         char out_text[3] = { '\0','\0','\0' };

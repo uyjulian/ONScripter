@@ -384,6 +384,20 @@ int ONScripterLabel::loadSaveFile( int no )
     loadStr( fp, &bg_info.file_name );
     setupAnimationInfo( &bg_info );
     bg_effect_image = (EFFECT_IMAGE)fgetc( fp );
+    
+    if (bg_effect_image == COLOR_EFFECT_IMAGE){
+        bg_info.image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                      screen_width, screen_height,
+                                                      32, rmask, gmask, bmask, amask );
+        SDL_FillRect( bg_info.image_surface, NULL,
+                      SDL_MapRGB( bg_info.image_surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
+        bg_info.pos.x = 0;
+        bg_info.pos.y = 0;
+        bg_info.pos.w = screen_width;
+        bg_info.pos.h = screen_height;
+    }
+    bg_info.trans_mode = AnimationInfo::TRANS_COPY;
+
 
     for ( i=0 ; i<3 ; i++ ){
         tachi_info[i].remove();

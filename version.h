@@ -1,1 +1,1 @@
-#define ONS_VERSION "beta-20040417(2.42)"
+#define ONS_VERSION "beta-20040419(2.42)"

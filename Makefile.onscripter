@@ -6,8 +6,8 @@
 GUI_OBJS = ONScripterLabel$(OBJSUFFIX) ONScripterLabel_command$(OBJSUFFIX) ONScripterLabel_text$(OBJSUFFIX) \
 	ONScripterLabel_effect$(OBJSUFFIX) ONScripterLabel_event$(OBJSUFFIX) ONScripterLabel_rmenu$(OBJSUFFIX) \
 	ONScripterLabel_animation$(OBJSUFFIX) ONScripterLabel_sound$(OBJSUFFIX) ONScripterLabel_file$(OBJSUFFIX) \
-	ONScripterLabel_file2$(OBJSUFFIX) AnimationInfo$(OBJSUFFIX) FontInfo$(OBJSUFFIX) DirtyRect$(OBJSUFFIX) \
-	resize_image$(OBJSUFFIX)
+	ONScripterLabel_file2$(OBJSUFFIX) ONScripterLabel_image$(OBJSUFFIX) \
+	AnimationInfo$(OBJSUFFIX) FontInfo$(OBJSUFFIX) DirtyRect$(OBJSUFFIX) resize_image$(OBJSUFFIX)
 SARDEC_OBJS  = sardec$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX)
 SARCONV_OBJS = sarconv$(OBJSUFFIX) conv_shared$(OBJSUFFIX) resize_image$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX)
 NSADEC_OBJS  = nsadec$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX) NsaReader$(OBJSUFFIX)
@@ -60,7 +60,7 @@ simple_aviplay$(OBJSUFFIX): AVIWrapper.h
 conv_shared$(OBJSUFFIX): resize_image.h
 
 onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
-ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
+ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
@@ -70,6 +70,7 @@ ONScripterLabel_animation$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_sound$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_file$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_file2$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripterLabel_image$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
 AnimationInfo$(OBJSUFFIX): AnimationInfo.h
 FontInfo$(OBJSUFFIX): FontInfo.h
 DirtyRect$(OBJSUFFIX) : DirtyRect.h

@@ -204,7 +204,7 @@ int ONScripterLabel::talCommand()
         else if ( loc == 'c' ) no = 1;
         else if ( loc == 'r' ) no = 2;
 
-        if      ( trans > 255 ) trans = 255;
+        if      ( trans > 256 ) trans = 256;
         else if ( trans < 0   ) trans = 0;
 
         tachi_info[ no ].trans = trans;
@@ -863,7 +863,7 @@ int ONScripterLabel::prnumCommand()
     prnum_info[no]->trans_mode = AnimationInfo::TRANS_STRING;
     prnum_info[no]->abs_flag = true;
     prnum_info[no]->num_of_cells = 1;
-    prnum_info[no]->current_cell = 0;
+    prnum_info[no]->setCell(0);
     prnum_info[no]->color_list = new uchar3[ prnum_info[no]->num_of_cells ];
     
     prnum_info[no]->param = script_h.readInt();
@@ -988,7 +988,7 @@ int ONScripterLabel::mspCommand()
     dirty_rect.add( sprite_info[ no ].pos );
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans += script_h.readInt();
-    if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
+    if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
 
     return RET_CONTINUE;
@@ -1128,7 +1128,7 @@ int ONScripterLabel::lspCommand()
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
     else
-        sprite_info[ no ].trans = 255;
+        sprite_info[ no ].trans = 256;
 
     parseTaggedString( &sprite_info[ no ] );
     setupAnimationInfo( &sprite_info[ no ] );
@@ -1852,6 +1852,105 @@ int ONScripterLabel::dvCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::drawtextCommand()
+{
+    restoreTextBuffer( accumulation_surface, NULL, true );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawsp2Command()
+{
+    int sprite_no = script_h.readInt();
+    int cell_no = script_h.readInt();
+    int alpha = script_h.readInt();
+    int x = script_h.readInt();
+    int y = script_h.readInt();
+    int scale_x = script_h.readInt();
+    int scale_y = script_h.readInt();
+    int rot = script_h.readInt();
+
+    AnimationInfo &si = sprite_info[sprite_no];
+    int old_cell_no = si.current_cell;
+    si.setCell(cell_no);
+    si.blendOnSurface( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
+                       accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
+                       NULL, alpha, scale_x, scale_y, rot );
+    si.setCell(old_cell_no);
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawspCommand()
+{
+    int sprite_no = script_h.readInt();
+    int cell_no = script_h.readInt();
+    int alpha = script_h.readInt();
+    int x = script_h.readInt();
+    int y = script_h.readInt();
+
+    int old_cell_no = sprite_info[sprite_no].current_cell;
+    sprite_info[sprite_no].setCell(cell_no);
+    sprite_info[sprite_no].blendOnSurface( accumulation_surface, x, y,
+                                           accumulation_surface, x, y,
+                                           NULL, alpha );
+    sprite_info[sprite_no].setCell(old_cell_no);
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawfillCommand()
+{
+    int r = script_h.readInt();
+    int g = script_h.readInt();
+    int b = script_h.readInt();
+    
+    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGB( accumulation_surface->format, r, g, b) );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawclearCommand()
+{
+    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGB( accumulation_surface->format, 0, 0, 0) );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawbgCommand()
+{
+    setBackground( accumulation_surface );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawbg2Command()
+{
+    int x = script_h.readInt();
+    int y = script_h.readInt();
+    int scale_x = script_h.readInt();
+    int scale_y = script_h.readInt();
+    int rot = script_h.readInt();
+
+    bg_info.blendOnSurface( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
+                            accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
+                            NULL, 256, scale_x, scale_y, rot );
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::drawCommand()
+{
+    SDL_Rect rect;
+    rect.x = rect.y = 0;
+    rect.w = screen_width;
+    rect.h = screen_height;
+
+    flush( &rect, true, true );
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::delayCommand()
 {
     int t = script_h.readInt();
@@ -1997,8 +2096,8 @@ int ONScripterLabel::cellCommand()
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    sprite_info[ sprite_no ].current_cell = no;
-    dirty_rect.add( sprite_info[ sprite_no ].pos );
+    sprite_info[sprite_no].setCell(no);
+    dirty_rect.add( sprite_info[sprite_no].pos );
         
     return RET_CONTINUE;
 }
@@ -2117,23 +2216,25 @@ int ONScripterLabel::btnwaitCommand()
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                bool visible = sprite_info[p_button_link->sprite_no].visible;
-                sprite_info[p_button_link->sprite_no].visible = true;
+                AnimationInfo &si = sprite_info[p_button_link->sprite_no];
+                
+                bool visible = si.visible;
+                si.visible = true;
 
                 allocateSelectedSurface(p_button_link->sprite_no, p_button_link);
                 
                 if ( p_button_link->selected_surface ){
-                    sprite_info[p_button_link->sprite_no].current_cell = 1;
+                    si.setCell(1);
                     refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
                     SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
                 }
-                sprite_info[p_button_link->sprite_no].current_cell = 0;
+                si.setCell(0);
                 if ( p_button_link->no_selected_surface ){
                     refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
                     SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
                     SDL_BlitSurface( p_button_link->no_selected_surface, NULL, accumulation_surface, &p_button_link->image_rect );
                 }
-                sprite_info[p_button_link->sprite_no].visible = visible;
+                si.visible = visible;
             }
             else{
                 if ( p_button_link->no_selected_surface )
@@ -2366,37 +2467,23 @@ int ONScripterLabel::bgCommand()
         else           return doEffect( tmp_effect.effect, &bg_info, bg_effect_image );
     }
     else{
-        for ( int i=0 ; i<3 ; i++ ){
+        for ( int i=0 ; i<3 ; i++ )
             tachi_info[i].remove();
-        }
+
         bg_info.remove();
-
-        bg_effect_image = COLOR_EFFECT_IMAGE;
-        dirty_rect.fill( screen_width, screen_height );
-
         if ( !strcmp( script_h.getStringBuffer(), "white" ) ){
             setStr( &bg_info.file_name, "white" );
-            bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
         }
         else if ( !strcmp( script_h.getStringBuffer(), "black" ) ){
             setStr( &bg_info.file_name, "black" );
-            bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
         }
         else{
             const char *buf = script_h.readStr( true );
-            
-            if ( buf[0] == '#' ){
-                setStr( &bg_info.file_name, buf );
-                readColor( &bg_info.color, buf );
-            }
-            else{
-                bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
-                setStr( &bg_info.image_name, buf );
-                parseTaggedString( &bg_info );
-                setupAnimationInfo( &bg_info );
-                bg_effect_image = BG_EFFECT_IMAGE;
-            }
+            setStr( &bg_info.file_name, buf );
         }
+
+        createBackground();
+        dirty_rect.fill( screen_width, screen_height );
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -2428,7 +2515,7 @@ int ONScripterLabel::barCommand()
     bar_info[no]->trans_mode = AnimationInfo::TRANS_COPY;
     bar_info[no]->abs_flag = true;
     bar_info[no]->num_of_cells = 1;
-    bar_info[no]->current_cell = 0;
+    bar_info[no]->setCell(0);
     bar_info[no]->alpha_offset = 0;
 
     bar_info[no]->param = script_h.readInt();
@@ -2493,7 +2580,7 @@ int ONScripterLabel::amspCommand()
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
 
-    if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
+    if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
     dirty_rect.add( sprite_info[ no ].pos );
     

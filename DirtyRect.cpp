@@ -64,11 +64,22 @@ DirtyRect::~DirtyRect()
     delete[] history;
 }
 
-void DirtyRect::add( SDL_Rect &src )
+void DirtyRect::add( SDL_Rect src )
 {
     //printf("add %d %d %d %d\n", src.x, src.y, src.w, src.h );
     if ( src.w == 0 || src.h == 0 ) return;
-    
+
+    if (src.x < 0){
+        if (src.w < -src.x) return;
+        src.w += src.x;
+        src.x = 0;
+    }
+    if (src.y < 0){
+        if (src.h < -src.y) return;
+        src.h += src.y;
+        src.y = 0;
+    }
+
     history[ num_history++ ] = src;
     addBoundingBox( src );
     area += src.w * src.h;

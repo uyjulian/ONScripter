@@ -234,12 +234,10 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
         }
         else if ( buffer[0] == 'm' ){
             anim->trans_mode = AnimationInfo::TRANS_MASK;
-            buffer++;
-            script_h.pushCurrent( buffer );
-            script_h.readToken();
-            setStr( &anim->mask_file_name, script_h.getStringBuffer() );
-            buffer = script_h.getNext();
-            script_h.popCurrent();
+            char *start = ++buffer;
+            while(buffer[0] != ';' && buffer[0] != 0x0a && buffer[0] != '\0') buffer++;
+            if (buffer[0] == ';')
+                setStr( &anim->mask_file_name, start, buffer-start );
         }
         else if ( buffer[0] == '#' ){
             anim->trans_mode = AnimationInfo::TRANS_DIRECT;
@@ -300,32 +298,15 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 
 void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
 {
-    int cell = anim->current_cell;
-    if ( cell >= anim->num_of_cells )
-        cell = anim->num_of_cells - 1;
-    
-    if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
-        alphaBlend( dst_surface, anim->pos,
-                    dst_surface, anim->pos.x, anim->pos.y,
-                    anim->image_surface, anim->image_surface->w / anim->num_of_cells * cell, 0, 
-                    NULL, anim->image_surface->w / anim->num_of_cells * cell, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
-        return;
-    }
-    else if ( !anim->image_surface ) return;
-
-    int offset = (anim->pos.w + anim->alpha_offset) * cell;
-
-    SDL_Rect dst_rect = anim->pos;
+    int x = anim->pos.x;
+    int y = anim->pos.y;
     if ( !anim->abs_flag ){
-        dst_rect.x += sentence_font.x() * screen_ratio1 / screen_ratio2;
-        dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
+        x += sentence_font.x() * screen_ratio1 / screen_ratio2;
+        y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
-
-    alphaBlend( dst_surface, dst_rect,
-                dst_surface, dst_rect.x, dst_rect.y,
-                anim->image_surface, offset, 0,
-                anim->mask_surface, offset + anim->alpha_offset,
-                anim->trans_mode, anim->trans, clip, &anim->direct_color );
+    anim->blendOnSurface( dst_surface, x, y,
+                          dst_surface, x, y,
+                          clip, anim->trans );
 }
 
 void ONScripterLabel::stopAnimation( int click )

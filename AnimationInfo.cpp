@@ -22,6 +22,12 @@
  */
 
 #include "AnimationInfo.h"
+#include <math.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+//#define ENABLE_BILINEAR
 
 AnimationInfo::AnimationInfo(){
     /* Variables from TaggedInfo */
@@ -40,7 +46,7 @@ AnimationInfo::AnimationInfo(){
     image_name = NULL;
     image_surface = NULL;
     mask_surface = NULL;
-    trans = 255;
+    trans = 256;
 
     font_size_xy[0] = font_size_xy[1] = -1;
     font_pitch = -1;
@@ -70,7 +76,7 @@ void AnimationInfo::deleteSurface(){
 }
 
 void AnimationInfo::remove(){
-    trans = 255;
+    trans = 256;
     deleteImageName();
     deleteSurface();
     removeTag();
@@ -137,3 +143,207 @@ bool AnimationInfo::proceedAnimation()
     return is_changed;
 }
 
+void AnimationInfo::setCell(int cell)
+{
+    if (cell < 0) cell = 0;
+    else if (cell >= num_of_cells) cell = num_of_cells - 1;
+
+    current_cell = cell;
+}
+
+void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
+                                    SDL_Surface *src_surface, int src_x, int src_y,
+                                    SDL_Rect *clip,
+                                    int alpha, int scale_x, int scale_y, int rot,
+                                    bool do_interpolation )
+{
+    if ( image_surface == NULL ) return;
+    if ( scale_x == 0 || scale_y == 0 ) return;
+    
+    int i, x, y;
+    SDL_Rect dst_rect;
+    dst_rect.x = dst_x;
+    dst_rect.y = dst_y;
+    dst_rect.w = pos.w;
+    dst_rect.h = pos.h;
+
+    // for integer arithmetic operation
+    int cos_i = 256, sin_i = 0;
+    if (rot != 0){
+        cos_i = (int)(256.0 * cos(-M_PI*rot/180));
+        sin_i = (int)(256.0 * sin(-M_PI*rot/180));
+    }
+
+    // project corner point and calculate bounding box
+    int dst_corner_xy[4][2];
+    int dst_center_xy[2] = {dst_rect.x + dst_rect.w/2, dst_rect.y + dst_rect.h/2};
+    int min_xy[2]={dst_surface->w-1, dst_surface->h-1}, max_xy[2]={0,0};
+    for (i=0 ; i<4 ; i++){
+        int c_x = ((((i+1)%4)/2)*2-1)*dst_rect.w/2 - (((i+1)%4)/2) * (1-dst_rect.w%2);
+        int c_y = ((i/2)*2-1)*dst_rect.h/2 - (i/2) * (1-dst_rect.h%2);
+        dst_corner_xy[i][0] = (cos_i * scale_x * c_x - sin_i * scale_y * c_y) / (100*256) + dst_center_xy[0];
+        dst_corner_xy[i][1] = (sin_i * scale_x * c_x + cos_i * scale_y * c_y) / (100*256) + dst_center_xy[1];
+
+        if (min_xy[0] > dst_corner_xy[i][0]) min_xy[0] = dst_corner_xy[i][0];
+        if (max_xy[0] < dst_corner_xy[i][0]) max_xy[0] = dst_corner_xy[i][0];
+        if (min_xy[1] > dst_corner_xy[i][1]) min_xy[1] = dst_corner_xy[i][1];
+        if (max_xy[1] < dst_corner_xy[i][1]) max_xy[1] = dst_corner_xy[i][1];
+    }
+
+    // clip bounding box
+    if (max_xy[0] < 0) return;
+    if (max_xy[0] >= dst_surface->w) max_xy[0] = dst_surface->w - 1;
+    if (min_xy[0] >= dst_surface->w) return;
+    if (min_xy[0] < 0) min_xy[0] = 0;
+    if (max_xy[1] < 0) return;
+    if (max_xy[1] >= dst_surface->h) max_xy[1] = dst_surface->h - 1;
+    if (min_xy[1] >= dst_surface->h) return;
+    if (min_xy[1] < 0) min_xy[1] = 0;
+
+    // extra clipping
+    if ( clip ){
+        if (max_xy[0] < clip->x) return;
+        else if (max_xy[0] >= clip->x + clip->w) max_xy[0] = clip->x + clip->w - 1;
+        if (min_xy[0] >= clip->x + clip->w) return;
+        else if (min_xy[0] < clip->x) min_xy[0] = clip->x;
+        if (max_xy[1] < clip->y) return;
+        else if (max_xy[1] >= clip->y + clip->h) max_xy[1] = clip->y + clip->h - 1;
+        if (min_xy[1] >= clip->y + clip->h) return;
+        else if (min_xy[1] < clip->y) min_xy[1] = clip->y;
+    }
+
+    // lock surface
+    SDL_LockSurface( dst_surface );
+    if ( src_surface != dst_surface ) SDL_LockSurface( src_surface );
+    SDL_LockSurface( image_surface );
+
+    SDL_Surface *tmp_mask_surface;
+    int mask_offset;
+    if ( mask_surface ){
+        SDL_LockSurface( mask_surface );
+        tmp_mask_surface = mask_surface;
+        mask_offset = 0;
+    }
+    else{
+        tmp_mask_surface = image_surface;
+        mask_offset = pos.w;
+    }
+
+    // check constant alpha key
+    Uint32 ref_color=0;
+    if ( trans_mode == TRANS_TOPLEFT ){
+        ref_color = *((Uint32*)image_surface->pixels);
+    }
+    else if ( trans_mode == TRANS_TOPRIGHT ){
+        ref_color = *((Uint32*)image_surface->pixels + image_surface->w - 1);
+    }
+    else if ( trans_mode == TRANS_DIRECT ) {
+        ref_color = direct_color[0] << image_surface->format->Rshift |
+            direct_color[1] << image_surface->format->Gshift |
+            direct_color[2] << image_surface->format->Bshift;
+    }
+    ref_color &= 0xffffff;
+
+    // set pixel by inverse-projection with raster scanning
+    for (y=min_xy[1] ; y<= max_xy[1] ; y++){
+        // calculate start and end point for each raster scanning
+        int raster_min = min_xy[0], raster_max = max_xy[0];
+        if (rot != 0){
+            for (i=0 ; i<4 ; i++){
+                if (dst_corner_xy[i][1] == dst_corner_xy[(i+1)%4][1]) continue;
+                x = (dst_corner_xy[(i+1)%4][0] - dst_corner_xy[i][0])*(y-dst_corner_xy[i][1])/(dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1]) + dst_corner_xy[i][0];
+                if (dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1] > 0){
+                    if (raster_max > x) raster_max = x;
+                }
+                else{
+                    if (raster_min < x) raster_min = x;
+                }
+            }
+        }
+
+        Uint32 *dst_buffer = (Uint32 *)dst_surface->pixels + dst_surface->w * y + raster_min;
+        Uint32 *src_buffer = (Uint32 *)src_surface->pixels + src_surface->w * (y-dst_rect.y+src_y) + raster_min - dst_rect.x + src_x;
+
+        // inverse-projection
+        for (x=raster_min ; x<=raster_max ; x++, dst_buffer++, src_buffer++){
+#ifdef ENABLE_BILINEAR            
+            int x2 = ( cos_i * (x-dst_center_xy[0]) + sin_i * (y-dst_center_xy[1])) * 100 / scale_x + (dst_rect.w/2)*256;
+            int y2 = (-sin_i * (x-dst_center_xy[0]) + cos_i * (y-dst_center_xy[1])) * 100 / scale_y + (dst_rect.h/2)*256;
+            int dx = x2 % 256;
+            int dy = y2 % 256;
+            
+            x2 = x2 / 256;
+            y2 = y2 / 256;
+            
+#else
+            int x2 = ( cos_i * (x-dst_center_xy[0]) + sin_i * (y-dst_center_xy[1])) * 100 / (scale_x*256) + dst_rect.w/2;
+            int y2 = (-sin_i * (x-dst_center_xy[0]) + cos_i * (y-dst_center_xy[1])) * 100 / (scale_y*256) + dst_rect.h/2;
+#endif            
+            if (x2 < 0) x2 = 0;
+            else if (x2 >= image_surface->w) x2 = image_surface->w-1;
+            x2 += image_surface->w*current_cell/num_of_cells;
+            
+            // one last line is omitted to accelerate the interpolation code
+            if (y2 < 0) y2 = 0;
+            else if (y2 >= image_surface->h-1) y2 = image_surface->h-2;
+            
+            Uint32 *sp_buffer  = (Uint32 *)image_surface->pixels + image_surface->w * y2 + x2;
+            Uint32 pixel, mask_rb, mask_g;
+#ifdef ENABLE_BILINEAR            
+            Uint32 mask_rb2, mask_g2;
+            if (do_interpolation){
+                // bi-linear interpolation
+                mask_rb = (((*sp_buffer & 0xff00ff) * (256-dx) + (*(sp_buffer+1) & 0xff00ff) * dx) >> 8) & 0xff00ff;
+                mask_g  = (((*sp_buffer & 0x00ff00) * (256-dx) + (*(sp_buffer+1) & 0x00ff00) * dx) >> 8) & 0x00ff00;
+
+                sp_buffer += image_surface->w;
+                mask_rb2 = (((*sp_buffer & 0xff00ff) * (256-dx) + (*(sp_buffer+1) & 0xff00ff) * dx) >> 8) & 0xff00ff;
+                mask_g2  = (((*sp_buffer & 0x00ff00) * (256-dx) + (*(sp_buffer+1) & 0x00ff00) * dx) >> 8) & 0x00ff00;
+
+                pixel = (((mask_rb * (256-dy) + mask_rb2 * dy) >> 8) & 0xff00ff) |
+                    (((mask_g  * (256-dy) + mask_g2  * dy) >> 8) & 0x00ff00);
+            }
+            else
+#endif                
+            {
+                pixel = *sp_buffer;
+            }
+
+            Uint32 mask, mask1, mask2;
+            if ( trans_mode == TRANS_ALPHA || trans_mode == TRANS_MASK ){
+                mask = ~*((Uint32 *)tmp_mask_surface->pixels + tmp_mask_surface->w * (y2%tmp_mask_surface->h) + (x2+mask_offset)%tmp_mask_surface->w) & 0xff;
+                mask2 = (mask * alpha) >> 8;
+            }
+            else if ( trans_mode == TRANS_TOPLEFT ||
+                      trans_mode == TRANS_TOPRIGHT ||
+                      trans_mode == TRANS_DIRECT ){
+                if ( (pixel & 0xffffff) == ref_color )
+                    mask2 = 0;
+                else
+                    mask2 = alpha;
+            }
+            else if ( trans_mode == TRANS_STRING ){
+                mask = *((Uint32 *)tmp_mask_surface->pixels + tmp_mask_surface->w * (y2%tmp_mask_surface->h) + (x2+mask_offset)%tmp_mask_surface->w) & 0xff000000;
+                mask >>= 24;
+                mask2 = (mask * alpha) >> 8;
+            }
+            else{ // TRANS_COPY
+                mask2 = alpha;
+            }
+            mask1 = 256 - mask2;
+            
+            mask_rb = (((*src_buffer & 0xff00ff) * mask1 +
+                        (pixel & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+            mask_g = (((*src_buffer & 0x00ff00) * mask1 +
+                       (pixel & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+
+            *dst_buffer = mask_rb | mask_g;
+        }
+    }
+    
+    // unlock surface
+    if ( mask_surface ) SDL_UnlockSurface( mask_surface );
+    SDL_UnlockSurface( image_surface );
+    if ( src_surface != dst_surface ) SDL_UnlockSurface( src_surface );
+    SDL_UnlockSurface( dst_surface );
+}
