@@ -955,7 +955,8 @@ int ONScripterLabel::mp3Command()
     const char *buf = script_h.readStr();
     if ( buf[0] != '\0' ){
         setStr( &music_file_name, buf );
-        playMP3( 0 );
+        if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+            playMP3( 0 );
     }
         
     return RET_CONTINUE;

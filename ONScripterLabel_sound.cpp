@@ -218,9 +218,8 @@ int ONScripterLabel::playWave( const char *file_name, bool loop_flag, int channe
         wave_sample[channel] = Mix_LoadWAV_RW(SDL_RWFromMem( buffer, length ), 1);
         delete[] buffer;
     }
-    else{
-        if ( wave_sample[channel] ) return -1; // if not pre-loaded
-    }
+
+    if ( !wave_sample[channel] ) return -1; // if not pre-loaded or the format is MP3
     
     if ( channel == 0 ) Mix_Volume( channel, voice_volume * 128 / 100 );
     else                Mix_Volume( channel, se_volume * 128 / 100 );

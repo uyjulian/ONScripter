@@ -95,33 +95,14 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
             ai->fi_list[i].original_length = ai->fi_list[i].length;
         }
 
-        /* NBZ check */
-        if ( count >= 3 && !strncmp( &ai->fi_list[i].name[count-3], "NBZ", 3 ) ){
-            fpos_t pos;
-            fgetpos( ai->file_handle, &pos );
-            fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
-            size_t tmp_len = readLong( ai->file_handle );
-            if ( readChar( ai->file_handle ) == 'B' && readChar( ai->file_handle ) == 'Z' ){
-                ai->fi_list[i].compression_type = NBZ_COMPRESSION;
-                ai->fi_list[i].original_length = tmp_len;
-            }
-            fsetpos( ai->file_handle, &pos );
-        }
-        /* SPB check */
-        else if ( count >= 3 && !strncmp( &ai->fi_list[i].name[count-3], "SPB", 3 ) ){
-            fpos_t pos;
-            fgetpos( ai->file_handle, &pos );
-            fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
-            size_t width  = readShort( ai->file_handle );
-            size_t height = readShort( ai->file_handle );
+        /* Registered Plugin check */
+        if ( ai->fi_list[i].compression_type == NO_COMPRESSION )
+            ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
 
-            size_t width_pad  = (4 - width * 3 % 4) % 4;
-            
-            ai->fi_list[i].compression_type = SPB_COMPRESSION;
-            ai->fi_list[i].original_length = (width * 3 +width_pad) * height + 54;
-            fsetpos( ai->file_handle, &pos );
+        if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ||
+             ai->fi_list[i].compression_type == SPB_COMPRESSION ){
+            ai->fi_list[i].original_length = getDecompressedFileLength( ai->fi_list[i].compression_type, ai->file_handle, ai->fi_list[i].offset );
         }
-
         ai->fi_list[i].access_flag = false;
     }
     ai->num_of_accessed = 0;
@@ -314,6 +295,12 @@ size_t SarReader::getFileLength( const char *file_name )
         info->fi_list[j].access_flag = true;
     }
 
+    if ( info->fi_list[j].compression_type == NO_COMPRESSION ){
+        int type = getRegisteredCompressionType( file_name );
+        if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION )
+            return getDecompressedFileLength( type, info->file_handle, info->fi_list[j].offset );
+    }
+    
     return info->fi_list[j].original_length;
 }
 
@@ -322,10 +309,16 @@ size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned c
     int i = getIndexFromFile( ai, file_name );
     if ( i == ai->num_of_files ) return 0;
 
-    if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ){
+    int type = ai->fi_list[i].compression_type;
+    if ( type == NO_COMPRESSION ) type = getRegisteredCompressionType( file_name );
+
+    if      ( type == NBZ_COMPRESSION ){
         return decodeNBZ( ai->file_handle, ai->fi_list[i].offset, buf );
     }
-    else if ( ai->fi_list[i].compression_type == SPB_COMPRESSION ){
+    else if ( type == LZSS_COMPRESSION ){
+        return decodeLZSS( ai, i, buf );
+    }
+    else if ( type == SPB_COMPRESSION ){
         return decodeSPB( ai->file_handle, ai->fi_list[i].offset, buf );
     }
 

@@ -26,12 +26,6 @@
 #define NSA_ARCHIVE_NAME "arc.nsa"
 #define NSA_ARCHIVE_NAME2 "arc%d.nsa"
 
-#define EI 8
-#define EJ 4
-#define P   1  /* If match length <= P then output one character */
-#define N (1 << EI)  /* buffer size */
-#define F ((1 << EJ) + P)  /* lookahead buffer size */
-
 NsaReader::NsaReader( char *path )
         :SarReader( path )
 {
@@ -145,17 +139,14 @@ size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
         ai->num_of_accessed++;
         ai->fi_list[i].access_flag = true;
     }
-    if ( ai->fi_list[i].compression_type != SPB_COMPRESSION )
-        return ai->fi_list[i].original_length;
-    
-    fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
 
-    size_t width  = readShort( ai->file_handle );
-    size_t height = readShort( ai->file_handle );
-
-    size_t width_pad  = (4 - width * 3 % 4) % 4;
+    if ( ai->fi_list[i].compression_type == NO_COMPRESSION ){
+        int type = getRegisteredCompressionType( file_name );
+        if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION )
+            return getDecompressedFileLength( type, ai->file_handle, ai->fi_list[i].offset );
+    }
     
-    return (width * 3 + width_pad) * height + 54;
+    return ai->fi_list[i].original_length;
 }
 
 size_t NsaReader::getFileLength( const char *file_name )
@@ -173,27 +164,6 @@ size_t NsaReader::getFileLength( const char *file_name )
         if ( (ret = getFileLengthSub( &archive_info2[i], file_name )) ) return ret;
     }
     
-    return 0;
-}
-
-size_t NsaReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned char *buffer )
-{
-    int i = getIndexFromFile( ai, file_name );
-    if ( i == ai->num_of_files ) return 0;
-
-    if ( ai->fi_list[i].compression_type == NO_COMPRESSION ){
-        return SarReader::getFileSub( ai, file_name, buffer );
-    }
-    else if ( ai->fi_list[i].compression_type == SPB_COMPRESSION ){
-        return decodeSPB( ai->file_handle, ai->fi_list[i].offset, buffer );
-    }
-    else if ( ai->fi_list[i].compression_type == LZSS_COMPRESSION ){
-        return decodeLZSS( ai, i, buffer );
-    }
-    else if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ){
-        return decodeNBZ( ai->file_handle, ai->fi_list[i].offset, buffer );
-    }
-
     return 0;
 }
 
@@ -229,36 +199,4 @@ struct NsaReader::FileInfo NsaReader::getFileByIndex( int index )
     fprintf( stderr, "NsaReader::getFileByIndex  Index %d is out of range\n", index );
 
     return archive_info.fi_list[0];
-}
-
-size_t NsaReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buf )
-{
-    unsigned int count = 0;
-    int i, j, k, r, c;
-    unsigned char *lzss_buffer = new unsigned char[ N * 2 ];
-
-    getbit_mask = 0;
-
-    fseek( ai->file_handle, ai->fi_list[no].offset, SEEK_SET );
-    memset( lzss_buffer, 0, N-F );
-    r = N - F;
-
-    while ( count < ai->fi_list[no].original_length ){
-        if ( getbit( ai->file_handle, 1 ) ) {
-            if ((c = getbit( ai->file_handle, 8 )) == EOF) break;
-            buf[ count++ ] = c;
-            lzss_buffer[ r++ ] = c;  r &= (N - 1);
-        } else {
-            if ((i = getbit( ai->file_handle, EI )) == EOF) break;
-            if ((j = getbit( ai->file_handle, EJ )) == EOF) break;
-            for (k = 0; k <= j + 1  ; k++) {
-                c = lzss_buffer[(i + k) & (N - 1)];
-                buf[ count++ ] = c;
-                lzss_buffer[ r++ ] = c;  r &= (N - 1);
-            }
-        }
-    }
-
-    delete[] lzss_buffer;
-    return count;
 }

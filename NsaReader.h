@@ -53,8 +53,6 @@ private:
     int num_of_nsa_archives;
 
     size_t getFileLengthSub( ArchiveInfo *ai, const char *file_name );
-    size_t getFileSub( ArchiveInfo *ai, const char *file_name, unsigned char *buffer );
-    size_t decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buffer );
 };
 
 #endif // __NSA_READER_H__

@@ -57,6 +57,8 @@ static struct FuncLUT{
     {"textgosub", &ScriptParser::textgosubCommand},
     {"sub", &ScriptParser::subCommand},
     {"stralias", &ScriptParser::straliasCommand},
+    {"spi", &ScriptParser::soundpressplginCommand},
+    {"soundpressplgin", &ScriptParser::soundpressplginCommand},
     {"skip",     &ScriptParser::skipCommand},
     {"selectvoice",     &ScriptParser::selectvoiceCommand},
     {"selectcolor",     &ScriptParser::selectcolorCommand},

@@ -72,6 +72,7 @@ public:
     int textgosubCommand();
     int subCommand();
     int straliasCommand();
+    int soundpressplginCommand();
     int skipCommand();
     int selectvoiceCommand();
     int selectcolorCommand();

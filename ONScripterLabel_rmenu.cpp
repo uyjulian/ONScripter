@@ -381,7 +381,8 @@ int ONScripterLabel::loadSaveFile( int no )
         if ( current_cd_track == -2 )
             playMIDIFile();
         else
-            playMP3( current_cd_track );
+            if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+                playMP3( current_cd_track );
     }
 
     /* ---------------------------------------- */

@@ -34,6 +34,12 @@
 #define READ_LENGTH 4096
 #define WRITE_LENGTH 5000
 
+#define EI 8
+#define EJ 4
+#define P   1  /* If match length <= P then output one character */
+#define N (1 << EI)  /* buffer size */
+#define F ((1 << EJ) + P)  /* lookahead buffer size */
+
 DirectReader::DirectReader( char *path )
 {
     if ( path ){
@@ -43,10 +49,21 @@ DirectReader::DirectReader( char *path )
     else{
         archive_path = "";
     }
+
+    last_registered_compression_type = &root_registered_compression_type;
+    registerCompressionType( "SPB", SPB_COMPRESSION );
+    registerCompressionType( "JPG", NO_COMPRESSION );
+    registerCompressionType( "GIF", NO_COMPRESSION );
 }
 
 DirectReader::~DirectReader()
 {
+    last_registered_compression_type = root_registered_compression_type.next;
+    while ( last_registered_compression_type ){
+        RegisteredCompressionType *cur = last_registered_compression_type;
+        last_registered_compression_type = last_registered_compression_type->next;
+        delete cur;
+    }
 }
 
 FILE *DirectReader::fopen(const char *path, const char *mode)
@@ -181,6 +198,33 @@ int DirectReader::getNumAccessed()
     return 0;
 }
     
+void DirectReader::registerCompressionType( const char *ext, int type )
+{
+    last_registered_compression_type->next = new RegisteredCompressionType(ext, type);
+    last_registered_compression_type = last_registered_compression_type->next;
+}
+    
+int DirectReader::getRegisteredCompressionType( const char *file_name )
+{
+    const char *ext_buf = file_name + strlen(file_name);
+    while( *ext_buf != '.' && ext_buf != file_name ) ext_buf--;
+    ext_buf++;
+    
+    strcpy( capital_name, ext_buf );
+    for ( unsigned int i=0 ; i<strlen(ext_buf)+1 ; i++ )
+        if ( capital_name[i] >= 'a' && capital_name[i] <= 'z' )
+            capital_name[i] += 'A' - 'a';
+    
+    RegisteredCompressionType *reg = root_registered_compression_type.next;
+    while (reg){
+        if ( !strcmp( capital_name, reg->ext ) ) return reg->type;
+
+        reg = reg->next;
+    }
+
+    return NO_COMPRESSION;
+}
+    
 struct DirectReader::FileInfo DirectReader::getFileByIndex( int index )
 {
     DirectReader::FileInfo fi;
@@ -211,26 +255,15 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
 
     *length = 0;
     if ( (fp = fopen( capital_name, "rb" )) != NULL && len >= 3 ){
-        if ( !strncmp( &capital_name[len-3], "NBZ", 3 ) || !strncmp( &capital_name[len-3], "nbz", 3 ) ){
-            *length = readLong( fp );
-            if ( readChar( fp ) == 'B' && readChar( fp ) == 'Z' ) compression_type = NBZ_COMPRESSION;
+        compression_type = getRegisteredCompressionType( capital_name );
+        if ( compression_type == NBZ_COMPRESSION || compression_type == SPB_COMPRESSION ){
+            *length = getDecompressedFileLength( compression_type, fp, 0 );
+        }
+        else{
+            fseek( fp, 0, SEEK_END );
+            *length = ftell( fp );
             fseek( fp, 0, SEEK_SET );
         }
-        else if ( !strncmp( &capital_name[len-3], "SPB", 3 ) || !strncmp( &capital_name[len-3], "spb", 3 ) ){
-            size_t width  = readShort( fp );
-            size_t height = readShort( fp );
-            
-            size_t width_pad  = (4 - width * 3 % 4) % 4;
-    
-            *length = (width * 3 + width_pad) * height + 54;
-            compression_type = SPB_COMPRESSION;
-            fseek( fp, 0, SEEK_SET );
-        }
-    }
-    if ( fp && compression_type == NO_COMPRESSION ){
-        fseek( fp, 0, SEEK_END );
-        *length = ftell( fp );
-        fseek( fp, 0, SEEK_SET );
     }
             
     return fp;
@@ -429,4 +462,58 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
     delete[] spb_buffer;
     
     return total_size;
+}
+
+size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buf )
+{
+    unsigned int count = 0;
+    int i, j, k, r, c;
+    unsigned char *lzss_buffer = new unsigned char[ N * 2 ];
+
+    getbit_mask = 0;
+
+    fseek( ai->file_handle, ai->fi_list[no].offset, SEEK_SET );
+    memset( lzss_buffer, 0, N-F );
+    r = N - F;
+
+    while ( count < ai->fi_list[no].original_length ){
+        if ( getbit( ai->file_handle, 1 ) ) {
+            if ((c = getbit( ai->file_handle, 8 )) == EOF) break;
+            buf[ count++ ] = c;
+            lzss_buffer[ r++ ] = c;  r &= (N - 1);
+        } else {
+            if ((i = getbit( ai->file_handle, EI )) == EOF) break;
+            if ((j = getbit( ai->file_handle, EJ )) == EOF) break;
+            for (k = 0; k <= j + 1  ; k++) {
+                c = lzss_buffer[(i + k) & (N - 1)];
+                buf[ count++ ] = c;
+                lzss_buffer[ r++ ] = c;  r &= (N - 1);
+            }
+        }
+    }
+
+    delete[] lzss_buffer;
+    return count;
+}
+
+size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offset )
+{
+    fpos_t pos;
+    size_t length;
+    fgetpos( fp, &pos );
+    fseek( fp, offset, SEEK_SET );
+    
+    if ( type == NBZ_COMPRESSION ){
+        length = readLong( fp );
+    }
+    else if ( type == SPB_COMPRESSION ){
+        size_t width  = readShort( fp );
+        size_t height = readShort( fp );
+        size_t width_pad  = (4 - width * 3 % 4) % 4;
+            
+        length = (width * 3 +width_pad) * height + 54;
+    }
+    fsetpos( fp, &pos );
+
+    return length;
 }

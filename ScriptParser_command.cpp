@@ -140,6 +140,21 @@ int ScriptParser::straliasCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::soundpressplginCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "soundpressplgin: not in the define section" );
+
+    script_h.readStr();
+    const char *buf = script_h.getStringBuffer();
+    while( *buf != '|' ) buf++;
+    buf++;
+
+    // We assume NZB compression here.
+    script_h.cBR->registerCompressionType( buf, BaseReader::NBZ_COMPRESSION );
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::skipCommand()
 {
     int skip_num    = script_h.readInt();

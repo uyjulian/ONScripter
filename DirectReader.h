@@ -41,6 +41,7 @@ public:
     char *getArchiveName() const;
     int getNumFiles();
     int getNumAccessed();
+    void registerCompressionType( const char *ext, int type );
 
     bool getAccessFlag( const char *file_name );
     struct FileInfo getFileByIndex( int index );
@@ -50,6 +51,27 @@ public:
 protected:
     char *archive_path;
     int  getbit_mask;
+    struct RegisteredCompressionType{
+        RegisteredCompressionType *next;
+        char *ext;
+        int type;
+        RegisteredCompressionType(){
+            next = NULL;
+        };
+        RegisteredCompressionType( const char *ext, int type ){
+            this->ext = new char[ strlen(ext)+1 ];
+            for ( unsigned int i=0 ; i<strlen(ext)+1 ; i++ ){
+                this->ext[i] = ext[i];
+                if ( this->ext[i] >= 'a' && this->ext[i] <= 'z' )
+                    this->ext[i] += 'A' - 'a';
+            }
+            this->type = type;
+            this->next = NULL;
+        };
+        ~RegisteredCompressionType(){
+            if (ext) delete[] ext;
+        };
+    } root_registered_compression_type, *last_registered_compression_type;
 
     FILE *fopen(const char *path, const char *mode);
     unsigned char readChar( FILE *fp );
@@ -63,7 +85,10 @@ protected:
     size_t encodeNBZ( FILE *fp, size_t length, unsigned char *buf );
     int getbit( FILE *fp, int n );
     size_t decodeSPB( FILE *fp, size_t offset, unsigned char *buf );
-
+    size_t decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buf );
+    int getRegisteredCompressionType( const char *file_name );
+    size_t getDecompressedFileLength( int type, FILE *fp, size_t offset );
+    
 private:
     FILE *getFileHandle( const char *file_name, int &compression_type, size_t *length );
 };

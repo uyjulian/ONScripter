@@ -284,7 +284,8 @@ int ScriptHandler::readToken()
             text_flag = false;
             break;
         }
-        else if ( (ch == '*' || 
+        else if ( (ch == '*' ||
+                   ch == '#' || // color
                    ch == '!') && // for !w2000 line 
                   string_counter == 0 )
         {
@@ -339,10 +340,12 @@ int ScriptHandler::readToken()
                 break;
             }
         }
-        else if ( text_flag && (ch == '@' || ch == '\\') )
+        else if ( ch == '@' || ch == '\\' )
         {
-            addStringBuffer( ch, string_counter++ );
-            buf++;
+            if ( text_flag || string_counter == 0 ){
+                addStringBuffer( ch, string_counter++ );
+                buf++;
+            }
             break;
         }
         else if ( ch & 0x80 ){
@@ -359,8 +362,6 @@ int ScriptHandler::readToken()
                  ( ch == ',' ||
                    ch == ' ' ||
                    ch == '\t' ||
-                   ch == '\\' ||
-                   ch == '@' ||
                    // conditions in if
                    ch == '<' ||
                    ch == '>' ||
