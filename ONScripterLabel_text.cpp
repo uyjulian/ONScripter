@@ -492,11 +492,17 @@ int ONScripterLabel::textCommand()
                     string_buffer_offset++;
             }
         }
-        else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
-                    (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' ||
-                     script_h.getStringBuffer()[ string_buffer_offset + 1 ] == 0x0a ))){
-            string_buffer_offset += 2;
+        else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
+            if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
+                if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
+                    !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
+                    string_buffer_offset += 3;
+                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
+                    string_buffer_offset += 2;
+            }
+            else{
+                string_buffer_offset+=2;
+            }
         }
         else
             string_buffer_offset++;
@@ -768,20 +774,32 @@ int ONScripterLabel::textCommand()
         bool flush_flag = true;
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
             flush_flag = false;
-        if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-             !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
-               ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' ||
-                 script_h.getStringBuffer()[ string_buffer_offset + 1 ] == 0x0a ))){
-            out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
+        if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
+            if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
+                if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
+                    !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
+                    out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 2 ];
+                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
+                    out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
+            }
+            else{
+                out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
+            }
         }
         drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
-            if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-                 !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
-                   ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' ||
-                     script_h.getStringBuffer()[ string_buffer_offset + 1 ] == 0x0a ))){
-                string_buffer_offset++;
+            if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
+                if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
+                    if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
+                        !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
+                        string_buffer_offset += 2;
+                    else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
+                        string_buffer_offset++;
+                }
+                else{
+                    string_buffer_offset++;
+                }
             }
             string_buffer_offset++;
             return RET_CONTINUE | RET_NOREAD;

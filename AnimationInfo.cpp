@@ -79,7 +79,7 @@ void AnimationInfo::deleteSurface(){
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;
 #ifdef USE_OPENGL
-    glDeleteTextures(1, (const GLuint*)&tex_id);
+    if (tex_id != 0) glDeleteTextures(1, (const GLuint*)&tex_id);
     tex_id = 0;
 #endif    
 }
