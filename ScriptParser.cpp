@@ -557,7 +557,10 @@ void ScriptParser::loadStr( FILE *fp, char **str )
             counter_max += INITIAL_LOAD_STR;
         }
     }
-    setStr( str, p_buffer );
+    if (counter == 1)
+        *str = NULL;
+    else
+        setStr( str, p_buffer );
     delete[] p_buffer;
 }
 
@@ -595,7 +598,7 @@ void ScriptParser::errorAndExit( const char *str, const char *reason )
 void ScriptParser::setStr( char **dst, const char *src )
 {
     if ( *dst ) delete[] *dst;
-    if ( src && src[0] ){
+    if ( src ){
         *dst = new char[ strlen( src ) + 1 ];
         strcpy( *dst, src );
     }
