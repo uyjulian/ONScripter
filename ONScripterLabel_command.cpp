@@ -168,6 +168,7 @@ int ONScripterLabel::texecCommand()
     if ( clickstr_state == CLICK_NEWPAGE ){
         new_line_skip_flag = true;
         newPage( true );
+        clickstr_state = CLICK_NONE;
     }
 
     return RET_CONTINUE;
@@ -1051,8 +1052,8 @@ int ONScripterLabel::lspCommand()
         v = true;
 
     int no = script_h.readInt();
+    if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
     sprite_info[ no ].valid = v;
-    dirty_rect.add( sprite_info[ no ].pos );
     
     const char *buf = script_h.readStr();
     sprite_info[ no ].setImageName( buf );
@@ -1067,7 +1068,7 @@ int ONScripterLabel::lspCommand()
 
     parseTaggedString( &sprite_info[ no ] );
     setupAnimationInfo( &sprite_info[ no ] );
-    dirty_rect.add( sprite_info[ no ].pos );
+    if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
 
     return RET_CONTINUE;
 }
@@ -1495,7 +1496,7 @@ int ONScripterLabel::exbtnCommand()
                                                             sprite_info[ button->sprite_no ].pos.h,
                                                             32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        sprite_info[ sprite_no ].valid = true;
+        //sprite_info[ sprite_no ].valid = true;
     }
 
     return RET_CONTINUE;
@@ -1606,11 +1607,11 @@ int ONScripterLabel::cspCommand()
 
     if ( no == -1 )
         for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-            dirty_rect.add( sprite_info[i].pos );
+            if ( sprite_info[i].valid ) dirty_rect.add( sprite_info[i].pos );
             sprite_info[i].remove();
         }
     else{
-        dirty_rect.add( sprite_info[no].pos );
+        if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
         sprite_info[no].remove();
     }
 
@@ -1829,25 +1830,10 @@ int ONScripterLabel::btnwaitCommand()
         event_mode = WAIT_BUTTON_MODE;
         if ( textbtn_flag ) event_mode |= WAIT_TEXTBTN_MODE;
 
-        ButtonLink *p_button_link = root_button_link.next;
-        while( p_button_link ){
-            if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
-                 p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON )
-                sprite_info[ p_button_link->sprite_no ].current_cell = 0;
-            p_button_link = p_button_link->next;
-        }
-
-        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-        refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-
-        if ( isTextVisible() ){
-            display_mode = next_display_mode = TEXT_DISPLAY_MODE;
-        }
-
         /* ---------------------------------------- */
         /* Resotre csel button */
         FontInfo f_info = sentence_font;
-        p_button_link = root_button_link.next;
+        ButtonLink *p_button_link = root_button_link.next;
         while ( p_button_link ){
             if ( p_button_link->button_type == ButtonLink::CUSTOM_SELECT_BUTTON ){
                 
@@ -1869,19 +1855,30 @@ int ONScripterLabel::btnwaitCommand()
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                 sprite_info[p_button_link->sprite_no].current_cell = 1;
-                refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-                SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
+                refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
                 sprite_info[p_button_link->sprite_no].current_cell = 0;
+                refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+            }
+            else{
                 refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
             }
             if ( p_button_link->no_selected_surface )
                 SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
 
-            dirty_rect.add( p_button_link->image_rect );
             p_button_link = p_button_link->next;
         }
+        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+        //refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+
+        if ( isTextVisible() ){
+            display_mode = next_display_mode = TEXT_DISPLAY_MODE;
+        }
+
+        if ( exbtn_d_button_link.exbtn_ctl ){
+            decodeExbtnControl( text_surface, exbtn_d_button_link.exbtn_ctl  );
+        }
         flush();
-        
         refreshMouseOverButton();
 
         if ( btntime_value > 0 ){

@@ -40,7 +40,8 @@ public:
            TRANS_TOPRIGHT       = 7,
            TRANS_MASK           = 8,
            TRANS_FADE_MASK      = 9,
-           TRANS_CROSSFADE_MASK = 10
+           TRANS_CROSSFADE_MASK = 10,
+           TRANS_ALPHA_PRESERVE = 11
     };
 
     /* Variables from TaggedInfo */

@@ -68,12 +68,12 @@ int ONScripterLabel::proceedAnimation()
 int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum )
 {
     if ( anim->remaining_time == 0 ){
-        refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
-        flush( &rect );
         if ( minimum == 0 ||
              minimum > anim->duration_list[ anim->current_cell ] )
             minimum = anim->duration_list[ anim->current_cell ];
         anim->proceedAnimation();
+        refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
+        flush();
     }
     else{
         if ( minimum == 0 ||
@@ -128,18 +128,25 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
         f_info.xy[0] = f_info.xy[1] = 0;
         f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
         f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
+        f_info.num_xy[0] = strlen( anim->file_name );
+        f_info.num_xy[1] = 1;
 
         if ( anim->font_size_xy[0] >= 0 ){
             f_info.font_size_xy[0] = f_info.pitch_xy[0] = anim->font_size_xy[0];
             f_info.font_size_xy[1] = f_info.pitch_xy[1] = anim->font_size_xy[1];
-            f_info.num_xy[0] = strlen( anim->file_name );
-            f_info.num_xy[1] = 1;
             if ( anim->font_pitch >= 0 )
                 f_info.pitch_xy[0] = anim->font_pitch;
             f_info.ttf_font = NULL;
         }
 
         drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
+        anim->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h, 32, rmask, gmask, bmask, amask );
+        f_info.top_xy[0] = f_info.top_xy[1] = 0;
+        for ( int i=0 ; i<anim->num_of_cells ; i++ ){
+            f_info.xy[0] = f_info.xy[1] = 0;
+            drawString( anim->file_name, anim->color_list[ i ], &f_info, false, anim->image_surface );
+            f_info.top_xy[0] += anim->pos.w;
+        }
     }
     else{
         anim->image_surface = loadImage( anim->file_name );
@@ -295,30 +302,10 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
 {
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
-
-        if ( clip ){
-            if ( anim->pos.x + anim->pos.w <= clip->x ||
-                 clip->x + clip->w <= anim->pos.x ||
-                 anim->pos.y + anim->pos.h <= clip->y ||
-                 clip->y + clip->h <= anim->pos.y )
-                return;
-        }
-        FontInfo f_info = sentence_font;
-        f_info.xy[0] = f_info.xy[1] = 0;
-        f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
-        f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
-
-        if ( anim->font_size_xy[0] >= 0 ){
-            f_info.font_size_xy[0] = f_info.pitch_xy[0] = anim->font_size_xy[0];
-            f_info.font_size_xy[1] = f_info.pitch_xy[1] = anim->font_size_xy[1];
-            f_info.num_xy[0] = strlen( anim->file_name );
-            f_info.num_xy[1] = 1;
-            if ( anim->font_pitch >= 0 )
-                f_info.pitch_xy[0] = anim->font_pitch;
-            f_info.ttf_font = NULL;
-        }
-
-        drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, dst_surface, NULL, false, clip );
+        alphaBlend( dst_surface, anim->pos,
+                    dst_surface, anim->pos.x, anim->pos.y,
+                    anim->image_surface, anim->image_surface->w / anim->num_of_cells * anim->current_cell, 0, 
+                    NULL, 0, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
         return;
     }
     else if ( !anim->image_surface ) return;

@@ -389,7 +389,7 @@ private:
     bool text_on_flag; // suppress the effect of erase_text_window_mode
     int  tateyoko_mode;
 
-    inline void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
+    void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
     void drawChar( char* text, FontInfo *info, bool flush_flag, SDL_Surface *surface, bool buffering_flag = true, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, bool buffering_flag = false, SDL_Rect *clip=NULL );
     void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip=NULL );

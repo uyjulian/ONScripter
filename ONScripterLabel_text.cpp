@@ -34,32 +34,30 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x76 ) || \
           ( *(x) == (char)0x81 && *((x)+1) == (char)0x5b ) )
 
-inline void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip )
+void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip )
 {
-    SDL_Rect dst_rect, src_rect, clipped_rect;
-    SDL_Surface *tmp_surface;
+    SDL_Rect dst_rect, src_rect;
     
     dst_rect.x = xy[0] + shadow_offset + minx;
     if ( !(text[0] & 0x80) && text[1] ) dst_rect.x += info->pitch_xy[0] / 2 * screen_ratio1 / screen_ratio2;
     dst_rect.y = xy[1] + TTF_FontAscent( (TTF_Font*)info->ttf_font ) + shadow_offset - maxy;
     src_rect.x = src_rect.y = 0;
     
-    tmp_surface = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
+    SDL_Surface *tmp_surface = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
 
     if ( tmp_surface ){
         dst_rect.w = src_rect.w = tmp_surface->w;
         dst_rect.h = src_rect.h = tmp_surface->h;
         if ( dst_surface ){
-            bool out_of_region = false;
-            if ( clip ){
-                if ( doClipping( &dst_rect, clip, &clipped_rect ) )
-                    out_of_region = true;
-                else
-                    shiftRect( src_rect, clipped_rect );
-            }
-            if ( !out_of_region ){
-                SDL_BlitSurface( tmp_surface, &src_rect, dst_surface, &dst_rect );
-                if ( dst_surface == text_surface && !flush_flag ) dirty_rect.add( dst_rect );
+            alphaBlend( dst_surface, dst_rect,
+                        dst_surface, dst_rect.x, dst_rect.y,
+                        tmp_surface, src_rect.x, src_rect.y,
+                        NULL, 0,
+                        AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
+            if ( !clip || doClipping( &dst_rect, clip ) == 0 ){
+                if ( dst_surface == text_surface && !flush_flag ){
+                    dirty_rect.add( dst_rect );
+                }
             }
         }
         SDL_FreeSurface( tmp_surface );
@@ -121,13 +119,18 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, SDL
     
     if ( info->is_shadow ){
         color.r = color.g = color.b = 0;
-        drawGlyph( surface, text, info, color, unicode, xy, minx, maxy, 1, false, clip );
+
+        if ( text[0] != ((char*)"　")[0] ||
+             text[1] != ((char*)"　")[1] )
+            drawGlyph( surface, text, info, color, unicode, xy, minx, maxy, 1, false, clip );
     }
     
     color.r = info->color[0];
     color.g = info->color[1];
     color.b = info->color[2];
-    drawGlyph( surface, text, info, color, unicode, xy, minx, maxy, 0, flush_flag, clip );
+    if ( text[0] != ((char*)"　")[0] ||
+         text[1] != ((char*)"　")[1] )
+        drawGlyph( surface, text, info, color, unicode, xy, minx, maxy, 0, flush_flag, clip );
 
     /* ---------------------------------------- */
     /* Update text buffer */
@@ -218,7 +221,11 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
         clipped_rect.y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
         clipped_rect.h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
     }
-
+    if ( info->is_shadow ){
+        clipped_rect.w++;
+        clipped_rect.h++;
+    }
+    
     if ( flush_flag ) flush( &clipped_rect );
     
     if ( rect ) *rect = clipped_rect;
@@ -379,13 +386,12 @@ int ONScripterLabel::textCommand()
             string_buffer_offset++;
 
         event_mode = IDLE_EVENT_MODE;
-        //string_buffer_offset;
     }
 
     if ( script_h.getStringBuffer()[string_buffer_offset] == '\0' ) return RET_CONTINUE;
     new_line_skip_flag = false;
     
-    //printf("*** textCommand %d (%d,%d) %s\n", string_buffer_offset, sentence_font.xy[0], sentence_font.xy[1], string_buffer + string_buffer_offset );
+    //printf("*** textCommand %d (%d,%d)\n", string_buffer_offset, sentence_font.xy[0], sentence_font.xy[1]);
     
     while( script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
            script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;

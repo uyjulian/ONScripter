@@ -43,6 +43,7 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
 {
     char file_name[256];
 
+    getSJISFromInteger( save_file_info.sjis_no, no );
 #if defined(LINUX) || defined(MACOSX)
     sprintf( file_name, "%ssave%d.dat", archive_path, no );
     struct stat buf;
@@ -94,7 +95,6 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     save_file_info.minute = 0;
 #endif
     save_file_info.valid = true;
-    getSJISFromInteger( save_file_info.sjis_no,     no );
     getSJISFromInteger( save_file_info.sjis_month,  save_file_info.month );
     getSJISFromInteger( save_file_info.sjis_day,    save_file_info.day );
     getSJISFromInteger( save_file_info.sjis_hour,   save_file_info.hour );

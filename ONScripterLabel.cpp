@@ -1039,6 +1039,25 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
             dst_buffer  += dst_surface->w  - dst_rect.w;
         }
     }
+    else if ( trans_mode == AnimationInfo::TRANS_ALPHA_PRESERVE ){
+
+        for ( i=0; i<dst_rect.h ; i++ ) {
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
+                mask = *((Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h) + (x3+j)%mask_surface->w) & 0xff000000;
+                mask2 = mask >> 24;
+                mask1 = ~mask2 & 0xff;
+
+                maskrb = (((*src1_buffer & 0xff00ff) * mask1 +
+                           (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                mask |= (((*src1_buffer & 0x00ff00) * mask1 +
+                          (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                *dst_buffer = (*dst_buffer & 0xff000000) | maskrb | mask;
+            }
+            src1_buffer += src1_surface->w - dst_rect.w;
+            src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
+        }
+    }
     else if ( trans_mode == AnimationInfo::TRANS_TOPLEFT ||
               trans_mode == AnimationInfo::TRANS_TOPRIGHT ||
               trans_mode == AnimationInfo::TRANS_DIRECT ){
@@ -1435,13 +1454,14 @@ void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool a
         cell_no = -1;
     }
 
-    if ( cell_no >= 0 || sprite_info[ sprite_no ].valid != active_flag )
+    if ( sprite_info[sprite_no].image_name && 
+         ( sprite_info[ sprite_no ].valid != active_flag ||
+           (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ) )
     {
         if ( cell_no >= 0 )
             sprite_info[ sprite_no ].current_cell = cell_no;
 
         sprite_info[ sprite_no ].valid = active_flag;
-        dirty_rect.add( sprite_info[ sprite_no ].pos );
 
         if ( surface ){
             refreshSurface( surface, &sprite_info[ sprite_no ].pos );
