@@ -187,6 +187,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp )
         info = info->next;
     }
     current_link_label_info = info;
+    current_link_label_info->textgosub_flag = false;
     
     loadInt( fp, &i );
     if (i == 1) monocro_flag_new = true;

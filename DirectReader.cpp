@@ -23,7 +23,7 @@
 
 #include "DirectReader.h"
 #include <bzlib.h>
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MACOS9)
 #include <dirent.h>
 #endif
 
@@ -77,7 +77,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
         return fp;
     }
     
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(MACOS9)
     char *p = strrchr( file_name, (char)DELIMITER );
     if ( !p ){
         DIR *dp = opendir( "." );

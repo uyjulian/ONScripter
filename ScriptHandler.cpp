@@ -50,6 +50,7 @@ ScriptHandler::ScriptHandler()
     str_string_buffer   = new char[ string_buffer_length ];
     saved_string_buffer = new char[ string_buffer_length ];
 
+    num_of_labels = 0;
     last_stack_info = &root_stack_info;
 
     /* ---------------------------------------- */

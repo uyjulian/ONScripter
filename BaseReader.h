@@ -34,6 +34,8 @@
 #define DELIMITER '/'
 #elif defined(WIN32)
 #define DELIMITER '\\'
+#elif defined(MACOS9)
+#define DELIMITER ':'
 #else
 #define DELIMITER '/'
 #endif

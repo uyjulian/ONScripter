@@ -12,10 +12,11 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Oct. 5, 2003<br>
+Last updated: Nov. 3, 2003<br>
 サービス統合に伴い、<A
 HREF="http://ogapee.at.infoseek.co.jp/onscripter.html">http://ogapee.at.infoseek.co.jp/onscripter.html</A>
-へページ移転。ベータ版を更新。<br>
+へページ移転。<br>
+ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -40,15 +41,15 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20031005.tar.gz">onscripter-beta-20031005.tar.gz</A>
+<A HREF="onscripter-beta-20031103.tar.gz">onscripter-beta-20031103.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20031003.tar.gz">onscripter-beta-20031003.tar.gz</A>
+<A HREF="onscripter-beta-20031005.tar.gz">onscripter-beta-20031005.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
 
-<P>バイナリパッケージ</P>
+<P>バイナリパッケージ（ただし当方では動作チェックはしておりません）</P>
 <UL>
   <LI> <A HREF="zaurus/index.html#Package">Zaurus(SL-5500, SL-A300, SL-B500, SL-C700, SL-C750, SL-C760)用</A>
        （<A HREF="http://sourceforge.jp/projects/zaurus-ja/">zaurus-ja</A>でも公開中）
@@ -66,7 +67,11 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
       </UL>
   <LI> <A HREF="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </A>（藤田さんの Free BSD Ports）
   <LI> <A HREF="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</A>（かつらさん）
-  <LI> <A HREF="http://tokyo.cool.ne.jp/eboshi/onscripter_win.html">ONScripter Windows Binary</A>（かつをのえぼしさん）
+  <LI> Windows 版 （バージョンの新しい方を使ってください）
+      <UL>
+          <LI> <A HREF="http://tokyo.cool.ne.jp/eboshi/onscripter_win.html">ONScripter Windows Binary</A>（かつをのえぼしさん）
+          <LI> <A HREF="http://homepage1.nifty.com/nyomo/onscripter/index.html">ONScripter M$ Windows版バイナリ</A>（にょもさん）
+      </UL>
   <LI> <A HREF="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</A>（bero さん）
   <LI> その他募集中。
 </UL>
@@ -101,13 +106,14 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
        <UL>
 	 <LI> <A HREF="#keyboard_shortcut">キーボードショートカットについて</A>
 	 <LI> <A HREF="#option">起動オプションについて</A>
+	 <LI> <A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A><font color=red>(updated in Oct. 16, 2003)</font>
 	 <LI> <A HREF="#registry">レジストリ読み込みについて</A>
 	 <LI> <A HREF="#dll">DLL 読み込みについて</A>
 	 <LI> <A HREF="#edit_mode">音量及び変数編集モードについて</A>
 	 <LI> <A HREF="#true_type_font">TrueType font による漢字表示について</A>
 	 <LI> <A HREF="#cd_audio_mapping">CD audio 演奏の振り替えについて</A>
 	 <LI> <A HREF="#midi">MIDI 演奏機能について</A>
-	 <LI> <A HREF="#archive_compression">アーカイブ圧縮について</A><font color=red>(updated in Oct. 18, 2002)</font>
+	 <LI> <A HREF="#archive_compression">アーカイブ圧縮について</A>
 	 <LI> <A HREF="#mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A>
        </UL>
 </UL>
@@ -307,6 +313,54 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>--edit</td><td>z キーを押したときに、音量及び変数の編集モードに入れるようになります。</td></tr>
 </table>
 
+</DIV>
+
+<DIV CLASS="block2">
+<H3><A NAME="save">異なるプラットフォーム上で同時に遊ぶ方法</A></H3>
+
+<P>例えば家では Windows、通勤中は Zaurus、職場では Linux といったよう
+に、同じゲームを別々のプラットフォーム上で同時に進行させるための方法を
+書きます。基本的には、それぞれの環境にゲームのアーカイブをセットアップ
+し、プラットフォームを移る度に ONScripter(もしくは NScripter) の書き出
+すファイルを全てコピーすれば良いのですが、注意点があります。</P>
+
+<P>NScripter もしくは ONScripter が書き出すファイルには次のものがあり
+ます。この内一部のファイルはゲームによっては書き出されませんので、無い
+場合もあります。</P>
+
+<table>
+<tr><th>ファイル</th><th>説明</th></tr>
+<tr><td><i>archive_path/</i>gloval.sav</td><td>グローバル変数の格納</td></tr>
+<tr><td><i>archive_path/</i>envdata</td><td>環境変数の格納</td></tr>
+<tr><td><i>archive_path/</i>kidoku.dat</td><td>既読テキスト情報の格納</td></tr>
+<tr><td><i>archive_path/</i>NScrflog.dat</td><td>既読ファイル情報の格納</td></tr>
+<tr><td><i>archive_path/</i>NScrllog.dat</td><td>既読ラベル情報の格納</td></tr>
+<tr><td><i>archive_path/</i>save*.dat</td><td>セーブファイル(ONScripter の出力したものは ONScripter 専用です、NScripter が出力したものは NScripter でも ONScripter でも読み込めます)</td></tr>
+<tr><td><i>archive_path/sav/</i>save*.dat</td><td>上段の NScripter が出力するものと互換性のあるもの（無保証）で、ONScripter が出力します</td></tr>
+<tr><td><i>archive_path/</i>その他画像ファイル</td><td>スクリーンショットを画像ファイルとして保存している場合があります。これはゲームによって場所や名前が異なるので、ゲーム毎に対応してください。</td></tr>
+</table>
+
+<h4>ONScripter 環境から ONScripter 環境へ</h4>
+上記のファイルを全てのそのままコピーしてください。<br>
+別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。
+
+<h4>NScripter 環境から ONScripter 環境へ</h4>
+上記のファイルを全て（save*.datを含む）そのままコピーしてください。<br>
+さらに save*.dat については、sav というディレクトリ以下にもファイルをコピーしてください。この作業は、後で ONScripter 環境から NScripter 環境にデータを移す場合に必要になります。<br>
+NScripter_dir/save*.dat -> ONScripter_dir/sav/save*.dat<br>
+
+<h4>ONScripter 環境から NScripter 環境へ</h4>
+save*.dat を除く上記のファイルを全てのそのままコピーしてください。<br>
+
+save*.dat については、sav というディレクトリ以下に生成されたファイルをコピーしてください。<br>
+ONScripter_dir/sav/save*.dat -> NScripter_dir/save*.dat<br>
+
+<h4>注意点</h4>
+<UL>
+  <LI>NScripter は、現時点(2003/10/16)で配布されているものを使用してください。これより古いものとは、セーブデータの互換性がありません。
+  <LI>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
+  <LI>過去のほぼ全ての NScripter 用のゲームは、上記の最新 NScripter で問題なく遊ぶことができます。したがって、Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の NScripter に差し換えて使ってください。ただし、現時点(2003/10/16)でごく最近出たゲームのスクリプトについては、上記 NScripter が対応してない場合もあります。その場合は、もしかしたらゲーム付属の実行ファイルが ONScripter と互換性があるかもしれません。互換性が無い場合は、ONScripter の Windows バイナリをご使用下さい。
+  <LI>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所に sav というディレクトリを作成しておいてください。
 </DIV>
 
 <DIV CLASS="block2">

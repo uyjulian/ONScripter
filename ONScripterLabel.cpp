@@ -724,11 +724,10 @@ void ONScripterLabel::executeLabel()
             goto executeLabelTop;
         }
         else if ( ret == RET_CONTINUE || ret == RET_CONTINUE_NOREAD ){
-            if ( s_buf[ string_buffer_offset ] == 0x0a ){
-                current_link_label_info->current_line++;
-            }
-            if ( ret == RET_CONTINUE )
+            if ( ret == RET_CONTINUE || s_buf[ string_buffer_offset ] == 0x0a )
             {
+                if ( s_buf[ string_buffer_offset ] == 0x0a )
+                    current_link_label_info->current_line++;
                 script_h.readToken(); // skip tailing \0 and mark kidoku
                 string_buffer_offset = 0;
             }

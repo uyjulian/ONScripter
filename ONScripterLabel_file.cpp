@@ -30,6 +30,10 @@
 #include <time.h>
 #elif defined(WIN32)
 #include <windows.h>
+#elif defined(MACOS9)
+#include <DateTimeUtils.h>
+#include <Files.h>
+extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 #else
 #endif
 
@@ -80,12 +84,36 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     save_file_info.day    = stm.wDay;
     save_file_info.hour   = stm.wHour;
     save_file_info.minute = stm.wMinute;
+#elif defined(MACOS9)
+	sprintf( file_name, "%ssave%d.dat", archive_path, no );
+	CInfoPBRec  pb;
+	Str255      p_file_name;
+	FSSpec      file_spec;
+	DateTimeRec tm;
+	c2pstrcpy( p_file_name, file_name );
+	if ( FSMakeFSSpec(0, 0, p_file_name, &file_spec) != noErr ){
+		save_file_info.valid = false;
+		return;
+	}
+	pb.hFileInfo.ioNamePtr = file_spec.name;
+	pb.hFileInfo.ioVRefNum = file_spec.vRefNum;
+	pb.hFileInfo.ioFDirIndex = 0;
+	pb.hFileInfo.ioDirID = file_spec.parID;
+	if (PBGetCatInfoSync(&pb) != noErr) {
+		save_file_info.valid = false;
+		return;
+	}
+	SecondsToDate( pb.hFileInfo.ioFlMdDat, &tm );
+	save_file_info.month  = tm.month;
+	save_file_info.day    = tm.day;
+	save_file_info.hour   = tm.hour;
+	save_file_info.minute = tm.minute;
 #else
     sprintf( file_name, "save%d.dat", no );
     FILE *fp;
     if ( (fp = fopen( file_name, "rb" )) == NULL ){
         save_file_info.valid = false;
-        continue;
+        return;
     }
     fclose( fp );
 

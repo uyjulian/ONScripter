@@ -476,12 +476,14 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
 void ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
 {
     switch ( event->keysym.sym ) {
+#if !defined(MACOSX) && !defined(MACOS9)
       case SDLK_RCTRL:
         ctrl_pressed_status  |= 0x01;
         goto ctrl_pressed;
       case SDLK_LCTRL:
         ctrl_pressed_status  |= 0x02;
         goto ctrl_pressed;
+#endif        
       case SDLK_RSHIFT:
         shift_pressed_status |= 0x01;
         break;
