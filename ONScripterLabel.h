@@ -453,7 +453,6 @@ private:
     
     /* ---------------------------------------- */
     /* Text event related variables */
-    bool text_char_flag;
     TTF_Font *text_font;
     bool new_line_skip_flag;
     int text_speed_no;

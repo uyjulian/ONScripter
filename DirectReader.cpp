@@ -23,6 +23,9 @@
 
 #include "DirectReader.h"
 #include <bzlib.h>
+#if !defined(WIN32)
+#include <dirent.h>
+#endif
 
 #ifndef SEEK_END
 #define SEEK_END 2
@@ -48,10 +51,53 @@ DirectReader::~DirectReader()
 
 FILE *DirectReader::fopen(const char *path, const char *mode)
 {
-    char file_name[256];
+    char *file_name = new char[ strlen(archive_path) + strlen(path) + 1 ];
 
     sprintf( file_name, "%s%s", archive_path, path );
-    return ::fopen( file_name, mode );
+    FILE *fp = ::fopen( file_name, mode );
+    if ( fp ) return fp;
+    
+#if !defined(WIN32)
+    char *p = strrchr( file_name, (char)DELIMITER );
+    if ( !p ){
+        DIR *dp = opendir( "." );
+        if ( dp ){
+            struct dirent *entp;
+            while ( (entp = readdir( dp )) != NULL ){
+                if ( !strcasecmp( file_name, entp->d_name ) ){
+                    fp = ::fopen( entp->d_name, mode );
+                    if ( fp ) break;
+                }
+            }
+            closedir( dp );
+        }
+    }
+    else {
+        int dlen = p - file_name;
+        char *fname = new char[ strlen(file_name) + 1 ];
+        char *fbase = p + 1;
+        strncpy( fname, file_name, dlen );
+        fname[dlen++] = (char)DELIMITER;
+        fname[dlen] = '\0';
+        DIR *dp = opendir( fname );
+        if ( dp ){
+            struct dirent *entp;
+            while ( (entp = readdir( dp )) != NULL ){
+                if ( !strcasecmp( fbase, entp->d_name ) ){
+                    strcat( fname, entp->d_name );
+                    fp = ::fopen( fname, mode );
+                    if ( fp ) break;
+                    fname[dlen] = '\0';
+                }
+            }
+            closedir( dp );
+        }
+        delete[] fname;
+    }
+#endif
+    delete[] file_name;
+
+    return fp;
 }
 
 unsigned char DirectReader::readChar( FILE *fp )
@@ -163,13 +209,14 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
         if ( capital_name[i] == '/' || capital_name[i] == '\\' ) capital_name[i] = (char)DELIMITER;
     }
 
+    *length = 0;
     if ( (fp = fopen( capital_name, "rb" )) != NULL && len >= 3 ){
-        if ( (!strncmp( &capital_name[len-3], "NBZ", 3 ) || !strncmp( &capital_name[len-3], "nbz", 3 )) ){
+        if ( !strncmp( &capital_name[len-3], "NBZ", 3 ) || !strncmp( &capital_name[len-3], "nbz", 3 ) ){
             *length = readLong( fp );
             if ( readChar( fp ) == 'B' && readChar( fp ) == 'Z' ) compression_type = NBZ_COMPRESSION;
             fseek( fp, 0, SEEK_SET );
         }
-        else if ( (!strncmp( &capital_name[len-3], "SPB", 3 ) || !strncmp( &capital_name[len-3], "spb", 3 )) ){
+        else if ( !strncmp( &capital_name[len-3], "SPB", 3 ) || !strncmp( &capital_name[len-3], "spb", 3 ) ){
             size_t width  = readShort( fp );
             size_t height = readShort( fp );
             
@@ -180,7 +227,12 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
             fseek( fp, 0, SEEK_SET );
         }
     }
-    
+    if ( fp && compression_type == NO_COMPRESSION ){
+        fseek( fp, 0, SEEK_END );
+        *length = ftell( fp );
+        fseek( fp, 0, SEEK_SET );
+    }
+            
     return fp;
 }
 
@@ -190,15 +242,7 @@ size_t DirectReader::getFileLength( const char *file_name )
     size_t len;
     FILE *fp = getFileHandle( file_name, compression_type, &len );
 
-    if ( fp ){
-        if ( compression_type == NO_COMPRESSION ){
-            fseek( fp, 0, SEEK_END );
-            len = ftell( fp );
-        }
-        fclose( fp );
-    }
-    else
-        len = 0;
+    if ( fp ) fclose( fp );
     
     return len;
 }

@@ -192,28 +192,28 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     /* ---------------------------------------- */
     /* Calculate the area of selection */
     if ( tateyoko_mode == 1 ){
-      clipped_rect.x = (info->top_xy[0] + (info->num_xy[1] - tmp_xy[1] - 1) * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-      clipped_rect.w = (info->pitch_xy[0] * (info->xy[1] - tmp_xy[1] + 1)) * screen_ratio1 / screen_ratio2;
-      if ( tmp_xy[1] == info->xy[1] ){
-	clipped_rect.y = (info->top_xy[1] + tmp_xy[0] * info->pitch_xy[1]) * screen_ratio1 / screen_ratio2;
-	clipped_rect.h = (info->pitch_xy[1] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-      }
-      else{
-	clipped_rect.y = info->top_xy[1] * screen_ratio1 / screen_ratio2;
-	clipped_rect.h = info->pitch_xy[1] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-      }
+        clipped_rect.x = (info->top_xy[0] + (info->num_xy[1] - tmp_xy[1] - 1) * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
+        clipped_rect.w = (info->pitch_xy[0] * (info->xy[1] - tmp_xy[1] + 1)) * screen_ratio1 / screen_ratio2;
+        if ( tmp_xy[1] == info->xy[1] ){
+            clipped_rect.y = (info->top_xy[1] + tmp_xy[0] * info->pitch_xy[1]) * screen_ratio1 / screen_ratio2;
+            clipped_rect.h = (info->pitch_xy[1] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
+        }
+        else{
+            clipped_rect.y = info->top_xy[1] * screen_ratio1 / screen_ratio2;
+            clipped_rect.h = info->pitch_xy[1] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
+        }
     }
     else{
-      if ( tmp_xy[1] == info->xy[1] ){
-	clipped_rect.x = (info->top_xy[0] + tmp_xy[0] * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-	clipped_rect.w = (info->pitch_xy[0] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-      }
-      else{
-	clipped_rect.x = info->top_xy[0] * screen_ratio1 / screen_ratio2;
-	clipped_rect.w = info->pitch_xy[0] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-      }
-      clipped_rect.y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
-      clipped_rect.h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
+        if ( tmp_xy[1] == info->xy[1] ){
+            clipped_rect.x = (info->top_xy[0] + tmp_xy[0] * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
+            clipped_rect.w = (info->pitch_xy[0] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
+        }
+        else{
+            clipped_rect.x = info->top_xy[0] * screen_ratio1 / screen_ratio2;
+            clipped_rect.w = info->pitch_xy[0] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
+        }
+        clipped_rect.y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
+        clipped_rect.h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
     }
 
     if ( flush_flag ) flush( &clipped_rect );
@@ -251,9 +251,6 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
     }
 
     sentence_font.ttf_font = f_info.ttf_font;
-    
-    if ( sentence_font.xy[0] == 0 ) text_char_flag = false;
-    else                            text_char_flag = true;
 }
 
 int ONScripterLabel::clickWait( char *out_text )
@@ -264,20 +261,14 @@ int ONScripterLabel::clickWait( char *out_text )
             drawChar( out_text, &sentence_font, false, text_surface );
             string_buffer_offset += 2;
         }
-        else{
+        else{ // called on '@'
             flush();
             string_buffer_offset++;
         }
         // ... below is ugly work-around ...
-        if ( script_h.getStringBuffer()[string_buffer_offset] == '\0' ){
-            if ( script_h.getNext()[0] == 0x0a ){
-                script_h.next_text_line_flag = true;
-            }
-            else{
-                script_h.next_text_line_flag = false;
-            }
+        if ( script_h.getStringBuffer()[string_buffer_offset] == '\0' )
             return RET_CONTINUE;
-        }
+
         return RET_CONTINUE_NOREAD;
     }
     else{
@@ -401,7 +392,6 @@ int ONScripterLabel::textCommand()
            script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
     char ch = script_h.getStringBuffer()[string_buffer_offset];
     if ( ch & 0x80 ){ // Shift jis
-        text_char_flag = true;
         /* ---------------------------------------- */
         /* Kinsoku process */
         if ( sentence_font.xy[0] + 1 == sentence_font.num_xy[0] &&
@@ -469,9 +459,11 @@ int ONScripterLabel::textCommand()
     else if ( ch == '/' ){ // skip new line
         new_line_skip_flag = true;
         string_buffer_offset++;
+#if 0
         if ( script_h.isQuat() )
             return RET_CONTINUE;
         else
+#endif
             return RET_CONTINUE_NOREAD;
     }
     else if ( ch == '\\' ){ // new page
@@ -530,7 +522,7 @@ int ONScripterLabel::textCommand()
         return RET_CONTINUE;
     }
     else if ( ch == '#' ){
-        readColor( &sentence_font.color, script_h.getStringBuffer() + string_buffer_offset + 1 );
+        readColor( &sentence_font.color, script_h.getStringBuffer() + string_buffer_offset );
         string_buffer_offset += 7;
         return RET_CONTINUE_NOREAD;
     }
@@ -538,7 +530,6 @@ int ONScripterLabel::textCommand()
         bool flush_flag = true;
         if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0)
             flush_flag = false;
-        text_char_flag = true;
         out_text[0] = ch;
         drawChar( out_text, &sentence_font, flush_flag, text_surface );
         sentence_font.xy[0]--;

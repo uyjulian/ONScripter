@@ -387,7 +387,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
         sprintf( font_file, "%s%s", archive_path, FONT_FILE );
     }
     
-    text_char_flag = false;
     text_speed_no = 1;
     
     new_line_skip_flag = false;
@@ -610,12 +609,7 @@ void ONScripterLabel::executeLabel()
             last_tilde.current_script = script_h.getCurrent();
 
             if ( jumpf_flag ) jumpf_flag = false;
-#if 0
-            if ( script_h.string_buffer[string_buffer_offset] == 0x0a ){
-                current_link_label_info->current_line++;
-                text_line_flag = false;
-            }
-#endif            
+
             script_h.readToken(); string_buffer_offset = 0;
             continue;
         }
@@ -708,32 +702,33 @@ int ONScripterLabel::parseLine( )
              s_buf[0] != '/'  && s_buf[0] != '!' && s_buf[0] != '#'  &&
              s_buf[0] != '_'  && s_buf[0] != '%' && !(s_buf[0] & 0x80 ) ){
             fprintf( stderr, " command [%s] is not supported yet!!\n", s_buf );
-            skipToken();
+
+            string_buffer_offset = 0;
+            if ( script_h.skipToken() ){
+                if ( kidokuskip_flag ) script_h.markAsKidoku();
+            }
             return RET_CONTINUE;
         }
     }
 
     /* Text */
-    //text_line_flag = true;
-    bool empty_line_flag = true;
-    if ( s_buf[string_buffer_offset] != 0x0a ){
+    if ( s_buf[string_buffer_offset] != 0x0a )
         ret = textCommand();
-        empty_line_flag = false;
-    }
     else
         ret = RET_CONTINUE;
 
     if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
-         ( script_h.getStringBuffer()[string_buffer_offset] == '\0' && // for puttext
-           script_h.isQuat() ) ){
-        if ( !new_line_skip_flag && script_h.text_line_flag ){
+         // for puttext
+         ( script_h.getStringBuffer()[string_buffer_offset] == '\0' && 
+           script_h.getEndStatus() == ScriptHandler::END_COLON ) ){
+        ret = RET_CONTINUE;
+        if ( !new_line_skip_flag && script_h.isText() ){
             sentence_font.xy[0] = 0;
             sentence_font.xy[1]++;
-            text_char_flag = false;
         }
 
         event_mode = IDLE_EVENT_MODE;
-        if ( !empty_line_flag ) new_line_skip_flag = false;
+        new_line_skip_flag = false;
     }
 
     return ret;
@@ -845,7 +840,7 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
     tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ),1);
 
     char *ext = strrchr(file_name, '.');
-    if ( !tmp && ext && !strcmp( ext+1, "JPG" ) ){
+    if ( !tmp && ext && (!strcmp( ext+1, "JPG" ) || !strcmp( ext+1, "jpg" ) ) ){
         fprintf( stderr, " *** force-loading a JPG image [%s]\n", file_name );
         SDL_RWops *src = SDL_RWFromMem( buffer, length );
         tmp = IMG_LoadJPG_RW(src);
@@ -1179,7 +1174,6 @@ void ONScripterLabel::clearCurrentTextBuffer()
     int i, j;
     current_text_buffer->xy[0] = sentence_font.xy[0] = 0;
     current_text_buffer->xy[1] = sentence_font.xy[1] = 0;
-    text_char_flag = false;
 
     if ( current_text_buffer->buffer &&
          (current_text_buffer->num_xy[0] != sentence_font.num_xy[0] ||
@@ -1551,4 +1545,3 @@ void ONScripterLabel::saveAll()
     if ( labellog_flag ) script_h.saveLabelLog();
     if ( kidokuskip_flag ) script_h.saveKidokuData();
 }
-

@@ -266,10 +266,6 @@ int ONScripterLabel::loadSaveFile( int no )
     }
     script_h.setCurrent( current_link_label_info->current_script );
     string_buffer_offset = current_link_label_info->string_buffer_offset;
-    if ( script_h.isQuat() ){ // for puttext
-        script_h.text_line_flag = true;
-        script_h.next_text_line_flag = true;
-    }
     
     int tmp_event_mode = fgetc( fp );
 
@@ -632,7 +628,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
     system_menu_enter_flag = false;
     yesno_caller = SYSTEM_NULL;
     key_pressed_flag = false;
-    //text_line_flag = false;
 
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
 

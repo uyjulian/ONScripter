@@ -221,7 +221,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             }
             anim->color_list = new uchar3[ anim->num_of_cells ];
             for ( i=0 ; i<anim->num_of_cells ; i++ ){
-                readColor( &anim->color_list[i], buffer + 1 );
+                readColor( &anim->color_list[i], buffer );
                 buffer += 7;
             }
         }
@@ -229,14 +229,14 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             anim->trans_mode = AnimationInfo::TRANS_MASK;
             buffer++;
             script_h.pushCurrent( buffer );
-            const char *buf = script_h.readStr( NULL, true );
+            const char *buf = script_h.readStr( true );
             setStr( &anim->mask_file_name, buf );
             buffer = script_h.getNext();
             script_h.popCurrent();
         }
         else if ( buffer[0] == '#' ){
             anim->trans_mode = AnimationInfo::TRANS_DIRECT;
-            readColor( &anim->direct_color, buffer + 1 );
+            readColor( &anim->direct_color, buffer );
             buffer += 7;
         }
         else if ( buffer[0] == '!' ){
@@ -287,9 +287,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
     if ( buffer[0] == ';' ) buffer++;
 
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING && buffer[0] == '$' ){
-        buffer++;
-        int no = script_h.parseInt( &buffer );
-        setStr( &anim->file_name, script_h.str_variables[ no ] );
+        script_h.pushCurrent( buffer );
+        setStr( &anim->file_name, script_h.readStr() );
+        script_h.popCurrent();
     }
     else{
         setStr( &anim->file_name, buffer );

@@ -360,13 +360,16 @@ unsigned char ScriptParser::convHexToDec( char ch )
     if      ( '0' <= ch && ch <= '9' ) return ch - '0';
     else if ( 'a' <= ch && ch <= 'f' ) return ch - 'a' + 10;
     else if ( 'A' <= ch && ch <= 'F' ) return ch - 'A' + 10;
-    else return 0;
+    else errorAndExit("convHexToDec: not valid character for color.");
+
+    return 0;
 }
 
 void ScriptParser::readColor( uchar3 *color, const char *buf ){
-    (*color)[0] = convHexToDec( buf[0] ) << 4 | convHexToDec( buf[1] );
-    (*color)[1] = convHexToDec( buf[2] ) << 4 | convHexToDec( buf[3] );
-    (*color)[2] = convHexToDec( buf[4] ) << 4 | convHexToDec( buf[5] );
+    if ( buf[0] != '#' ) errorAndExit("readColor: no preceeding #.");
+    (*color)[0] = convHexToDec( buf[1] ) << 4 | convHexToDec( buf[2] );
+    (*color)[1] = convHexToDec( buf[3] ) << 4 | convHexToDec( buf[4] );
+    (*color)[2] = convHexToDec( buf[5] ) << 4 | convHexToDec( buf[6] );
 }
 
 int ScriptParser::parseLine()
@@ -386,20 +389,6 @@ int ScriptParser::parseLine()
     }
 
     return RET_NOMATCH;
-}
-
-void ScriptParser::skipToken() // skip phrase
-{
-    string_buffer_offset = 0;
-    while( 1 )
-    {
-        if ( script_h.readToken() ) continue;
-        if ( script_h.getStringBuffer()[0] == ':' ) break;
-        if ( script_h.getStringBuffer()[0] == 0x0a ){
-            if ( kidokuskip_flag ) script_h.markAsKidoku();
-            break;
-        }
-    }
 }
 
 ScriptParser::EffectLink *ScriptParser::getEffect( int effect_no )
@@ -609,10 +598,10 @@ int ScriptParser::readEffect( EffectLink *effect )
     int num = 1;
     
     effect->effect = script_h.readInt();
-    if ( script_h.isEndWithComma() ){
+    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
         num++;
         effect->duration = script_h.readInt();
-        if ( script_h.isEndWithComma() ){
+        if ( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
             num++;
             const char *buf = script_h.readStr();
             effect->anim.setImageName( buf );
@@ -631,8 +620,11 @@ int ScriptParser::readEffect( EffectLink *effect )
 
 FILE *ScriptParser::fopen(const char *path, const char *mode)
 {
-    char file_name[256];
-
+    char * file_name = new char[strlen(archive_path)+strlen(path)+1];
     sprintf( file_name, "%s%s", archive_path, path );
-    return ::fopen( file_name, mode );
+
+    FILE *fp = ::fopen( file_name, mode );
+    delete[] file_name;
+
+    return fp;
 }

@@ -26,27 +26,87 @@ H1{
 text-align: center;
 }
 
+DIV.block{
+top:              0px;
+left:             0px;
+width:            80%;
+font-size: medium;
+background: white;
+margin:           0.1em;
+margin-bottom:           1em;
+padding:          0em;
+}
+
+H2{
+text-indent: 0.5em;
+font-size:LARGE;
+padding: 2pt;
+border-color: black;
+border-left-color: #0000ff;
+color: black;
+border-width: 1pt 1pt 3pt 5pt;
+border-style: solid;
+border-bottom-style: double;
+font-weight: bold;
+background-color: #cccccc;
+}
+
+DIV.block2{
+text-indent: 1em;
+position:         relative;
+top:              0px;
+left:             0px;
+font-size: medium;
+color: black;
+background: white;
+margin:           1.0em;
+padding:          0em;
+border-width: 0pt 0pt 2pt 0pt;
+border-bottom-color: #cccccc;
+border-bottom-style: solid;
+}
+
 H3{
-background-color: lightgreen;
-border-width:2pt;
+text-indent: 0.5em;
+position: relative;
+left: 0.5em;
+background-color: #ccccff;
+border-width: 1pt 1pt 1pt 3pt;
+border-top-color: #ddddff;
+border-left-color: #8888ff;
+border-right-color: #ddddff;
+border-bottom-color: #8888ff;
+border-style: solid;
+}
+
+DIV.quat{
+position:         relative;
+top:              0px;
+left:             0px;
+font-size: medium;
+color: black;
+background: white;
+margin:           1.0em;
+padding-left:          0.5em;
+padding-right:          0.5em;
+border-width: 2pt 2pt 2pt 2pt;
+border-color: brown;
+border-style: dashed;
 }
 
 TABLE {
 padding: 2pt;
-background-color: ligthyellow;
+background-color: lightyellow;
 width: 80%;
 color: black;
-align: center;
 text-align: left;
 margin-bottom: 10pt;
 }
 
 TH {
-font-size:LARGE;
 padding: 2pt;
-border-color: orange;
 color:black;
-border-width: 1pt 3pt 5pt 1pt;
+border-width: 1pt 1pt 1pt 1pt;
 border-style: solid;
 font-weight: bold;
 color: black;
@@ -67,7 +127,9 @@ text-indent: 1em;
 HR {
 width: 80%;
 text-align: center;
-align: center;
 }
 
 PRE { text-indent: 0; }
+
+UL LI { list-style-type: square; }
+UL LI LI { list-style-type: circle; }

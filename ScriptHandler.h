@@ -32,9 +32,15 @@
 #define VARIABLE_RANGE 4096
 #define ARRAY_VARIABLE_RANGE 200
 
+typedef unsigned char uchar3[3];
+
 class ScriptHandler
 {
 public:
+    enum { END_NONE  = 0,
+           END_COMMA = 1,
+           END_COLON = 2
+    };
     struct LabelInfo{
         char *name;
         char *start_address;
@@ -51,6 +57,19 @@ public:
         };
     };
 
+    enum { VAR_NONE,      // text, color, etc.
+           VAR_INT,       // integer variable
+           VAR_INT_CONST, // integer const
+           VAR_STR,       // string variable
+           VAR_STR_CONST, // string const
+           VAR_PTR        // array variable
+    };
+    struct VariableInfo{
+        int type;
+        int var_no;   // for integer(%), string($)
+        int *var_ptr; // for array(?)
+    };
+
     ScriptHandler();
     ~ScriptHandler();
     FILE *fopen( const char *path, const char *mode );
@@ -61,29 +80,30 @@ public:
     char *getNext();
     void pushCurrent( char *pos, bool reread_flag=true );
     void popCurrent();
+    char *getStringBuffer();
 
     bool isName( const char *name );
     bool isText();
-    void setText( bool val );
-    bool isQuat();
-    bool isEndWithComma();
+    void setText( bool val ); // exception: for select command to handle string variables in the second line or below
+    int  getEndStatus();
     void skipLine( int no=1 );
     void setLinepage( bool val );
 
     bool isKidoku();
     void markAsKidoku();
-    bool rereadToken();
-    bool readToken();
-    char *getStringBuffer();
 
-    const char *readStr( char *dst_buf=NULL, bool reread_flag=false );
-    int readInt( bool reread_flag=false );
+    int  rereadToken();
+    int  readToken();
+    const char *readStr( bool reread_flag=false );
+    int  readInt( bool reread_flag=false );
+    void declareDim();
+    bool skipToken();
 
-    int parseInt( char **buf );
-    void setInt( char *buf, int val, int offset = 0 );
+    void setInt( VariableInfo *var_info, int val, int offset=0 );
     void setNumVariable( int no, int val );
+    void pushVariable();
+    int  getIntVariable( VariableInfo *var_info=NULL );
 
-    int decodeArraySub( char **buf, ArrayVariable *array );
     void getSJISFromInteger( char *buffer, int no, bool add_space_flag );
 
     int readScriptSub( FILE *fp, char **buf, bool encrypt_flag );
@@ -107,22 +127,26 @@ public:
 
     /* ---------------------------------------- */
     /* Variable */
-    enum{ VAR_INT, VAR_STR, VAR_ARRAY };
     int num_variables[ VARIABLE_RANGE ];
     int num_limit_upper[ VARIABLE_RANGE ];
     int num_limit_lower[ VARIABLE_RANGE ];
     bool num_limit_flag[ VARIABLE_RANGE ];
     char *str_variables[ VARIABLE_RANGE ];
-    ArrayVariable array_variables[ ARRAY_VARIABLE_RANGE ], tmp_array_variable;
+    VariableInfo current_variable, pushed_variable;
     
     bool svga_flag;
 
     BaseReader *cBR;
     
-    bool text_line_flag;
-    bool next_text_line_flag;
-
 private:
+    enum { OP_INVALID = 0, // 000
+           OP_PLUS    = 2, // 010
+           OP_MINUS   = 3, // 011
+           OP_MULT    = 4, // 100
+           OP_DIV     = 5, // 101
+           OP_MOD     = 6  // 110
+    };
+    
     struct StackInfo{
         struct StackInfo *next;
         char *current_script;
@@ -173,6 +197,13 @@ private:
     void addStringBuffer( char ch, int string_counter );
     int findLabel( const char* label );
 
+    int parseInt( char **buf );
+    int parseIntExpression( char **buf );
+    void parseStr( char **buf );
+
+    void readNextOp( char **buf, int *op, int *num );
+    int calcArithmetic( int num1, int op, int num2 );
+    int decodeArraySub( char **buf, ArrayVariable *array );
     int *decodeArray( char **buf, int offset = 0 );
 
 
@@ -181,6 +212,8 @@ private:
     NameAlias root_name_alias, *last_name_alias;
     StringAlias root_str_alias, *last_str_alias;
     
+    ArrayVariable array_variables[ ARRAY_VARIABLE_RANGE ], tmp_array_variable;
+
     char *archive_path;
     int script_buffer_length;
     char *script_buffer;
@@ -197,8 +230,8 @@ private:
     char *kidoku_buffer;
 
     bool text_flag; // true if the current token is text
-    bool quat_flag;
-    bool end_with_comma_flag;
+    bool line_head_flag; // true if the current token is the first token of the line
+    int  end_status;
     bool linepage_flag;
 
     StackInfo root_stack_info, *last_stack_info;

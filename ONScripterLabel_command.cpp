@@ -102,13 +102,14 @@ int ONScripterLabel::vCommand()
 
 int ONScripterLabel::trapCommand()
 {
-    const char *buf = script_h.readStr();
-
+    script_h.readToken();
+    const char *buf = script_h.getStringBuffer();
+    
     if ( buf[0] == '*' ){
         trap_flag = true;
         if ( trap_dist ) delete[] trap_dist;
-        trap_dist = new char[ strlen( buf ) ];
-        memcpy( trap_dist, buf+1, strlen( buf ) );
+        trap_dist = new char[ strlen(buf) ];
+        memcpy( trap_dist, buf+1, strlen(buf) );
     }
     else if ( !strcmp( buf, "off" ) ){
         trap_flag = false;
@@ -180,8 +181,8 @@ int ONScripterLabel::tateyokoCommand()
 
 int ONScripterLabel::talCommand()
 {
-    const char *buf = script_h.readStr();
-    char loc = buf[0];
+    script_h.readToken();
+    char loc = script_h.getStringBuffer()[0];
     int trans = script_h.readInt();
 
     if ( event_mode & EFFECT_EVENT_MODE ){
@@ -210,8 +211,9 @@ int ONScripterLabel::tablegotoCommand()
     int count = 0;
     int no = script_h.readInt();
 
-    while( script_h.isEndWithComma() ){
-        const char *buf = script_h.readStr();
+    while( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
+        script_h.readToken();
+        const char *buf = script_h.getStringBuffer();
         if ( count++ == no ){
             current_link_label_info->label_info = script_h.lookupLabel( buf+1 );
             current_link_label_info->current_line = 0;
@@ -227,8 +229,8 @@ int ONScripterLabel::tablegotoCommand()
 
 int ONScripterLabel::systemcallCommand()
 {
-    const char *buf = script_h.readStr();
-    system_menu_mode = getSystemCallNo( buf );
+    script_h.readToken();
+    system_menu_mode = getSystemCallNo( script_h.getStringBuffer() );
     event_mode = WAIT_SLEEP_MODE;
 
     enterSystemCall();
@@ -297,7 +299,7 @@ int ONScripterLabel::setwindow2Command()
     const char *buf = script_h.readStr();
     if ( buf[0] == '#' ){
         sentence_font.is_transparent = true;
-        readColor( &sentence_font.window_color, buf+1 );
+        readColor( &sentence_font.window_color, buf );
     }
     else{
         sentence_font.is_transparent = false;
@@ -329,7 +331,7 @@ int ONScripterLabel::setwindowCommand()
     const char *buf = script_h.readStr();
     if ( buf[0] == '#' ){
         sentence_font.is_transparent = true;
-        readColor( &sentence_font.window_color, buf + 1 );
+        readColor( &sentence_font.window_color, buf );
 
         sentence_font_info.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
         sentence_font_info.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -381,13 +383,13 @@ int ONScripterLabel::selectCommand()
     int xy[2];
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
-    char *p_buf, *save_buf = NULL;
+    char *p_buf;
 
     if ( script_h.isName( "selnum" ) ){
         select_mode = SELECT_NUM_MODE;
         p_buf = script_h.getCurrent();
-        script_h.readToken();
-        save_buf = script_h.saveStringBuffer();
+        script_h.readInt();
+        script_h.pushVariable();
     }
     else if ( script_h.isName( "selgosub" ) ){
         select_mode = SELECT_GOSUB_MODE;
@@ -433,7 +435,7 @@ int ONScripterLabel::selectCommand()
             ret = RET_JUMP;
         }
         else{
-            script_h.setInt( save_buf, current_button_state.button - 1 );
+            script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
             current_link_label_info->current_line = select_label_info.current_line;
             script_h.setCurrent( select_label_info.current_script );
             ret = RET_CONTINUE_NOREAD;
@@ -462,26 +464,30 @@ int ONScripterLabel::selectCommand()
 
         last_select_link = &root_select_link;
         select_label_info.current_line = current_link_label_info->current_line;
-        const char *buf = script_h.readStr();
+        script_h.readToken();
+        const char *buf = script_h.getStringBuffer();
         int count = 0;
         while(1){
-            //printf("sel [%s] comma %d\n", buf, comma_flag  );
+            printf("sel [%s] comma %d\n", buf, comma_flag  );
             if ( buf[0] != 0x0a && comma_flag == true ){
-                comma_flag = script_h.isEndWithComma();
+                comma_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
                 count++;
                 if ( select_mode == SELECT_NUM_MODE || count % 2 ){
+                    buf = script_h.readStr( true );
                     if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
                     link = new SelectLink();
                     setStr( &link->text, buf );
-                    //printf("Select text %s\n", link->text);
+                    printf("Select text %s\n", link->text);
                 }
                 if ( select_mode == SELECT_NUM_MODE || !(count % 2) ){
-                    setStr( &link->label, buf+1 );
-                    //printf("Select label %s\n", link->label );
+                    if ( select_mode != SELECT_NUM_MODE )
+                        setStr( &link->label, buf+1 );
+                    printf("Select label %s\n", link->label );
                     last_select_link->next = link;
                     last_select_link = last_select_link->next;
                 }
-                buf = script_h.readStr();
+                script_h.readToken();
+                buf = script_h.getStringBuffer();
             }
             else{
                 if ( select_mode != SELECT_NUM_MODE && (count & 1) == 1 ) errorAndExit( "select: label must be in the same line." );
@@ -489,7 +495,8 @@ int ONScripterLabel::selectCommand()
                     if ( buf[0] == 0x0a || buf[0] == ',' ){
                         select_label_info.current_line++;
                         script_h.setText( false );
-                        buf = script_h.readStr();
+                        script_h.readToken();
+                        buf = script_h.getStringBuffer();
                     }
                     select_label_info.current_script = script_h.getCurrent();
                     if ( buf[0] == ',' ){
@@ -517,11 +524,6 @@ int ONScripterLabel::selectCommand()
         }
 
         if ( select_mode == SELECT_GOTO_MODE || select_mode == SELECT_CSEL_MODE ){ /* Resume */
-            //p_script_buffer = current_link_label_info->current_script;
-            //script_h.setCurrent( p_script_buffer );
-            //script_h.readToken();
-            //readLine( &p_script_buffer );
-
             if ( select_mode == SELECT_CSEL_MODE ){
                 current_link_label_info->label_info = script_h.lookupLabel( "customsel" );
                 current_link_label_info->current_line = 0;
@@ -546,31 +548,30 @@ int ONScripterLabel::savetimeCommand()
 {
     int no = script_h.readInt() - 1;
 
-    script_h.readToken();
+    script_h.readInt();
     if ( no >= MAX_SAVE_FILE ){
-        script_h.setInt( script_h.getStringBuffer(), 0 );
-        for ( int i=0 ; i<4 ; i++ )
-            script_h.readToken();
+        script_h.setInt( &script_h.current_variable, 0 );
+        for ( int i=0 ; i<3 ; i++ )
+            script_h.readInt();
         return RET_CONTINUE;
     }
     
     searchSaveFiles( no );
 
     if ( !save_file_info[no].valid ){
-        script_h.setInt( script_h.getStringBuffer(), 0 );
-        for ( int i=0 ; i<4 ; i++ )
+        script_h.setInt( &script_h.current_variable, 0 );
+        for ( int i=0 ; i<3 ; i++ )
             script_h.readToken();
         return RET_CONTINUE;
     }
 
-    script_h.setInt( script_h.getStringBuffer(), save_file_info[no].month );
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), save_file_info[no].day );
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), save_file_info[no].hour );
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), save_file_info[no].minute );
-    script_h.readToken();
+    script_h.setInt( &script_h.current_variable, save_file_info[no].month );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, save_file_info[no].day );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, save_file_info[no].hour );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, save_file_info[no].minute );
 
     return RET_CONTINUE;
 }
@@ -597,7 +598,7 @@ int ONScripterLabel::savegameCommand()
     int no = script_h.readInt();
 
     if ( no < 0 )
-        errorAndExit( script_h.getStringBuffer(), "savegame: the specified number is less than 0" );
+        errorAndExit("savegame: the specified number is less than 0.");
     else{
         shelter_event_mode = event_mode;
         char *p_buf = script_h.getCurrent();
@@ -611,9 +612,9 @@ int ONScripterLabel::savegameCommand()
 
 int ONScripterLabel::savefileexistCommand()
 {
-    script_h.readToken();
-    char *save_buf = script_h.saveStringBuffer();
-    int no = script_h.readInt();
+    script_h.readInt();
+    script_h.pushVariable();
+    int no = script_h.readInt()-1;
 
     searchSaveFiles( no );
 
@@ -623,7 +624,7 @@ int ONScripterLabel::savefileexistCommand()
     else
         val = 0;
 
-    script_h.setInt( save_buf, val );
+    script_h.setInt( &script_h.pushed_variable, val );
 
     return RET_CONTINUE;
 }
@@ -631,24 +632,23 @@ int ONScripterLabel::savefileexistCommand()
 int ONScripterLabel::rndCommand()
 {
     int  upper, lower;
-    char *save_buf;
     
     if ( script_h.isName( "rnd2" ) ){
-        script_h.readToken();
-        save_buf = script_h.saveStringBuffer();
+        script_h.readInt();
+        script_h.pushVariable();
         
         lower = script_h.readInt();
         upper = script_h.readInt();
     }
     else{
-        script_h.readToken();
-        save_buf = script_h.saveStringBuffer();
+        script_h.readInt();
+        script_h.pushVariable();
 
         lower = 0;
         upper = script_h.readInt() - 1;
     }
 
-    script_h.setInt( save_buf, lower + (int)( (double)(upper-lower+1)*rand()/(RAND_MAX+1.0)) );
+    script_h.setInt( &script_h.pushed_variable, lower + (int)( (double)(upper-lower+1)*rand()/(RAND_MAX+1.0)) );
 
     return RET_CONTINUE;
 }
@@ -683,7 +683,6 @@ int ONScripterLabel::resetCommand()
     resetSentenceFont();
     sentence_font.closeFont();
     
-    text_char_flag = false;
     skip_flag      = false;
     monocro_flag   = false;
     nega_mode      = 0;
@@ -763,10 +762,10 @@ int ONScripterLabel::puttextCommand()
     int ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
 
-    script_h.readToken();
+    script_h.readStr();
     string_buffer_offset = 0;
-    script_h.text_line_flag = true;
-    script_h.next_text_line_flag = true;
+    script_h.setText( true );
+    /*line_head_flag = true*/
 
     return RET_CONTINUE_NOREAD;
 }
@@ -800,8 +799,7 @@ int ONScripterLabel::prnumCommand()
     prnum_info[no]->font_size_xy[1] = script_h.readInt();
 
     const char *buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( script_h.getStringBuffer(), "prnum: Color is not specified." );
-    readColor( &prnum_info[no]->color_list[0], buf+1 );
+    readColor( &prnum_info[no]->color_list[0], buf );
 
     char num_buf[12], buf2[7];
     int ptr = 0;
@@ -861,7 +859,6 @@ int ONScripterLabel::playCommand()
         music_play_once_flag = false;
 
     const char *buf = script_h.readStr();
-
     if ( buf[0] == '*' ){
         int new_cd_track = atoi( buf + 1 );
 #ifdef CONTINUOUS_PLAY        
@@ -910,7 +907,7 @@ int ONScripterLabel::mspCommand()
     int no = script_h.readInt();
     sprite_info[ no ].pos.x += script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y += script_h.readInt() * screen_ratio1 / screen_ratio2;
-    if ( script_h.isEndWithComma() )
+    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
         sprite_info[ no ].trans += script_h.readInt();
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
@@ -980,17 +977,15 @@ int ONScripterLabel::movemousecursorCommand()
 
 int ONScripterLabel::monocroCommand()
 {
-    const char *buf = script_h.readStr();
+    script_h.readToken();
+    const char *buf = script_h.getStringBuffer();
 
     if ( !strcmp( buf, "off" ) ){
         monocro_flag_new = false;
     }
-    else if ( buf[0] != '#' ){
-        errorAndExit( script_h.getStringBuffer() );
-    }
     else{
         monocro_flag_new = true;
-        readColor( &monocro_color_new, buf + 1 );
+        readColor( &monocro_color_new, buf );
     }
     need_refresh_flag = true;
 
@@ -1033,7 +1028,7 @@ int ONScripterLabel::lspCommand()
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    if ( script_h.isEndWithComma() )
+    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
     else
         sprite_info[ no ].trans = 255;
@@ -1084,10 +1079,10 @@ int ONScripterLabel::loadgameCommand()
 
 int ONScripterLabel::ldCommand()
 {
-    const char *buf = script_h.readStr();
-    char loc = buf[0];
+    script_h.readToken();
+    char loc = script_h.getStringBuffer()[0];
 
-    buf = script_h.readStr();
+    const char *buf = script_h.readStr();
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -1134,33 +1129,32 @@ int ONScripterLabel::jumpbCommand()
 
 int ONScripterLabel::ispageCommand()
 {
-    script_h.readToken();
+    script_h.readInt();
 
     if ( clickstr_state == CLICK_NEWPAGE )
-        script_h.setInt( script_h.getStringBuffer(), 1 );
+        script_h.setInt( &script_h.current_variable, 1 );
     else
-        script_h.setInt( script_h.getStringBuffer(), 0 );
+        script_h.setInt( &script_h.current_variable, 0 );
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::isdownCommand()
 {
-    script_h.readToken();
+    script_h.readInt();
 
     if ( current_button_state.down_flag )
-        script_h.setInt( script_h.getStringBuffer(), 1 );
+        script_h.setInt( &script_h.current_variable, 1 );
     else
-        script_h.setInt( script_h.getStringBuffer(), 0 );
+        script_h.setInt( &script_h.current_variable, 0 );
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::getversionCommand()
 {
-    script_h.readToken();
-    
-    script_h.setInt( script_h.getStringBuffer(), ONSCRIPTER_VERSION );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, ONSCRIPTER_VERSION );
 
     return RET_CONTINUE;
 }
@@ -1175,13 +1169,13 @@ int ONScripterLabel::gettimerCommand()
     else if ( script_h.isName( "getbtntimer" ) ){
     }
 
-    script_h.readToken();
+    script_h.readInt();
 
     if ( gettimer_flag ){
-        script_h.setInt( script_h.getStringBuffer(), SDL_GetTicks() - internal_timer );
+        script_h.setInt( &script_h.current_variable, SDL_GetTicks() - internal_timer );
     }
     else{
-        script_h.setInt( script_h.getStringBuffer(), btnwait_time );
+        script_h.setInt( &script_h.current_variable, btnwait_time );
     }
         
     return RET_CONTINUE; 
@@ -1189,9 +1183,8 @@ int ONScripterLabel::gettimerCommand()
 
 int ONScripterLabel::gettextCommand()
 {
-    script_h.readToken();
-    char *p_buf = script_h.getStringBuffer()+1;
-    int no = script_h.parseInt( &p_buf );
+    script_h.readStr();
+    int no = script_h.current_variable.var_no;
 
     char *buf = new char[ current_text_buffer->num_xy[1] * current_text_buffer->num_xy[0] * 2 ];
     int c=0;
@@ -1204,7 +1197,7 @@ int ONScripterLabel::gettextCommand()
     }
     buf[ c*2 ] = '\0';
 
-    setStr( &script_h.str_variables[ no ], buf );
+    setStr( &script_h.str_variables[no], buf );
     delete[] buf;
     
     return RET_CONTINUE;
@@ -1227,11 +1220,11 @@ int ONScripterLabel::getpageupCommand()
 int ONScripterLabel::getregCommand()
 {
     char *path = NULL, *key = NULL;
-    script_h.readToken();
+    script_h.readStr();
     
-    if ( script_h.getStringBuffer()[0] != '$') errorAndExit( "getreg: no string variable." );
-    char *p_buf = script_h.getStringBuffer()+1;
-    int no = script_h.parseInt( &p_buf );
+    if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) 
+        errorAndExit( "getreg: no string variable." );
+    int no = script_h.pushed_variable.var_no;
 
     const char *buf = script_h.readStr();
     setStr( &path, buf );
@@ -1256,7 +1249,7 @@ int ONScripterLabel::getregCommand()
                 while( fgets( reg_buf2, 256, fp) ){
 
                     script_h.pushCurrent( reg_buf2 );
-                    buf = script_h.readStr( NULL, true );
+                    buf = script_h.readStr( true );
                     if ( strncmp( buf,
                                   key,
                                   (strlen(buf)>strlen(key))?strlen(buf):strlen(key) ) ){
@@ -1264,16 +1257,16 @@ int ONScripterLabel::getregCommand()
                         continue;
                     }
                     
-                    buf = script_h.readStr();
-                    if ( buf[0] != '=' ){
+                    script_h.readToken();
+                    if ( script_h.getStringBuffer()[0] != '=' ){
                         script_h.popCurrent();
                         continue;
                     }
 
                     buf = script_h.readStr();
                     script_h.popCurrent();
-                    setStr( &script_h.str_variables[ no ], buf );
-                    printf("  $%d = %s\n", no, script_h.str_variables[ no ] );
+                    setStr( &script_h.str_variables[no], buf );
+                    printf("  $%d = %s\n", no, script_h.str_variables[no] );
                     found_flag = true;
                     break;
                 }
@@ -1289,11 +1282,11 @@ int ONScripterLabel::getregCommand()
 
 int ONScripterLabel::getmouseposCommand()
 {
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), current_button_state.x * screen_ratio2 / screen_ratio1 );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, current_button_state.x * screen_ratio2 / screen_ratio1 );
     
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), current_button_state.y * screen_ratio2 / screen_ratio1 );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, current_button_state.y * screen_ratio2 / screen_ratio1 );
     
     return RET_CONTINUE;
 }
@@ -1315,11 +1308,11 @@ int ONScripterLabel::getenterCommand()
 
 int ONScripterLabel::getcursorposCommand()
 {
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), sentence_font.x( tateyoko_mode ) );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, sentence_font.x( tateyoko_mode ) );
     
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), sentence_font.y( tateyoko_mode ) );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, sentence_font.y( tateyoko_mode ) );
     
     return RET_CONTINUE;
 }
@@ -1340,8 +1333,8 @@ int ONScripterLabel::getcselnumCommand()
         count++;
         link = link->next;
     }
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), count );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, count );
 
     return RET_CONTINUE;
 }
@@ -1606,8 +1599,8 @@ int ONScripterLabel::clickCommand()
 
 int ONScripterLabel::clCommand()
 {
-    const char *buf = script_h.readStr();
-    char loc = buf[0];
+    script_h.readToken();
+    char loc = script_h.getStringBuffer()[0];
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -1703,7 +1696,7 @@ int ONScripterLabel::btnwaitCommand()
         selectbtn_flag = true;
     }
 
-    script_h.readToken();
+    script_h.readInt();
     
     if ( event_mode & WAIT_BUTTON_MODE )
     {
@@ -1711,7 +1704,7 @@ int ONScripterLabel::btnwaitCommand()
         btntime_value = 0;
 
         if ( textbtn_flag && skip_flag ) current_button_state.button = 0;
-        script_h.setInt( script_h.getStringBuffer(), current_button_state.button );
+        script_h.setInt( &script_h.current_variable, current_button_state.button );
 
         if ( del_flag ){
             if ( current_button_state.button > 0 ) deleteButtonLink();
@@ -1835,9 +1828,11 @@ int ONScripterLabel::btndownCommand()
 
 int ONScripterLabel::btndefCommand()
 {
-    const char *buf = script_h.readStr();
-
-    if ( strcmp( buf, "clear" ) ){
+    script_h.readToken();
+    
+    if ( strcmp( script_h.getStringBuffer(), "clear" ) ){
+        const char *buf = script_h.readStr( true );
+        
         btndef_info.remove();
         if ( buf[0] != '\0' ){
             btndef_info.setImageName( buf );
@@ -1896,7 +1891,6 @@ int ONScripterLabel::brCommand()
 
     sentence_font.xy[0] = 0;
     sentence_font.xy[1]++;
-    text_char_flag = false;
 
     return RET_CONTINUE;
 }
@@ -1943,7 +1937,7 @@ int ONScripterLabel::bltCommand()
 
 int ONScripterLabel::bgCommand()
 {
-    const char *buf = script_h.readStr();
+    script_h.readToken();
 
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -1958,30 +1952,34 @@ int ONScripterLabel::bgCommand()
 
         bg_effect_image = COLOR_EFFECT_IMAGE;
 
-        if ( !strcmp( (const char*)buf, "white" ) ){
+        if ( !strcmp( script_h.getStringBuffer(), "white" ) ){
             bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
         }
-        else if ( !strcmp( (const char*)buf, "black" ) ){
+        else if ( !strcmp(  script_h.getStringBuffer(), "black" ) ){
             bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
         }
-        else if ( buf[0] == '#' ){
-            readColor( &bg_info.color, buf+1 );
-        }
         else{
-            setStr( &bg_info.image_name, buf );
-            parseTaggedString( &bg_info );
-            setupAnimationInfo( &bg_info );
-            bg_effect_image = BG_EFFECT_IMAGE;
-            if ( bg_info.image_surface ){
-                SDL_Rect src_rect, dst_rect;
-                src_rect.x = 0;
-                src_rect.y = 0;
-                src_rect.w = bg_info.image_surface->w;
-                src_rect.h = bg_info.image_surface->h;
-                dst_rect.x = (screen_width - bg_info.image_surface->w) / 2;
-                dst_rect.y = (screen_height - bg_info.image_surface->h) / 2;
+            const char *buf = script_h.readStr( true );
+            
+            if ( buf[0] == '#' ){
+                readColor( &bg_info.color, buf );
+            }
+            else{
+                setStr( &bg_info.image_name, buf );
+                parseTaggedString( &bg_info );
+                setupAnimationInfo( &bg_info );
+                bg_effect_image = BG_EFFECT_IMAGE;
+                if ( bg_info.image_surface ){
+                    SDL_Rect src_rect, dst_rect;
+                    src_rect.x = 0;
+                    src_rect.y = 0;
+                    src_rect.w = bg_info.image_surface->w;
+                    src_rect.h = bg_info.image_surface->h;
+                    dst_rect.x = (screen_width - bg_info.image_surface->w) / 2;
+                    dst_rect.y = (screen_height - bg_info.image_surface->h) / 2;
 
-                SDL_BlitSurface( bg_info.image_surface, &src_rect, background_surface, &dst_rect );
+                    SDL_BlitSurface( bg_info.image_surface, &src_rect, background_surface, &dst_rect );
+                }
             }
         }
 
@@ -2027,8 +2025,7 @@ int ONScripterLabel::barCommand()
     bar_info[no]->pos.w = bar_info[no]->pos.w * param / max;
 
     const char *buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( "bar: Color is not specified." );
-    readColor( &bar_info[no]->color, buf+1 );
+    readColor( &bar_info[no]->color, buf );
 
     if ( bar_info[no]->pos.w > 0 ){
         bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
@@ -2056,7 +2053,7 @@ int ONScripterLabel::amspCommand()
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    if ( script_h.isEndWithComma() )
+    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
 
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;

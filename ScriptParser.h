@@ -56,7 +56,6 @@ public:
     int parseLine();
 
     FILE *fopen(const char *path, const char *mode);
-    void skipToken();
     void saveGlovalData();
     void loadFileLog();
     void saveFileLog();
@@ -247,16 +246,12 @@ protected:
         int current_line;
         int offset;
         char *current_script;
-        char *p_int;
+        ScriptHandler::VariableInfo var;
         int to;
         int step;
 
         ForInfo(){
             next = NULL;
-            p_int = NULL;
-        };
-        ~ForInfo(){
-            if ( p_int ) delete[] p_int;
         };
     } root_for_link, *current_for_link;
     int for_stack_depth;
@@ -296,8 +291,7 @@ protected:
     char *clickstr_list;
     int  clickstr_line;
     int  clickstr_state;
-    //bool text_line_flag;
-
+    
     /* ---------------------------------------- */
     /* Sound related variables */
     int mp3_volume;

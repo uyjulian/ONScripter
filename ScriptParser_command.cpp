@@ -35,15 +35,12 @@ int ScriptParser::versionstrCommand()
 {
     delete[] version_str;
 
+    script_h.readStr();
+    const char *save_buf = script_h.saveStringBuffer();
+
     const char *buf = script_h.readStr();
-    char *buf2 = new char[ strlen( buf ) + 1 ];
-    strcpy( buf2, buf );
-
-    buf = script_h.readStr();
-    version_str = new char[ strlen( buf2 ) + strlen( buf ) + strlen("\n") * 2 + 1 ];
-    sprintf( version_str, "%s\n%s\n", buf2, buf );
-
-    delete[] buf2;
+    version_str = new char[ strlen( save_buf ) + strlen( buf ) + strlen("\n") * 2 + 1 ];
+    sprintf( version_str, "%s\n%s\n", save_buf, buf );
 
     printf("versionstr %s", version_str );
     
@@ -52,7 +49,7 @@ int ScriptParser::versionstrCommand()
 
 int ScriptParser::usewheelCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "userwheel: not in the define section" );
 
     usewheel_flag = true;
 
@@ -61,7 +58,7 @@ int ScriptParser::usewheelCommand()
 
 int ScriptParser::useescspcCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "useescspc: not in the define section" );
 
     if ( !force_button_shortcut_flag )
         useescspc_flag = true;
@@ -71,7 +68,7 @@ int ScriptParser::useescspcCommand()
 
 int ScriptParser::underlineCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "underline: not in the define section" );
 
     underline_value = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
@@ -80,9 +77,10 @@ int ScriptParser::underlineCommand()
 
 int ScriptParser::transmodeCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "transmode: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    script_h.readToken();
+    const char *buf = script_h.getStringBuffer();
     if      ( !strcmp( buf, "leftup" ) )   trans_mode = AnimationInfo::TRANS_TOPLEFT;
     else if ( !strcmp( buf, "copy" ) )     trans_mode = AnimationInfo::TRANS_COPY;
     else if ( !strcmp( buf, "alpha" ) )    trans_mode = AnimationInfo::TRANS_ALPHA;
@@ -97,23 +95,23 @@ int ScriptParser::timeCommand()
     struct tm *tm = localtime( &t );
 
     script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_hour );
+    script_h.setInt( &script_h.current_variable, tm->tm_hour );
     
     script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_min );
+    script_h.setInt( &script_h.current_variable, tm->tm_min );
     
     script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_sec );
+    script_h.setInt( &script_h.current_variable, tm->tm_sec );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::textgosubCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "textgosub: not in the define section" );
 
-    const char *buf = script_h.readStr();
-    setStr( &textgosub_label, buf+1 );
+    script_h.readToken();
+    setStr( &textgosub_label, script_h.getStringBuffer()+1 );
     
     return RET_CONTINUE;
 }
@@ -121,26 +119,23 @@ int ScriptParser::textgosubCommand()
 int ScriptParser::subCommand()
 {
     int val1 = script_h.readInt();
-    char *save_buf = script_h.saveStringBuffer();
+    script_h.pushVariable();
 
     int val2 = script_h.readInt();
-    script_h.setInt( save_buf, val1 - val2 );
+    script_h.setInt( &script_h.pushed_variable, val1 - val2 );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::straliasCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "stralias: not in the define section" );
     
+    script_h.readToken();
+    const char *save_buf = script_h.saveStringBuffer();
     const char *buf = script_h.readStr();
-    char *buf2 = new char[ strlen( buf ) + 1 ];
-    strcpy( buf2, buf );
     
-    buf = script_h.readStr();
-    
-    script_h.addStrAlias( buf2, buf );
-    delete[] buf2;
+    script_h.addStrAlias( save_buf, buf );
     
     return RET_CONTINUE;
 }
@@ -166,7 +161,7 @@ int ScriptParser::skipCommand()
 
 int ScriptParser::selectvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "selectvoice: not in the define section" );
 
     for ( int i=0 ; i<SELECTVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
@@ -185,12 +180,10 @@ int ScriptParser::selectvoiceCommand()
 int ScriptParser::selectcolorCommand()
 {
     const char *buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( buf, "selectcolor: no preceeding #" );
-    readColor( &sentence_font.on_color, buf+1 );
+    readColor( &sentence_font.on_color, buf );
 
     buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( buf, "selectcolor: no preceeding #" );
-    readColor( &sentence_font.off_color, buf+1 );
+    readColor( &sentence_font.off_color, buf );
     
     return RET_CONTINUE;
 }
@@ -218,7 +211,7 @@ int ScriptParser::savenameCommand()
 
 int ScriptParser::roffCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "roff: not in the define section" );
     rmode_flag = false;
 
     return RET_CONTINUE;
@@ -243,7 +236,7 @@ int ScriptParser::rmenuCommand()
     menu_link_width = 0;
 
     bool first_flag = true;
-    while ( script_h.isEndWithComma() || first_flag ){
+    while ( script_h.getEndStatus() == ScriptHandler::END_COMMA || first_flag ){
         MenuLink *menu = new MenuLink();
 
         const char *buf = script_h.readStr();
@@ -251,8 +244,8 @@ int ScriptParser::rmenuCommand()
         if ( menu_link_width < strlen( buf ) / 2 )
             menu_link_width = strlen( buf ) / 2;
 
-        buf = script_h.readStr();
-        menu->system_call_no = getSystemCallNo( buf );
+        script_h.readToken();
+        menu->system_call_no = getSystemCallNo( script_h.getStringBuffer() );
 
         link->next = menu;
         link = menu;
@@ -266,7 +259,7 @@ int ScriptParser::rmenuCommand()
 
 int ScriptParser::returnCommand()
 {
-    if ( --label_stack_depth < 0 ) errorAndExit( script_h.getStringBuffer(), "too many returns" );
+    if ( --label_stack_depth < 0 ) errorAndExit( "return: too many returns" );
     
     current_link_label_info = current_link_label_info->previous;
 
@@ -274,10 +267,8 @@ int ScriptParser::returnCommand()
     string_buffer_offset = current_link_label_info->string_buffer_offset;
 
     if ( current_link_label_info->next->textgosub_flag ){
-        script_h.next_text_line_flag = false;
-        
         if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
-            script_h.text_line_flag = true;
+            script_h.setText(true);
     }
 
     delete current_link_label_info->next;
@@ -288,11 +279,12 @@ int ScriptParser::returnCommand()
 
 int ScriptParser::numaliasCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "numalias: not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "numalias: numalias: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    script_h.readToken();
+    const char *save_buf = script_h.saveStringBuffer();
     int no = script_h.readInt();
-    script_h.addNumAlias( buf, no );
+    script_h.addNumAlias( save_buf, no );
     
     return RET_CONTINUE;
 }
@@ -323,8 +315,7 @@ int ScriptParser::nsaCommand()
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path );
     if ( script_h.cBR->open( nsa_path, archive_type ) ){
-        fprintf( stderr, " *** failed to open Nsa archive, exitting ...  ***\n");
-        exit(-1);
+        fprintf( stderr, " *** failed to open Nsa archive, continuing ...  ***\n");
     }
 
     return RET_CONTINUE;
@@ -332,17 +323,14 @@ int ScriptParser::nsaCommand()
 
 int ScriptParser::nextCommand()
 {
-    char *p_buf;
     int val;
     
     if ( !break_flag ){
-        p_buf = current_for_link->p_int;
-        val   = script_h.parseInt( &p_buf );
-        script_h.setInt( current_for_link->p_int, val + current_for_link->step );
+        val   = script_h.getIntVariable( &current_for_link->var );
+        script_h.setInt( &current_for_link->var, val + current_for_link->step );
     }
 
-    p_buf = current_for_link->p_int;
-    val   = script_h.parseInt( &p_buf );
+    val = script_h.getIntVariable( &current_for_link->var );
     
     if ( break_flag ||
          current_for_link->step >= 0 && val > current_for_link->to ||
@@ -369,10 +357,10 @@ int ScriptParser::nextCommand()
 int ScriptParser::mulCommand()
 {
     int val1 = script_h.readInt();
-    char *save_buf = script_h.saveStringBuffer();
-
+    script_h.pushVariable();
+    
     int val2 = script_h.readInt();
-    script_h.setInt( save_buf, val1 * val2 );
+    script_h.setInt( &script_h.pushed_variable, val1*val2 );
 
     return RET_CONTINUE;
 }
@@ -395,32 +383,31 @@ int ScriptParser::movCommand()
     }
 
     script_h.readToken();
-    
-    if ( script_h.getStringBuffer()[0] == '%' || script_h.getStringBuffer()[0] == '?' ){
-        char *save_buf = script_h.saveStringBuffer();
-        bool loop_flag = script_h.isEndWithComma();
+
+    if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
+         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+        script_h.pushVariable();
+        bool loop_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
         int i=0;
         while ( (count==-1 || i<count) && loop_flag ){
             no = script_h.readInt();
-            loop_flag = script_h.isEndWithComma();
-            script_h.setInt( save_buf, no, i++ );
+            loop_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
+            script_h.setInt( &script_h.pushed_variable, no, i++ );
         }
     }
-    else if ( script_h.getStringBuffer()[0] == '$'){
-        char *p_buf = script_h.getStringBuffer()+1;
-        no = script_h.parseInt( &p_buf );
-
+    else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
+        script_h.pushVariable();
         const char *buf = script_h.readStr();
-        setStr( &script_h.str_variables[ no ], buf );
+        setStr( &script_h.str_variables[ script_h.pushed_variable.var_no ], buf );
     }
-    else errorAndExit( script_h.getStringBuffer() );
+    else errorAndExit( "mov: no variable" );
     
     return RET_CONTINUE;
 }
 
 int ScriptParser::mode_sayaCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "mode_saya: not in the define section" );
     mode_saya_flag = true;
 
     return RET_CONTINUE;
@@ -428,34 +415,31 @@ int ScriptParser::mode_sayaCommand()
 
 int ScriptParser::modCommand()
 {
-    script_h.readToken();
-    char *p_buf = script_h.saveStringBuffer(), *p_buf2 = p_buf;
-
-    int val1 = script_h.parseInt( &p_buf2 );
+    int val1 = script_h.readInt();
+    script_h.pushVariable();
+    
     int val2 = script_h.readInt();
-    script_h.setInt( p_buf, val1 % val2 );
+    script_h.setInt( &script_h.pushed_variable, val1%val2 );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::midCommand()
 {
-    script_h.readToken();
+    script_h.readStr();
+    if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
+        errorAndExit( "mid: no string variable" );
+    int no = script_h.current_variable.var_no;
+    
+    script_h.readStr();
+    const char *save_buf = script_h.saveStringBuffer();
+    int start = script_h.readInt();
+    int len   = script_h.readInt();
 
-    if ( script_h.getStringBuffer()[0] == '$'){
-        char *p_buf = script_h.getStringBuffer()+1;
-        int no = script_h.parseInt( &p_buf );
-        
-        const char *buf = script_h.readStr();
-        int start = script_h.readInt();
-        int len   = script_h.readInt();
-
-        delete[] script_h.str_variables[ no ];
-        script_h.str_variables[ no ] = new char[ len + 1 ];
-        memcpy( script_h.str_variables[ no ], buf + start, len );
-        script_h.str_variables[ no ][ len ] = '\0';
-    }
-    else errorAndExit( script_h.getStringBuffer(), "no string variable" );
+    delete[] script_h.str_variables[no];
+    script_h.str_variables[no] = new char[len+1];
+    memcpy( script_h.str_variables[no], save_buf+start, len );
+    script_h.str_variables[no][len] = '\0';
 
     return RET_CONTINUE;
 }
@@ -471,15 +455,14 @@ int ScriptParser::menusetwindowCommand()
     menu_font.is_shadow       = script_h.readInt()?true:false;
 
     const char *buf = script_h.readStr();
-    if ( strlen( buf ) != 7 ) errorAndExit( buf, "menusetwindow: no color" );
-    readColor( &menu_font.window_color, buf+1 );
+    readColor( &menu_font.window_color, buf );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::menuselectvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "menuselectvoice: not in the define section" );
 
     for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
@@ -500,18 +483,15 @@ int ScriptParser::menuselectcolorCommand()
     int i;
 
     const char *buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( script_h.getStringBuffer(), "no preceeding #" );
-    readColor( &menu_font.on_color, buf+1 );
+    readColor( &menu_font.on_color, buf );
     for ( i=0 ; i<3 ; i++ ) system_font.on_color[i] = menu_font.on_color[i];
 
     buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( script_h.getStringBuffer(), "no preceeding #" );
-    readColor( &menu_font.off_color, buf+1 );
+    readColor( &menu_font.off_color, buf );
     for ( i=0 ; i<3 ; i++ ) system_font.off_color[i] = menu_font.off_color[i];
     
     buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( script_h.getStringBuffer(), "no preceeding #" );
-    readColor( &menu_font.nofile_color, buf+1 );
+    readColor( &menu_font.nofile_color, buf );
     for ( i=0 ; i<3 ; i++ ) system_font.nofile_color[i] = menu_font.nofile_color[i];
     
     return RET_CONTINUE;
@@ -528,8 +508,7 @@ int ScriptParser::lookbackspCommand()
 int ScriptParser::lookbackcolorCommand()
 {
     const char *buf = script_h.readStr();
-    if ( buf[0] != '#' ) errorAndExit( script_h.getStringBuffer(), "no preceeding #" );
-    readColor( &lookback_color, buf+1 );
+    readColor( &lookback_color, buf );
 
     return RET_CONTINUE;
 }
@@ -545,7 +524,7 @@ int ScriptParser::lookbackbuttonCommand()
 
 int ScriptParser::linepageCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "linepage: not in the define section" );
     script_h.setLinepage( true );
 
     return RET_CONTINUE;
@@ -553,12 +532,12 @@ int ScriptParser::linepageCommand()
 
 int ScriptParser::lenCommand()
 {
-    script_h.readToken();
-    char *p_buf = script_h.saveStringBuffer();
+    script_h.readInt();
+    script_h.pushVariable();
     
     const char *buf = script_h.readStr();
 
-    script_h.setInt( p_buf, strlen( buf ) );
+    script_h.setInt( &script_h.pushed_variable, strlen( buf ) );
 
     return RET_CONTINUE;
 }
@@ -592,16 +571,16 @@ int ScriptParser::kidokumodeCommand()
 
 int ScriptParser::itoaCommand()
 {
-    script_h.readToken();
-    if ( script_h.getStringBuffer()[0] != '$' ) errorAndExit( script_h.getStringBuffer(), "no string variable" );
+    script_h.readStr();
+    if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
+        errorAndExit( "itoa: no string variable." );
+    int no = script_h.current_variable.var_no;
 
-    char *p_buf = script_h.getStringBuffer() + 1;
-    int no  = script_h.parseInt( &p_buf );
     int val = script_h.readInt();
 
     char val_str[20];
     sprintf( val_str, "%d", val );
-    setStr( &script_h.str_variables[ no ], val_str );
+    setStr( &script_h.str_variables[no], val_str );
     
     return RET_CONTINUE;
 }
@@ -620,7 +599,7 @@ int ScriptParser::intlimitCommand()
 int ScriptParser::incCommand()
 {
     int val = script_h.readInt();
-    script_h.setInt( script_h.getStringBuffer(), val + 1 );
+    script_h.setInt( &script_h.current_variable, val+1 );
 
     return RET_CONTINUE;
 }
@@ -645,14 +624,16 @@ int ScriptParser::ifCommand()
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, cBR->getAccessFlag( tmp_string_buffer ), condition_flag );
         }
         else if ( script_h.getStringBuffer()[0] == 'l' ){ // lchk
-            const char *buf = script_h.readStr();
+            script_h.readToken();
+            const char *buf = script_h.getStringBuffer();
             f = script_h.getLabelAccessFlag( buf+1 );
             //printf("lchk %s(%d,%d) ", tmp_string_buffer, getLabelAccessFlag( tmp_string_buffer+1 ), condition_flag );
         }
-        else if ( script_h.getStringBuffer()[0] == '$' || script_h.isQuat() ){
-            const char *buf = script_h.readStr( NULL, true ); // reread
-            tmp_buffer = new char[ strlen( buf ) + 1 ];
-            memcpy( tmp_buffer, buf, strlen( buf ) + 1 );
+        else if ( script_h.current_variable.type == ScriptHandler::VAR_STR || 
+                  script_h.current_variable.type == ScriptHandler::VAR_STR_CONST ){
+            const char *buf = script_h.readStr( true ); // reread
+            tmp_buffer = new char[ strlen(buf) + 1 ];
+            strcpy( tmp_buffer, buf );
             
             script_h.readToken();
             const char *save_buf = script_h.saveStringBuffer();
@@ -717,9 +698,9 @@ int ScriptParser::humanzCommand()
 
 int ScriptParser::gotoCommand()
 {
-    const char *buf = script_h.readStr();
+    script_h.readToken();
 
-    current_link_label_info->label_info = script_h.lookupLabel( buf+1 );
+    current_link_label_info->label_info = script_h.lookupLabel( script_h.getStringBuffer()+1 );
     current_link_label_info->current_line = 0;
     script_h.setCurrent( current_link_label_info->label_info.start_address );
     string_buffer_offset = 0;
@@ -750,16 +731,16 @@ void ScriptParser::gosubReal( const char *label, bool textgosub_flag, char *curr
 
 int ScriptParser::gosubCommand()
 {
-    const char *buf = script_h.readStr();
+    script_h.readToken();
     string_buffer_offset = 0;
-    gosubReal( buf+1, false, script_h.getNext() );
+    gosubReal( script_h.getStringBuffer()+1, false, script_h.getNext() );
 
     return RET_JUMP;
 }
 
 int ScriptParser::globalonCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "globalon: not in the define section" );
 
     globalon_flag = true;
     return RET_CONTINUE;
@@ -770,16 +751,18 @@ int ScriptParser::forCommand()
     for_stack_depth++;
     ForInfo *info = new ForInfo();
 
-    script_h.readToken();
-    setStr( &info->p_int, script_h.getStringBuffer() );
+    script_h.readInt();
+    info->var = script_h.current_variable;
     
     script_h.readToken();
-    if ( script_h.getStringBuffer()[0] != '=' ) errorAndExit( script_h.getStringBuffer(), "for: no =" );
+    if ( script_h.getStringBuffer()[0] != '=' ) 
+        errorAndExit( script_h.getStringBuffer(), "for: no =" );
 
-    script_h.setInt( info->p_int, script_h.readInt() );
+    script_h.setInt( &info->var, script_h.readInt() );
     
-    const char *buf = script_h.readStr();
-    if ( strcmp( buf, "to" ) ) errorAndExit( script_h.getStringBuffer(), "for: no to" );
+    script_h.readToken();
+    if ( strcmp( script_h.getStringBuffer(), "to" ) ) 
+        errorAndExit( script_h.getStringBuffer(), "for: no to" );
     
     info->to = script_h.readInt();
 
@@ -810,7 +793,7 @@ int ScriptParser::forCommand()
 
 int ScriptParser::filelogCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer() );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "filelog: not in the define section" );
 
     filelog_flag = true;
     return RET_CONTINUE;
@@ -818,7 +801,7 @@ int ScriptParser::filelogCommand()
 
 int ScriptParser::effectcutCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer() );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "effectcut: not in the define section." );
     
     effect_cut_flag = true;
 
@@ -827,7 +810,7 @@ int ScriptParser::effectcutCommand()
 
 int ScriptParser::effectblankCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer() );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "effectblank: not in the define section" );
     
     effect_blank = script_h.readInt();
 
@@ -843,7 +826,7 @@ int ScriptParser::effectCommand()
         elink = &window_effect;
     }
     else{
-        if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+        if ( current_mode != DEFINE_MODE ) errorAndExit( "effect: not in the define section" );
 
         elink = new EffectLink();
         elink->num = script_h.readInt();
@@ -860,35 +843,19 @@ int ScriptParser::effectCommand()
 int ScriptParser::divCommand()
 {
     int val1 = script_h.readInt();
-    char *save_buf = script_h.saveStringBuffer();
+    script_h.pushVariable();
 
     int val2 = script_h.readInt();
-    script_h.setInt( save_buf, val1 / val2 );
+    script_h.setInt( &script_h.pushed_variable, val1/val2 );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::dimCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "dim: not in the define section" );
 
-    struct ScriptHandler::ArrayVariable array;
-    int dim = 1;
-
-    script_h.readToken();
-    char *p_buf = script_h.getCurrent();
-    int no = script_h.decodeArraySub( &p_buf, &array );
-
-    script_h.array_variables[ no ].num_dim = array.num_dim;
-    //printf("dimCommand no=%d dim=%d\n",no,array.num_dim);
-    for ( int i=0 ; i<array.num_dim ; i++ ){
-        //printf("%d ",array.dim[i]);
-        script_h.array_variables[ no ].dim[i] = array.dim[i]+1;
-        dim *= (array.dim[i]+1);
-        script_h.array_variables[ no ].data = new int[ dim ];
-        memset( script_h.array_variables[ no ].data, 0, sizeof(int) * dim );
-    }
-    skipToken();
+    script_h.declareDim();
     
     return RET_CONTINUE;
 }
@@ -916,7 +883,7 @@ int ScriptParser::defmp3volCommand()
 
 int ScriptParser::defaultspeedCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "defaultspeed: not in the define section" );
 
     for ( int i=0 ; i<3 ; i++ ) default_text_speed[i] = script_h.readInt();
 
@@ -926,7 +893,7 @@ int ScriptParser::defaultspeedCommand()
 int ScriptParser::decCommand()
 {
     int val = script_h.readInt();
-    script_h.setInt( script_h.getStringBuffer(), val - 1 );
+    script_h.setInt( &script_h.current_variable, val-1 );
 
     return RET_CONTINUE;
 }
@@ -936,42 +903,39 @@ int ScriptParser::dateCommand()
     time_t t = time(NULL);
     struct tm *tm = localtime( &t );
 
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_year + 1900 );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, tm->tm_year + 1900 );
 
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_mon + 1 );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, tm->tm_mon + 1 );
 
-    script_h.readToken();
-    script_h.setInt( script_h.getStringBuffer(), tm->tm_mday );
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, tm->tm_mday );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::cmpCommand()
 {
-    script_h.readToken();
+    script_h.readInt();
+    script_h.pushVariable();
+    
+    script_h.readStr();
     char *save_buf = script_h.saveStringBuffer();
 
     const char *buf = script_h.readStr();
-    char *tmp_buffer = new char[ strlen( buf ) + 1 ];
-    strcpy( tmp_buffer, buf );
 
-    buf = script_h.readStr();
-
-    int val = strcmp( tmp_buffer, buf );
+    int val = strcmp( save_buf, buf );
     if      ( val > 0 ) val = 1;
     else if ( val < 0 ) val = -1;
-    script_h.setInt( save_buf, val );
+    script_h.setInt( &script_h.pushed_variable, val );
 
-    delete[] tmp_buffer;
-    
     return RET_CONTINUE;
 }
 
 int ScriptParser::clickvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "clickvoice: not in the define section" );
 
     for ( int i=0 ; i<CLICKVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
@@ -1002,7 +966,10 @@ int ScriptParser::clickstrCommand()
 
 int ScriptParser::breakCommand()
 {
-    const char *buf = script_h.readStr();
+    char *tmp_buf = script_h.getCurrent();
+    script_h.readToken();
+    const char *buf = script_h.getStringBuffer();
+
     if ( buf[0] == '*' ){
         current_link_label_info->label_info = script_h.lookupLabel( buf+1 );
         current_link_label_info->current_line = 0;
@@ -1012,6 +979,7 @@ int ScriptParser::breakCommand()
         return RET_JUMP;
     }
     else{
+        script_h.setCurrent( tmp_buf );
         break_flag = true;
         return RET_CONTINUE;
     }
@@ -1019,12 +987,12 @@ int ScriptParser::breakCommand()
 
 int ScriptParser::atoiCommand()
 {
-    script_h.readToken();
-    char *save_buf = script_h.saveStringBuffer();
+    script_h.readInt();
+    script_h.pushVariable();
     
     const char *buf = script_h.readStr();
         
-    script_h.setInt( save_buf, atoi( buf ) );
+    script_h.setInt( &script_h.pushed_variable, atoi(buf) );
     
     return RET_CONTINUE;
 }
@@ -1047,29 +1015,27 @@ int ScriptParser::arcCommand()
         fprintf( stderr, " *** failed to open archive %s ...  ***\n", buf2 );
         exit(-1);
     }
+    delete[] buf2;
+    
     return RET_CONTINUE;
 }
 
 int ScriptParser::addCommand()
 {
-    char *tmp_buffer;
-    int no;
-
     script_h.readToken();
-    char *save_buf = script_h.saveStringBuffer();
     
-    if ( script_h.getStringBuffer()[0] == '%' || script_h.getStringBuffer()[0] == '?' ){
-        char *p_buf = script_h.getStringBuffer();
-        no = script_h.parseInt( &p_buf );
+    if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
+         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+        int val = script_h.getIntVariable( &script_h.current_variable );
+        script_h.pushVariable();
 
-        script_h.setInt( save_buf, no + script_h.readInt() );
+        script_h.setInt( &script_h.pushed_variable, val+script_h.readInt() );
     }
-    else if ( script_h.getStringBuffer()[0] == '$'){
-        char *p_buf = script_h.getStringBuffer()+1;
-        no = script_h.parseInt( &p_buf );
+    else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
+        int no = script_h.current_variable.var_no;
 
         const char *buf = script_h.readStr();
-        tmp_buffer = script_h.str_variables[ no ];
+        char *tmp_buffer = script_h.str_variables[no];
 
         script_h.str_variables[ no ] = new char[ strlen( tmp_buffer ) + strlen( buf ) + 1 ];
         strcpy( script_h.str_variables[ no ], tmp_buffer );
