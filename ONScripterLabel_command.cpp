@@ -629,6 +629,20 @@ int ONScripterLabel::savetimeCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::savescreenshotCommand()
+{
+    if      ( script_h.isName( "savescreenshot" ) ){
+    }
+    else if ( script_h.isName( "savescreenshot2" ) ){
+    }
+
+    const char *buf = script_h.readStr();
+
+    printf("savescreen %s\n", buf );
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::saveonCommand()
 {
     saveon_flag = true;
@@ -1312,6 +1326,13 @@ int ONScripterLabel::inputCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::getzxcCommand()
+{
+    getzxc_flag = true;
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::getversionCommand()
 {
     script_h.readInt();
@@ -1348,11 +1369,12 @@ int ONScripterLabel::gettextCommand()
     int no = script_h.current_variable.var_no;
 
     char *buf = new char[ current_text_buffer->buffer2_count + 1 ];
-    int i=0;
-    for ( i=0 ; i<current_text_buffer->buffer2_count ; i++ ){
-        buf[i] = current_text_buffer->buffer2[i];
+    int i, j;
+    for ( i=0, j=0 ; i<current_text_buffer->buffer2_count ; i++ ){
+        if ( current_text_buffer->buffer2[i] != 0x0a )
+            buf[j++] = current_text_buffer->buffer2[i];
     }
-    buf[i] = '\0';
+    buf[j] = '\0';
 
     setStr( &script_h.str_variables[no], buf );
     delete[] buf;
@@ -1364,6 +1386,20 @@ int ONScripterLabel::gettabCommand()
 {
     gettab_flag = true;
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getscreenshotCommand()
+{
+    if ( screenshot_surface )
+        SDL_FreeSurface( screenshot_surface );
+
+    unsigned int w = script_h.readInt();
+    unsigned int h = script_h.readInt();
+    screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
+
+    resizeSurface( screen_surface, NULL, screenshot_surface, NULL );
+
     return RET_CONTINUE;
 }
 
@@ -1470,6 +1506,13 @@ int ONScripterLabel::getmouseposCommand()
     script_h.readInt();
     script_h.setInt( &script_h.current_variable, current_button_state.y * screen_ratio2 / screen_ratio1 );
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getinsertCommand()
+{
+    getinsert_flag = true;
+
     return RET_CONTINUE;
 }
 
@@ -1916,12 +1959,8 @@ int ONScripterLabel::cellCommand()
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    if ( sprite_info[ sprite_no ].num_of_cells > 0 ){
-        if ( no >= sprite_info[ sprite_no ].num_of_cells )
-            no = sprite_info[ sprite_no ].num_of_cells-1;
-        sprite_info[ sprite_no ].current_cell = no;
-        dirty_rect.add( sprite_info[ sprite_no ].pos );
-    }
+    sprite_info[ sprite_no ].current_cell = no;
+    dirty_rect.add( sprite_info[ sprite_no ].pos );
         
     return RET_CONTINUE;
 }

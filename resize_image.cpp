@@ -46,13 +46,14 @@ inline void calcWeightedSum( unsigned char **dst, unsigned char **src, int x1, i
 
 void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int dst_total_width,
                   unsigned char *src_buffer, int src_width, int src_height, int src_total_width,
-                  int byte_per_pixel, unsigned char *tmp_buffer )
+                  int byte_per_pixel, unsigned char *tmp_buffer, int tmp_total_width )
 {
     unsigned char *tmp_buf = tmp_buffer;
     unsigned char *src_buf = src_buffer;
 
     int i, j, s;
-    int offset = src_total_width - src_width * byte_per_pixel;
+    int src_offset = src_total_width - src_width * byte_per_pixel;
+    int tmp_offset = tmp_total_width - src_width * byte_per_pixel;
 
     unsigned int mx, my;
 
@@ -68,8 +69,8 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
             calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 1, my, src_total_width, byte_per_pixel );
         if ( src_width > 1 )
             calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 0, my, src_total_width, byte_per_pixel );
-        tmp_buf += offset;
-        src_buf += offset;
+        tmp_buf += tmp_offset;
+        src_buf += src_offset;
 
         for ( i=1 ; i<src_height-1 ; i++ ){
             calcWeightedSum( &tmp_buf, &src_buf, 0, -1, mx, 1, src_total_width, byte_per_pixel );
@@ -77,8 +78,8 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
                 calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 1, 1, src_total_width, byte_per_pixel );
             if ( src_width > 1 )
                 calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 0, 1, src_total_width, byte_per_pixel );
-            tmp_buf += offset;
-            src_buf += offset;
+            tmp_buf += tmp_offset;
+            src_buf += src_offset;
         }
 
         if ( src_height > 1 ){
@@ -104,14 +105,14 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
             int dx = x & 0x7;
             x >>= 3;
 
-            int k = src_total_width * y + x * byte_per_pixel;
+            int k = tmp_total_width * y + x * byte_per_pixel;
             
             for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
                 unsigned int p;
                 p =  (8-dx)*(8-dy)*tmp_buffer[ k ];
                 p +=    dx *(8-dy)*tmp_buffer[ k+mx*byte_per_pixel ];
-                p += (8-dx)*   dy *tmp_buffer[ k+my*src_total_width ];
-                p +=    dx *   dy *tmp_buffer[ k+mx*byte_per_pixel+my*src_total_width ];
+                p += (8-dx)*   dy *tmp_buffer[ k+my*tmp_total_width ];
+                p +=    dx *   dy *tmp_buffer[ k+mx*byte_per_pixel+my*tmp_total_width ];
                 *dst_buf++ = (unsigned char)(p>>6);
             }
         }

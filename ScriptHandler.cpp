@@ -123,14 +123,9 @@ void ScriptHandler::setCurrent( char *pos, bool reread_flag )
 
 int ScriptHandler::getLineByAddress( char *address )
 {
-    int i;
-    
-    for ( i=0 ; i<num_of_labels-1 ; i++ ){
-        if ( label_info[i+1].start_address > address )
-            break;
-    }
+    LabelInfo label = getLabelByAddress( address );
 
-    char *addr = label_info[i].start_address;
+    char *addr = label.start_address;
     int line = 0;
     while ( address > addr ){
         if ( *addr == 0x0a ) line++;
@@ -141,15 +136,10 @@ int ScriptHandler::getLineByAddress( char *address )
 
 char *ScriptHandler::getAddressByLine( int line )
 {
-    int i;
+    LabelInfo label = getLabelByLine( line );
     
-    for ( i=0 ; i<num_of_labels-1 ; i++ ){
-        if ( label_info[i+1].start_line > line )
-            break;
-    }
-
-    int l = line - label_info[i].start_line;
-    char *addr = label_info[i].start_address;
+    int l = line - label.start_line;
+    char *addr = label.start_address;
     while ( l > 0 ){
         while( *addr != 0x0a ) addr++;
         addr++;
@@ -160,22 +150,22 @@ char *ScriptHandler::getAddressByLine( int line )
 
 ScriptHandler::LabelInfo ScriptHandler::getLabelByAddress( char *address )
 {
-    for ( int i=0 ; i<num_of_labels-1 ; i++ ){
+    int i;
+    for ( i=0 ; i<num_of_labels-1 ; i++ ){
         if ( label_info[i+1].start_address > address )
             return label_info[i];
     }
-    errorAndExit( "getLabelByAddress: Label is not found." );
-    return label_info[0];
+    return label_info[i];
 }
 
 ScriptHandler::LabelInfo ScriptHandler::getLabelByLine( int line )
 {
-    for ( int i=0 ; i<num_of_labels-1 ; i++ ){
+    int i;
+    for ( i=0 ; i<num_of_labels-1 ; i++ ){
         if ( label_info[i+1].start_line > line )
             return label_info[i];
     }
-    errorAndExit( "getLabelByLine: Label is not found." );
-    return label_info[0];
+    return label_info[i];
 }
 
 char *ScriptHandler::getNext()

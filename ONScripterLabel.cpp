@@ -73,6 +73,8 @@ static struct FuncLUT{
     {"selectbtnwait", &ONScripterLabel::btnwaitCommand},
     {"select",   &ONScripterLabel::selectCommand},
     {"savetime",   &ONScripterLabel::savetimeCommand},
+    //    {"savescreenshot2",   &ONScripterLabel::savescreenshotCommand},
+    //    {"savescreenshot",   &ONScripterLabel::savescreenshotCommand},
     {"saveon",   &ONScripterLabel::saveonCommand},
     {"saveoff",   &ONScripterLabel::saveoffCommand},
     {"savegame",   &ONScripterLabel::savegameCommand},
@@ -122,8 +124,10 @@ static struct FuncLUT{
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"input", &ONScripterLabel::inputCommand},
+    {"getzxc", &ONScripterLabel::getzxcCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
+    {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
     {"gettab", &ONScripterLabel::gettabCommand},
     {"getret", &ONScripterLabel::getretCommand},
@@ -131,6 +135,7 @@ static struct FuncLUT{
     {"getpageup", &ONScripterLabel::getpageupCommand},
     {"getpage", &ONScripterLabel::getpageCommand},
     {"getmousepos", &ONScripterLabel::getmouseposCommand},
+    {"getinsert", &ONScripterLabel::getinsertCommand},
     {"getfunction", &ONScripterLabel::getfunctionCommand},
     {"getenter", &ONScripterLabel::getenterCommand},
     {"getcursorpos", &ONScripterLabel::getcursorposCommand},
@@ -321,6 +326,7 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     SDL_SetAlpha( effect_dst_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     shelter_text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( shelter_text_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    screenshot_surface = NULL;
 
     internal_timer = SDL_GetTicks();
     automode_flag = false;
@@ -636,12 +642,12 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                 }
                 if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                      p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                    if ( sprite_info[ p_button_link->sprite_no ].num_of_cells >= 1 )
+                        sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                     if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                         decodeExbtnControl( text_surface, p_button_link->exbtn_ctl );
                     }
                     sprite_info[ p_button_link->sprite_no ].visible = true;
-                    if ( sprite_info[ p_button_link->sprite_no ].num_of_cells >= 1 )
-                        sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                 }
                 if ( nega_mode == 1 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( text_surface, &p_button_link->image_rect );
                 if ( monocro_flag && !(event_mode & WAIT_INPUT_MODE) ) makeMonochromeSurface( text_surface, &p_button_link->image_rect );
@@ -854,7 +860,7 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Su
     unsigned char *tmp_buffer = new unsigned char[ (len<16)?16:len ];
     resizeImage( (unsigned char*)dst_buffer, dst_rect2.w, dst_rect2.h, dst->w * 4,
                  (unsigned char*)src_buffer, src_rect2.w, src_rect2.h, src->w * 4,
-                 4, tmp_buffer );
+                 4, tmp_buffer, src_rect2.w * 4 );
     delete[] tmp_buffer;
 
     SDL_UnlockSurface( src );
@@ -1555,6 +1561,7 @@ void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool a
 
 void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str )
 {
+    char sound_name[256];
     int num = 0, sprite_no = -1;
     bool active_flag = false;
     bool first_flag = true;
@@ -1576,10 +1583,20 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
         else if ( *ctl_str == 'S' ){
             if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
             sound_flag = true;
+            num = 0;
+            sprite_no = -1;
         }
         else if ( *ctl_str == ',' ){
             sprite_no = num;
             num = 0;
+        }
+        else if ( *ctl_str == '(' ){
+            ctl_str++;
+            char *buf = sound_name;
+            while (*ctl_str != ')' && *ctl_str != '\0' ) *buf++ = *ctl_str++;
+            *buf++ = '\0';
+            playWave( sound_name, false, DEFAULT_WAVE_CHANNEL );
+            if ( *ctl_str == ')' ) ctl_str++;
         }
         else{
             num = num * 10 + *ctl_str - '0';
@@ -1781,10 +1798,12 @@ void ONScripterLabel::allocateSelectedSurface( int sprite_no, ButtonLink *button
 void ONScripterLabel::disableGetButtonFlag()
 {
     btndown_flag = false;
-        
+
+    getzxc_flag = false;
     gettab_flag = false;
     getpageup_flag = false;
     getpagedown_flag = false;
+    getinsert_flag = false;
     getfunction_flag = false;
     getenter_flag = false;
     getcursor_flag = false;

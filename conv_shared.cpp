@@ -86,7 +86,7 @@ void rescaleImage( unsigned char *original_buffer, int width, int height, int by
 
     resizeImage( rescaled_tmp_buffer, w, h, w*byte_per_pixel+w_pad,
                  original_buffer, width, height, width*byte_per_pixel+width_pad,
-                 byte_per_pixel, rescaled_tmp2_buffer );
+                 byte_per_pixel, rescaled_tmp2_buffer, width*byte_per_pixel+width_pad );
 }
 
 

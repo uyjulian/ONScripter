@@ -205,6 +205,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
                 anim->font_size_xy[0] = script_h.readInt();
                 anim->font_size_xy[1] = script_h.readInt();
                 anim->font_pitch = script_h.readInt() + anim->font_size_xy[0];
+                if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+                    script_h.readInt(); // 0 ... normal, 1 ... no anti-aliasing, 2 ... Fukuro
+                }
                 buffer = script_h.getNext();
                 script_h.popCurrent();
                 buffer++;
@@ -301,18 +304,20 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 
 void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
 {
-    if ( anim->current_cell >= anim->num_of_cells ) return;
+    int cell = anim->current_cell;
+    if ( cell >= anim->num_of_cells )
+        cell = anim->num_of_cells - 1;
     
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
         alphaBlend( dst_surface, anim->pos,
                     dst_surface, anim->pos.x, anim->pos.y,
-                    anim->image_surface, anim->image_surface->w / anim->num_of_cells * anim->current_cell, 0, 
+                    anim->image_surface, anim->image_surface->w / anim->num_of_cells * cell, 0, 
                     NULL, 0, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
         return;
     }
     else if ( !anim->image_surface ) return;
 
-    int offset = (anim->pos.w + anim->alpha_offset) * anim->current_cell;
+    int offset = (anim->pos.w + anim->alpha_offset) * cell;
 
     SDL_Rect dst_rect = anim->pos;
     if ( !anim->abs_flag ){

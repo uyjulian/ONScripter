@@ -460,9 +460,16 @@ int ScriptParser::midCommand()
     int len   = script_h.readInt();
 
     if ( script_h.str_variables[no] ) delete[] script_h.str_variables[no];
-    script_h.str_variables[no] = new char[len+1];
-    memcpy( script_h.str_variables[no], save_buf+start, len );
-    script_h.str_variables[no][len] = '\0';
+    if ( start >= strlen(save_buf) ){
+        script_h.str_variables[no] = NULL;
+    }
+    else{
+        if ( start+len > strlen(save_buf ) )
+            len = strlen(save_buf) - start;
+        script_h.str_variables[no] = new char[len+1];
+        memcpy( script_h.str_variables[no], save_buf+start, len );
+        script_h.str_variables[no][len] = '\0';
+    }
 
     return RET_CONTINUE;
 }

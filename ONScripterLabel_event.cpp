@@ -595,6 +595,18 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( getcursor_flag && event->keysym.sym == SDLK_LEFT ){
             current_button_state.button  = -43;
         }
+        else if ( getinsert_flag && event->keysym.sym == SDLK_INSERT ){
+            current_button_state.button  = -50;
+        }
+        else if ( getzxc_flag && event->keysym.sym == SDLK_z ){
+            current_button_state.button  = -51;
+        }
+        else if ( getzxc_flag && event->keysym.sym == SDLK_x ){
+            current_button_state.button  = -52;
+        }
+        else if ( getzxc_flag && event->keysym.sym == SDLK_c ){
+            current_button_state.button  = -53;
+        }
         else if ( getfunction_flag ){
             if      ( event->keysym.sym == SDLK_F1 )
                 current_button_state.button = -21;

@@ -106,6 +106,7 @@ public:
     int saveoffCommand();
     int savegameCommand();
     int savefileexistCommand();
+    int savescreenshotCommand();
     int resettimerCommand();
     int resetCommand();
     int repaintCommand();
@@ -144,15 +145,18 @@ public:
     int isskipCommand();
     int isdownCommand();
     int inputCommand();
+    int getzxcCommand();
     int getversionCommand();
     int gettimerCommand();
     int gettextCommand();
     int gettabCommand();
+    int getscreenshotCommand();
     int getretCommand();
     int getregCommand();
     int getpageupCommand();
     int getpageCommand();
     int getmouseposCommand();
+    int getinsertCommand();
     int getfunctionCommand();
     int getenterCommand();
     int getcursorposCommand();
@@ -303,6 +307,7 @@ private:
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
     SDL_Surface *shelter_text_surface; // Intermediate buffer to store text_surface when entering system menu
+    SDL_Surface *screenshot_surface; // Screenshot
 #if defined(USE_OVERLAY)    
     SDL_Overlay *screen_overlay;
 #endif
@@ -359,9 +364,11 @@ private:
 
     int current_over_button;
 
+    bool getzxc_flag;
     bool gettab_flag;
     bool getpageup_flag;
     bool getpagedown_flag;
+    bool getinsert_flag;
     bool getfunction_flag;
     bool getenter_flag;
     bool getcursor_flag;
