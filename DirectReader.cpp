@@ -160,8 +160,8 @@ void DirectReader::writeShort( FILE *fp, unsigned short ch )
 {
     unsigned char buf[2];
 
-    buf[0] = ((unsigned char*)&ch)[1];
-    buf[1] = ((unsigned char*)&ch)[0];
+    buf[0] = (ch>>8) & 0xff;
+    buf[1] = ch & 0xff;
     fwrite( &buf, 1, 2, fp );
 }
 
@@ -169,10 +169,10 @@ void DirectReader::writeLong( FILE *fp, unsigned long ch )
 {
     unsigned char buf[4];
     
-    buf[0] = ((unsigned char*)&ch)[3];
-    buf[1] = ((unsigned char*)&ch)[2];
-    buf[2] = ((unsigned char*)&ch)[1];
-    buf[3] = ((unsigned char*)&ch)[0];
+    buf[0] = (ch>>24) & 0xff;
+    buf[1] = (ch>>16) & 0xff;
+    buf[2] = (ch>>8)  & 0xff;
+    buf[3] = ch & 0xff;
     fwrite( &buf, 1, 4, fp );
 }
 
