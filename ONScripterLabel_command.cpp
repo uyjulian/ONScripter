@@ -1888,11 +1888,13 @@ int ONScripterLabel::cspCommand()
                 sprite_info[i].pos.x = -1000 * screen_ratio1 / screen_ratio2;
                 sprite_info[i].pos.y = -1000 * screen_ratio1 / screen_ratio2;
             }
+            root_button_link.removeSprite(i);
             sprite_info[i].remove();
         }
     else{
         if ( sprite_info[no].visible )
             dirty_rect.add( sprite_info[no].pos );
+        root_button_link.removeSprite(no);
         sprite_info[no].remove();
     }
 

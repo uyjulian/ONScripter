@@ -1233,7 +1233,7 @@ void ScriptHandler::saveLog( LOG_TYPE type )
 
     FILE *fp;
     if ( ( fp = fopen( info->filename, "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write NScrllog.dat\n" );
+        fprintf( stderr, "can't write %s\n", info->filename );
         exit( -1 );
     }
 

@@ -364,6 +364,19 @@ private:
             button->next = this->next;
             this->next = button;
         };
+        void removeSprite( int no ){
+            ButtonLink *p = this;
+            while(p->next){
+                if ( p->next->sprite_no == no ){
+                    ButtonLink *p2 = p->next;
+                    p->next = p->next->next;
+                    delete p2;
+                }
+                else{
+                    p = p->next;
+                }
+            }
+        };
     } root_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
 
     int current_over_button;
