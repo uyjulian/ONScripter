@@ -28,6 +28,7 @@ void optionHelp()
 {
     printf( "Usage: onscripter [option ...]\n" );
     printf( "      --cdaudio\t\tuse CD audio if available\n");
+    printf( "      --cdnumber cd_number\tchoose the CD-ROM drive number\n");
     printf( "  -f, --font file\tuse file as a default font\n");
     printf( "      --registry file\tuse file as a default registry file\n");
     printf( "      --dll file\tuse file as a default dll file\n");
@@ -70,6 +71,11 @@ int main( int argc, char **argv )
             }
             else if ( !strcmp( argv[0]+1, "-cdaudio" ) ){
                 ons.enableCDAudio();
+            }
+            else if ( !strcmp( argv[0]+1, "-cdnumber" ) ){
+                argc--;
+                argv++;
+                ons.setCDNumber(atoi(argv[0]));
             }
             else if ( !strcmp( argv[0]+1, "f" ) || !strcmp( argv[0]+1, "-font" ) ){
                 argc--;

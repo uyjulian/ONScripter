@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -575,13 +575,13 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
          ( event->type == SDL_KEYUP ||
            ( btndown_flag && event->keysym.sym == SDLK_RETURN) ) ){
         if ( ( !getcursor_flag && event->keysym.sym == SDLK_UP ) ||
-             event->keysym.sym == SDLK_p ){
+             event->keysym.sym == SDLK_p || event->keysym.sym == SDLK_k ){
 
             shiftCursorOnButton( 1 );
             return;
         }
         else if ( ( !getcursor_flag && event->keysym.sym == SDLK_DOWN ) ||
-                  event->keysym.sym == SDLK_n ){
+                  event->keysym.sym == SDLK_n || event->keysym.sym == SDLK_j ){
 
             shiftCursorOnButton( -1 );
             return;

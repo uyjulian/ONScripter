@@ -78,6 +78,7 @@ public:
     // ----------------------------------------
     // start-up options
     void enableCDAudio();
+    void setCDNumber(int cdrom_drive_number);
     void setFontFile(const char *filename);
     void setRegistryFile(const char *filename);
     void setDLLFile(const char *filename);
@@ -565,6 +566,7 @@ private:
     
     /* ---------------------------------------- */
     /* Sound related variables */
+    int  cdrom_drive_number;
     char *default_cdrom_drive;
     bool cdaudio_on_flag; // false if mute
     bool volume_on_flag; // false if mute

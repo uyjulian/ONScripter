@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Jan. 31, 2005<br>
+Last updated: Feb. 14, 2005<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20050131.tar.gz">onscripter-beta-20050131.tar.gz</A>
+<A HREF="onscripter-beta-20050214.tar.gz">onscripter-beta-20050214.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20050130.tar.gz">onscripter-beta-20050130.tar.gz</A>
+<A HREF="onscripter-beta-20050131.tar.gz">onscripter-beta-20050131.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -53,8 +53,11 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <LI> <A HREF="http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody/onscripter/">Debian Woody 用</A>（古賀さん）
        <UL>
          <LI> ;*** apt line ***
-	 <LI> deb http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
-	 <LI> deb-src http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
+<!--	 <LI> deb http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
+	 <LI> deb-src http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./-->
+	 <LI> deb http://detroit.ddo.jp/debian/woody/ ./ 
+	 <LI> deb-src http://detroit.ddo.jp/debian/woody/ ./ 
+
        </UL>
   <LI> <A HREF="http://abe.nwr.jp/onscripter/rpms/">Red Hat 系(RPM) 用</A>（αβεさん）
        <UL>
@@ -277,8 +280,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>space</td><td>マウスの左クリックと同じだが、下にボタンがあってもボタン外を押したことになる</td></tr>
 <tr><td>return</td><td>マウスの左クリックと同じ</td></tr>
 <tr><td>escape</td><td>マウスの右クリックと同じ</td></tr>
-<tr><td>p, ↑</td><td>ボタン・文章選択時にマウスカーソルを前の選択肢に動かす</td></tr>
-<tr><td>n, ↓</td><td>ボタン・文章選択時にマウスカーソルを次の選択肢に動かす</td></tr>
+<tr><td>p, k, ↑</td><td>ボタン・文章選択時にマウスカーソルを前の選択肢に動かす</td></tr>
+<tr><td>n, j, ↓</td><td>ボタン・文章選択時にマウスカーソルを次の選択肢に動かす</td></tr>
 <tr><td>s, ←</td><td>次の選択肢まで飛ばすモードに切り替え</td></tr>
 <tr><td>o, →</td><td>１ページ表示をするかしないかの切り替え</td></tr>
 <tr><td> f </td><td>Full screen mode と Window mode の切り替え</td></tr>
@@ -304,6 +307,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>-h,--help</td><td>へルプを表示して終了します。</td></tr>
 <tr><td>-v,--version</td><td>バージョンを表示して終了します。</td></tr>
 <tr><td>--cdaudio</td><td>CD Audio 演奏モードに変更します。CD Audio が使えなかったとしても MP3 ファイルは使用しません。</td></tr>
+<tr><td>--cdnumber cd_number</td><td>CD Audio 演奏モードにおいて、CD-ROM ドライブが複数ある場合に、何番目のドライブを使用するのかを指定します。デフォルトは０番目です。</td></tr>
 <tr><td>-f,--font file</td><td>使用するフォントの path を指定します。</td></tr>
 <tr><td>--registry file</td><td>使用する registry file を指定します。</td></tr>
 <tr><td>--dll file</td><td>使用する dll file を指定します。</td></tr>

@@ -324,6 +324,7 @@ ONScripterLabel::ONScripterLabel()
 {
     printf("ONScripter\n");
 
+    cdrom_drive_number = 0;
     cdaudio_flag = false;
     default_font = NULL;
     registry_file = NULL;
@@ -344,6 +345,11 @@ ONScripterLabel::~ONScripterLabel()
 
 void ONScripterLabel::enableCDAudio(){
     cdaudio_flag = true;
+}
+
+void ONScripterLabel::setCDNumber(int cdrom_drive_number)
+{
+    this->cdrom_drive_number = cdrom_drive_number;
 }
 
 void ONScripterLabel::setFontFile(const char *filename)
@@ -435,7 +441,8 @@ int ONScripterLabel::init()
     this->cdaudio_flag = cdaudio_flag;
     cdrom_info = NULL;
     if ( cdaudio_flag ){
-        if ( SDL_CDNumDrives() > 0 ) cdrom_info = SDL_CDOpen( 0 );
+        if ( cdrom_drive_number >= 0 && cdrom_drive_number < SDL_CDNumDrives() )
+            cdrom_info = SDL_CDOpen( cdrom_drive_number );
         if ( !cdrom_info ){
             fprintf(stderr, "Couldn't open default CD-ROM: %s\n", SDL_GetError());
         }

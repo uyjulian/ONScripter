@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -252,10 +252,9 @@ int ONScripterLabel::playMP3( int cd_no )
             SMPEG_enableaudio( mp3_sample, 1 );
         }
 #endif
-        SMPEG_play( mp3_sample );
         SMPEG_setvolume( mp3_sample, mp3_volume );
-
         Mix_HookMusic( mp3callback, mp3_sample );
+        SMPEG_play( mp3_sample );
     }
 
     return 0;
@@ -523,7 +522,7 @@ void ONScripterLabel::setupWaveHeader( unsigned char *buffer, int channels, int 
     header.byte_size[3] = (byte_size >> 24) & 0xff;
     header.sample_byte_size[0] = sample_byte_size;
     header.sample_byte_size[1] = 0;
-    header.sample_bit_size[0] = sample_byte_size * 8;
+    header.sample_bit_size[0] = 16; // 16bit
     header.sample_bit_size[1] = 0;
 
     memcpy( header.chunk_id, "data", 4 );
