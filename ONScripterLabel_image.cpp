@@ -306,7 +306,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         else
             top = z_order;
         for ( i=MAX_SPRITE_NUM-1 ; i>top ; i-- ){
-            if ( sprite_info[i].image_name && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip, refresh_mode );
             }
         }
@@ -329,7 +329,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         else
             top = 0;
         for ( i=z_order ; i>=top ; i-- ){
-            if ( sprite_info[i].image_name && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip, refresh_mode );
             }
         }

@@ -134,10 +134,12 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
             f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
             f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
             f_info.clear();
-            f_info.setLineArea( strlen(anim->file_name)/2+1 );
+            //f_info.setLineArea( strlen(anim->file_name)/2+1 );
             
-            f_info.font_size_xy[0] = f_info.pitch_xy[0] = anim->font_size_xy[0];
-            f_info.font_size_xy[1] = f_info.pitch_xy[1] = anim->font_size_xy[1];
+            f_info.pitch_xy[0] = f_info.pitch_xy[0] - f_info.font_size_xy[0] + anim->font_size_xy[0];
+            f_info.font_size_xy[0] = anim->font_size_xy[0];
+            f_info.pitch_xy[1] = f_info.pitch_xy[1] - f_info.font_size_xy[1] + anim->font_size_xy[1];
+            f_info.font_size_xy[1] = anim->font_size_xy[1];
             if ( anim->font_pitch >= 0 )
                 f_info.pitch_xy[0] = anim->font_pitch;
             f_info.ttf_font = NULL;
@@ -344,5 +346,5 @@ void ONScripterLabel::stopAnimation( int click )
         dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
 
-    flushDirect( dst_rect, REFRESH_SHADOW_TEXT_MODE );
+    flushDirect( dst_rect, refresh_shadow_text_mode );
 }

@@ -25,9 +25,6 @@
 
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
-#define IS_TWO_BYTE(x) \
-        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
-
 #define IS_KINSOKU(x)	\
         ( *(x) == (char)0x81 && *((x)+1) == (char)0x41 || \
           *(x) == (char)0x81 && *((x)+1) == (char)0x42 || \
@@ -134,8 +131,16 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
 
     if ( info->isEndOfLine() ){
         info->newLine();
-        if ( lookback_flag )
+        for (int i=0 ; i<indent_offset ; i++)
+            sentence_font.advanceChar();
+
+        if ( lookback_flag ){
             current_text_buffer->addBuffer( 0x0a );
+            for (int i=0 ; i<indent_offset ; i++){
+                current_text_buffer->addBuffer(((char*)"　")[0]);
+                current_text_buffer->addBuffer(((char*)"　")[1]);
+            }
+        }
     }
 
     int xy[2];
@@ -160,7 +165,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
     else if ( flush_flag ){
         info->addShadeArea(dst_rect, shade_distance);
-        flushDirect( dst_rect, REFRESH_SHADOW_TEXT_MODE );
+        flushDirect( dst_rect, refresh_shadow_text_mode );
     }
 
     /* ---------------------------------------- */
@@ -223,10 +228,19 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 #endif            
         if ( IS_TWO_BYTE(*str) ){
             /* Kinsoku process */
-            if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )) info->newLine();
+            if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )){
+                info->newLine();
+                for (int i=0 ; i<indent_offset ; i++){
+                    sentence_font.advanceChar();
+                }
+            }
             text[0] = *str++;
             text[1] = *str++;
             drawChar( text, info, false, false, surface, cache_surface );
+        }
+        else if (*str == 0x0a){
+            info->newLine();
+            str++;
         }
         else{
             text[0] = *str++;
@@ -246,7 +260,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     SDL_Rect clipped_rect = info->calcUpdatedArea(start_xy, screen_ratio1, screen_ratio2);
     info->addShadeArea(clipped_rect, shade_distance);
     
-    if ( flush_flag ) flush( REFRESH_SHADOW_TEXT_MODE, &clipped_rect );
+    if ( flush_flag ) flush( refresh_shadow_text_mode, &clipped_rect );
     
     if ( rect ) *rect = clipped_rect;
 }
@@ -282,11 +296,28 @@ void ONScripterLabel::restoreTextBuffer()
         }
         else{
             out_text[0] = current_text_buffer->buffer2[i];
-            if ( !IS_TWO_BYTE(out_text[0]) ){
+#ifndef FORCE_1BYTE_CHAR            
+            if (out_text[0] == '('){
+                startRuby(current_text_buffer->buffer2 + i + 1, f_info);
+                continue;
+            }
+            else if (out_text[0] == '/' && ruby_struct.stage == RubyStruct::BODY ){
+                f_info.addMargin(ruby_struct.margin);
+                i = ruby_struct.ruby_end - current_text_buffer->buffer2 - 1;
+                if (*ruby_struct.ruby_end == ')'){
+                    endRuby(false, false, NULL);
+                    i++;
+                }
+                continue;
+            }
+            else
+#endif                
+                if ( !IS_TWO_BYTE(out_text[0]) ){
                 out_text[1] = '\0';
                 drawChar( out_text, &f_info, false, false, NULL, text_surface );
                 f_info.advanceChar(-1);
             }
+            
             if (i+1 == current_text_buffer->buffer2_count) break;
             out_text[1] = current_text_buffer->buffer2[i+1];
             if (out_text[1] == 0x0a) continue;
@@ -315,7 +346,7 @@ int ONScripterLabel::enterTextDisplayMode()
         }
         else{
             next_display_mode = TEXT_DISPLAY_MODE;
-            refreshSurface( effect_dst_surface, NULL, REFRESH_SHADOW_TEXT_MODE );
+            refreshSurface( effect_dst_surface, NULL, refresh_shadow_text_mode );
             dirty_rect.clear();
             dirty_rect.add( sentence_font_info.pos );
 
@@ -360,7 +391,7 @@ int ONScripterLabel::clickWait( char *out_text )
             string_buffer_offset++;
         }
         else{ // called on '@'
-            flush(REFRESH_SHADOW_TEXT_MODE);
+            flush(refresh_shadow_text_mode);
             string_buffer_offset++;
         }
         num_chars_in_sentence = 0;
@@ -416,7 +447,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
     }
-    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( REFRESH_SHADOW_TEXT_MODE );
+    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( refresh_shadow_text_mode );
     
     if ( (skip_flag || ctrl_pressed_status) && !textgosub_label  ){
         event_mode = WAIT_SLEEP_MODE;
@@ -455,11 +486,86 @@ int ONScripterLabel::clickNewPage( char *out_text )
     return RET_WAIT | RET_NOREAD;
 }
 
+void ONScripterLabel::startRuby(char *buf, FontInfo &info)
+{
+    ruby_struct.stage = RubyStruct::BODY;
+    ruby_font = info;
+    ruby_font.ttf_font = NULL;
+    if ( ruby_struct.font_size_xy[0] != -1 )
+        ruby_font.font_size_xy[0] = ruby_struct.font_size_xy[0];
+    else
+        ruby_font.font_size_xy[0] = info.font_size_xy[0]/2;
+    if ( ruby_struct.font_size_xy[1] != -1 )
+        ruby_font.font_size_xy[1] = ruby_struct.font_size_xy[1];
+    else
+        ruby_font.font_size_xy[1] = info.font_size_xy[1]/2;
+                
+    ruby_struct.body_count = 0;
+    ruby_struct.ruby_count = 0;
+
+    while(1){
+        if ( *buf == '/' ){
+            ruby_struct.stage = RubyStruct::RUBY;
+            ruby_struct.ruby_start = buf+1;
+        }
+        else if ( *buf == ')' || *buf == '\0' ){
+            break;
+        }
+        else{
+            if ( ruby_struct.stage == RubyStruct::BODY )
+                ruby_struct.body_count++;
+            else if ( ruby_struct.stage == RubyStruct::RUBY )
+                ruby_struct.ruby_count++;
+        }
+        buf++;
+    }
+    ruby_struct.ruby_end = buf;
+    ruby_struct.stage = RubyStruct::BODY;
+    ruby_struct.margin = ruby_font.initRuby(info, ruby_struct.body_count/2, ruby_struct.ruby_count/2);
+}
+
+void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface)
+{
+    char out_text[3]= {'\0', '\0', '\0'};
+    if ( rubyon_flag ){
+        ruby_font.clear();
+        char *buf = ruby_struct.ruby_start;
+        while( buf < ruby_struct.ruby_end ){
+            out_text[0] = *buf;
+            if ( IS_TWO_BYTE(*buf) ){
+                out_text[1] = *(buf+1);
+                drawChar( out_text, &ruby_font, flush_flag, lookback_flag, surface, text_surface );
+                buf++;
+            }
+            else{
+                out_text[1] = '\0';
+                drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, text_surface );
+                if ( *(buf+1) ){
+                    out_text[1] = *(buf+1);
+                    drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, text_surface );
+                    buf++;
+                }
+            }
+            buf++;
+        }
+    }
+    ruby_struct.stage = RubyStruct::NONE;
+}
+
 int ONScripterLabel::textCommand()
 {
-    int i, ret = enterTextDisplayMode();
+    int ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
     
+    if (pretextgosub_label && 
+        (line_enter_flag == false ||
+         (string_buffer_offset == 0 &&
+          script_h.getStringBuffer()[string_buffer_offset] == '['))){
+        line_enter_flag = true;
+        gosubReal( pretextgosub_label, script_h.getCurrent() );
+        return RET_CONTINUE;
+    }
+
     //printf("textCommand %c %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode);
     char out_text[3]= {'\0', '\0', '\0'};
 
@@ -511,8 +617,13 @@ int ONScripterLabel::textCommand()
         event_mode = IDLE_EVENT_MODE;
     }
 
-    if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
-         script_h.getStringBuffer()[string_buffer_offset] == '\0' ) return RET_CONTINUE;
+    
+    if (script_h.getStringBuffer()[string_buffer_offset] == '\0' ||
+        script_h.getStringBuffer()[string_buffer_offset] == 0x0a ){
+        indent_offset = 0;
+        line_enter_flag = false;
+        return RET_CONTINUE;
+    }
 
     new_line_skip_flag = false;
     
@@ -534,8 +645,13 @@ int ONScripterLabel::textCommand()
             }
 
             if (sentence_font.isEndOfLine(i/2)){
-                sentence_font.newLine();
                 current_text_buffer->addBuffer( 0x0a );
+                sentence_font.newLine();
+                for (int i=0 ; i<indent_offset ; i++){
+                    current_text_buffer->addBuffer(((char*)"　")[0]);
+                    current_text_buffer->addBuffer(((char*)"　")[1]);
+                    sentence_font.advanceChar();
+                }
             }
         }
         
@@ -574,105 +690,18 @@ int ONScripterLabel::textCommand()
             return RET_WAIT | RET_NOREAD;
         }
     }
-    else if ( ch == '(' ){
-        int i=0;
-
-        while( (ch = script_h.getStringBuffer()[string_buffer_offset+i]) != '\0' ){
-            if ( ch == '(' ){
-                ruby_struct.stage = RubyStruct::BODY;
-                ruby_font = sentence_font;
-                ruby_font.ttf_font = NULL;
-                if ( ruby_struct.font_size_xy[0] != -1 )
-                    ruby_font.font_size_xy[0] = ruby_struct.font_size_xy[0];
-                else
-                    ruby_font.font_size_xy[0] = sentence_font.font_size_xy[0]/2;
-                if ( ruby_struct.font_size_xy[1] != -1 )
-                    ruby_font.font_size_xy[1] = ruby_struct.font_size_xy[1];
-                else
-                    ruby_font.font_size_xy[1] = sentence_font.font_size_xy[1]/2;
-                
-                ruby_struct.body_count = 0;
-                ruby_struct.ruby_count = 0;
-                ruby_struct.ruby_end = 0;
-            }
-            else if ( ch == '/' ){
-                ruby_struct.stage = RubyStruct::RUBY;
-                ruby_struct.ruby_start = string_buffer_offset + i + 1;
-            }
-            else if ( ch == ')' ){
-                ruby_struct.ruby_end = string_buffer_offset + i;
-                break;
-            }
-            else{
-                if ( ruby_struct.stage == RubyStruct::BODY )
-                    ruby_struct.body_count++;
-                else if ( ruby_struct.stage == RubyStruct::RUBY )
-                    ruby_struct.ruby_count++;
-            }
-            i++;
-        }
-        ruby_struct.stage = RubyStruct::BODY;
-        ruby_struct.margin = ruby_font.initRuby(sentence_font, ruby_struct.body_count/2, ruby_struct.ruby_count/2);
-        
-        string_buffer_offset++;
-        return RET_CONTINUE | RET_NOREAD;
-    }
-    else if ( ch == ')' ){
-        if ( rubyon_flag ){
-            bool flush_flag = true;
-            if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
-                flush_flag = false;
-        
-            ruby_font.clear();
-            for ( i=ruby_struct.ruby_start ; i<string_buffer_offset ; i++ ){
-                out_text[0] = script_h.getStringBuffer()[i];
-                if ( IS_TWO_BYTE(script_h.getStringBuffer()[i]) ){
-                    out_text[1] = script_h.getStringBuffer()[i+1];
-                    drawChar( out_text, &ruby_font, flush_flag, false, accumulation_surface, text_surface );
-                    i++;
-                }
-                else{
-                    out_text[1] = '\0';
-                    drawChar( out_text, &ruby_font, flush_flag, false, accumulation_surface, text_surface );
-                    if ( script_h.getStringBuffer()[i+1] ){
-                        out_text[1] = script_h.getStringBuffer()[i+1];
-                        drawChar( out_text, &ruby_font, flush_flag, false, accumulation_surface, text_surface );
-                        i++;
-                    }
-                }
-            }
-        }
-        ruby_struct.stage = RubyStruct::NONE;
-        string_buffer_offset++;
-        return RET_CONTINUE | RET_NOREAD;
-    }
     else if ( ch == '@' ){ // wait for click
         return clickWait( NULL );
-    }
-    else if ( ch == '/' ){
-        if ( ruby_struct.stage == RubyStruct::BODY ){
-            sentence_font.addMargin(ruby_struct.margin);
-            if ( ruby_struct.ruby_end != 0 ){
-                ruby_struct.stage = RubyStruct::RUBY;
-                string_buffer_offset = ruby_struct.ruby_end;
-            }
-            else{
-                ruby_struct.stage = RubyStruct::NONE;
-                while( script_h.getStringBuffer()[string_buffer_offset] != '\0' )
-                    string_buffer_offset++;
-            }
-            return RET_CONTINUE | RET_NOREAD;
-        }
-        else{ // skip new line
-            new_line_skip_flag = true;
-            //string_buffer_offset++;
-            return RET_CONTINUE; // skip the following eol
-        }
     }
     else if ( ch == '\\' ){ // new page
         return clickNewPage( NULL );
     }
-    else if ( ch == '!' ){
+    else if ( ch == '_' ){ // Ignore following forced return
+        clickstr_state = CLICK_IGNORE;
+        string_buffer_offset++;
+        return RET_CONTINUE | RET_NOREAD;
+    }
+    else if ( ch == '!' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
         string_buffer_offset++;
         if ( script_h.getStringBuffer()[ string_buffer_offset ] == 's' ){
             string_buffer_offset++;
@@ -716,20 +745,40 @@ int ONScripterLabel::textCommand()
         }
         return RET_CONTINUE | RET_NOREAD;
     }
-    else if ( ch == '_' ){ // Ignore following forced return
-        clickstr_state = CLICK_IGNORE;
-        string_buffer_offset++;
-        return RET_CONTINUE | RET_NOREAD;
-    }
-    else if ( ch == '\0' ){ // End of line
-        printf("end of text\n");
-        return RET_CONTINUE;
-    }
-    else if ( ch == '#' ){
+    else if ( ch == '#' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
         readColor( &sentence_font.color, script_h.getStringBuffer() + string_buffer_offset );
         readColor( &ruby_font.color, script_h.getStringBuffer() + string_buffer_offset );
         string_buffer_offset += 7;
         return RET_CONTINUE | RET_NOREAD;
+    }
+    else if ( ch == '(' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)){
+        current_text_buffer->addBuffer('(');
+        startRuby( script_h.getStringBuffer() + string_buffer_offset + 1, sentence_font );
+        
+        string_buffer_offset++;
+        return RET_CONTINUE | RET_NOREAD;
+    }
+    else if ( ch == '/' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
+        if ( ruby_struct.stage == RubyStruct::BODY ){
+            current_text_buffer->addBuffer('/');
+            sentence_font.addMargin(ruby_struct.margin);
+            string_buffer_offset = ruby_struct.ruby_end - script_h.getStringBuffer();
+            if (*ruby_struct.ruby_end == ')'){
+                if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
+                    endRuby(false, true, accumulation_surface);
+                else
+                    endRuby(true, true, accumulation_surface);
+                current_text_buffer->addBuffer(')');
+                string_buffer_offset++;
+            }
+
+            return RET_CONTINUE | RET_NOREAD;
+        }
+        else{ // skip new line
+            new_line_skip_flag = true;
+            //string_buffer_offset++;
+            return RET_CONTINUE; // skip the following eol
+        }
     }
     else{
         out_text[0] = ch;

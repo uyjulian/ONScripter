@@ -35,7 +35,7 @@ void optionHelp()
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
-    printf( "      --key-exe file\tuse file (EXE) which contains a key table\n");
+    printf( "      --key-exe file\tset file (*.EXE) which contains a key table\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);
@@ -55,18 +55,10 @@ int SDL_main( int argc, char **argv )
 int main( int argc, char **argv )
 #endif
 {
-    bool cdaudio_flag = false;
-    char *default_font = NULL;
-    char *default_registry = NULL;
-    char *default_dll = NULL;
-    char *default_archive_path = NULL;
-    char *default_key_exe = NULL;
-    bool force_button_shortcut_flag = false;
-    bool disable_rescale_flag = false;
-    bool edit_flag = false;
-    
-    /* ---------------------------------------- */
-    /* Parse options */
+    ONScripterLabel ons;
+
+    // ----------------------------------------
+    // Parse options
     argv++;
     while( argc > 1 ){
         if ( argv[0][0] == '-' ){
@@ -77,51 +69,41 @@ int main( int argc, char **argv )
                 optionVersion();
             }
             else if ( !strcmp( argv[0]+1, "-cdaudio" ) ){
-                cdaudio_flag = true;
+                ons.enableCDAudio();
             }
             else if ( !strcmp( argv[0]+1, "f" ) || !strcmp( argv[0]+1, "-font" ) ){
                 argc--;
                 argv++;
-                if ( default_font ) delete[] default_font;
-                default_font = new char[ strlen( argv[0] ) + 1 ];
-                memcpy( default_font, argv[0], strlen( argv[0] ) + 1 );
+                ons.setFontFile(argv[0]);
             }
             else if ( !strcmp( argv[0]+1, "-registry" ) ){
                 argc--;
                 argv++;
-                if ( default_registry ) delete[] default_registry;
-                default_registry = new char[ strlen( argv[0] ) + 1 ];
-                memcpy( default_registry, argv[0], strlen( argv[0] ) + 1 );
+                ons.setRegistryFile(argv[0]);
             }
             else if ( !strcmp( argv[0]+1, "-dll" ) ){
                 argc--;
                 argv++;
-                if ( default_dll ) delete[] default_dll;
-                default_dll = new char[ strlen( argv[0] ) + 1 ];
-                memcpy( default_dll, argv[0], strlen( argv[0] ) + 1 );
+                ons.setDLLFile(argv[0]);
             }
             else if ( !strcmp( argv[0]+1, "r" ) || !strcmp( argv[0]+1, "-root" ) ){
                 argc--;
                 argv++;
-                if ( default_archive_path ) delete[] default_archive_path;
-                default_archive_path = new char[ strlen( argv[0] ) + 1 ];
-                memcpy( default_archive_path, argv[0], strlen( argv[0] ) + 1 );
+                ons.setArchivePath(argv[0]);
             }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
-                force_button_shortcut_flag = true;
+                ons.enableButtonShortCut();
             }
             else if ( !strcmp( argv[0]+1, "-disable-rescale" ) ){
-                disable_rescale_flag = true;
+                ons.disableRescale();
             }
             else if ( !strcmp( argv[0]+1, "-edit" ) ){
-                edit_flag = true;
+                ons.enableEdit();
             }
             else if ( !strcmp( argv[0]+1, "-key-exe" ) ){
                 argc--;
                 argv++;
-                if ( default_key_exe ) delete[] default_key_exe;
-                default_key_exe = new char[ strlen( argv[0] ) + 1 ];
-                memcpy( default_key_exe, argv[0], strlen( argv[0] ) + 1 );
+                ons.setKeyEXE(argv[0]);
             }
             else{
                 printf(" unknown option %s\n", argv[0] );
@@ -134,10 +116,11 @@ int main( int argc, char **argv )
         argv++;
     }
     
-    /* ---------------------------------------- */
-    /* Run ONScripter */
-    ONScripterLabel *ons = new ONScripterLabel( cdaudio_flag, default_font, default_registry, default_dll, default_archive_path, force_button_shortcut_flag, disable_rescale_flag, edit_flag, default_key_exe );
-    ons->eventLoop();
+    // ----------------------------------------
+    // Run ONScripter
+
+    if (ons.init()) exit(-1);
+    ons.eventLoop();
     
     exit(0);
 }

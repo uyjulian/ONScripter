@@ -140,7 +140,7 @@ void ONScripterLabel::executeSystemCall()
 
 void ONScripterLabel::executeSystemMenu()
 {
-    MenuLink *link;
+    RMenuLink *link;
     int counter = 1;
 
     current_font = &menu_font;
@@ -161,7 +161,7 @@ void ONScripterLabel::executeSystemMenu()
         if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_CLICK], false, DEFAULT_WAVE_CHANNEL );
 
-        link = root_menu_link.next;
+        link = root_rmenu_link.next;
         while ( link ){
             if ( current_button_state.button == counter++ ){
                 system_menu_mode = link->system_call_no;
@@ -178,23 +178,23 @@ void ONScripterLabel::executeSystemMenu()
 
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
-        flush( REFRESH_SHADOW_TEXT_MODE );
+        flush( refresh_shadow_text_mode );
 
-        menu_font.num_xy[0] = menu_link_width;
-        menu_font.num_xy[1] = menu_link_num;
+        menu_font.num_xy[0] = rmenu_link_width;
+        menu_font.num_xy[1] = rmenu_link_num;
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-        menu_font.setXY( (menu_font.num_xy[0] - menu_link_width) / 2,
-                         (menu_font.num_xy[1] - menu_link_num) / 2 );
+        menu_font.setXY( (menu_font.num_xy[0] - rmenu_link_width) / 2,
+                         (menu_font.num_xy[1] - rmenu_link_num) / 2 );
 
-        link = root_menu_link.next;
+        link = root_rmenu_link.next;
         while( link ){
             ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
             root_button_link.insert( button );
             button->no = counter++;
 
             link = link->next;
-            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
+            flush( refresh_shadow_text_mode, &button->image_rect );
         }
 
         flushEvent();
@@ -294,7 +294,7 @@ void ONScripterLabel::executeSystemLoad()
         menu_font.newLine();
         menu_font.newLine();
         
-        flush( REFRESH_SHADOW_TEXT_MODE );
+        flush( refresh_shadow_text_mode );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -322,7 +322,7 @@ void ONScripterLabel::executeSystemLoad()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
+            flush( refresh_shadow_text_mode, &button->image_rect );
         }
         delete[] buffer;
 
@@ -365,7 +365,7 @@ void ONScripterLabel::executeSystemSave()
         menu_font.newLine();
         menu_font.newLine();
         
-        flush( REFRESH_SHADOW_TEXT_MODE );
+        flush( refresh_shadow_text_mode );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -394,7 +394,7 @@ void ONScripterLabel::executeSystemSave()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
+            flush( refresh_shadow_text_mode, &button->image_rect );
         }
         delete[] buffer;
 
@@ -434,12 +434,14 @@ void ONScripterLabel::executeSystemYesNo()
                 leaveSystemCall( false );
                 saveon_flag = true;
                 internal_saveon_flag = true;
-                script_h.readToken();
-                string_buffer_offset = 0;
+                text_on_flag = true;
+                indent_offset = 0;
+                line_enter_flag = false;
+                readToken();
             }
             else if ( yesno_caller & SYSTEM_RESET ){
                 resetCommand();
-                script_h.readToken();
+                readToken();
                 //event_mode = WAIT_SLEEP_MODE;
                 event_mode = IDLE_EVENT_MODE;
                 leaveSystemCall( false );
@@ -488,7 +490,7 @@ void ONScripterLabel::executeSystemYesNo()
         uchar3 color = {0xcc, 0xcc, 0xcc};
         drawString( name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
 
-        flush( REFRESH_SHADOW_TEXT_MODE );
+        flush( refresh_shadow_text_mode );
         
         int offset1 = strlen(name)/5;
         int offset2 = strlen(name)/2 - offset1;
@@ -497,14 +499,14 @@ void ONScripterLabel::executeSystemYesNo()
         ButtonLink *button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 1;
-        flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
+        flush( refresh_shadow_text_mode, &button->image_rect );
 
         strcpy( name, MESSAGE_NO );
         menu_font.setXY(offset2, 2);
         button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 2;
-        flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
+        flush( refresh_shadow_text_mode, &button->image_rect );
         
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();
@@ -646,5 +648,5 @@ void ONScripterLabel::executeSystemLookback()
     for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
     
     dirty_rect.fill( screen_width, screen_height );
-    flush( REFRESH_SHADOW_TEXT_MODE );
+    flush( refresh_shadow_text_mode );
 }

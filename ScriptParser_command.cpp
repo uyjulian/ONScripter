@@ -179,10 +179,8 @@ int ScriptParser::selectvoiceCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "selectvoice: not in the define section" );
 
-    for ( int i=0 ; i<SELECTVOICE_NUM ; i++ ){
-        const char *buf = script_h.readStr();
-        setStr( &selectvoice_file_name[i], buf );
-    }
+    for ( int i=0 ; i<SELECTVOICE_NUM ; i++ )
+        setStr( &selectvoice_file_name[i], script_h.readStr() );
 
     return RET_CONTINUE;
 }
@@ -261,33 +259,22 @@ int ScriptParser::roffCommand()
 
 int ScriptParser::rmenuCommand()
 {
-    /* ---------------------------------------- */
-    /* Delete old MenuLink */
-    MenuLink *link = root_menu_link.next;
-    while( link ){
-        MenuLink *menu = link->next;
-        if ( link->label ) delete[] link->label;
-        delete link;
-        link = menu;
-    }
+    deleteRMenuLink();
 
-    link = &root_menu_link;
-    menu_link_num   = 0;
-    menu_link_width = 0;
-
+    RMenuLink *link = &root_rmenu_link;
     bool comma_flag = true;
     while ( comma_flag ){
-        link->next = new MenuLink();
+        link->next = new RMenuLink();
 
         const char *buf = script_h.readStr();
         setStr( &link->next->label, buf );
-        if ( menu_link_width < strlen( buf )/2 + 1 )
-            menu_link_width = strlen( buf )/2 + 1;
+        if ( rmenu_link_width < strlen( buf )/2 + 1 )
+            rmenu_link_width = strlen( buf )/2 + 1;
 
         link->next->system_call_no = getSystemCallNo( script_h.readLabel() );
 
         link = link->next;
-        menu_link_num++;
+        rmenu_link_num++;
 
         comma_flag = script_h.getEndStatus() & ScriptHandler::END_COMMA;
     }
@@ -375,11 +362,11 @@ int ScriptParser::nextCommand()
     
     int val;
     if ( !break_flag ){
-        val   = script_h.num_variables[ last_nest_info->var_no ];
+        val   = script_h.variable_data[ last_nest_info->var_no ].num;
         script_h.setNumVariable( last_nest_info->var_no, val + last_nest_info->step );
     }
 
-    val = script_h.num_variables[ last_nest_info->var_no ];
+    val = script_h.variable_data[ last_nest_info->var_no ].num;
     
     if ( break_flag ||
          last_nest_info->step >= 0 && val > last_nest_info->to ||
@@ -440,7 +427,7 @@ int ScriptParser::movCommand()
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         script_h.pushVariable();
         const char *buf = script_h.readStr();
-        setStr( &script_h.str_variables[ script_h.pushed_variable.var_no ], buf );
+        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf );
     }
     else errorAndExit( "mov: no variable" );
     
@@ -486,16 +473,17 @@ int ScriptParser::midCommand()
     unsigned int start = script_h.readInt();
     unsigned int len   = script_h.readInt();
 
-    if ( script_h.str_variables[no] ) delete[] script_h.str_variables[no];
+    ScriptHandler::VariableData &vd = script_h.variable_data[no];
+    if ( vd.str ) delete[] vd.str;
     if ( start >= strlen(save_buf) ){
-        script_h.str_variables[no] = NULL;
+        vd.str = NULL;
     }
     else{
         if ( start+len > strlen(save_buf ) )
             len = strlen(save_buf) - start;
-        script_h.str_variables[no] = new char[len+1];
-        memcpy( script_h.str_variables[no], save_buf+start, len );
-        script_h.str_variables[no][len] = '\0';
+        vd.str = new char[len+1];
+        memcpy( vd.str, save_buf+start, len );
+        vd.str[len] = '\0';
     }
 
     return RET_CONTINUE;
@@ -526,10 +514,8 @@ int ScriptParser::menuselectvoiceCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "menuselectvoice: not in the define section" );
 
-    for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ ){
-        const char *buf = script_h.readStr();
-        setStr( &menuselectvoice_file_name[i], buf );
-    }
+    for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
+        setStr( &menuselectvoice_file_name[i], script_h.readStr() );
 
     return RET_CONTINUE;
 }
@@ -556,6 +542,23 @@ int ScriptParser::maxkaisoupageCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::lookbackspCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "lookbacksp: not in the define section" );
+
+    for ( int i=0 ; i<2 ; i++ )
+        lookback_sp[i] = script_h.readInt();
+
+    if ( filelog_flag ){
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], DEFAULT_LOOKBACK_NAME0, true );
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], DEFAULT_LOOKBACK_NAME1, true );
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], DEFAULT_LOOKBACK_NAME2, true );
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], DEFAULT_LOOKBACK_NAME3, true );
+    }
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::lookbackcolorCommand()
 {
     const char *buf = script_h.readStr();
@@ -567,7 +570,12 @@ int ScriptParser::lookbackcolorCommand()
 int ScriptParser::linepageCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "linepage: not in the define section" );
-    script_h.setLinepage( true );
+
+    linepage_line = 1000; // some big number
+    if ( script_h.isName( "linepage2" ) )
+        linepage_line = script_h.readInt();
+
+    script_h.setLinepage(true);
 
     return RET_CONTINUE;
 }
@@ -623,7 +631,7 @@ int ScriptParser::itoaCommand()
 
     char val_str[20];
     sprintf( val_str, "%d", val );
-    setStr( &script_h.str_variables[no], val_str );
+    setStr( &script_h.variable_data[no].str, val_str );
     
     return RET_CONTINUE;
 }
@@ -634,9 +642,9 @@ int ScriptParser::intlimitCommand()
     
     int no = script_h.readInt();
 
-    script_h.num_limit_flag[ no ]  = true;
-    script_h.num_limit_lower[ no ] = script_h.readInt();
-    script_h.num_limit_upper[ no ] = script_h.readInt();
+    script_h.variable_data[no].num_limit_flag  = true;
+    script_h.variable_data[no].num_limit_lower = script_h.readInt();
+    script_h.variable_data[no].num_limit_upper = script_h.readInt();
 
     return RET_CONTINUE;
 }
@@ -665,13 +673,13 @@ int ScriptParser::ifCommand()
         if (script_h.compareString("fchk")){
             script_h.readLabel();
             buf = script_h.readStr();
-            f = (script_h.findAndAddLog( ScriptHandler::FILE_LOG, buf, false ));
+            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ));
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
             buf = script_h.readStr();
-            f = (script_h.findAndAddLog( ScriptHandler::LABEL_LOG, buf+1, false ));
+            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ));
             //printf("lchk %s(%d,%d) ", tmp_string_buffer, script_h.fineAndAddLabelLog( tmp_string_buffer+1, false ), condition_flag );
         }
         else{
@@ -796,19 +804,16 @@ int ScriptParser::globalonCommand()
 
 int ScriptParser::getparamCommand()
 {
+    if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
+        errorAndExit( "getpapam: not in a subroutine" );
+
     int end_status;
     do{
         script_h.readVariable();
         script_h.pushVariable();
         
-        if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
-            errorAndExit( "getpapam: not in a subroutine" );
-        
         script_h.pushCurrent(last_nest_info->next_script);
 
-        script_h.readVariable();
-        end_status = script_h.getEndStatus();
-        
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_PTR ){
             script_h.readVariable();
             script_h.setInt( &script_h.pushed_variable, script_h.current_variable.var_no );
@@ -819,8 +824,10 @@ int ScriptParser::getparamCommand()
         }
         else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
             const char *buf = script_h.readStr();
-            setStr( &script_h.str_variables[ script_h.pushed_variable.var_no ], buf );
+            setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf );
         }
+        
+        end_status = script_h.getEndStatus();
         
         last_nest_info->next_script = script_h.getNext();
         script_h.popCurrent();
@@ -878,7 +885,7 @@ int ScriptParser::filelogCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "filelog: not in the define section" );
 
     filelog_flag = true;
-    script_h.loadLog( ScriptHandler::FILE_LOG );
+    script_h.loadLog( script_h.log_info[ScriptHandler::FILE_LOG] );
     
     return RET_CONTINUE;
 }
@@ -1038,10 +1045,8 @@ int ScriptParser::clickvoiceCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "clickvoice: not in the define section" );
 
-    for ( int i=0 ; i<CLICKVOICE_NUM ; i++ ){
-        const char *buf = script_h.readStr();
-        setStr( &clickvoice_file_name[i], buf );
-    }
+    for ( int i=0 ; i<CLICKVOICE_NUM ; i++ )
+        setStr( &clickvoice_file_name[i], script_h.readStr() );
 
     return RET_CONTINUE;
 }
@@ -1134,17 +1139,18 @@ int ScriptParser::addCommand()
         int no = script_h.current_variable.var_no;
 
         const char *buf = script_h.readStr();
-        char *tmp_buffer = script_h.str_variables[no];
+        ScriptHandler::VariableData &vd = script_h.variable_data[no];
+        char *tmp_buffer = vd.str;
 
         if ( tmp_buffer ){
-            script_h.str_variables[ no ] = new char[ strlen( tmp_buffer ) + strlen( buf ) + 1 ];
-            strcpy( script_h.str_variables[ no ], tmp_buffer );
-            strcat( script_h.str_variables[ no ], buf );
+            vd.str = new char[ strlen( tmp_buffer ) + strlen( buf ) + 1 ];
+            strcpy( vd.str, tmp_buffer );
+            strcat( vd.str, buf );
             delete[] tmp_buffer;
         }
         else{
-            script_h.str_variables[ no ] = new char[ strlen( buf ) + 1 ];
-            strcpy( script_h.str_variables[ no ], buf );
+            vd.str = new char[ strlen( buf ) + 1 ];
+            strcpy( vd.str, buf );
         }
     }
     else errorAndExit( "add: no variable." );

@@ -25,28 +25,13 @@
 
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
-#define IS_TWO_BYTE(x) \
-        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
-
 ScriptHandler::ScriptHandler()
 {
-    int i;
-    
+    num_of_labels = 0;
     script_buffer = NULL;
-    end_status = END_NONE;
-    log_info[LABEL_LOG].current_log = &log_info[LABEL_LOG].root_log;
-    log_info[LABEL_LOG].num_logs = 0;
-    log_info[LABEL_LOG].filename = "NScrllog.dat";
-    log_info[FILE_LOG].current_log = &log_info[FILE_LOG].root_log;
-    log_info[FILE_LOG].num_logs = 0;
-    log_info[FILE_LOG].filename = "NScrflog.dat";
-    kidokuskip_flag = false;
     kidoku_buffer = NULL;
-    skip_enabled = false;
-
-    text_flag = true;
-    linepage_flag = false;
-    textgosub_flag = false;
+    log_info[LABEL_LOG].filename = "NScrllog.dat";
+    log_info[FILE_LOG].filename  = "NScrflog.dat";
     clickstr_list = NULL;
     
     string_buffer_length = 512;
@@ -54,33 +39,75 @@ ScriptHandler::ScriptHandler()
     str_string_buffer   = new char[ string_buffer_length ];
     saved_string_buffer = new char[ string_buffer_length ];
 
-    num_of_labels = 0;
-
-    /* ---------------------------------------- */
-    for ( i=0 ; i<VARIABLE_RANGE ; i++ ){
-        num_variables[i] = 0;
-        num_limit_flag[i] = false;
-        str_variables[i] = NULL;
-    }
-    root_array_variable = current_array_variable = NULL;
-
+    variable_data = new VariableData[VARIABLE_RANGE];
+    root_array_variable = NULL;
+    
     screen_size = SCREEN_SIZE_640x480;
     global_variable_border = 200;
-
-    last_name_alias = &root_name_alias;
-    last_name_alias->next = NULL;
-    last_str_alias = &root_str_alias;
-    last_str_alias->next = NULL;
 }
 
 ScriptHandler::~ScriptHandler()
 {
-    if ( script_buffer )       delete[] script_buffer;
-    if ( string_buffer )       delete[] string_buffer;
-    if ( str_string_buffer )   delete[] string_buffer;
-    if ( saved_string_buffer ) delete[] saved_string_buffer;
-    deleteLog( LABEL_LOG );
-    deleteLog( FILE_LOG );
+    reset();
+    
+    if ( script_buffer ) delete[] script_buffer;
+    if ( kidoku_buffer ) delete[] kidoku_buffer;
+
+    delete[] string_buffer;
+    delete[] string_buffer;
+    delete[] saved_string_buffer;
+    delete[] variable_data;
+}
+
+void ScriptHandler::reset()
+{
+    for (int i=0 ; i<VARIABLE_RANGE ; i++)
+        variable_data[i].reset(true);
+
+    ArrayVariable *av = root_array_variable;
+    while(av){
+        ArrayVariable *tmp = av;
+        av = av->next;
+        delete tmp;
+    }
+    root_array_variable = current_array_variable = NULL;
+
+    // reset log info
+    resetLog( log_info[LABEL_LOG] );
+    resetLog( log_info[FILE_LOG] );
+    
+    // reset number alias
+    Alias *alias;
+    alias = root_num_alias.next;
+    while (alias){
+        Alias *tmp = alias;
+        alias = alias->next;
+        delete tmp;
+    };
+    last_num_alias = &root_num_alias;
+    last_num_alias->next = NULL;
+
+    // reset string alias
+    alias = root_str_alias.next;
+    while (alias){
+        Alias *tmp = alias;
+        alias = alias->next;
+        delete tmp;
+    };
+    last_str_alias = &root_str_alias;
+    last_str_alias->next = NULL;
+
+    // reset misc. variables
+    end_status = END_NONE;
+    kidokuskip_flag = false;
+    text_flag = true;
+    linepage_flag = false;
+    textgosub_flag = false;
+    skip_enabled = false;
+    if (clickstr_list){
+        delete[] clickstr_list;
+        clickstr_list = NULL;
+    }
 }
 
 FILE *ScriptHandler::fopen( const char *path, const char *mode )
@@ -133,6 +160,7 @@ const char *ScriptHandler::readToken()
              (ch >= '0' && ch <= '9') ||
              ch == '@' || ch == '\\' || ch == '/' ||
              ch == '%' || ch == '?' || ch == '$' ||
+             ch == '[' ||
 #ifndef ENABLE_1BYTE_CHAR
              ch == '`' ||
 #endif             
@@ -150,28 +178,24 @@ const char *ScriptHandler::readToken()
                 ch = *buf;
             }
             else{
-                for (unsigned int i=0 ; i<2 ; i++){
-                    if (ch == '%' || ch == '?'){
-                        addIntVariable(&buf);
-                        i = 1;
-                    }
-                    else if (ch == '$'){
-                        addStrVariable(&buf);
-                        i = 1;
-                    }
-                    else{
-                        if (textgosub_flag && checkClickstr(buf) == 1)
-                            loop_flag = false;
-                        addStringBuffer( ch );
-                        buf++;
-                    }
-                    ch = *buf;
-                    if (ch == 0x0a || ch == '\0' || !loop_flag
-#ifdef ENABLE_1BYTE_CHAR
-                        || ch == '`'
-#endif
-                        ) break;
+                if (ch == '%' || ch == '?'){
+                    addIntVariable(&buf);
                 }
+                else if (ch == '$'){
+                    addStrVariable(&buf);
+                }
+                else{
+                    if (textgosub_flag && checkClickstr(buf) == 1)
+                        loop_flag = false;
+                    addStringBuffer( ch );
+                    buf++;
+                }
+                ch = *buf;
+                if (ch == 0x0a || ch == '\0' || !loop_flag
+#ifdef ENABLE_1BYTE_CHAR
+                    || ch == '`'
+#endif
+                    ) break;
                 SKIP_SPACE(buf);
                 ch = *buf;
             }
@@ -181,8 +205,7 @@ const char *ScriptHandler::readToken()
                && ch != '`'
 #endif
                );
-        if (linepage_flag) addStringBuffer( '\\' );
-        if (loop_flag && ch == 0x0a){
+        if (loop_flag && ch == 0x0a && !(textgosub_flag && linepage_flag)){
             addStringBuffer( ch );
             markAsKidoku( buf++ );
         }
@@ -201,8 +224,7 @@ const char *ScriptHandler::readToken()
             ch = *++buf;
         }
         if (ch == '`') buf++;
-        if (linepage_flag) addStringBuffer( '\\' );
-        if (ch == 0x0a){
+        if (ch == 0x0a && !(textgosub_flag && linepage_flag)){
             addStringBuffer( ch );
             markAsKidoku( buf++ );
         }
@@ -524,19 +546,18 @@ void ScriptHandler::addIntVariable(char **buf)
     int no = parseInt(buf);
 
     int len = getStringFromInteger( num_buf, no, -1 );
-    for (int i=0 ; i<len ; i++){
-        addStringBuffer( num_buf[i*2] );
-        addStringBuffer( num_buf[i*2+1] );
-    }
+    for (int i=0 ; i<len ; i++)
+        addStringBuffer( num_buf[i] );
 }
 
 void ScriptHandler::addStrVariable(char **buf)
 {
     (*buf)++;
     int no = parseInt(buf);
-    if ( str_variables[no] ){
-        for (unsigned int i=0 ; i<strlen( str_variables[no] ) ; i++){
-            addStringBuffer( str_variables[no][i] );
+    VariableData &vd = variable_data[no];
+    if ( vd.str ){
+        for (unsigned int i=0 ; i<strlen( vd.str ) ; i++){
+            addStringBuffer( vd.str[i] );
         }
     }
 }
@@ -594,7 +615,7 @@ int ScriptHandler::getIntVariable( VariableInfo *var_info )
     if ( var_info == NULL ) var_info = &current_variable;
     
     if ( var_info->type == VAR_INT )
-        return num_variables[ var_info->var_no];
+        return variable_data[var_info->var_no].num;
     else if ( var_info->type == VAR_ARRAY )
         return *getArrayPtr( var_info->var_no, var_info->array, 0 );
     return 0;
@@ -657,11 +678,12 @@ void ScriptHandler::pushVariable()
 void ScriptHandler::setNumVariable( int no, int val )
 {
     if ( no >= VARIABLE_RANGE ) errorAndExit( "setNumVariable: range exceeds." );
-    if ( num_limit_flag[no] ){
-        if      ( val < num_limit_lower[no] ) val = num_limit_lower[no];
-        else if ( val > num_limit_upper[no] ) val = num_limit_upper[no];
+    VariableData &vd = variable_data[no];
+    if ( vd.num_limit_flag ){
+        if      ( val < vd.num_limit_lower ) val = vd.num;
+        else if ( val > vd.num_limit_upper ) val = vd.num;
     }
-    num_variables[no] = val;
+    vd.num = val;
 }
 
 int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
@@ -691,6 +713,8 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
     char format[5];
     sprintf(format, "%%%dd", num_column);
     sprintf(buffer, format, no);
+    
+    return num_column;
 #else
     int c = 0;
     for (i=0 ; i<num_space ; i++){
@@ -710,9 +734,9 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
         c -= 2;
     }
     buffer[num_column*2] = '\0';
-#endif    
 
-    return num_column;
+    return num_column*2;
+#endif    
 }
 
 int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
@@ -723,7 +747,7 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
     bool cr_flag = false;
 
     if (encrypt_mode == 3 && !key_table_flag)
-        errorAndExit("readScriptSub: key_exe must be specified with --key-exe option.\n");
+        errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.\n");
 
     while(1)
     {
@@ -917,7 +941,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabel( const char *label )
 {
     int i = findLabel( label );
 
-    findAndAddLog( LABEL_LOG, label_info[i].name, true );
+    findAndAddLog( log_info[LABEL_LOG], label_info[i].name, true );
     return label_info[i];
 }
 
@@ -925,14 +949,14 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabelNext( const char *labe
 {
     int i = findLabel( label );
     if ( i+1 < num_of_labels ){
-        findAndAddLog( LABEL_LOG, label_info[i+1].name, true );
+        findAndAddLog( log_info[LABEL_LOG], label_info[i+1].name, true );
         return label_info[i+1];
     }
 
     return label_info[num_of_labels];
 }
 
-ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LOG_TYPE type, const char *name, bool add_flag )
+ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LogInfo &info, const char *name, bool add_flag )
 {
     char capital_name[256];
     for ( unsigned int i=0 ; i<strlen(name)+1 ; i++ ){
@@ -941,13 +965,7 @@ ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LOG_TYPE type, const char 
         else if ( capital_name[i] == '/' ) capital_name[i] = '\\';
     }
     
-    LogInfo *info = NULL;
-    if ( type == LABEL_LOG )
-        info = &log_info[LABEL_LOG];
-    else
-        info = &log_info[FILE_LOG];
-
-    LogLink *cur = info->root_log.next;
+    LogLink *cur = info.root_log.next;
     while( cur ){
         if ( !strcmp( cur->name, capital_name ) ) break;
         cur = cur->next;
@@ -957,48 +975,36 @@ ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LOG_TYPE type, const char 
     LogLink *link = new LogLink();
     link->name = new char[strlen(capital_name)+1];
     strcpy( link->name, capital_name );
-    info->current_log->next = link;
-    info->current_log = info->current_log->next;
-    info->num_logs++;
+    info.current_log->next = link;
+    info.current_log = info.current_log->next;
+    info.num_logs++;
     
     return link;
 }
 
-void ScriptHandler::deleteLog( LOG_TYPE type )
+void ScriptHandler::resetLog( LogInfo &info )
 {
-    LogInfo *info = NULL;
-    if ( type == LABEL_LOG )
-        info = &log_info[LABEL_LOG];
-    else
-        info = &log_info[FILE_LOG];
-    info->current_log = &info->root_log;
-
-    LogLink *link = info->root_log.next;
-
+    LogLink *link = info.root_log.next;
     while( link ){
         LogLink *tmp = link;
         link = link->next;
         delete tmp;
     }
-    info->num_logs = 0;
-    info->root_log.next = NULL;
+
+    info.root_log.next = NULL;
+    info.current_log = &info.root_log;
+    info.num_logs = 0;
 }
 
-void ScriptHandler::loadLog( LOG_TYPE type )
+void ScriptHandler::loadLog( LogInfo &info )
 {
-    deleteLog( type );
+    resetLog( info );
     
     int i, j, ch, count = 0;
     char buf[100];
 
-    LogInfo *info = NULL;
-    if ( type == LABEL_LOG )
-        info = &log_info[LABEL_LOG];
-    else
-        info = &log_info[FILE_LOG];
-
     FILE *fp; 
-    if ( ( fp = fopen( info->filename, "rb" ) ) != NULL ){
+    if ( ( fp = fopen( info.filename, "rb" ) ) != NULL ){
         while( (ch = fgetc( fp )) != 0x0a ){
             count = count * 10 + ch - '0';
         }
@@ -1009,36 +1015,30 @@ void ScriptHandler::loadLog( LOG_TYPE type )
             while( (ch = fgetc( fp )) != '"' ) buf[j++] = ch ^ 0x84;
             buf[j] = '\0';
 
-            findAndAddLog( type, buf, true );
+            findAndAddLog( info, buf, true );
         }
 
         fclose( fp );
     }
 }
 
-void ScriptHandler::saveLog( LOG_TYPE type )
+void ScriptHandler::saveLog( LogInfo &info )
 {
     int  i,j;
     char buf[10];
 
-    LogInfo *info = NULL;
-    if ( type == LABEL_LOG )
-        info = &log_info[LABEL_LOG];
-    else
-        info = &log_info[FILE_LOG];
-
     FILE *fp;
-    if ( ( fp = fopen( info->filename, "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write %s\n", info->filename );
+    if ( ( fp = fopen( info.filename, "wb" ) ) == NULL ){
+        fprintf( stderr, "can't write %s\n", info.filename );
         exit( -1 );
     }
 
-    sprintf( buf, "%d", info->num_logs );
+    sprintf( buf, "%d", info.num_logs );
     for ( i=0 ; i<(int)strlen( buf ) ; i++ ) fputc( buf[i], fp );
     fputc( 0x0a, fp );
 
-    LogLink *cur = info->root_log.next;
-    for ( i=0 ; i<info->num_logs ; i++ ){
+    LogLink *cur = info.root_log.next;
+    for ( i=0 ; i<info.num_logs ; i++ ){
         fputc( '"', fp );
         for ( j=0 ; j<(int)strlen( cur->name ) ; j++ )
             fputc( cur->name[j] ^ 0x84, fp );
@@ -1096,14 +1096,14 @@ void ScriptHandler::loadArrayVariable( FILE *fp )
 
 void ScriptHandler::addNumAlias( const char *str, int no )
 {
-    NameAlias *p_name_alias = new NameAlias( str, no );
-    last_name_alias->next = p_name_alias;
-    last_name_alias = last_name_alias->next;
+    Alias *p_num_alias = new Alias( str, no );
+    last_num_alias->next = p_num_alias;
+    last_num_alias = last_num_alias->next;
 }
 
 void ScriptHandler::addStrAlias( const char *str1, const char *str2 )
 {
-    StringAlias *p_str_alias = new StringAlias( str1, str2 );
+    Alias *p_str_alias = new Alias( str1, str2 );
     last_str_alias->next = p_str_alias;
     last_str_alias = last_str_alias->next;
 }
@@ -1183,7 +1183,7 @@ void ScriptHandler::parseStr( char **buf )
         if ( (*buf)[0] != ')' ) errorAndExit("parseStr: ) is not found.");
         (*buf)++;
 
-        if ( findAndAddLog( FILE_LOG, str_string_buffer, false ) ){
+        if ( findAndAddLog( log_info[FILE_LOG], str_string_buffer, false ) ){
             parseStr(buf);
             char *tmp_buf = new char[ strlen( str_string_buffer ) + 1 ];
             strcpy( tmp_buf, str_string_buffer );
@@ -1200,8 +1200,8 @@ void ScriptHandler::parseStr( char **buf )
     else if ( **buf == '$' ){
         (*buf)++;
         int no = parseInt(buf);
-        if ( str_variables[no] )
-            strcpy( str_string_buffer, str_variables[no] );
+        if ( variable_data[no].str )
+            strcpy( str_string_buffer, variable_data[no].str );
         else
             str_string_buffer[0] = '\0';
         current_variable.type = VAR_STR;
@@ -1266,7 +1266,7 @@ void ScriptHandler::parseStr( char **buf )
             return;
         }
         
-        StringAlias *p_str_alias = root_str_alias.next;
+        Alias *p_str_alias = root_str_alias.next;
 
         while( p_str_alias ){
             if ( !strcmp( p_str_alias->alias, (const char*)alias_buf ) ){
@@ -1293,7 +1293,7 @@ int ScriptHandler::parseInt( char **buf )
         (*buf)++;
         current_variable.var_no = parseInt(buf);
         current_variable.type = VAR_INT;
-        return num_variables[ current_variable.var_no ];
+        return variable_data[ current_variable.var_no ].num;
     }
     else if ( **buf == '?' ){
         current_variable.var_no = parseArray( buf, current_variable.array );
@@ -1338,18 +1338,18 @@ int ScriptHandler::parseInt( char **buf )
         /* Solve num aliases */
         if ( num_alias_flag ){
             alias_buf[ alias_buf_len ] = '\0';
-            NameAlias *p_name_alias = root_name_alias.next;
+            Alias *p_num_alias = root_num_alias.next;
 
-            while( p_name_alias ){
-                if ( !strcmp( p_name_alias->alias,
+            while( p_num_alias ){
+                if ( !strcmp( p_num_alias->alias,
                               (const char*)alias_buf ) ){
-                    alias_no = p_name_alias->num;
+                    alias_no = p_num_alias->num;
                     break;
                 }
-                p_name_alias = p_name_alias->next;
+                p_num_alias = p_num_alias->next;
             }
-            if ( !p_name_alias ){
-                //printf("can't find name alias for %s... assume 0.\n", alias_buf );
+            if ( !p_num_alias ){
+                //printf("can't find num alias for %s... assume 0.\n", alias_buf );
                 current_variable.type = VAR_NONE;
                 *buf = buf_start;
                 return 0;

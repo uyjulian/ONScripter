@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Sep. 27, 2004<br>
+Last updated: Oct. 25, 2004<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040927.tar.gz">onscripter-beta-20040927.tar.gz</A>
+<A HREF="onscripter-beta-20041025.tar.gz">onscripter-beta-20041025.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040925a.tar.gz">onscripter-beta-20040925a.tar.gz</A>
+<A HREF="onscripter-beta-20040927.tar.gz">onscripter-beta-20040927.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -229,7 +229,6 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
 
 <OL>
-  <LI> (<FONT color="#ff0000">高</FONT>)pretextgosub を実装する。
   <LI> (<FONT color="#ff0000">高</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
   <LI> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
   <LI> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
@@ -621,18 +620,26 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
 <DIV CLASS="block2">
 <H3><A NAME="enable_1byte">英語ノベル作成について</A></H3>
 
+<P>これは Chend さん(chendo[at]gmail.com)からの要望に基づく ONScripter 
+独自の拡張です。これまで、仕様の提案やパッチなど多くの協力をしていただ
+きました。</P>
+
 <P>コンパイル時に ENABLE_1BYTE_CHAR を定義することで、`(back quote) 以
 降行末もしくは別の ` までを、1byte 文字で記述されたテキスト文とみなし
-て表示するようにします。半角スペースが表示として有効になりますが、テキ
-スト内の変数表示は無効になり、また色・時間指定も開始位置によっては無効
-になります。テキスト途中で色を変える場合は、/ で行を分けるなどしてくだ
-さい。ただし、クリック待ち(@)改ページ待ち(\)直後の強制クリック文字を無
-視(_)は有効です。</P>
+て表示するようにします。この間では半角スペースが表示として有効になりま
+すが、テキスト内の変数表示は無効になり、また色・時間指定も開始位置によっ
+ては無効になります。テキスト途中で色を変える場合は、/ で行を分けるなど
+してください。ただし、クリック待ち(@)改ページ待ち(\)直後の強制クリック
+文字を無視(_)は有効です。</P>
 
-<P>これは ONScripter 独自の拡張です。将来本家で ` に何か機能を割り振っ
-た場合には、削除もしくは別の文字に変更される可能性があります。現状のよ
-うに ENABLE_1BYTE_CHAR で使い分けられるようにするかもしれませんが、保
-証の限りではありません。</P>
+<P>将来本家で ` に何か機能を割り振った場合には、削除もしくは別の文字に
+変更される可能性があります。現状のように ENABLE_1BYTE_CHAR で使い分け
+られるようにするかもしれませんが、保証の限りではありません。</P>
+
+<P>また、コンパイル時に ENABLE_1BYTE_CHAR と合わせて FORCE_1BYTE_CHAR 
+を指定すると、全ての表示を半角にすることが可能になります。具体的には、
+上記に加えて、右クリックメニューの表示が英語になり、また数字変数の表示
+が半角になります。</P>
 
 <P>以下にスクリプト例を書きます。<BR>
 

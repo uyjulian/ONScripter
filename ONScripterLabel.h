@@ -72,16 +72,32 @@ public:
         short x, y, w, h;
     } Rect;
     
-    ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag, char *default_key_exe );
+    ONScripterLabel();
     ~ONScripterLabel();
+
+    // ----------------------------------------
+    // start-up options
+    void enableCDAudio();
+    void setFontFile(const char *filename);
+    void setRegistryFile(const char *filename);
+    void setDLLFile(const char *filename);
+    void setArchivePath(const char *path);
+    void enableButtonShortCut();
+    void disableRescale();
+    void enableEdit();
+    void setKeyEXE(const char *path);
+    
+    int  init();
+    int  eventLoop();
+
+    void reset(); // used if definereset
+    void resetSub(); // used if reset
 
     bool skip_flag;
     bool draw_one_page_flag;
     bool key_pressed_flag;
-    int shift_pressed_status;
-    int ctrl_pressed_status;
-    
-    int  eventLoop();
+    int  shift_pressed_status;
+    int  ctrl_pressed_status;
 
     /* ---------------------------------------- */
     /* Commands */
@@ -94,8 +110,10 @@ public:
     int vCommand();
     int trapCommand();
     int textspeedCommand();
+    int textshowCommand();
     int textonCommand();
     int textoffCommand();
+    int texthideCommand();
     int textclearCommand();
     int texecCommand();
     int tateyokoCommand();
@@ -146,9 +164,9 @@ public:
     int lspCommand();
     int loopbgmstopCommand();
     int loopbgmCommand();
-    int lookbackspCommand();
     int lookbackflushCommand();
     int lookbackbuttonCommand();
+    int logspCommand();
     int locateCommand();
     int loadgameCommand();
     int ldCommand();
@@ -159,11 +177,13 @@ public:
     int isskipCommand();
     int isdownCommand();
     int inputCommand();
+    int indentCommand();
     int humanorderCommand();
     int getzxcCommand();
     int getversionCommand();
     int gettimerCommand();
     int gettextCommand();
+    int gettagCommand();
     int gettabCommand();
     int getscreenshotCommand();
     int getretCommand();
@@ -171,6 +191,7 @@ public:
     int getpageupCommand();
     int getpageCommand();
     int getmouseposCommand();
+    int getlogCommand();
     int getinsertCommand();
     int getfunctionCommand();
     int getenterCommand();
@@ -195,12 +216,14 @@ public:
     int drawbgCommand();
     int drawCommand();
     int delayCommand();
+    int defineresetCommand();
     int cspCommand();
     int cselgotoCommand();
     int cselbtnCommand();
     int clickCommand();
     int clCommand();
     int chvolCommand();
+    int checkpageCommand();
     int cellCommand();
     int captionCommand();
     int btnwait2Command();
@@ -251,7 +274,7 @@ protected:
     void startTimer( int count );
     void advancePhase( int count=0 );
     void trapHandler();
-    void initSDL( bool cdaudio_flag );
+    void initSDL();
     void openAudio();
     
 private:
@@ -271,10 +294,21 @@ private:
                    TACHI_EFFECT_IMAGE  = 3
     } EFFECT_IMAGE;
 
-    /* ---------------------------------------- */
-    /* Global definitions */
-    bool edit_flag;
+    // ----------------------------------------
+    // start-up options
+    bool cdaudio_flag;
+    char *default_font;
+    char *registry_file;
+    char *dll_file;
+    char *dll_str;
+    int  dll_ret;
+    bool force_button_shortcut_flag;
     bool disable_rescale_flag;
+    bool edit_flag;
+    char *key_exe_file;
+
+    // ----------------------------------------
+    // Global definitions
     enum { MOUSE_ROTATION_NONE    = 0,
            MOUSE_ROTATION_PDA     = 1,
            MOUSE_ROTATION_PDA_VGA = 2
@@ -329,11 +363,11 @@ private:
            REFRESH_SAYA_MODE        = 2,
            REFRESH_SHADOW_MODE      = 4,
            REFRESH_TEXT_MODE        = 8,
-           REFRESH_SHADOW_TEXT_MODE = (1|4|8),
            REFRESH_CURSOR_MODE      = 16,
            REFRESH_OPENGL_MODE      = 32
     };
     
+    int refresh_shadow_text_mode;
     int display_mode, next_display_mode;
     int event_mode;
     SDL_Surface *text_surface; // Text (+alpha)
@@ -466,16 +500,6 @@ private:
     AnimationInfo lookback_info[4];
     
     /* ---------------------------------------- */
-    /* Registry related variables */
-    char *registry_file;
-    
-    /* ---------------------------------------- */
-    /* DLL related variables */
-    char *dll_file;
-    char *dll_str;
-    int dll_ret;
-    
-    /* ---------------------------------------- */
     /* Text related variables */
     AnimationInfo sentence_font_info;
     char *font_file;
@@ -483,6 +507,8 @@ private:
     bool text_on_flag; // suppress the effect of erase_text_window_mode
     bool draw_cursor_flag;
     int  textgosub_clickstr_state;
+    int  indent_offset;
+    int  line_enter_flag;
 
     int  refreshMode();
     
@@ -496,6 +522,8 @@ private:
     int  leaveTextDisplayMode();
     int  clickWait( char *out_text );
     int  clickNewPage( char *out_text );
+    void startRuby(char *buf, FontInfo &info);
+    void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface);
     int  textCommand();
     
     /* ---------------------------------------- */
@@ -541,7 +569,6 @@ private:
     bool volume_on_flag; // false if mute
     SDL_AudioSpec audio_format;
     bool audio_open_flag;
-    bool cdaudio_flag;
     
     bool wave_play_loop_flag;
     char *wave_file_name;
@@ -582,6 +609,7 @@ private:
     };
     int playWave( const char *file_name, bool loop_flag, int channel, int play_mode=WAVE_PLAY );
     void stopBGM( bool continue_flag );
+    void stopWave();
     void playClickVoice();
     void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
     unsigned long decodeOggVorbis( unsigned char *buffer_in, unsigned char *buffer_out, unsigned long length, int &channels, int &rate );
@@ -596,7 +624,6 @@ private:
     void clearCurrentTextBuffer();
     void newPage( bool next_flag );
     
-    void deleteNestInfo();
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
     void executeLabel();

@@ -506,7 +506,7 @@ int ONScripterLabel::loadSaveFile( int no )
     cached_text_buffer = current_text_buffer;
 
     dirty_rect.fill( screen_width, screen_height );
-    flush( REFRESH_SHADOW_TEXT_MODE );
+    flush( refresh_shadow_text_mode );
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 
     event_mode = tmp_event_mode;
@@ -573,7 +573,7 @@ int ONScripterLabel::saveSaveFile( int no )
 
         sprintf( file_name, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
         if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
-            fprintf( stderr, "can't open save file %s for writing (not error)\n", file_name );
+            fprintf( stderr, "can't open save file %s for writing (not an error)\n", file_name );
             return 0;
         }
         if (saveon_flag && internal_saveon_flag)

@@ -29,39 +29,39 @@
 
 //#define ENABLE_BILINEAR
 
-AnimationInfo::AnimationInfo(){
-    /* Variables from TaggedInfo */
-    current_cell = 0;
-    num_of_cells = 0;
-    direction = 1;
-    duration_list = NULL;
-    color_list = NULL;
-    file_name = NULL;
-    mask_file_name = NULL;
-    is_animatable = false;
-    pos.x = pos.y = 0;
-
-    /* Variables from AnimationInfo */
-    visible = false;
-    image_name = NULL;
-    image_surface = NULL;
-    trans = 256;
-
-    font_size_xy[0] = font_size_xy[1] = -1;
-    font_pitch = -1;
-    remaining_time = 0;
-
+AnimationInfo::AnimationInfo()
+{
     rmask = 0x000000ff;
     gmask = 0x0000ff00;
     bmask = 0x00ff0000;
     amask = 0xff000000;
     rgbmask = (rmask | gmask | bmask);
 
+    image_name = NULL;
+    image_surface = NULL;
     tex_id = 0;
+
+    duration_list = NULL;
+    color_list = NULL;
+    file_name = NULL;
+    mask_file_name = NULL;
+
+    reset();
 }
 
 AnimationInfo::~AnimationInfo(){
+    reset();
+}
+
+void AnimationInfo::reset()
+{
     remove();
+
+    pos.x = pos.y = 0;
+    visible = false;
+
+    font_size_xy[0] = font_size_xy[1] = -1;
+    font_pitch = -1;
 }
 
 void AnimationInfo::deleteImageName(){
@@ -112,6 +112,7 @@ void AnimationInfo::removeTag(){
     num_of_cells = 0;
     remaining_time = 0;
     is_animatable = false;
+    direction = 1;
 
     color[0] = color[1] = color[2] = 0;
 }
@@ -168,7 +169,7 @@ int AnimationInfo::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped 
          dst->x >= clip->x + clip->w || dst->x + dst->w <= clip->x ||
          dst->y >= clip->y + clip->h || dst->y + dst->h <= clip->y )
         return -1;
-    
+
     if ( dst->x < clip->x ){
         dst->w -= clip->x - dst->x;
         if ( clipped ) clipped->x = clip->x - dst->x;

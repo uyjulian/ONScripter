@@ -48,8 +48,10 @@ static struct FuncLUT{
     {"voicevol",   &ONScripterLabel::voicevolCommand},
     {"trap",   &ONScripterLabel::trapCommand},
     {"textspeed",   &ONScripterLabel::textspeedCommand},
+    {"textshow",   &ONScripterLabel::textshowCommand},
     {"texton",   &ONScripterLabel::textonCommand},
     {"textoff",   &ONScripterLabel::textoffCommand},
+    {"texthide",   &ONScripterLabel::texthideCommand},
     {"textclear",   &ONScripterLabel::textclearCommand},
     {"textbtnwait",   &ONScripterLabel::btnwaitCommand},
     {"texec",   &ONScripterLabel::texecCommand},
@@ -114,9 +116,9 @@ static struct FuncLUT{
     {"lr_trap",   &ONScripterLabel::trapCommand},
     {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
     {"loopbgm", &ONScripterLabel::loopbgmCommand},
-    {"lookbacksp", &ONScripterLabel::lookbackspCommand},
     {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
     {"lookbackbutton",      &ONScripterLabel::lookbackbuttonCommand},
+    {"logsp", &ONScripterLabel::logspCommand},
     {"locate", &ONScripterLabel::locateCommand},
     {"loadgame", &ONScripterLabel::loadgameCommand},
     {"ld", &ONScripterLabel::ldCommand},
@@ -127,18 +129,21 @@ static struct FuncLUT{
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"input", &ONScripterLabel::inputCommand},
+    {"indent", &ONScripterLabel::indentCommand},
     {"humanorder", &ONScripterLabel::humanorderCommand},
     {"getzxc", &ONScripterLabel::getzxcCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
     {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
+    {"gettag", &ONScripterLabel::gettagCommand},
     {"gettab", &ONScripterLabel::gettabCommand},
     {"getret", &ONScripterLabel::getretCommand},
     {"getreg", &ONScripterLabel::getregCommand},
     {"getpageup", &ONScripterLabel::getpageupCommand},
     {"getpage", &ONScripterLabel::getpageCommand},
     {"getmousepos", &ONScripterLabel::getmouseposCommand},
+    {"getlog", &ONScripterLabel::getlogCommand},
     {"getinsert", &ONScripterLabel::getinsertCommand},
     {"getfunction", &ONScripterLabel::getfunctionCommand},
     {"getenter", &ONScripterLabel::getenterCommand},
@@ -169,6 +174,7 @@ static struct FuncLUT{
     {"drawbg", &ONScripterLabel::drawbgCommand},
     {"draw", &ONScripterLabel::drawCommand},
     {"delay", &ONScripterLabel::delayCommand},
+    {"definereset", &ONScripterLabel::defineresetCommand},
     {"csp", &ONScripterLabel::cspCommand},
     {"cselgoto", &ONScripterLabel::cselgotoCommand},
     {"cselbtn", &ONScripterLabel::cselbtnCommand},
@@ -176,6 +182,7 @@ static struct FuncLUT{
     {"click", &ONScripterLabel::clickCommand},
     {"cl", &ONScripterLabel::clCommand},
     {"chvol", &ONScripterLabel::chvolCommand},
+    {"checkpage", &ONScripterLabel::checkpageCommand},
     {"cell", &ONScripterLabel::cellCommand},
     {"caption", &ONScripterLabel::captionCommand},
     {"btnwait2", &ONScripterLabel::btnwaitCommand},
@@ -203,7 +210,7 @@ static struct FuncLUT{
     {"", NULL}
 };
 
-void ONScripterLabel::initSDL( bool cdaudio_flag )
+void ONScripterLabel::initSDL()
 {
     /* ---------------------------------------- */
     /* Initialize SDL */
@@ -310,14 +317,87 @@ void ONScripterLabel::openAudio()
     }
 }
 
-ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag, char *default_key_exe )
-        :ScriptParser( default_archive_path, default_key_exe )
+ONScripterLabel::ONScripterLabel()
 {
-    int i;
-
     printf("ONScripter\n");
 
-    initSDL( cdaudio_flag );
+    cdaudio_flag = false;
+    default_font = NULL;
+    registry_file = NULL;
+    setStr( &registry_file, REGISTRY_FILE );
+    dll_file = NULL;
+    setStr( &dll_file, DLL_FILE );
+    dll_str = NULL;
+    force_button_shortcut_flag = false;
+    disable_rescale_flag = false;
+    edit_flag = false;
+    key_exe_file = NULL;
+}
+
+ONScripterLabel::~ONScripterLabel()
+{
+    reset();
+}
+
+void ONScripterLabel::enableCDAudio(){
+    cdaudio_flag = true;
+}
+
+void ONScripterLabel::setFontFile(const char *filename)
+{
+    setStr(&default_font, filename);
+}
+
+void ONScripterLabel::setRegistryFile(const char *filename)
+{
+    setStr(&registry_file, filename);
+}
+
+void ONScripterLabel::setDLLFile(const char *filename)
+{
+    setStr(&dll_file, filename);
+}
+
+void ONScripterLabel::setArchivePath(const char *path)
+{
+    if (archive_path) delete[] archive_path;
+    archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
+    sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
+}
+
+void ONScripterLabel::enableButtonShortCut()
+{
+    force_button_shortcut_flag = true;
+}
+
+void ONScripterLabel::disableRescale()
+{
+    disable_rescale_flag = true;
+}
+
+void ONScripterLabel::enableEdit()
+{
+    edit_flag = true;
+}
+
+void ONScripterLabel::setKeyEXE(const char *filename)
+{
+    setStr(&key_exe_file, filename);
+}
+
+int ONScripterLabel::init()
+{
+    if (archive_path == NULL) archive_path = "";
+    
+    if (key_exe_file){
+        createKeyTable( key_exe_file );
+        script_h.setKeyTable( key_table );
+    }
+
+    if ( open() ) return -1;
+    
+
+    initSDL();
 
     rmask = 0x000000ff;
     gmask = 0x0000ff00;
@@ -334,52 +414,21 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     effect_dst_id = 0;
     text_id = 0;
 
-    initOpenGL();
-
-    internal_timer = SDL_GetTicks();
-    automode_flag = false;
-    automode_time = 3000;
-    autoclick_time = 0;
-    remaining_time = -1;
-    btntime2_flag = false;
-    btntime_value = 0;
-    btnwait_time = 0;
-
-    this->force_button_shortcut_flag = force_button_shortcut_flag;
-    disableGetButtonFlag();
-    
     tmp_save_fp = NULL;
-    saveon_flag = true;
-    internal_saveon_flag = true;
 
-    for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
-    monocro_flag = monocro_flag_new = false;
-    nega_mode = 0;
-    trap_mode = TRAP_NONE;
-    trap_dist = NULL;
+    // ----------------------------------------
+    // Initialize font
+    if ( default_font ){
+        font_file = new char[ strlen(default_font) + 1 ];
+        sprintf( font_file, "%s", default_font );
+    }
+    else{
+        font_file = new char[ strlen(archive_path) + strlen(FONT_FILE) + 1 ];
+        sprintf( font_file, "%s%s", archive_path, FONT_FILE );
+    }
     
-    system_menu_enter_flag = false;
-    system_menu_mode = SYSTEM_NULL;
-    skip_flag = false;
-    draw_one_page_flag = false;
-    key_pressed_flag = false;
-    shift_pressed_status = 0;
-    ctrl_pressed_status = 0;
-    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
-    event_mode = IDLE_EVENT_MODE;
-    all_sprite_hide_flag = false;
-
-    texture_buffer = NULL;
-    texture_buffer_size = 0;
-    
-    current_over_button = 0;
-
-    variable_edit_mode = NOT_EDIT_MODE;
-    this->disable_rescale_flag = disable_rescale_flag;
-    this->edit_flag = edit_flag;
-
-    /* ---------------------------------------- */
-    /* Sound related variables */
+    // ----------------------------------------
+    // Sound related variables
     this->cdaudio_flag = cdaudio_flag;
     cdrom_info = NULL;
     if ( cdaudio_flag ){
@@ -393,80 +442,106 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
             cdrom_info = NULL;
         }
     }
-
-    wave_play_loop_flag = false;
-    wave_file_name = NULL;
     
-    midi_play_loop_flag = false;
-    internal_midi_play_loop_flag = false;
+    wave_file_name = NULL;
     midi_file_name = NULL;
     midi_info  = NULL;
-
-    music_play_loop_flag = false;
-    cd_play_loop_flag = false;
-    mp3save_flag = false;
     mp3_sample = NULL;
     music_file_name = NULL;
     mp3_buffer = NULL;
 #if defined(EXTERNAL_MUSIC_PLAYER)
     music_info = NULL;
 #endif
-    current_cd_track = -1;
+
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
 
-    for ( i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ ) wave_sample[i] = NULL;
+    for (int i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++) wave_sample[i] = NULL;
 
-    for ( i=0 ; i<MAX_PARAM_NUM ; i++ ) bar_info[i] = prnum_info[i] = NULL;
+    // ----------------------------------------
+    // Initialize misc variables
     
-    /* ---------------------------------------- */
-    /* Initialize registry */
-    registry_file = NULL;
-    if ( default_registry ) setStr( &registry_file, default_registry );
-    else                    setStr( &registry_file, REGISTRY_FILE );
+    internal_timer = SDL_GetTicks();
 
-    /* ---------------------------------------- */
-    /* Initialize dll */
-    dll_file = NULL;
-    if ( default_dll ) setStr( &dll_file, default_dll );
-    else               setStr( &dll_file, DLL_FILE );
-    dll_str = NULL;
-    dll_ret = 0;
+    trap_dist = NULL;
+    texture_buffer = NULL;
 
-    /* ---------------------------------------- */
-    /* Initialize font */
-    if ( default_font ){
-        font_file = new char[ strlen(default_font) + 1 ];
-        sprintf( font_file, "%s", default_font );
-    }
-    else{
-        font_file = new char[ strlen(archive_path) + strlen(FONT_FILE) + 1 ];
-        sprintf( font_file, "%s%s", archive_path, FONT_FILE );
-    }
-    
-    new_line_skip_flag = false;
-    erase_text_window_mode = 1;
-    text_on_flag = true;
-    draw_cursor_flag = false;
-    textgosub_clickstr_state = CLICK_NONE;
-    
-    resetSentenceFont();
+    for (int i=0 ; i<MAX_PARAM_NUM ; i++) bar_info[i] = prnum_info[i] = NULL;
+
+    initOpenGL();
+
+    defineresetCommand();
+    readToken();
+
     if ( sentence_font.openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
         fprintf( stderr, "can't open font file: %s\n", font_file );
-        exit(-1);
+        return -1;
     }
 
-    /* ---------------------------------------- */
-    /* Effect related variables */
-    setStr( &bg_info.file_name, "black" );
-    createBackground();
+    loadEnvData();
+    
+    return 0;
+}
+
+void ONScripterLabel::reset()
+{
+    automode_flag = false;
+    automode_time = 3000;
+    autoclick_time = 0;
+    remaining_time = -1;
+    btntime2_flag = false;
+    btntime_value = 0;
+    btnwait_time = 0;
+
+    disableGetButtonFlag();
+
+    system_menu_enter_flag = false;
+    system_menu_mode = SYSTEM_NULL;
+    key_pressed_flag = false;
+    shift_pressed_status = 0;
+    ctrl_pressed_status = 0;
+    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+    event_mode = IDLE_EVENT_MODE;
+    all_sprite_hide_flag = false;
+
+    if (texture_buffer){
+        delete[] texture_buffer;
+        texture_buffer = NULL;
+    }
+    texture_buffer_size = 0;
+
+    current_over_button = 0;
+    variable_edit_mode = NOT_EDIT_MODE;
+
+    refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE | REFRESH_TEXT_MODE;
+    new_line_skip_flag = false;
+    text_on_flag = true;
+    draw_cursor_flag = false;
+
+    resetSentenceFont();
+
+    setStr(&dll_str, NULL);
+    dll_ret = 0;
+    
+    // ----------------------------------------
+    // Sound related variables
+    
+    wave_play_loop_flag = false;
+    midi_play_loop_flag = false;
+    internal_midi_play_loop_flag = false;
+    music_play_loop_flag = false;
+    cd_play_loop_flag = false;
+    mp3save_flag = false;
+    current_cd_track = -1;
+    
+    setStr(&loop_bgm_name[0], NULL);
+    setStr(&loop_bgm_name[1], NULL);
+
+    resetSub();
 
     /* ---------------------------------------- */
     /* Load global variables if available */
-    loadEnvData();
-    
     FILE *fp;
-
     if ( ( fp = fopen( "gloval.sav", "rb" ) ) != NULL ||
          ( fp = fopen( "global.sav", "rb" ) ) != NULL ){
         loadVariables( fp, script_h.global_variable_border, VARIABLE_RANGE );
@@ -474,8 +549,54 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     }
 }
 
-ONScripterLabel::~ONScripterLabel()
+void ONScripterLabel::resetSub()
 {
+    int i;
+
+    for ( i=0 ; i<script_h.global_variable_border ; i++ )
+        script_h.variable_data[i].reset(false);
+
+    for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
+
+    erase_text_window_mode = 1;
+    skip_flag = false;
+    monocro_flag = monocro_flag_new = false;
+    nega_mode = 0;
+    clickstr_state = CLICK_NONE;
+    trap_mode = TRAP_NONE;
+    setStr(&trap_dist, NULL);
+
+    saveon_flag = true;
+    internal_saveon_flag = true;
+
+    textgosub_clickstr_state = CLICK_NONE;
+    indent_offset = 0;
+    line_enter_flag = false;
+
+    resetSentenceFont();
+
+    deleteNestInfo();
+    deleteButtonLink();
+    deleteSelectLink();
+
+    stopBGM(false);
+    stopWave();
+
+    // ----------------------------------------
+    // reset AnimationInfo
+    btndef_info.reset();
+    bg_info.reset();
+    setStr( &bg_info.file_name, "black" );
+    createBackground();
+    for (i=0 ; i<3 ; i++) tachi_info[i].reset();
+    for (i=0 ; i<MAX_SPRITE_NUM ; i++) sprite_info[i].reset();
+    barclearCommand();
+    prnumclearCommand();
+    for (i=0 ; i<2 ; i++) cursor_info[i].reset();
+    for (i=0 ; i<4 ; i++) lookback_info[i].reset();
+    sentence_font_info.reset();
+
+    dirty_rect.fill( screen_width, screen_height );
 }
 
 void ONScripterLabel::resetSentenceFont()
@@ -645,20 +766,15 @@ void ONScripterLabel::executeLabel()
                    current_label_info.num_of_lines,
                    string_buffer_offset, display_mode );
         
-        const char *s_buf = script_h.getStringBuffer();
-        if ( s_buf[string_buffer_offset] == '~' ){
+        if ( script_h.getStringBuffer()[0] == '~' ){
             last_tilde.next_script = script_h.getNext();
-            script_h.readToken();
-            string_buffer_offset = 0;
+            readToken();
             continue;
         }
-        if ( break_flag && strncmp( &s_buf[string_buffer_offset], "next", 4 ) )
-        {
-            if ( s_buf[string_buffer_offset] == 0x0a ){
+        if ( break_flag && !script_h.isName("next") ){
+            if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
                 current_line++;
-            }
-            script_h.readToken();
-            string_buffer_offset = 0;
+            readToken();
             continue;
         }
 
@@ -680,8 +796,7 @@ void ONScripterLabel::executeLabel()
             if ( script_h.getStringBuffer()[ string_buffer_offset ] == 0x0a ){
                 if (++current_line >= current_label_info.num_of_lines) break;
             }
-            script_h.readToken();
-            string_buffer_offset = 0;
+            readToken();
         }
         
         if ( ret & RET_WAIT ) return;
@@ -692,11 +807,12 @@ void ONScripterLabel::executeLabel()
 
     if ( current_label_info.start_address != NULL ){
         script_h.setCurrent( current_label_info.label_header );
-        script_h.readToken();
-        string_buffer_offset = 0;
+        readToken();
         goto executeLabelTop;
     }
-    else fprintf( stderr, " ***** End *****\n");
+    
+    fprintf( stderr, " ***** End *****\n");
+    endCommand();
 }
 
 int ONScripterLabel::parseLine( )
@@ -737,6 +853,11 @@ int ONScripterLabel::parseLine( )
         if (!sentence_font.isLineEmpty()){
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
+            for (int i=0 ; i<indent_offset ; i++){
+                current_text_buffer->addBuffer(((char*)"@")[0]);
+                current_text_buffer->addBuffer(((char*)"@")[1]);
+                sentence_font.advanceChar();
+            }
         }
         //event_mode = IDLE_EVENT_MODE;
     }
@@ -757,7 +878,7 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         return NULL;
     }
     if ( filelog_flag )
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, file_name, true );
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], file_name, true );
     //printf(" ... loading %s length %ld\n", file_name, length );
     buffer = new unsigned char[length];
     int location;
@@ -799,19 +920,6 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
     SDL_FreeSurface( tmp );
 
     return ret;
-}
-
-/* ---------------------------------------- */
-/* Delete label link */
-void ONScripterLabel::deleteNestInfo()
-{
-    NestInfo *info = last_nest_info;
-    while ( info->previous ){
-        info = info->previous;
-        delete info->next;
-    }
-    root_nest_info.next = NULL;
-    last_nest_info = &root_nest_info;
 }
 
 /* ---------------------------------------- */
@@ -941,6 +1049,9 @@ void ONScripterLabel::newPage( bool next_flag )
         }
     }
 
+    indent_offset = 0;
+    line_enter_flag = false;
+    
     clearCurrentTextBuffer();
     if ( need_refresh_flag ){
         refreshSurfaceParameters();
@@ -1052,7 +1163,7 @@ void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool ab
     parseTaggedString( &cursor_info[ no ] );
     setupAnimationInfo( &cursor_info[ no ] );
     if ( filelog_flag )
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, cursor_info[ no ].file_name, true ); // a trick for save file
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], cursor_info[ no ].file_name, true ); // a trick for save file
     cursor_info[ no ].abs_flag = abs_flag;
     if ( cursor_info[ no ].image_surface )
         cursor_info[ no ].visible = true;
@@ -1064,8 +1175,8 @@ void ONScripterLabel::saveAll()
 {
     saveEnvData();
     saveGlovalData();
-    if ( filelog_flag )  script_h.saveLog( ScriptHandler::FILE_LOG );
-    if ( labellog_flag ) script_h.saveLog( ScriptHandler::LABEL_LOG );
+    if ( filelog_flag )  script_h.saveLog( script_h.log_info[ScriptHandler::FILE_LOG] );
+    if ( labellog_flag ) script_h.saveLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
     if ( kidokuskip_flag ) script_h.saveKidokuData();
 }
 
@@ -1138,7 +1249,7 @@ int ONScripterLabel::refreshMode()
     //erase_text_window_mode == 0, text_on_flag );
     if ( next_display_mode == TEXT_DISPLAY_MODE ||
          erase_text_window_mode == 0 && text_on_flag ){
-        return REFRESH_SHADOW_TEXT_MODE;
+        return refresh_shadow_text_mode;
     }
     return REFRESH_NORMAL_MODE;
 }

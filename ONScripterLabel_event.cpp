@@ -203,8 +203,7 @@ void ONScripterLabel::trapHandler()
 {
     trap_mode = TRAP_NONE;
     setCurrentLabel( trap_dist );
-    script_h.readToken();
-    string_buffer_offset = 0;
+    readToken();
     stopAnimation( clickstr_state );
     event_mode = IDLE_EVENT_MODE;
     advancePhase();
@@ -291,7 +290,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     if ( ( event_mode & WAIT_INPUT_MODE ) &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE) ) &&
          volatile_button_state.button == -1 && 
-         root_menu_link.next ){
+         root_rmenu_link.next ){
         system_menu_mode = SYSTEM_MENU;
     }
     
@@ -358,7 +357,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 
           case EDIT_VARIABLE_INDEX_MODE:
             variable_edit_index = variable_edit_num;
-            variable_edit_num = script_h.num_variables[ variable_edit_index ];
+            variable_edit_num = script_h.variable_data[ variable_edit_index ].num;
             if ( variable_edit_num < 0 ){
                 variable_edit_num = -variable_edit_num;
                 variable_edit_sign = -1;
@@ -423,7 +422,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 
           case EDIT_VARIABLE_NUM_MODE:
             sprintf( var_index, "%%%d", variable_edit_index );
-            var_name = var_index; p = script_h.num_variables[ variable_edit_index ]; break;
+            var_name = var_index; p = script_h.variable_data[ variable_edit_index ].num; break;
 
           case EDIT_MP3_VOLUME_MODE:
             var_name = "MP3 Volume"; p = mp3_volume; break;
@@ -616,7 +615,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         if ( !useescspc_flag && event->keysym.sym == SDLK_ESCAPE && rmode_flag ){
             current_button_state.button  = -1;
             if ( event_mode & WAIT_INPUT_MODE &&
-                 root_menu_link.next ){
+                 root_rmenu_link.next ){
                 system_menu_mode = SYSTEM_MENU;
             }
         }
@@ -819,15 +818,14 @@ void ONScripterLabel::timerEvent( void )
         
         if ( ret & RET_CONTINUE ){
             if ( ret == RET_CONTINUE ){
-                script_h.readToken(); // skip tailing \0 and mark kidoku
-                string_buffer_offset = 0;
+                readToken(); // skip tailing \0 and mark kidoku
             }
             if ( effect_blank == 0 || effect_counter == 0 ) goto timerEventTop;
             startTimer( effect_blank );
         }
         else{
             script_h.setCurrent( current );
-            script_h.readToken();
+            readToken();
             advancePhase();
         }
         return;

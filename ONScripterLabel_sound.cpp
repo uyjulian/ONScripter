@@ -472,6 +472,19 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( !continue_flag ) current_cd_track = -1;
 }
 
+void ONScripterLabel::stopWave()
+{
+    for (int i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++){
+        if ( wave_sample[i] ){
+            Mix_Pause( i );
+            Mix_FreeChunk( wave_sample[i] );
+            wave_sample[i] = NULL;
+        }
+    }
+
+    setStr( &wave_file_name, NULL );
+}
+
 void ONScripterLabel::playClickVoice()
 {
     if      ( clickstr_state == CLICK_NEWPAGE ){

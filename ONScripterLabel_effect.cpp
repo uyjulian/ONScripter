@@ -436,7 +436,7 @@ void ONScripterLabel::drawEffect( SDL_Rect &dst_rect, SDL_Rect &src_rect, SDL_Su
         drawTexture( effect_src_id, (Rect&)dst_rect, (Rect&)src_rect );
 #else
     SDL_Rect clipped_rect;
-    AnimationInfo::doClipping( &dst_rect, &dirty_rect.bounding_box, &clipped_rect );
+    if (AnimationInfo::doClipping( &dst_rect, &dirty_rect.bounding_box, &clipped_rect )) return;
     shiftRect( src_rect, clipped_rect );
     blitSurface( surface, &src_rect, accumulation_surface, &dst_rect );
 #endif    

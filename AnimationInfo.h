@@ -90,6 +90,8 @@ public:
     
     AnimationInfo();
     ~AnimationInfo();
+    void reset();
+    
     void deleteImageName();
     void setImageName( const char *name );
     void deleteSurface();

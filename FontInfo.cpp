@@ -42,24 +42,20 @@ FontInfo::FontInfo()
     ttf_font = NULL;
 
     reset();
-    resetSelectColor();
 }
 
 void FontInfo::reset()
 {
     clear();
 
-    color[0] = color[1] = color[2] = 0xff;
-    is_bold = true;
-    is_shadow = true;
-    is_transparent = true;
-}
-
-void FontInfo::resetSelectColor()
-{
+    color[0]        = color[1]        = color[2]        = 0xff;
     on_color[0]     = on_color[1]     = on_color[2]     = 0xff;
     off_color[0]    = off_color[1]    = off_color[2]    = 0x80;
     nofile_color[0] = nofile_color[1] = nofile_color[2] = 0x80;
+
+    is_bold = true;
+    is_shadow = true;
+    is_transparent = true;
 }
 
 void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )

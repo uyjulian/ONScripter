@@ -31,6 +31,9 @@
 
 #define VARIABLE_RANGE 4096
 
+#define IS_TWO_BYTE(x) \
+        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+
 typedef unsigned char uchar3[3];
 
 class ScriptHandler
@@ -58,10 +61,6 @@ public:
             next = NULL;
             data = NULL;
         };
-        ArrayVariable(const ArrayVariable &av){
-            next = NULL;
-            data = NULL;
-        };
     };
 
     enum { VAR_NONE  = 0,
@@ -79,6 +78,8 @@ public:
 
     ScriptHandler();
     ~ScriptHandler();
+
+    void reset();
     FILE *fopen( const char *path, const char *mode );
     void setKeyTable( const unsigned char *key_table );
 
@@ -88,6 +89,7 @@ public:
     void readVariable( bool reread_flag=false );
     const char *readStr();
     int  readInt();
+    int  parseInt( char **buf );
     void skipToken();
 
     // function for string access
@@ -155,10 +157,11 @@ public:
 
     typedef enum { LABEL_LOG = 0,
                    FILE_LOG = 1
-    } LOG_TYPE;
+    };
     struct LogLink{
         LogLink *next;
         char *name;
+
         LogLink(){
             next = NULL;
             name = NULL;
@@ -167,18 +170,41 @@ public:
             if ( name ) delete[] name;
         };
     };
-    LogLink *findAndAddLog( LOG_TYPE type, const char *name, bool add_flag );
-    void deleteLog( LOG_TYPE type );
-    void loadLog( LOG_TYPE type );
-    void saveLog( LOG_TYPE type );
+    struct LogInfo{
+        LogLink root_log;
+        LogLink *current_log;
+        int num_logs;
+        char *filename;
+    } log_info[2];
+    LogLink *findAndAddLog( LogInfo &info, const char *name, bool add_flag );
+    void resetLog( LogInfo &info );
+    void loadLog( LogInfo &info );
+    void saveLog( LogInfo &info );
     
     /* ---------------------------------------- */
     /* Variable */
-    int num_variables[ VARIABLE_RANGE ];
-    int num_limit_upper[ VARIABLE_RANGE ];
-    int num_limit_lower[ VARIABLE_RANGE ];
-    bool num_limit_flag[ VARIABLE_RANGE ];
-    char *str_variables[ VARIABLE_RANGE ];
+    struct VariableData{
+        int num;
+        bool num_limit_flag;
+        int num_limit_upper;
+        int num_limit_lower;
+        char *str;
+
+        VariableData(){
+            str = NULL;
+            reset(true);
+        };
+        void reset(bool limit_reset_flag){
+            num = 0;
+            if (limit_reset_flag)
+                num_limit_flag = false;
+            if (str){
+                delete[] str;
+                str = NULL;
+            }
+        };
+    } *variable_data;
+    
     VariableInfo current_variable, pushed_variable;
     
     int screen_size;
@@ -200,45 +226,41 @@ private:
            OP_MOD     = 6  // 110
     };
     
-    struct NameAlias{
-        struct NameAlias *next;
+    struct Alias{
+        struct Alias *next;
         char *alias;
         int  num;
+        char *str;
 
-        NameAlias(){
+        Alias(){
             next = NULL;
+            alias = NULL;
+            str = NULL;
         };
-        NameAlias( const char *str, int no ){
-            next  = NULL;
-            alias = new char[ strlen(str) + 1];
-            strcpy( alias, str );
-            num = no;
+        Alias( const char *name, int num ){
+            next = NULL;
+            alias = new char[ strlen(name) + 1];
+            strcpy( alias, name );
+            str = NULL;
+            this->num = num;
+        };
+        Alias( const char *name, const char *str ){
+            next = NULL;
+            alias = new char[ strlen(name) + 1];
+            strcpy( alias, name );
+            this->str = new char[ strlen(str) + 1];
+            strcpy( this->str, str );
+        };
+        ~Alias(){
+            if (alias) delete[] alias;
+            if (str)   delete[] str;
         };
     };
     
-    struct StringAlias{
-        struct StringAlias *next;
-        char *alias;
-        char *str;
-
-        StringAlias(){
-            next  = NULL;
-        };
-        StringAlias( const char *str1, const char *str2 ){
-            next  = NULL;
-            alias = new char[ strlen(str1) + 1];
-            strcpy( alias, str1 );
-            str = new char[ strlen(str2) + 1];
-            strcpy( str, str2 );
-        };
-    };
-
-
     int findLabel( const char* label );
 
     char *checkComma( char *buf );
     void parseStr( char **buf );
-    int  parseInt( char **buf );
     int  parseIntExpression( char **buf );
     void readNextOp( char **buf, int *op, int *num );
     int  calcArithmetic( int num1, int op, int num2 );
@@ -247,8 +269,8 @@ private:
 
     /* ---------------------------------------- */
     /* Variable */
-    NameAlias root_name_alias, *last_name_alias;
-    StringAlias root_str_alias, *last_str_alias;
+    Alias root_num_alias, *last_num_alias;
+    Alias root_str_alias, *last_str_alias;
     
     ArrayVariable *root_array_variable, *current_array_variable;
 
@@ -264,12 +286,6 @@ private:
 
     LabelInfo *label_info;
     int num_of_labels;
-    struct LogInfo{
-        LogLink root_log;
-        LogLink *current_log;
-        int num_logs;
-        char *filename;
-    } log_info[2];
 
     bool skip_enabled;
     bool kidokuskip_flag;

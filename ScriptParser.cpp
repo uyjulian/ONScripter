@@ -94,9 +94,10 @@ static struct FuncLUT{
     {"menuselectvoice",      &ScriptParser::menuselectvoiceCommand},
     {"menuselectcolor",      &ScriptParser::menuselectcolorCommand},
     {"maxkaisoupage",      &ScriptParser::maxkaisoupageCommand},
-    //{"lookbacksp",      &ScriptParser::lookbackspCommand},
+    {"lookbacksp",      &ScriptParser::lookbackspCommand},
     {"lookbackcolor",      &ScriptParser::lookbackcolorCommand},
     //{"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
+    {"linepage2",    &ScriptParser::linepageCommand},
     {"linepage",    &ScriptParser::linepageCommand},
     {"len",      &ScriptParser::lenCommand},
     {"labellog",      &ScriptParser::labellogCommand},
@@ -138,14 +139,60 @@ static struct FuncLUT{
     {"", NULL}
 };
 
-ScriptParser::ScriptParser( char *path, char *key_exe )
+ScriptParser::ScriptParser()
 {
-    int i;
-    
     debug_level = 0;
+    srand( time(NULL) );
 
-    archive_path = "";
+    archive_path = NULL;
+    version_str = NULL;
     nsa_path = "";
+    key_table = NULL;
+    
+    save_menu_name = NULL;
+    load_menu_name = NULL;
+    save_item_name = NULL;
+
+    text_buffer = NULL;
+    
+    /* ---------------------------------------- */
+    /* Sound related variables */
+    int i;
+    for ( i=0 ; i<     CLICKVOICE_NUM ; i++ )
+             clickvoice_file_name[i] = NULL;
+    for ( i=0 ; i<    SELECTVOICE_NUM ; i++ )
+            selectvoice_file_name[i] = NULL;
+    for ( i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
+        menuselectvoice_file_name[i] = NULL;
+}
+
+ScriptParser::~ScriptParser()
+{
+    reset();
+
+    if (version_str) delete[] version_str;
+    if (save_menu_name) delete[] save_menu_name;
+    if (load_menu_name) delete[] load_menu_name;
+    if (save_item_name) delete[] save_item_name;
+}
+
+void ScriptParser::reset()
+{
+    UserFuncLUT *func = root_user_func.next;
+    while(func){
+        UserFuncLUT *tmp = func;
+        func = func->next;
+        delete tmp;
+    }
+    root_user_func.next = NULL;
+    last_user_func = &root_user_func;
+
+    // reset misc variables
+    if (strlen(nsa_path) > 0){
+        delete[] nsa_path;
+        nsa_path = "";
+    }
+
     globalon_flag = false;
     labellog_flag = false;
     filelog_flag = false;
@@ -158,90 +205,71 @@ ScriptParser::ScriptParser( char *path, char *key_exe )
     mode_saya_flag = false;
     mode_ext_flag = false;
     rubyon_flag = false;
-    
-    last_user_func = &root_user_func;
-    
-    /* ---------------------------------------- */
-    /* Global definitions */
+
+    break_flag = false;
+    trans_mode = AnimationInfo::TRANS_TOPLEFT;
+
+    if (version_str) delete[] version_str;
     version_str = new char[strlen(VERSION_STR1)+
-                          strlen("\n")+
-                          strlen(VERSION_STR2)+
-                          strlen("\n")+
-                          +1];
+                           strlen("\n")+
+                           strlen(VERSION_STR2)+
+                           strlen("\n")+
+                           +1];
     sprintf( version_str, "%s\n%s\n", VERSION_STR1, VERSION_STR2 );
-    srand( time(NULL) );
     z_order = 25;
-    //script_h->end_with_comma_flag = false;
-    
+
+    textgosub_label = NULL;
+    pretextgosub_label = NULL;
+
     /* ---------------------------------------- */
     /* Lookback related variables */
-#if 0    
-    lookback_image_name[0] = new char[ strlen( DEFAULT_LOOKBACK_NAME0 ) + 1 ];
-    memcpy( lookback_image_name[0], DEFAULT_LOOKBACK_NAME0, strlen( DEFAULT_LOOKBACK_NAME0 ) + 1 );
-    lookback_image_name[1] = new char[ strlen( DEFAULT_LOOKBACK_NAME1 ) + 1 ];
-    memcpy( lookback_image_name[1], DEFAULT_LOOKBACK_NAME1, strlen( DEFAULT_LOOKBACK_NAME1 ) + 1 );
-    lookback_image_name[2] = new char[ strlen( DEFAULT_LOOKBACK_NAME2 ) + 1 ];
-    memcpy( lookback_image_name[2], DEFAULT_LOOKBACK_NAME2, strlen( DEFAULT_LOOKBACK_NAME2 ) + 1 );
-    lookback_image_name[3] = new char[ strlen( DEFAULT_LOOKBACK_NAME3 ) + 1 ];
-    memcpy( lookback_image_name[3], DEFAULT_LOOKBACK_NAME3, strlen( DEFAULT_LOOKBACK_NAME3 ) + 1 );
-#endif    
     lookback_sp[0] = lookback_sp[1] = -1;
     lookback_color[0] = 0xff;
     lookback_color[1] = 0xff;
     lookback_color[2] = 0x00;
 
     /* ---------------------------------------- */
-    /* Select related variables */
-    select_on_color[0] = select_on_color[1] = select_on_color[2] = 0xff;
-    select_off_color[0] = select_off_color[1] = select_off_color[2] = 0x80;
-    
-    /* ---------------------------------------- */
-    /* For loop related variables */
-    break_flag = false;
-    
-    /* ---------------------------------------- */
-    /* Transmode related variables */
-    trans_mode = AnimationInfo::TRANS_TOPLEFT;
-    
-    /* ---------------------------------------- */
     /* Save/Load related variables */
-    save_menu_name = new char[ strlen( DEFAULT_SAVE_MENU_NAME ) + 1 ];
-    memcpy( save_menu_name, DEFAULT_SAVE_MENU_NAME, strlen( DEFAULT_SAVE_MENU_NAME ) + 1 );
-    load_menu_name = new char[ strlen( DEFAULT_LOAD_MENU_NAME ) + 1 ];
-    memcpy( load_menu_name, DEFAULT_LOAD_MENU_NAME, strlen( DEFAULT_LOAD_MENU_NAME ) + 1 );
-    save_item_name = new char[ strlen( DEFAULT_SAVE_ITEM_NAME ) + 1 ];
-    memcpy( save_item_name, DEFAULT_SAVE_ITEM_NAME, strlen( DEFAULT_SAVE_ITEM_NAME ) + 1 );
-
+    setStr( &save_menu_name, DEFAULT_SAVE_MENU_NAME );
+    setStr( &load_menu_name, DEFAULT_LOAD_MENU_NAME );
+    setStr( &save_item_name, DEFAULT_SAVE_ITEM_NAME );
     num_save_file = 9;
 
     /* ---------------------------------------- */
     /* Text related variables */
+    sentence_font.reset();
+    menu_font.reset();
+    ruby_font.reset();
+
+    current_font = &sentence_font;
+    shade_distance[0] = 1;
+    shade_distance[1] = 1;
+    
     default_text_speed[0] = DEFAULT_TEXT_SPEED_LOW;
     default_text_speed[1] = DEFAULT_TEXT_SPEED_MIDDLE;
     default_text_speed[2] = DEFAULT_TEXT_SPEED_HIGHT;
     max_text_buffer = MAX_TEXT_BUFFER;
     num_chars_in_sentence = 0;
-    text_buffer = NULL;
+    if (text_buffer){
+        delete[] text_buffer;
+        text_buffer = NULL;
+    }
     current_text_buffer = start_text_buffer = NULL;
     
     clickstr_line = 0;
     clickstr_state = CLICK_NONE;
+    linepage_line = -1;
     
     /* ---------------------------------------- */
     /* Sound related variables */
+    int i;
     for ( i=0 ; i<     CLICKVOICE_NUM ; i++ )
-             clickvoice_file_name[i] = NULL;
+        setStr(&clickvoice_file_name[i], NULL);
     for ( i=0 ; i<    SELECTVOICE_NUM ; i++ )
-            selectvoice_file_name[i] = NULL;
+        setStr(&selectvoice_file_name[i], NULL);
     for ( i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
-        menuselectvoice_file_name[i] = NULL;
+        setStr(&menuselectvoice_file_name[i], NULL);
 
-    /* ---------------------------------------- */
-    /* Font related variables */
-    current_font = &sentence_font;
-    shade_distance[0] = 1;
-    shade_distance[1] = 1;
-    
     /* ---------------------------------------- */
     /* Menu related variables */
     menu_font.font_size_xy[0] = DEFAULT_FONT_SIZE;
@@ -254,61 +282,39 @@ ScriptParser::ScriptParser( char *path, char *key_exe )
     menu_font.pitch_xy[1] = 2 + menu_font.font_size_xy[1];
     menu_font.window_color[0] = menu_font.window_color[1] = menu_font.window_color[2] = 0xcc;
 
-    root_menu_link.next = NULL;
-    root_menu_link.label = NULL;
-    menu_link_num = 0;
-    menu_link_width = 0;
-    
-    /* ---------------------------------------- */
-    /* System customize related variables */
-    textgosub_label = NULL;
-    pretextgosub_label = NULL;
-
-    effect_blank = 10;
-    effect_cut_flag = false;
+    deleteRMenuLink();
 
     /* ---------------------------------------- */
     /* Effect related variables */
+    effect_blank = 10;
+    effect_cut_flag = false;
+
     window_effect.effect = 1;
     window_effect.duration = 0;
     root_effect_link.num = 0;
     root_effect_link.effect = 0;
     root_effect_link.duration = 0;
+
+    EffectLink *link = root_effect_link.next;
+    while(link){
+        EffectLink *tmp = link;
+        link = link->next;
+        delete tmp;
+    }
     last_effect_link = &root_effect_link;
     last_effect_link->next = NULL;
 
-    key_table = NULL;
-    if (key_exe){
-        createKeyTable( key_exe );
-        script_h.setKeyTable( key_table );
-    }
-    
-    if ( open( path ) ) exit(-1);
-    
-    script_h.loadLog( ScriptHandler::LABEL_LOG );
+    script_h.loadLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
     
     current_mode = DEFINE_MODE;
 
     script_h.setCurrent( "effect 1,1" );
-    script_h.readToken();
+    readToken();
     effectCommand();
-
-    last_nest_info = &root_nest_info;
-    setCurrentLabel( "define" );
-    script_h.readToken();
-    string_buffer_offset = 0;
 }
 
-ScriptParser::~ScriptParser()
+int ScriptParser::open()
 {
-}
-
-int ScriptParser::open( char *path )
-{
-    if ( path ){
-        archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
-        sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
-    }
     script_h.cBR = new DirectReader( archive_path, key_table );
     script_h.cBR->open();
     
@@ -427,6 +433,20 @@ ScriptParser::EffectLink *ScriptParser::getEffect( int effect_no )
     exit(-1);
 }
 
+void ScriptParser::deleteRMenuLink()
+{
+    RMenuLink *link = root_rmenu_link.next;
+    while(link){
+        RMenuLink *tmp = link;
+        link = link->next;
+        delete tmp;
+    }
+    root_rmenu_link.next = NULL;
+
+    rmenu_link_num   = 0;
+    rmenu_link_width = 0;
+}
+
 int ScriptParser::getSystemCallNo( const char *buffer )
 {
     if      ( !strcmp( buffer, "skip" ) )        return SYSTEM_SKIP;
@@ -513,16 +533,16 @@ void ScriptParser::loadStr( FILE *fp, char **str )
 void ScriptParser::saveVariables( FILE *fp, int from, int to )
 {
     for ( int i=from ; i<to ; i++ ){
-        saveInt( fp, script_h.num_variables[i] );
-        saveStr( fp, script_h.str_variables[i] );
+        saveInt( fp, script_h.variable_data[i].num );
+        saveStr( fp, script_h.variable_data[i].str );
     }
 }
 
 void ScriptParser::loadVariables( FILE *fp, int from, int to )
 {
     for ( int i=from ; i<to ; i++ ){
-        loadInt( fp, &script_h.num_variables[i] );
-        loadStr( fp, &script_h.str_variables[i] );
+        loadInt( fp, &script_h.variable_data[i].num );
+        loadStr( fp, &script_h.variable_data[i].str );
     }
 }
 
@@ -541,7 +561,19 @@ void ScriptParser::errorAndExit( const char *str, const char *reason )
     exit(-1);
 }
 
-void ScriptParser::setStr( char **dst, const char *src, int num )
+void ScriptParser::deleteNestInfo()
+{
+    NestInfo *info = root_nest_info.next;
+    while(info){
+        NestInfo *tmp = info;
+        info = info->next;
+        delete tmp;
+    }
+    root_nest_info.next = NULL;
+    last_nest_info = &root_nest_info;
+}
+
+inline void ScriptParser::setStr( char **dst, const char *src, int num )
 {
     if ( *dst ) delete[] *dst;
     if ( src ){
@@ -564,6 +596,28 @@ void ScriptParser::setCurrentLabel( const char *label )
     current_label_info = script_h.lookupLabel( label );
     current_line = script_h.getLineByAddress( current_label_info.start_address );
     script_h.setCurrent( current_label_info.start_address );
+}
+
+void ScriptParser::readToken()
+{
+    script_h.readToken();
+    string_buffer_offset = 0;
+
+    if (script_h.isText() && linepage_line >= 0){
+        char ch = '@'; // click wait
+        if (sentence_font.xy[1] >= sentence_font.num_xy[1] - linepage_line)
+            ch = '\\'; // newline
+
+        // ugly work around
+        unsigned int len = strlen(script_h.getStringBuffer());
+        if (script_h.getStringBuffer()[len-1] == 0x0a){
+            script_h.getStringBuffer()[len-1] = ch;
+            script_h.addStringBuffer(0x0a);
+        }
+        else{
+            script_h.addStringBuffer(ch);
+        }
+    }
 }
 
 int ScriptParser::readEffect( EffectLink *effect )
@@ -600,18 +654,18 @@ FILE *ScriptParser::fopen(const char *path, const char *mode)
 
 void ScriptParser::createKeyTable( const char *key_exe )
 {
-    key_table = new unsigned char[256];
-
-    int i;
-    for (i=0 ; i<256 ; i++) key_table[i] = i;
-
     if (!key_exe) return;
     
     FILE *fp = ::fopen(key_exe, "rb");
     if (fp == NULL){
-        fprintf(stderr, "createKeyTable: can't open key exe %s\n", key_exe);
+        fprintf(stderr, "createKeyTable: can't open EXE file %s\n", key_exe);
         return;
     }
+
+    key_table = new unsigned char[256];
+
+    int i;
+    for (i=0 ; i<256 ; i++) key_table[i] = i;
 
     unsigned char ring_buffer[256];
     int ring_start = 0, ring_last = 0;

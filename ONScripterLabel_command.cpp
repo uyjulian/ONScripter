@@ -28,11 +28,6 @@
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
 
-#define DEFAULT_LOOKBACK_NAME0 "uoncur.bmp"
-#define DEFAULT_LOOKBACK_NAME1 "uoffcur.bmp"
-#define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
-#define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
-
 #define CONTINUOUS_PLAY
 
 int ONScripterLabel::waveCommand()
@@ -124,9 +119,7 @@ int ONScripterLabel::trapCommand()
 
     const char *buf = script_h.readLabel();
     if ( buf[0] == '*' ){
-        if ( trap_dist ) delete[] trap_dist;
-        trap_dist = new char[ strlen(buf) ];
-        memcpy( trap_dist, buf+1, strlen(buf) );
+        setStr(&trap_dist, buf+1);
     }
     else{
         printf("trapCommand: [%s] is not supported\n", buf );
@@ -142,12 +135,21 @@ int ONScripterLabel::textspeedCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::textshowCommand()
+{
+    dirty_rect.fill( screen_width, screen_height );
+    refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE | REFRESH_TEXT_MODE;
+    flush(refresh_shadow_text_mode);
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::textonCommand()
 {
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         dirty_rect.fill( screen_width, screen_height );
-        flush(REFRESH_SHADOW_TEXT_MODE);
+        flush(refresh_shadow_text_mode);
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
     }
 
@@ -162,6 +164,15 @@ int ONScripterLabel::textoffCommand()
         flush(REFRESH_NORMAL_MODE);
         display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::texthideCommand()
+{
+    dirty_rect.fill( screen_width, screen_height );
+    refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE;
+    flush(refresh_shadow_text_mode);
 
     return RET_CONTINUE;
 }
@@ -181,6 +192,8 @@ int ONScripterLabel::texecCommand()
     else if ( textgosub_clickstr_state == (CLICK_WAIT | CLICK_EOL) ){
         if ( !sentence_font.isLineEmpty() &&
              !new_line_skip_flag ){
+            indent_offset = 0;
+            line_enter_flag = false;
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
         }
@@ -280,11 +293,11 @@ int ONScripterLabel::splitCommand()
             script_h.setInt( &script_h.current_variable, atoi(token) );
         }
         else if ( script_h.current_variable.type & ScriptHandler::VAR_STR ){
-            setStr( &script_h.str_variables[ script_h.current_variable.var_no ], token );
+            setStr( &script_h.variable_data[ script_h.current_variable.var_no ].str, token );
         }
 
-        if (save_buf[c] == '\0') return RET_CONTINUE;
-        save_buf += c+1;
+        save_buf += c;
+        if (save_buf[0] != '\0') save_buf++;
     }
     
     return RET_CONTINUE;
@@ -742,48 +755,11 @@ int ONScripterLabel::resettimerCommand()
 
 int ONScripterLabel::resetCommand()
 {
-    int i;
-
-    for ( i=0 ; i<script_h.global_variable_border ; i++ ){
-        script_h.num_variables[i] = 0;
-        if ( script_h.str_variables[i] ) delete[] script_h.str_variables[i];
-        script_h.str_variables[i] = NULL;
-    }
-
-    erase_text_window_mode = 1;
+    resetSub();
     clearCurrentTextBuffer();
-    resetSentenceFont();
-
-    skip_flag      = false;
-    monocro_flag   = false;
-    nega_mode      = 0;
-    saveon_flag    = true;
-    clickstr_state = CLICK_NONE;
-    rubyon_flag    = false;
     
-    deleteNestInfo();
     setCurrentLabel( "start" );
     
-    for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
-    barclearCommand();
-    prnumclearCommand();
-    for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        sprite_info[i].remove();
-    }
-    for ( i=0 ; i<3 ; i++ ){
-        tachi_info[i].remove();
-    }
-    bg_info.remove();
-    setStr( &bg_info.file_name, "black");
-    
-    deleteButtonLink();
-    deleteSelectLink();
-
-    wavestopCommand();
-    stopBGM( false );
-
-    dirty_rect.fill( screen_width, screen_height );
-
     return RET_CONTINUE;
 }
 
@@ -1175,21 +1151,6 @@ int ONScripterLabel::loopbgmCommand()
     return RET_CONTINUE;
 }
 
-int ONScripterLabel::lookbackspCommand()
-{
-    for ( int i=0 ; i<2 ; i++ )
-        lookback_sp[i] = script_h.readInt();
-
-    if ( filelog_flag ){
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME0, true );
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME1, true );
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME2, true );
-        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME3, true );
-    }
-
-    return RET_CONTINUE;
-}
-
 int ONScripterLabel::lookbackflushCommand()
 {
     current_text_buffer = current_text_buffer->next;
@@ -1211,6 +1172,50 @@ int ONScripterLabel::lookbackbuttonCommand()
         parseTaggedString( &lookback_info[i] );
         setupAnimationInfo( &lookback_info[i] );
     }
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::logspCommand()
+{
+    int sprite_no = script_h.readInt();
+
+    AnimationInfo &si = sprite_info[sprite_no];
+    if ( si.visible ) dirty_rect.add( si.pos );
+    si.remove();
+    setStr( &si.file_name, script_h.readStr() );
+    si.trans_mode = AnimationInfo::TRANS_STRING;
+    si.font_size_xy[0] = sentence_font.font_size_xy[0];
+    si.font_size_xy[1] = sentence_font.font_size_xy[1];
+    si.font_pitch = sentence_font.pitch_xy[0];
+
+    si.pos.x = script_h.readInt();
+    si.pos.y = script_h.readInt();
+    
+    char *current = script_h.getNext();
+    int num = 0;
+    while(script_h.getEndStatus() & ScriptHandler::END_COMMA){
+        script_h.readStr();
+        num++;
+    }
+
+    script_h.setCurrent(current);
+    if (num == 0){
+        si.num_of_cells = 1;
+        si.color_list = new uchar3[ si.num_of_cells ];
+        readColor( &si.color_list[0], "#ffffff" );
+    }
+    else{
+        si.num_of_cells = num;
+        si.color_list = new uchar3[ si.num_of_cells ];
+        for (int i=0 ; i<num ; i++){
+            readColor( &si.color_list[i], script_h.readStr() );
+        }
+    }
+
+    setupAnimationInfo( &si );
+    si.visible = true;
+    dirty_rect.add( si.pos );
+    
     return RET_CONTINUE;
 }
 
@@ -1239,10 +1244,11 @@ int ONScripterLabel::loadgameCommand()
         deleteButtonLink();
         deleteSelectLink();
         key_pressed_flag = false;
-        saveon_flag = true;
+        text_on_flag = true;
+        indent_offset = 0;
+        line_enter_flag = false;
         
-        script_h.readToken();
-        string_buffer_offset = 0;
+        readToken();
         
         if ( event_mode & WAIT_INPUT_MODE ) return RET_WAIT | RET_NOREAD;
         return RET_CONTINUE | RET_NOREAD;
@@ -1362,7 +1368,7 @@ int ONScripterLabel::inputCommand()
 
     script_h.readStr(); // description
     const char *buf = script_h.readStr(); // default value
-    setStr( &script_h.str_variables[no], buf );
+    setStr( &script_h.variable_data[no].str, buf );
 
     printf( "*** inputCommand(): $%d is set to the default value: %s\n",
             no, buf );
@@ -1375,6 +1381,13 @@ int ONScripterLabel::inputCommand()
         script_h.readInt(); // text box height
     }
 
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::indentCommand()
+{
+    indent_offset = script_h.readInt();
+    
     return RET_CONTINUE;
 }
 
@@ -1455,9 +1468,58 @@ int ONScripterLabel::gettextCommand()
     }
     buf[j] = '\0';
 
-    setStr( &script_h.str_variables[no], buf );
+    setStr( &script_h.variable_data[no].str, buf );
     delete[] buf;
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::gettagCommand()
+{
+    if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
+        errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
+
+    char *buf = last_nest_info->next_script;
+    bool end_flag = false;
+    int end_status;
+    do{
+        script_h.readVariable();
+        end_status = script_h.getEndStatus();
+        script_h.pushVariable();
+
+        if (*buf == '[' || *buf == '/')
+            buf++;
+        else
+            end_flag = true;
+    
+        if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
+             script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
+            if (end_flag)
+                script_h.setInt( &script_h.pushed_variable, 0);
+            else{
+                script_h.setInt( &script_h.pushed_variable, script_h.parseInt(&buf));
+            }
+        }
+        else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
+            if (end_flag)
+                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
+            else{
+                const char *buf_start = buf;
+                while(*buf != '/' && *buf != ']'){
+                    if (IS_TWO_BYTE(*buf))
+                        buf += 2;
+                    else
+                        buf++;
+                }
+                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf_start, buf-buf_start );
+            }
+        }
+    }
+    while(end_status & ScriptHandler::END_COMMA);
+    
+    if (*buf == ']') buf++;
+    last_nest_info->next_script = buf;
+
     return RET_CONTINUE;
 }
 
@@ -1532,7 +1594,7 @@ int ONScripterLabel::getretCommand()
     }
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         int no = script_h.current_variable.var_no;
-        setStr( &script_h.str_variables[no], dll_str );
+        setStr( &script_h.variable_data[no].str, dll_str );
     }
     else errorAndExit( "getret: no variable." );
     
@@ -1586,9 +1648,9 @@ int ONScripterLabel::getregCommand()
                     script_h.setCurrent(script_h.getNext()+1);
 
                     buf = script_h.readStr();
-                    setStr( &script_h.str_variables[no], buf );
+                    setStr( &script_h.variable_data[no].str, buf );
                     script_h.popCurrent();
-                    printf("  $%d = %s\n", no, script_h.str_variables[no] );
+                    printf("  $%d = %s\n", no, &script_h.variable_data[no].str );
                     found_flag = true;
                     break;
                 }
@@ -1610,6 +1672,27 @@ int ONScripterLabel::getmouseposCommand()
     script_h.readInt();
     script_h.setInt( &script_h.current_variable, current_button_state.y * screen_ratio2 / screen_ratio1 );
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getlogCommand()
+{
+    script_h.readVariable();
+    script_h.pushVariable();
+
+    int page_no = script_h.readInt();
+
+    TextBuffer *t_buf = current_text_buffer;
+    while(t_buf != start_text_buffer && page_no > 0){
+        page_no--;
+        t_buf = t_buf->previous;
+    }
+
+    if (page_no > 0)
+        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL );
+    else
+        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, t_buf->buffer2, t_buf->buffer2_count );
+
     return RET_CONTINUE;
 }
 
@@ -1723,11 +1806,8 @@ int ONScripterLabel::gameCommand()
 
     /* ---------------------------------------- */
     /* Initialize local variables */
-    for ( i=0 ; i<script_h.global_variable_border ; i++ ){
-        script_h.num_variables[i] = 0;
-        delete[] script_h.str_variables[i];
-        script_h.str_variables[i] = NULL;
-    }
+    for ( i=0 ; i<script_h.global_variable_border ; i++ )
+        script_h.variable_data[i].reset(false);
 
     return RET_CONTINUE;
 }
@@ -2108,6 +2188,17 @@ int ONScripterLabel::delayCommand()
     }
 }
 
+int ONScripterLabel::defineresetCommand()
+{
+    script_h.reset();
+    ScriptParser::reset();
+    reset();
+
+    setCurrentLabel( "define" );
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::cspCommand()
 {
     int no = script_h.readInt();
@@ -2171,7 +2262,7 @@ int ONScripterLabel::cselbtnCommand()
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
         errorAndExit( "cselbtn: no select text" );
 
-    csel_info.setLineArea( strlen(link->text)/2+1 );
+    //csel_info.setLineArea( strlen(link->text)/2+1 );
     csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
     root_button_link.insert( button );
@@ -2238,6 +2329,32 @@ int ONScripterLabel::chvolCommand()
     }
     
     return RET_CONTINUE;
+}
+
+int ONScripterLabel::checkpageCommand()
+{
+    script_h.readVariable();
+    script_h.pushVariable();
+
+    if ( script_h.pushed_variable.type != ScriptHandler::VAR_INT &&
+         script_h.pushed_variable.type != ScriptHandler::VAR_ARRAY )
+        errorAndExit( "checkpage: no variable." );
+
+    int page_no = script_h.readInt();
+    
+    TextBuffer *t_buf = current_text_buffer;
+    while(t_buf != start_text_buffer && page_no > 0){
+        page_no--;
+        t_buf = t_buf->previous;
+    }
+
+    if (page_no > 0)
+        script_h.setInt( &script_h.pushed_variable, 0 );
+    else
+        script_h.setInt( &script_h.pushed_variable, 1 );
+
+    return RET_CONTINUE;
+    
 }
 
 int ONScripterLabel::cellCommand()

@@ -42,15 +42,21 @@
 
 #define DEFAULT_FONT_SIZE 26
 
+#define DEFAULT_LOOKBACK_NAME0 "uoncur.bmp"
+#define DEFAULT_LOOKBACK_NAME1 "uoffcur.bmp"
+#define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
+#define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
+
 typedef unsigned char uchar3[3];
 
 class ScriptParser
 {
 public:
-    ScriptParser( char *path, char *key_exe );
+    ScriptParser();
     ~ScriptParser();
 
-    int open( char *path );
+    void reset();
+    int open();
     int parseLine();
 
     FILE *fopen(const char *path, const char *mode);
@@ -94,6 +100,7 @@ public:
     int menuselectvoiceCommand();
     int menuselectcolorCommand();
     int maxkaisoupageCommand();
+    int lookbackspCommand();
     int lookbackcolorCommand();
     //int lookbackbuttonCommand();
     int linepageCommand();
@@ -222,10 +229,13 @@ protected:
     char *version_str;
     int underline_value;
 
+
+    void deleteNestInfo();
     void setStr( char **dst, const char *src, int num=-1 );
     
     void gosubReal( const char *label, char *next_script );
     void setCurrentLabel( const char *label );
+    void readToken();
 
     /* ---------------------------------------- */
     /* Effect related variables */
@@ -257,11 +267,6 @@ protected:
     //char *lookback_image_name[4];
     int lookback_sp[2];
     uchar3 lookback_color;
-    
-    /* ---------------------------------------- */
-    /* Select related variables */
-    uchar3 select_on_color;
-    uchar3 select_off_color;
     
     /* ---------------------------------------- */
     /* For loop related variables */
@@ -301,6 +306,9 @@ protected:
             buffer2 = NULL;
             buffer2_count = 0;
         }
+        ~TextBuffer(){
+            if (buffer2) delete[] buffer2;
+        }
         int addBuffer( char ch ){
             if ( buffer2_count >= (num_xy[0]*2+1)*(num_xy[1]+1) ) return -1;
             buffer2[buffer2_count++] = ch;
@@ -310,6 +318,7 @@ protected:
     int  max_text_buffer;
     int  clickstr_line;
     int  clickstr_state;
+    int  linepage_line;
     int  num_chars_in_sentence;
     
     /* ---------------------------------------- */
@@ -351,8 +360,8 @@ protected:
                RUBY };
         int stage;
         int body_count;
-        int ruby_start;
-        int ruby_end;
+        char *ruby_start;
+        char *ruby_end;
         int ruby_count;
         int margin;
 
@@ -372,19 +381,23 @@ protected:
     int shade_distance[2];
 
     /* ---------------------------------------- */
-    /* Menu related variables */
-    struct MenuLink{
-        struct MenuLink *next;
+    /* RMenu related variables */
+    struct RMenuLink{
+        RMenuLink *next;
         char *label;
         int system_call_no;
 
-        MenuLink(){
+        RMenuLink(){
             next  = NULL;
             label = NULL;
         };
-    } root_menu_link;
-    unsigned int  menu_link_num, menu_link_width;
+        ~RMenuLink(){
+            if (label) delete[] label;
+        };
+    } root_rmenu_link;
+    unsigned int rmenu_link_num, rmenu_link_width;
 
+    void deleteRMenuLink();
     int getSystemCallNo( const char *buffer );
     unsigned char convHexToDec( char ch );
     void readColor( uchar3 *color, const char *buf );
@@ -403,10 +416,8 @@ protected:
     char *textgosub_label;
     char *pretextgosub_label;
 
-protected:
     ScriptHandler script_h;
     
-private:
     unsigned char *key_table;
 
     void createKeyTable( const char *key_exe );
