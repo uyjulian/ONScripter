@@ -110,6 +110,8 @@ static struct FuncLUT{
     {"menu_automode", &ONScripterLabel::menu_automodeCommand},
     {"lsph", &ONScripterLabel::lspCommand},
     {"lsp", &ONScripterLabel::lspCommand},
+    {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
+    {"loopbgm", &ONScripterLabel::loopbgmCommand},
     {"lookbacksp", &ONScripterLabel::lookbackspCommand},
     {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
     {"lookbackbutton",      &ONScripterLabel::lookbackbuttonCommand},
@@ -306,7 +308,7 @@ void ONScripterLabel::openAudio()
 
         audio_open_flag = true;
 
-        Mix_AllocateChannels( ONS_MIX_CHANNELS );
+        Mix_AllocateChannels( ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS );
         Mix_ChannelFinished( waveCallback );
     }
 }
@@ -398,6 +400,7 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     wave_file_name = NULL;
     
     midi_play_loop_flag = false;
+    internal_midi_play_loop_flag = false;
     midi_file_name = NULL;
     midi_info  = NULL;
 
@@ -411,8 +414,10 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     music_info = NULL;
 #endif
     current_cd_track = -1;
+    loop_bgm_name[0] = NULL;
+    loop_bgm_name[1] = NULL;
 
-    for ( i=0 ; i<ONS_MIX_CHANNELS ; i++ ) wave_sample[i] = NULL;
+    for ( i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ ) wave_sample[i] = NULL;
 
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ) bar_info[i] = prnum_info[i] = NULL;
     
@@ -585,9 +590,12 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         DirtyRect dirty = dirty_rect;
         dirty_rect.clear();
 
+        SDL_Rect check_src_rect = {0, 0, 0, 0};
+        SDL_Rect check_dst_rect = {0, 0, 0, 0};
         if ( event_mode & WAIT_BUTTON_MODE && current_over_button != 0 ){
             if ( current_button_link->no_selected_surface ){
                 SDL_BlitSurface( current_button_link->no_selected_surface, NULL, accumulation_surface, &current_button_link->image_rect );
+                check_src_rect = current_button_link->image_rect;
             }
             if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                  current_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
@@ -610,12 +618,13 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
 
                 if ( p_button_link->selected_surface ){
                     SDL_BlitSurface( p_button_link->selected_surface, NULL, accumulation_surface, &p_button_link->image_rect );
+                    check_dst_rect = p_button_link->image_rect;
                 }
                 if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                      p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                     sprite_info[ p_button_link->sprite_no ].setCell(1);
                     if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                        decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl );
+                        decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
                     }
                     sprite_info[ p_button_link->sprite_no ].visible = true;
                 }
@@ -629,7 +638,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         }
         else{
             if ( exbtn_d_button_link.exbtn_ctl ){
-                decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl  );
+                decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
             }
         }
         flush();
@@ -1052,7 +1061,7 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     return button_link;
 }
 
-void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str )
+void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     char sound_name[256];
     int sprite_no, cell_no;
@@ -1066,7 +1075,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             }
             else
                 cell_no = -1;
-            refreshSprite( surface, sprite_no, false, cell_no );
+            refreshSprite( surface, sprite_no, false, cell_no, NULL, NULL );
         }
         else if ( com == 'P' ){
             sprite_no = getNumberFromBuffer( &ctl_str );
@@ -1076,7 +1085,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             }
             else
                 cell_no = -1;
-            refreshSprite( surface, sprite_no, true, cell_no );
+            refreshSprite( surface, sprite_no, true, cell_no, check_src_rect, check_dst_rect );
         }
         else if ( com == 'S' ){
             sprite_no = getNumberFromBuffer( &ctl_str );
@@ -1227,12 +1236,13 @@ void ONScripterLabel::allocateSelectedSurface( int sprite_no, ButtonLink *button
     AnimationInfo *sp = &sprite_info[ sprite_no ];
 
     if ( button->no_selected_surface &&
-         ( button->no_selected_surface->w != sp->pos.w ||
+         ( sp->num_of_cells == 1 ||
+           button->no_selected_surface->w != sp->pos.w ||
            button->no_selected_surface->h != sp->pos.h ) ){
         SDL_FreeSurface( button->no_selected_surface );
         button->no_selected_surface = NULL;
     }
-    if ( !button->no_selected_surface ){
+    if ( !button->no_selected_surface && sp->num_of_cells != 1 ){
         button->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
                                                             sp->pos.w, sp->pos.h,
                                                             32, rmask, gmask, bmask, amask );

@@ -110,7 +110,8 @@ int ONScripterLabel::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clippe
 {
     if ( clipped ) clipped->x = clipped->y = 0;
 
-    if ( dst->x >= clip->x + clip->w || dst->x + dst->w <= clip->x ||
+    if ( !dst ||
+         dst->x >= clip->x + clip->w || dst->x + dst->w <= clip->x ||
          dst->y >= clip->y + clip->h || dst->y + dst->h <= clip->y )
         return -1;
     
@@ -421,14 +422,18 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
     }
 }
 
-void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no )
+void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no,
+                                     bool active_flag, int cell_no,
+                                     SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     if ( sprite_info[sprite_no].image_name && 
          ( sprite_info[ sprite_no ].visible != active_flag ||
-           (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ) )
+           (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ||
+           doClipping(check_src_rect, &sprite_info[ sprite_no ].pos) == 0 ||
+           doClipping(check_dst_rect, &sprite_info[ sprite_no ].pos) == 0) )
     {
         if ( cell_no >= 0 )
-            sprite_info[ sprite_no ].current_cell = cell_no;
+            sprite_info[ sprite_no ].setCell(cell_no);
 
         sprite_info[ sprite_no ].visible = active_flag;
 

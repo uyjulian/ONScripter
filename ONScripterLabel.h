@@ -46,12 +46,16 @@
 #define MAX_SPRITE_NUM 1000
 #define MAX_PARAM_NUM 100
 #define CUSTOM_EFFECT_NO 100
+
 #define ONS_MIX_CHANNELS 50
+#define ONS_MIX_EXTRA_CHANNELS 3
+#define DEFAULT_WAVE_CHANNEL 1
+#define MIX_BGM_CHANNEL (ONS_MIX_CHANNELS+0)
+#define MIX_LOOPBGM_CHANNEL0 (ONS_MIX_CHANNELS+1)
+#define MIX_LOOPBGM_CHANNEL1 (ONS_MIX_CHANNELS+2)
 
 #define DEFAULT_WM_TITLE "ONScripter"
 #define DEFAULT_WM_ICON  "ONScripter"
-
-#define DEFAULT_WAVE_CHANNEL 1
 
 #define DEFAULT_FONT_SIZE 26
 
@@ -132,6 +136,8 @@ public:
     int menu_fullCommand();
     int menu_automodeCommand();
     int lspCommand();
+    int loopbgmstopCommand();
+    int loopbgmCommand();
     int lookbackspCommand();
     int lookbackflushCommand();
     int lookbackbuttonCommand();
@@ -404,8 +410,9 @@ private:
     void resetSentenceFont();
     void deleteButtonLink();
     void refreshMouseOverButton();
-    void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no );
-    void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str );
+    void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect );
+
+    void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect=NULL, SDL_Rect *check_dst_rect=NULL );
     void disableGetButtonFlag();
     int getNumberFromBuffer( const char **buf );
     
@@ -522,6 +529,7 @@ private:
     char *wave_file_name;
     
     bool midi_play_loop_flag;
+    bool internal_midi_play_loop_flag; // for playing MIDI both via playCommand and via mp3Command
     char *midi_file_name;
     Mix_Music *midi_info;
     
@@ -536,14 +544,15 @@ private:
 #if defined(EXTERNAL_MUSIC_PLAYER)
     Mix_Music *music_info;
 #endif
+    char *loop_bgm_name[2];
     
-    Mix_Chunk *wave_sample[ONS_MIX_CHANNELS];
+    Mix_Chunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
     int playMusic();
     int playMusicFile();
 #endif
-    int playMIDIFile();
+    int playMIDIFile(const char* filename);
     int playMIDI();
     int playMP3( int cd_no );
     void playMPEG( const char *filename, bool click_flag );
@@ -635,6 +644,7 @@ private:
     void executeSystemMenu();
     void executeSystemSkip();
     void executeSystemReset();
+    void executeSystemEnd();
     void executeWindowErase();
     void executeSystemLoad();
     void executeSystemSave();

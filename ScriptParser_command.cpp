@@ -567,15 +567,12 @@ int ScriptParser::menuselectcolorCommand()
 
     const char *buf = script_h.readStr();
     readColor( &menu_font.on_color, buf );
-    for ( i=0 ; i<3 ; i++ ) system_font.on_color[i] = menu_font.on_color[i];
 
     buf = script_h.readStr();
     readColor( &menu_font.off_color, buf );
-    for ( i=0 ; i<3 ; i++ ) system_font.off_color[i] = menu_font.off_color[i];
     
     buf = script_h.readStr();
     readColor( &menu_font.nofile_color, buf );
-    for ( i=0 ; i<3 ; i++ ) system_font.nofile_color[i] = menu_font.nofile_color[i];
     
     return RET_CONTINUE;
 }

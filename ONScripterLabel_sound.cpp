@@ -77,7 +77,7 @@ extern SDL_TimerID timer_cdaudio_id;
 #define TMP_MIDI_FILE "tmp.mid"
 #define TMP_MUSIC_FILE "tmp.mus"
 
-int ONScripterLabel::playMIDIFile()
+int ONScripterLabel::playMIDIFile(const char* filename)
 {
     if ( !audio_open_flag ) return -1;
 
@@ -88,13 +88,13 @@ int ONScripterLabel::playMIDIFile()
         return -1;
     }
 
-    unsigned long length = script_h.cBR->getFileLength( midi_file_name );
+    unsigned long length = script_h.cBR->getFileLength( filename );
     if ( length == 0 ){
-        fprintf( stderr, " *** can't find file [%s] ***\n", midi_file_name );
+        fprintf( stderr, " *** can't find file [%s] ***\n", filename );
         return -1;
     }
     unsigned char *buffer = new unsigned char[length];
-    script_h.cBR->getFile( midi_file_name, buffer );
+    script_h.cBR->getFile( filename, buffer );
     fwrite( buffer, 1, length, fp );
     delete[] buffer;
 
@@ -105,7 +105,7 @@ int ONScripterLabel::playMIDIFile()
 
 int ONScripterLabel::playMIDI()
 {
-    int midi_looping = midi_play_loop_flag ? -1 : 0;
+    int midi_looping = internal_midi_play_loop_flag ? -1 : 0;
     char *midi_file = new char[ strlen(archive_path) + strlen(TMP_MIDI_FILE) + 1 ];
     sprintf( midi_file, "%s%s", archive_path, TMP_MIDI_FILE );
 
@@ -113,7 +113,7 @@ int ONScripterLabel::playMIDI()
 
 #if defined(EXTERNAL_MIDI_PROGRAM)
     FILE *com_file;
-    if ( midi_play_loop_flag ){
+    if ( internal_midi_play_loop_flag ){
         if( (com_file = fopen("play_midi", "wb")) != NULL )
             fclose(com_file);
     }
@@ -232,7 +232,7 @@ int ONScripterLabel::playMP3( int cd_no )
             /* WMA */
             delete [] mp3_buffer;
             mp3_buffer = NULL;
-            return 0;
+            return -1;
         }
         mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( mp3_buffer, length ), NULL, 0 );
     }
@@ -242,6 +242,7 @@ int ONScripterLabel::playMP3( int cd_no )
         // The line below fails. ?????
         //SMPEG_delete( mp3_sample );
         mp3_sample = NULL;
+        return -1;
     }
     else{
 #ifndef MP3_MAD        
@@ -363,7 +364,7 @@ int ONScripterLabel::playWave( const char *file_name, bool loop_flag, int channe
 
     if ( !audio_open_flag ) return -1;
     
-    if ( channel >= ONS_MIX_CHANNELS ) channel = ONS_MIX_CHANNELS - 1;
+    if ( channel >= ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ) channel = ONS_MIX_CHANNELS-1;
 
     Mix_Pause( channel );
     if ( !(play_mode & WAVE_PLAY_LOADED) ){
@@ -441,7 +442,6 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         setStr( &music_file_name, NULL );
 
     if ( midi_info ){
-        midi_play_loop_flag = false;
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
         midi_info = NULL;

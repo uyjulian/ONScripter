@@ -39,7 +39,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 1
+#define SAVEFILE_VERSION_MINOR 2
 
 #define READ_LENGTH 4096
 
@@ -468,10 +468,10 @@ int ONScripterLabel::loadSaveFile( int no )
         }
     }
     else if ( midi_file_name && midi_play_loop_flag ){
-        playMIDIFile();
+        playMIDIFile(midi_file_name);
     }
     else if ( music_file_name && music_play_loop_flag ){
-        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
+        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
 #if defined(EXTERNAL_MUSIC_PLAYER)
             playMusicFile();
 #else

@@ -146,13 +146,14 @@ protected:
 
     enum { SYSTEM_NULL        = 0,
            SYSTEM_SKIP        = 1,
-           SYSTEM_RESET       = 2,
+           SYSTEM_RESET       = 0x10, // used in logical operation
            SYSTEM_SAVE        = 3,
            SYSTEM_LOAD        = 4,
            SYSTEM_LOOKBACK    = 5,
            SYSTEM_WINDOWERASE = 6,
            SYSTEM_MENU        = 7,
-           SYSTEM_YESNO       = 8
+           SYSTEM_YESNO       = 8,
+           SYSTEM_END         = 0x20 // used in logical operation
     };
     enum { RET_COMMENT         = 0,
            RET_NOMATCH         = 1,
@@ -341,7 +342,7 @@ protected:
      
     /* ---------------------------------------- */
     /* Font related variables */
-    FontInfo sentence_font, system_font, menu_font, ruby_font;
+    FontInfo sentence_font, menu_font, ruby_font;
     struct RubyStruct{
         enum { NONE,
                BODY,
@@ -358,8 +359,8 @@ protected:
 
         RubyStruct(){
             stage = NONE;
-            font_size_xy[0] = -1;
-            font_size_xy[1] = -1;
+            font_size_xy[0] = 0;
+            font_size_xy[1] = 0;
             font_name = NULL;
         };
         ~RubyStruct(){

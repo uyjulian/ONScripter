@@ -103,6 +103,9 @@ void ONScripterLabel::executeSystemCall()
       case SYSTEM_MENU:
         executeSystemMenu();
         break;
+      case SYSTEM_END:
+        executeSystemEnd();
+        break;
       default:
         leaveSystemCall();
     }
@@ -129,7 +132,7 @@ void ONScripterLabel::executeSystemMenu()
     
         if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_CLICK], false, DEFAULT_WAVE_CHANNEL );
-        
+
         link = root_menu_link.next;
         while ( link ){
             if ( current_button_state.button == counter++ ){
@@ -152,7 +155,6 @@ void ONScripterLabel::executeSystemMenu()
         menu_font.num_xy[1] = menu_link_num;
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-
         menu_font.setXY( (menu_font.num_xy[0] - menu_link_width) / 2,
                          (menu_font.num_xy[1] - menu_link_num) / 2 );
 
@@ -188,8 +190,19 @@ void ONScripterLabel::executeSystemReset()
         leaveSystemCall();
     }
     else{
-        if ( yesno_caller == SYSTEM_NULL )
-            yesno_caller = SYSTEM_RESET;
+        yesno_caller |= SYSTEM_RESET;
+        system_menu_mode = SYSTEM_YESNO;
+        advancePhase();
+    }
+}
+
+void ONScripterLabel::executeSystemEnd()
+{
+    if ( yesno_caller == SYSTEM_END ){
+        leaveSystemCall();
+    }
+    else{
+        yesno_caller |= SYSTEM_END;
         system_menu_mode = SYSTEM_YESNO;
         advancePhase();
     }
@@ -243,16 +256,22 @@ void ONScripterLabel::executeSystemLoad()
         shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
         flush();
         
-        system_font.setXY( (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
-        drawString( load_menu_name, system_font.color, &system_font, true, accumulation_surface );
-        system_font.xy[1] += 2;
+        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
+        menu_font.num_xy[1] = num_save_file+2;
+        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+        menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
+        uchar3 color = {0xcc, 0xcc, 0xcc};
+        drawString( load_menu_name, color, &menu_font, true, accumulation_surface );
+        menu_font.newLine();
+        menu_font.newLine();
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
 
         for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
             searchSaveFile( save_file_info, i );
-            system_font.setXY( (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
+            menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
             if ( save_file_info.valid ){
                 sprintf( buffer, "%s%s　%s月%s日%s時%s分",
@@ -270,7 +289,7 @@ void ONScripterLabel::executeSystemLoad()
                          save_file_info.sjis_no );
                 nofile_flag = true;
             }
-            ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
+            ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
             flush( &button->image_rect );
@@ -306,10 +325,15 @@ void ONScripterLabel::executeSystemSave()
         shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
         flush();
 
-        system_font.xy[0] = (system_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2;
-        system_font.xy[1] = 0;
-        drawString( save_menu_name, system_font.color, &system_font, true, accumulation_surface );
-        system_font.xy[1] += 2;
+        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
+        menu_font.num_xy[1] = num_save_file+2;
+        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+        menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
+        uchar3 color = {0xcc, 0xcc, 0xcc};
+        drawString( save_menu_name, color, &menu_font, true, accumulation_surface );
+        menu_font.newLine();
+        menu_font.newLine();
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -317,7 +341,7 @@ void ONScripterLabel::executeSystemSave()
         for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
             SaveFileInfo save_file_info;
             searchSaveFile( save_file_info, i );
-            system_font.xy[0] = (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2;
+            menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
             if ( save_file_info.valid ){
                 sprintf( buffer, "%s%s　%s月%s日%s時%s分",
@@ -335,7 +359,7 @@ void ONScripterLabel::executeSystemSave()
                          save_file_info.sjis_no );
                 nofile_flag = true;
             }
-            ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
+            ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
             flush( &button->image_rect );
@@ -377,18 +401,21 @@ void ONScripterLabel::executeSystemYesNo()
                 saveon_flag = true;
                 internal_saveon_flag = true;
             }
-            else if ( yesno_caller == SYSTEM_RESET || 
-                      yesno_caller == SYSTEM_MENU ){
+            else if ( yesno_caller & SYSTEM_RESET ){
 
                 resetCommand();
                 event_mode = WAIT_SLEEP_MODE;
                 leaveSystemCall( false );
             }
+            else if ( yesno_caller & SYSTEM_END ){
+
+                endCommand();
+            }
         }
         else{
             if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
                 playWave( menuselectvoice_file_name[MENUSELECTVOICE_NO], false, DEFAULT_WAVE_CHANNEL );
-            system_menu_mode = yesno_caller;
+            system_menu_mode = yesno_caller & 0xf;
             advancePhase();
         }
     }
@@ -404,30 +431,37 @@ void ONScripterLabel::executeSystemYesNo()
                      save_item_name,
                      save_file_info.sjis_no );
         }
-            
+
         if ( yesno_caller == SYSTEM_SAVE )
             strcat( name, "にセーブします。よろしいですか？" );
         else if ( yesno_caller == SYSTEM_LOAD )
             strcat( name, "をロードします。よろしいですか？" );
-        else if ( yesno_caller == SYSTEM_RESET || 
-                  yesno_caller == SYSTEM_MENU )
+        else if ( yesno_caller & SYSTEM_RESET )
+            strcpy( name, "リセットします。よろしいですか？" );
+        else if ( yesno_caller & SYSTEM_END )
             strcpy( name, "終了します。よろしいですか？" );
-        system_font.xy[0] = (system_font.num_xy[0] - strlen( name ) / 2 ) / 2;
-        system_font.xy[1] = 10;
-        drawString( name, system_font.color, &system_font, true, accumulation_surface );
+        
+        
+        menu_font.num_xy[0] = strlen(name)/2;
+        menu_font.num_xy[1] = 3;
+        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+        menu_font.setXY(0, 0);
+        uchar3 color = {0xcc, 0xcc, 0xcc};
+        drawString( name, color, &menu_font, true, accumulation_surface );
 
+        int offset1 = strlen(name)/5;
+        int offset2 = strlen(name)/2 - offset1;
         strcpy( name, "はい" );
-        system_font.xy[0] = 12;
-        system_font.xy[1] = 12;
-        ButtonLink *button = getSelectableSentence( name, &system_font, false );
+        menu_font.setXY(offset1-2, 2);
+        ButtonLink *button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 1;
         flush( &button->image_rect );
 
         strcpy( name, "いいえ" );
-        system_font.xy[0] = 18;
-        system_font.xy[1] = 12;
-        button = getSelectableSentence( name, &system_font, false );
+        menu_font.setXY(offset2, 2);
+        button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 2;
         flush( &button->image_rect );

@@ -30,7 +30,6 @@
 #include "BaseReader.h"
 
 #define VARIABLE_RANGE 4096
-#define ARRAY_VARIABLE_RANGE 200
 
 typedef unsigned char uchar3[3];
 
@@ -50,10 +49,13 @@ public:
     };
 
     struct ArrayVariable{
+        struct ArrayVariable* next;
+        int no;
         int num_dim;
         int dim[20];
         int *data;
         ArrayVariable(){
+            next = NULL;
             data = NULL;
         };
     };
@@ -124,6 +126,8 @@ public:
     void setKidokuskip( bool kidokuskip_flag );
     void saveKidokuData();
     void loadKidokuData();
+    void saveArrayVariable( FILE *fp );
+    void loadArrayVariable( FILE *fp );
     
     void addNumAlias( const char *str, int no );
     void addStrAlias( const char *str1, const char *str2 );
@@ -240,7 +244,7 @@ private:
     NameAlias root_name_alias, *last_name_alias;
     StringAlias root_str_alias, *last_str_alias;
     
-    ArrayVariable array_variables[ ARRAY_VARIABLE_RANGE ], tmp_array_variable;
+    ArrayVariable *root_array_variable, *current_array_variable;
 
     char *archive_path;
     int script_buffer_length;

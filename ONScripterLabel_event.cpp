@@ -103,7 +103,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
         }
     }
     else if ( event.type == ONS_MIDI_EVENT ){
-        if ( midi_play_loop_flag ){
+        if ( internal_midi_play_loop_flag ){
             Mix_FreeMusic( midi_info );
             playMIDI();
         }
@@ -119,6 +119,8 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
         if ( wave_sample[event.user.code] ){
             Mix_FreeChunk( wave_sample[event.user.code] );
             wave_sample[event.user.code] = NULL;
+            if ( event.user.code == MIX_LOOPBGM_CHANNEL0 && loop_bgm_name[1] )
+                playWave( loop_bgm_name[1], true, MIX_LOOPBGM_CHANNEL1, WAVE_PLAY_LOADED );
         }
     }
 }
@@ -175,12 +177,10 @@ void midiCallback( int sig )
 
 extern "C" void waveCallback( int channel )
 {
-    if ( channel == 0 ){
-        SDL_Event event;
-        event.type = ONS_WAVE_EVENT;
-        event.user.code = channel;
-        SDL_PushEvent(&event);
-    }
+    SDL_Event event;
+    event.type = ONS_WAVE_EVENT;
+    event.user.code = channel;
+    SDL_PushEvent(&event);
 }
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
@@ -374,7 +374,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 
           case EDIT_SE_VOLUME_MODE:
             se_volume = variable_edit_num;
-            for ( i=1 ; i<ONS_MIX_CHANNELS ; i++ )
+            for ( i=1 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ )
                 if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
             break;
 

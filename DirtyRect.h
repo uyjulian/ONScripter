@@ -37,7 +37,7 @@ struct DirtyRect
     void clear();
     void fill( int w, int h );
 
-    void addBoundingBox( SDL_Rect &rect );
+    SDL_Rect calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 );
 
     int area;
     int total_history;

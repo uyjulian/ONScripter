@@ -330,7 +330,7 @@ int ONScripterLabel::sevolCommand()
 {
     se_volume = script_h.readInt();
 
-    for ( int i=1 ; i<ONS_MIX_CHANNELS ; i++ )
+    for ( int i=1 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ )
         if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
         
     return RET_CONTINUE;
@@ -958,7 +958,8 @@ int ONScripterLabel::playCommand()
         
         setStr( &midi_file_name, buf );
         midi_play_loop_flag = loop_flag;
-        playMIDIFile();
+        internal_midi_play_loop_flag = loop_flag;
+        playMIDIFile(midi_file_name);
     }
 
     return RET_CONTINUE;
@@ -1033,16 +1034,19 @@ int ONScripterLabel::mp3Command()
     }
 
     stopBGM( false );
-    
+
     const char *buf = script_h.readStr();
     if ( buf[0] != '\0' ){
         setStr( &music_file_name, buf );
-        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
+        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
 #if defined(EXTERNAL_MUSIC_PLAYER)
-            playMusicFile();
+            if (playMusicFile()){
 #else
-            playMP3( 0 );
+            if (playMP3( 0 )){
 #endif
+                internal_midi_play_loop_flag = music_play_loop_flag;
+                playMIDIFile(music_file_name);
+            }
     }
         
     return RET_CONTINUE;
@@ -1135,6 +1139,36 @@ int ONScripterLabel::lspCommand()
     if ( sprite_info[no].visible )
         dirty_rect.add( sprite_info[no].pos );
 
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::loopbgmstopCommand()
+{
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ){
+        Mix_Pause(MIX_LOOPBGM_CHANNEL0);
+        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL0] );
+        wave_sample[MIX_LOOPBGM_CHANNEL0] = NULL;
+    }
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ){
+        Mix_Pause(MIX_LOOPBGM_CHANNEL1);
+        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL1] );
+        wave_sample[MIX_LOOPBGM_CHANNEL1] = NULL;
+    }
+    setStr(&loop_bgm_name[0], NULL);
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::loopbgmCommand()
+{
+    const char *buf = script_h.readStr();
+    setStr( &loop_bgm_name[0], buf );
+    buf = script_h.readStr();
+    setStr( &loop_bgm_name[1], buf );
+
+    playWave( loop_bgm_name[1], false, MIX_LOOPBGM_CHANNEL1, WAVE_PRELOAD );
+    playWave( loop_bgm_name[0], false, MIX_LOOPBGM_CHANNEL0 );
+    
     return RET_CONTINUE;
 }
 
@@ -2213,6 +2247,7 @@ int ONScripterLabel::btnwaitCommand()
                 f_info.setLineArea( strlen(s_link->text)/2+1 );
                 f_info.clear();
                 drawString( s_link->text, f_info.off_color, &f_info, false, accumulation_surface );
+                dirty_rect.add( p_button_link->image_rect );
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
@@ -2240,7 +2275,6 @@ int ONScripterLabel::btnwaitCommand()
                 if ( p_button_link->no_selected_surface )
                     SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
-            dirty_rect.add( p_button_link->image_rect );
 
             p_button_link = p_button_link->next;
         }
@@ -2251,7 +2285,8 @@ int ONScripterLabel::btnwaitCommand()
         }
 
         if ( exbtn_d_button_link.exbtn_ctl ){
-            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl  );
+            SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
+            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect );
         }
         flush();
 

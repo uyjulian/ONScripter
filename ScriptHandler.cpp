@@ -71,6 +71,7 @@ ScriptHandler::ScriptHandler()
         num_limit_flag[i] = false;
         str_variables[i] = NULL;
     }
+    root_array_variable = current_array_variable = NULL;
 
     screen_size = SCREEN_SIZE_640x480;
     global_variable_border = 200;
@@ -1294,6 +1295,51 @@ void ScriptHandler::loadKidokuData()
     }
 }
 
+void ScriptHandler::saveArrayVariable( FILE *fp )
+{
+    ArrayVariable *av = root_array_variable;
+
+    while(av){
+        int i, dim = 1;
+        for ( i=0 ; i<av->num_dim ; i++ )
+            dim *= av->dim[i];
+        
+        for ( i=0 ; i<dim ; i++ ){
+            unsigned long ch = av->data[i];
+            char buf[4];
+            buf[3] = (ch>>24) & 0xff;
+            buf[2] = (ch>>16) & 0xff;
+            buf[1] = (ch>>8)  & 0xff;
+            buf[0] = ch & 0xff;
+            fwrite( &buf, 1, 4, fp );
+        }
+        av = av->next;
+    }
+}
+
+void ScriptHandler::loadArrayVariable( FILE *fp )
+{
+    ArrayVariable *av = root_array_variable;
+
+    while(av){
+        int i, dim = 1;
+        for ( i=0 ; i<av->num_dim ; i++ )
+            dim *= av->dim[i];
+        
+        for ( i=0 ; i<dim ; i++ ){
+            unsigned long ret;
+            char buf[4];
+            fread( &buf, 1, 4, fp );
+            ret = buf[3];
+            ret = ret << 8 | buf[2];
+            ret = ret << 8 | buf[1];
+            ret = ret << 8 | buf[0];
+            av->data[i] = ret;
+        }
+        av = av->next;
+    }
+}
+
 void ScriptHandler::addNumAlias( const char *str, int no )
 {
     NameAlias *p_name_alias = new NameAlias( str, no );
@@ -1376,14 +1422,21 @@ int ScriptHandler::decodeArray( char **buf, struct ArrayVariable &array )
 
 int *ScriptHandler::getArrayPtr( int no, ArrayVariable &array, int offset )
 {
-    int dim = 0, i;
-    for ( i=0 ; i<array_variables[no].num_dim ; i++ ){
-        if ( array_variables[no].dim[i] <= array.dim[i] ) errorAndExit( "dim[i] <= array.dim[i]." );
-        dim = dim * array_variables[no].dim[i] + array.dim[i];
+    ArrayVariable *av = root_array_variable;
+    while(av){
+        if (av->no == no) break;
+        av = av->next;
     }
-    if ( array_variables[no].dim[i-1] <= array.dim[i-1] + offset ) errorAndExit( "dim[i-1] <= array.dim[i-1] + offset." );
+    if (av == NULL) errorAndExit( "Array No. is not declared." );
+    
+    int dim = 0, i;
+    for ( i=0 ; i<av->num_dim ; i++ ){
+        if ( av->dim[i] <= array.dim[i] ) errorAndExit( "dim[i] <= array.dim[i]." );
+        dim = dim * av->dim[i] + array.dim[i];
+    }
+    if ( av->dim[i-1] <= array.dim[i-1] + offset ) errorAndExit( "dim[i-1] <= array.dim[i-1] + offset." );
 
-    return &array_variables[no].data[dim+offset];
+    return &av->data[dim+offset];
 }
 
 void ScriptHandler::declareDim()
@@ -1391,17 +1444,26 @@ void ScriptHandler::declareDim()
     current_script = next_script;
     char *buf = current_script;
 
+    if (current_array_variable){
+        current_array_variable->next = new ArrayVariable();
+        current_array_variable = current_array_variable->next;
+    }
+    else{
+        root_array_variable = new ArrayVariable();
+        current_array_variable = root_array_variable;
+    }
+
     ScriptHandler::ArrayVariable array;
-    int no = decodeArray( &buf, array );
+    current_array_variable->no = decodeArray( &buf, array );
 
     int dim = 1;
-    array_variables[no].num_dim = array.num_dim;
+    current_array_variable->num_dim = array.num_dim;
     for ( int i=0 ; i<array.num_dim ; i++ ){
-        array_variables[no].dim[i] = array.dim[i]+1;
+        current_array_variable->dim[i] = array.dim[i]+1;
         dim *= (array.dim[i]+1);
     }
-    array_variables[no].data = new int[dim];
-    memset( array_variables[no].data, 0, sizeof(int) * dim );
+    current_array_variable->data = new int[dim];
+    memset( current_array_variable->data, 0, sizeof(int) * dim );
 
     next_script = buf;
 }

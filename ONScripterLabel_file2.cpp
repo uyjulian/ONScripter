@@ -192,8 +192,9 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &i ); // play, playonce MIDI
     if ( i==1 ){
         midi_play_loop_flag = true;
+        internal_midi_play_loop_flag = true;
         current_cd_track = -2;
-        playMIDIFile();
+        playMIDIFile(midi_file_name);
     }
     else
         midi_play_loop_flag = false;
@@ -224,12 +225,15 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     else                                 mp3save_flag = false;
     loadStr( fp, &music_file_name );
     if ( music_file_name ){
-        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
+        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
 #if defined(EXTERNAL_MUSIC_PLAYER)
-            playMusicFile();
+            if (playMusicFile()){
 #else
-            playMP3( 0 );
+            if (playMP3( 0 )){
 #endif
+                internal_midi_play_loop_flag = music_play_loop_flag;
+                playMIDIFile(music_file_name);
+            }
     }
 
     loadInt( fp, &erase_text_window_mode );
@@ -291,11 +295,28 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &j ); // 1
     loadInt( fp, &j ); // 0
     loadInt( fp, &j ); // 1
+    btndef_info.remove();
     loadStr( fp, &btndef_info.image_name );
+    if ( btndef_info.image_name && btndef_info.image_name[0] != '\0' ){
+        parseTaggedString( &btndef_info );
+        setupAnimationInfo( &btndef_info );
+        SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    }
+
+    if ( file_version >= 202 )
+        script_h.loadArrayVariable(fp);
+    
     loadInt( fp, &j ); // 0
     if ( fgetc( fp ) == 1 ) erase_text_window_mode = 2;
     fgetc( fp ); // 0
-    loadInt( fp, &j ); // 0
+    fgetc( fp ); // 0
+    fgetc( fp ); // 0
+    loadStr( fp, &loop_bgm_name[0] );
+    loadStr( fp, &loop_bgm_name[1] );
+    if ( loop_bgm_name[0] ) {
+        if ( loop_bgm_name[1] ) playWave( loop_bgm_name[1], false, MIX_LOOPBGM_CHANNEL1, WAVE_PRELOAD );
+        playWave( loop_bgm_name[0], false, MIX_LOOPBGM_CHANNEL0 );
+    }
 
     if ( file_version >= 201 ){
         loadInt( fp, &j );
@@ -503,10 +524,16 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     saveInt( fp, 0 );
     saveInt( fp, 1 );
     saveStr( fp, btndef_info.image_name );
+
+    script_h.saveArrayVariable(fp);
+    
     saveInt( fp, 0 );
     fputc( (erase_text_window_mode==2)?1:0, fp );
     fputc( 0, fp );
-    saveInt( fp, 0 );
+    fputc( 0, fp );
+    fputc( 0, fp );
+    saveStr( fp, loop_bgm_name[0] );
+    saveStr( fp, loop_bgm_name[1] );
 
     saveInt( fp, (rubyon_flag)?1:0 );
     saveInt( fp, ruby_struct.font_size_xy[0] );

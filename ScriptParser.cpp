@@ -245,15 +245,14 @@ ScriptParser::ScriptParser( char *path )
     
     /* ---------------------------------------- */
     /* Menu related variables */
-    menu_font.font_size_xy[0] = system_font.font_size_xy[0] = 18;
-    menu_font.font_size_xy[1] = system_font.font_size_xy[1] = 18;
-    menu_font.top_xy[0] = system_font.top_xy[0] = 0;
-    menu_font.top_xy[1] = system_font.top_xy[1] = 16;
-    menu_font.num_xy[0] = system_font.num_xy[0] = 32;
-    menu_font.num_xy[1] = system_font.num_xy[1] = 23;
-    menu_font.pitch_xy[0] = system_font.pitch_xy[0] = 2 + system_font.font_size_xy[0];
-    menu_font.pitch_xy[1] = system_font.pitch_xy[1] = 2 + system_font.font_size_xy[1];
-    system_font.window_color[0] = system_font.window_color[1] = system_font.window_color[2] = 0xcc;
+    menu_font.font_size_xy[0] = 18;
+    menu_font.font_size_xy[1] = 18;
+    menu_font.top_xy[0] = 0;
+    menu_font.top_xy[1] = 16;
+    menu_font.num_xy[0] = 32;
+    menu_font.num_xy[1] = 23;
+    menu_font.pitch_xy[0] = 2 + menu_font.font_size_xy[0];
+    menu_font.pitch_xy[1] = 2 + menu_font.font_size_xy[1];
     menu_font.window_color[0] = menu_font.window_color[1] = menu_font.window_color[2] = 0xcc;
 
     root_menu_link.next = NULL;
@@ -433,6 +432,7 @@ int ScriptParser::getSystemCallNo( const char *buffer )
     else if ( !strcmp( buffer, "lookback" ) )    return SYSTEM_LOOKBACK;
     else if ( !strcmp( buffer, "windowerase" ) ) return SYSTEM_WINDOWERASE;
     else if ( !strcmp( buffer, "rmenu" ) )       return SYSTEM_MENU;
+    else if ( !strcmp( buffer, "end" ) )         return SYSTEM_END;
     else{
         printf("Unsupported system call %s\n", buffer );
         return -1;

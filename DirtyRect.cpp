@@ -80,41 +80,64 @@ void DirtyRect::add( SDL_Rect src )
         src.y = 0;
     }
 
+    bounding_box = calcBoundingBox( bounding_box, src );
+
+    int i, min_is=0, min_hist=-1;
+    for (i=0 ; i<num_history ; i++){
+        SDL_Rect rect = calcBoundingBox(src, history[i]);
+        if (i==0 || rect.w*rect.h < min_is){
+            min_is = rect.w*rect.h;
+            min_hist = i;
+        }
+    }
+    if (min_hist >= 0 &&
+        history[min_hist].w * history[min_hist].h + src.w * src.h > min_is ){
+        area -= history[min_hist].w * history[min_hist].h;
+        history[min_hist] = calcBoundingBox(src, history[min_hist]);
+        area += history[min_hist].w * history[min_hist].h;
+        return;
+    }
+    
     history[ num_history++ ] = src;
-    addBoundingBox( src );
     area += src.w * src.h;
     
     if ( num_history == total_history ){
         total_history += 10;
         SDL_Rect *tmp = history;
         history = new SDL_Rect[ total_history ];
-        for ( int i=0 ; i<num_history ; i++ )
+        for ( i=0 ; i<num_history ; i++ )
             history[i] = tmp[i];
 
         delete[] tmp;
     }
 };
 
-void DirtyRect::addBoundingBox( SDL_Rect &src )
+SDL_Rect DirtyRect::calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 )
 {
-    if ( bounding_box.w == 0 || bounding_box.h == 0 ){
-        bounding_box = src;
-        return;
+    if ( src2.w == 0 || src2.h == 0 ){
+        return src1;
     }
-    if ( bounding_box.x > src.x ){
-        bounding_box.w += bounding_box.x - src.x;
-        bounding_box.x = src.x;
+    if ( src1.w == 0 || src1.h == 0 ){
+        src1 = src2;
+        return src1;
     }
-    if ( bounding_box.y > src.y ){
-        bounding_box.h += bounding_box.y - src.y;
-        bounding_box.y = src.y;
+
+    if ( src1.x > src2.x ){
+        src1.w += src1.x - src2.x;
+        src1.x = src2.x;
     }
-    if ( bounding_box.x + bounding_box.w < src.x + src.w ){
-        bounding_box.w = src.x + src.w - bounding_box.x;
+    if ( src1.y > src2.y ){
+        src1.h += src1.y - src2.y;
+        src1.y = src2.y;
     }
-    if ( bounding_box.y + bounding_box.h < src.y + src.h ){
-        bounding_box.h = src.y + src.h - bounding_box.y;
+    if ( src1.x + src1.w < src2.x + src2.w ){
+        src1.w = src2.x + src2.w - src1.x;
     }
+    if ( src1.y + src1.h < src2.y + src2.h ){
+        src1.h = src2.y + src2.h - src1.y;
+    }
+
+    return src1;
 }
 
 void DirtyRect::clear()
