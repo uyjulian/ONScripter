@@ -382,7 +382,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
 
 int ONScripterLabel::textCommand()
 {
-    int i, j, ret = enterTextDisplayMode();// RET_WAIT_NOREAD );
+    int i, j, ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
     
     char out_text[3]= {'\0', '\0', '\0'};

@@ -51,17 +51,10 @@ AnimationInfo::AnimationInfo(){
     font_pitch = -1;
     remaining_time = 0;
 
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
     rmask = 0x000000ff;
     gmask = 0x0000ff00;
     bmask = 0x00ff0000;
     amask = 0xff000000;
-#else
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#endif
     rgbmask = (rmask | gmask | bmask);
 
     tex_id = 0;

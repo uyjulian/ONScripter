@@ -316,17 +316,10 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
 
     initSDL( cdaudio_flag );
 
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
     rmask = 0x000000ff;
     gmask = 0x0000ff00;
     bmask = 0x00ff0000;
     amask = 0xff000000;
-#else
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#endif
 
     text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     accumulation_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
@@ -982,7 +975,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
         }
         else{
             SDL_LockSurface( surface );
-            Uint32 *buf = (Uint32 *)surface->pixels + rect.y * surface->w + rect.x, c;
+            Uint32 *buf = (Uint32 *)surface->pixels + rect.y * surface->w + rect.x;
     
             for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
                 for ( int j=rect.x ; j<rect.x + rect.w ; j++, buf++ ){

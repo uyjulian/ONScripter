@@ -575,10 +575,22 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, in
     }
     
     SDL_LockSurface(surface);
-    for (i=0 ; i<rect.h ; i++)
+    for (i=0 ; i<rect.h ; i++){
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
         memcpy(texture_buffer+(rect.h-i-1)*texture_width*4,
                (Uint32*)surface->pixels + surface->w * i,
                surface->w*4);
+#else
+        unsigned char *dst_buf = texture_buffer+(rect.h-i-1)*texture_width*4;
+        unsigned char *src_buf = (unsigned char *)surface->pixels + surface->w * i * 4;
+        for (j=0 ; j<surface->w ; j++, src_buf+=4){
+            *dst_buf++ = src_buf[3];
+            *dst_buf++ = src_buf[2];
+            *dst_buf++ = src_buf[1];
+            *dst_buf++ = src_buf[0];
+        }
+#endif
+    }
     SDL_UnlockSurface(surface);
 
     if (trans < 256){
@@ -612,10 +624,22 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
     }
     
     SDL_LockSurface(surface);
-    for (i=0 ; i<rect2.h ; i++)
+    for (i=0 ; i<rect2.h ; i++){
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
         memcpy(texture_buffer+(rect2.h-i-1)*rect2.w*4,
                (Uint32*)surface->pixels + surface->w * (rect2.y+i) + rect2.x,
                rect2.w*4);
+#else
+        unsigned char *dst_buf = texture_buffer+(rect2.h-i-1)*rect2.w*4;
+        unsigned char *src_buf = (unsigned char *)surface->pixels + (surface->w * (rect2.y+i) + rect2.x)*4;
+        for (j=0 ; j<rect2.w ; j++, src_buf+=4){
+            *dst_buf++ = src_buf[3];
+            *dst_buf++ = src_buf[2];
+            *dst_buf++ = src_buf[1];
+            *dst_buf++ = src_buf[0];
+        }
+#endif    
+    }
     SDL_UnlockSurface(surface);
 
     if (trans < 256){
