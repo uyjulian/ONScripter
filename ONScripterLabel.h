@@ -629,7 +629,6 @@ private:
     /* Image processing */
     void blitSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     int  resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
-    int  doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
     void shiftCursorOnButton( int diff );
     void alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                      SDL_Surface *src1_surface,

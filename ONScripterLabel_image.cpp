@@ -99,40 +99,6 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Su
     return 0;
 }
 
-int ONScripterLabel::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped )
-{
-    if ( clipped ) clipped->x = clipped->y = 0;
-
-    if ( !dst ||
-         dst->x >= clip->x + clip->w || dst->x + dst->w <= clip->x ||
-         dst->y >= clip->y + clip->h || dst->y + dst->h <= clip->y )
-        return -1;
-    
-    if ( dst->x < clip->x ){
-        dst->w -= clip->x - dst->x;
-        if ( clipped ) clipped->x = clip->x - dst->x;
-        dst->x = clip->x;
-    }
-    if ( clip->x + clip->w < dst->x + dst->w ){
-        dst->w = clip->x + clip->w - dst->x;
-    }
-    
-    if ( dst->y < clip->y ){
-        dst->h -= clip->y - dst->y;
-        if ( clipped ) clipped->y = clip->y - dst->y;
-        dst->y = clip->y;
-    }
-    if ( clip->y + clip->h < dst->y + dst->h ){
-        dst->h = clip->y + clip->h - dst->y;
-    }
-    if ( clipped ){
-        clipped->w = dst->w;
-        clipped->h = dst->h;
-    }
-
-    return 0;
-}
-
 int ONScripterLabel::shiftRect( SDL_Rect &dst, SDL_Rect &clip )
 {
     dst.x += clip.x;
@@ -157,7 +123,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     /* ---------------------------------------- */
     /* 1st clipping */
     if ( clip ){
-        if ( doClipping( &dst_rect, clip, &clipped_rect ) ) return;
+        if ( AnimationInfo::doClipping( &dst_rect, clip, &clipped_rect ) ) return;
 
         x2 += clipped_rect.x;
         y2 += clipped_rect.y;
@@ -170,7 +136,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     clip_rect.w = dst_surface->w;
     clip_rect.h = dst_surface->h;
 
-    if ( doClipping( &dst_rect, &clip_rect, &clipped_rect ) ) return;
+    if ( AnimationInfo::doClipping( &dst_rect, &clip_rect, &clipped_rect ) ) return;
     
     x2 += clipped_rect.x;
     y2 += clipped_rect.y;
@@ -414,8 +380,8 @@ void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no,
     if ( sprite_info[sprite_no].image_name && 
          ( sprite_info[ sprite_no ].visible != active_flag ||
            (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ||
-           doClipping(check_src_rect, &sprite_info[ sprite_no ].pos) == 0 ||
-           doClipping(check_dst_rect, &sprite_info[ sprite_no ].pos) == 0) )
+           AnimationInfo::doClipping(check_src_rect, &sprite_info[ sprite_no ].pos) == 0 ||
+           AnimationInfo::doClipping(check_dst_rect, &sprite_info[ sprite_no ].pos) == 0) )
     {
         if ( cell_no >= 0 )
             sprite_info[ sprite_no ].setCell(cell_no);

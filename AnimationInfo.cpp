@@ -160,10 +160,106 @@ void AnimationInfo::setCell(int cell)
     current_cell = cell;
 }
 
+int AnimationInfo::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped )
+{
+    if ( clipped ) clipped->x = clipped->y = 0;
+
+    if ( !dst ||
+         dst->x >= clip->x + clip->w || dst->x + dst->w <= clip->x ||
+         dst->y >= clip->y + clip->h || dst->y + dst->h <= clip->y )
+        return -1;
+    
+    if ( dst->x < clip->x ){
+        dst->w -= clip->x - dst->x;
+        if ( clipped ) clipped->x = clip->x - dst->x;
+        dst->x = clip->x;
+    }
+    if ( clip->x + clip->w < dst->x + dst->w ){
+        dst->w = clip->x + clip->w - dst->x;
+    }
+    
+    if ( dst->y < clip->y ){
+        dst->h -= clip->y - dst->y;
+        if ( clipped ) clipped->y = clip->y - dst->y;
+        dst->y = clip->y;
+    }
+    if ( clip->y + clip->h < dst->y + dst->h ){
+        dst->h = clip->y + clip->h - dst->y;
+    }
+    if ( clipped ){
+        clipped->w = dst->w;
+        clipped->h = dst->h;
+    }
+
+    return 0;
+}
+
 void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                                    SDL_Rect *clip, int alpha,
-                                    int scale_x, int scale_y, int rot,
-                                    bool do_interpolation )
+                                    SDL_Rect *clip, int alpha )
+{
+    if ( image_surface == NULL ) return;
+    
+    SDL_Rect dst_rect = {dst_x, dst_y, pos.w, pos.h};
+    SDL_Rect src_rect = {0, 0, 0, 0};
+    SDL_Rect clip_rect, clipped_rect;
+
+    /* ---------------------------------------- */
+    /* 1st clipping */
+    if ( clip ){
+        if ( doClipping( &dst_rect, clip, &clipped_rect ) ) return;
+
+        src_rect.x += clipped_rect.x;
+        src_rect.y += clipped_rect.y;
+    }
+    
+    /* ---------------------------------------- */
+    /* 2nd clipping */
+    clip_rect.x = 0;
+    clip_rect.y = 0;
+    clip_rect.w = dst_surface->w;
+    clip_rect.h = dst_surface->h;
+
+    if ( doClipping( &dst_rect, &clip_rect, &clipped_rect ) ) return;
+    
+    src_rect.x += clipped_rect.x;
+    src_rect.y += clipped_rect.y;
+
+    /* ---------------------------------------- */
+    
+    // lock surface
+    SDL_LockSurface( dst_surface );
+    SDL_LockSurface( image_surface );
+
+    Uint32 *src_buffer = (Uint32 *)image_surface->pixels + image_surface->w * src_rect.y + image_surface->w*current_cell/num_of_cells + src_rect.x;
+    Uint32 *dst_buffer = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;
+    Uint32 mask1, mask2, mask_rb, mask_g;
+    
+    for (int i=0 ; i<dst_rect.h ; i++){
+        for (int j=0 ; j<dst_rect.w ; j++, src_buffer++, dst_buffer++){
+
+            mask2 = (((*src_buffer & amask) >> image_surface->format->Ashift) * alpha) >> 8;
+            mask1 = 256 - mask2;
+            
+            mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +
+                        (*src_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+            mask_g = (((*dst_buffer & 0x00ff00) * mask1 +
+                       (*src_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+
+            *dst_buffer = mask_rb | mask_g | amask;
+        }
+        src_buffer += image_surface->w - dst_rect.w;
+        dst_buffer += dst_surface->w  - dst_rect.w;
+    }
+    
+    // unlock surface
+    SDL_UnlockSurface( image_surface );
+    SDL_UnlockSurface( dst_surface );
+}
+
+void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
+                                     SDL_Rect *clip, int alpha, 
+                                     int scale_x, int scale_y, int rot,
+                                     bool do_interpolation )
 {
     if ( image_surface == NULL ) return;
     if ( scale_x == 0 || scale_y == 0 ) return;

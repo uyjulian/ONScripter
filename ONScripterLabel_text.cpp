@@ -155,7 +155,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
 
     if ( surface == accumulation_surface &&
          !flush_flag &&
-         (!clip || doClipping( &dst_rect, clip ) == 0) ){
+         (!clip || AnimationInfo::doClipping( &dst_rect, clip ) == 0) ){
         dirty_rect.add( dst_rect );
     }
     else if ( flush_flag ){

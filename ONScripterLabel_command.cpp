@@ -1982,8 +1982,8 @@ int ONScripterLabel::drawsp2Command()
 
     glPopMatrix();
 #else    
-    si.blendOnSurface( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
-                       NULL, alpha, scale_x, scale_y, rot );
+    si.blendOnSurface2( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
+                        NULL, alpha, scale_x, scale_y, rot );
 #endif    
     si.setCell(old_cell_no);
 
@@ -2016,8 +2016,7 @@ int ONScripterLabel::drawspCommand()
 
     glPopMatrix();
 #else    
-    si.blendOnSurface( accumulation_surface, x, y,
-                                           NULL, alpha );
+    si.blendOnSurface( accumulation_surface, x, y, NULL, alpha );
 #endif    
     si.setCell(old_cell_no);
 
@@ -2098,8 +2097,8 @@ int ONScripterLabel::drawbg2Command()
 
     glPopMatrix();
 #else    
-    bg_info.blendOnSurface( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
-                            NULL, 256, scale_x, scale_y, rot );
+    bg_info.blendOnSurface2( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
+                             NULL, 256, scale_x, scale_y, rot );
 #endif    
 
     return RET_CONTINUE;
@@ -2564,7 +2563,7 @@ int ONScripterLabel::bltCommand()
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 
         SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
-        doClipping( &dst_rect, &clip, &clipped );
+        AnimationInfo::doClipping( &dst_rect, &clip, &clipped );
         shiftRect( src_rect, clipped );
 
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );

@@ -895,7 +895,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
         if ( current_font == &sentence_font ){
             rect = sentence_font_info.pos;
 
-            if ( clip && doClipping( &rect, clip ) ) return;
+            if ( clip && AnimationInfo::doClipping( &rect, clip ) ) return;
         }
 
         if ( rect.x + rect.w > surface->w ) rect.w = surface->w - rect.x;
