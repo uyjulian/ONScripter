@@ -72,7 +72,10 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
 
     sprintf( file_name, "%s%s", archive_path, path );
     FILE *fp = ::fopen( file_name, mode );
-    if ( fp ) return fp;
+    if ( fp ){
+        delete[] file_name;
+        return fp;
+    }
     
 #if !defined(WIN32)
     char *p = strrchr( file_name, (char)DELIMITER );

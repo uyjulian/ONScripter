@@ -56,6 +56,7 @@ protected:
         char *ext;
         int type;
         RegisteredCompressionType(){
+            ext = NULL;
             next = NULL;
         };
         RegisteredCompressionType( const char *ext, int type ){
