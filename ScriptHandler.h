@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -60,6 +60,22 @@ public:
         ArrayVariable(){
             next = NULL;
             data = NULL;
+        };
+        ~ArrayVariable(){
+            if (data) delete[] data;
+        };
+        ArrayVariable& operator=(const ArrayVariable& av){
+            no = av.no;
+            num_dim = av.num_dim;
+            int total_dim = 1;
+            for (int i=0 ; i<20 ; i++){
+                dim[i] = av.dim[i];
+                total_dim *= dim[i];
+            }
+            data = new int[total_dim];
+            memcpy(data, av.data, sizeof(int)*total_dim);
+
+            return *this;
         };
     };
 

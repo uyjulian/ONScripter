@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Feb. 14, 2005<br>
+Last updated: Feb. 18, 2005<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20050214.tar.gz">onscripter-beta-20050214.tar.gz</A>
+<A HREF="onscripter-beta-20050218.tar.gz">onscripter-beta-20050218.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20050131.tar.gz">onscripter-beta-20050131.tar.gz</A>
+<A HREF="onscripter-beta-20050214.tar.gz">onscripter-beta-20050214.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -489,7 +489,7 @@ ret = 2
 <DIV CLASS="block2">
 <H3><A NAME="true_type_font">TrueType font による漢字表示について</A></H3>
 
-<P> 漢字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TreuType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<BR>
+<P> 漢字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TrueType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<BR>
 
 ここで注意しなければいけないのは、TrueType font によっては正常に漢字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</P>
 
@@ -508,7 +508,7 @@ ret = 2
 
 <P> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</P>
 
-<P> ONScripter を起動する前に、使用する TreuType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</P>
+<P> ONScripter を起動する前に、使用する TrueType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</P>
 
 </DIV>
 

@@ -60,8 +60,14 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
     }
 
     int minx, maxx, miny, maxy, advanced;
+#if 0
+    if (TTF_GetFontStyle( (TTF_Font*)info->ttf_font ) !=
+        (info->is_bold?TTF_STYLE_BOLD:TTF_STYLE_NORMAL) )
+        TTF_SetFontStyle( (TTF_Font*)info->ttf_font, (info->is_bold?TTF_STYLE_BOLD:TTF_STYLE_NORMAL));
+#endif    
     TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, unicode,
                       &minx, &maxx, &miny, &maxy, &advanced );
+    //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
     
     SDL_Surface *tmp_surface0 = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
     SDL_Surface *tmp_surface = SDL_ConvertSurface(tmp_surface0, text_surface->format, DEFAULT_SURFACE_FLAG);
@@ -74,7 +80,6 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         t = maxy; maxy = maxx; maxx = t;
     }
 
-    //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
     dst_rect.x = xy[0] + minx;
     dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_TRANSLATION_REQUIRED(text) ){

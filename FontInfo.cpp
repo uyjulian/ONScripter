@@ -50,8 +50,10 @@ void FontInfo::reset()
 
     color[0]        = color[1]        = color[2]        = 0xff;
     on_color[0]     = on_color[1]     = on_color[2]     = 0xff;
-    off_color[0]    = off_color[1]    = off_color[2]    = 0x80;
-    nofile_color[0] = nofile_color[1] = nofile_color[2] = 0x80;
+    off_color[0]    = off_color[1]    = off_color[2]    = 0xaa;
+    nofile_color[0] = 0x55;
+    nofile_color[1] = 0x55;
+    nofile_color[2] = 0x99;
 
     is_bold = true;
     is_shadow = true;

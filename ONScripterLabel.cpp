@@ -1109,7 +1109,10 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     anim->num_of_cells = 2;
     anim->color_list = new uchar3[ anim->num_of_cells ];
     for (int i=0 ; i<3 ; i++){
-        anim->color_list[0][i] = info->off_color[i];
+        if (nofile_flag)
+            anim->color_list[0][i] = info->nofile_color[i];
+        else
+            anim->color_list[0][i] = info->off_color[i];
         anim->color_list[1][i] = info->on_color[i];
     }
     setStr( &anim->file_name, buffer );

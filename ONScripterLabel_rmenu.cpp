@@ -197,7 +197,7 @@ void ONScripterLabel::executeSystemMenu()
             button->no = counter++;
 
             link = link->next;
-            flush( refresh_shadow_text_mode, &button->image_rect );
+            flush( refresh_shadow_text_mode );
         }
 
         flushEvent();
@@ -300,7 +300,7 @@ void ONScripterLabel::executeSystemLoad()
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
-        uchar3 color = {0xcc, 0xcc, 0xcc};
+        uchar3 color = {0xff, 0xff, 0xff};
         drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
         menu_font.newLine();
         menu_font.newLine();
@@ -333,7 +333,7 @@ void ONScripterLabel::executeSystemLoad()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( refresh_shadow_text_mode, &button->image_rect );
+            flush( refresh_shadow_text_mode );
         }
         delete[] buffer;
 
@@ -371,7 +371,7 @@ void ONScripterLabel::executeSystemSave()
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
-        uchar3 color = {0xcc, 0xcc, 0xcc};
+        uchar3 color = {0xff, 0xff, 0xff};
         drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
         menu_font.newLine();
         menu_font.newLine();
@@ -405,7 +405,7 @@ void ONScripterLabel::executeSystemSave()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( refresh_shadow_text_mode, &button->image_rect );
+            flush( refresh_shadow_text_mode );
         }
         delete[] buffer;
 
@@ -498,7 +498,7 @@ void ONScripterLabel::executeSystemYesNo()
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY(0, 0);
-        uchar3 color = {0xcc, 0xcc, 0xcc};
+        uchar3 color = {0xff, 0xff, 0xff};
         drawString( name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
 
         flush( refresh_shadow_text_mode );
@@ -510,14 +510,14 @@ void ONScripterLabel::executeSystemYesNo()
         ButtonLink *button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 1;
-        flush( refresh_shadow_text_mode, &button->image_rect );
 
         strcpy( name, MESSAGE_NO );
         menu_font.setXY(offset2, 2);
         button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 2;
-        flush( refresh_shadow_text_mode, &button->image_rect );
+        
+        flush( refresh_shadow_text_mode );
         
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();

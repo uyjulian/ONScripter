@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -643,8 +643,10 @@ void ScriptHandler::readVariable( bool reread_flag )
         current_variable.type = VAR_INT;
     }
     else if ( *buf == '?' ){
-        current_variable.var_no = parseArray( &buf, current_variable.array );
+        ArrayVariable av;
+        current_variable.var_no = parseArray( &buf, av );
         current_variable.type = VAR_ARRAY;
+        current_variable.array = av;
     }
     else if ( *buf == '$' ){
         buf++;
@@ -1296,8 +1298,10 @@ int ScriptHandler::parseInt( char **buf )
         return variable_data[ current_variable.var_no ].num;
     }
     else if ( **buf == '?' ){
-        current_variable.var_no = parseArray( buf, current_variable.array );
+        ArrayVariable av;
+        current_variable.var_no = parseArray( buf, av );
         current_variable.type = VAR_ARRAY;
+        current_variable.array = av;
         return *getArrayPtr( current_variable.var_no, current_variable.array, 0 );
     }
     else{
@@ -1525,7 +1529,7 @@ void ScriptHandler::declareDim()
         current_array_variable = root_array_variable;
     }
 
-    ScriptHandler::ArrayVariable array;
+    ArrayVariable array;
     current_array_variable->no = parseArray( &buf, array );
 
     int dim = 1;
