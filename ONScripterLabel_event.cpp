@@ -31,6 +31,9 @@
 #define ONS_SOUND_EVENT   (SDL_USEREVENT+1)
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
 #define ONS_MIDI_EVENT    (SDL_USEREVENT+3)
+#if defined(EXTERNAL_MUSIC_PLAYER)
+#define ONS_MUSIC_EVENT   (SDL_USEREVENT+4)
+#endif
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)"
@@ -38,6 +41,9 @@
 static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 bool midi_play_once_flag = false;
+#if defined(EXTERNAL_MUSIC_PLAYER)
+bool ext_music_play_once_flag = false;
+#endif
 
 /* **************************************** *
  * Callback functions
@@ -113,6 +119,22 @@ void midiCallback( int sig )
         SDL_PushEvent(&event);
     }
 }
+
+#if defined(EXTERNAL_MUSIC_PLAYER)
+void musicCallback( int sig )
+{
+#if defined(LINUX)
+    int status;
+    wait( &status );
+#endif
+
+    if ( !ext_music_play_once_flag ){
+        SDL_Event event;
+        event.type = ONS_MUSIC_EVENT;
+        SDL_PushEvent(&event);
+    }
+}
+#endif
 
 void ONScripterLabel::trapHandler()
 {
@@ -755,10 +777,18 @@ int ONScripterLabel::eventLoop()
             break;
 
           case ONS_MIDI_EVENT:
-            midi_play_once_flag = true;
+            midi_play_once_flag = music_play_once_flag;
             Mix_FreeMusic( midi_info );
             playMIDI();
             break;
+
+#if defined(EXTERNAL_MUSIC_PLAYER)
+          case ONS_MUSIC_EVENT:
+            ext_music_play_once_flag = music_play_once_flag;
+            Mix_FreeMusic( music_info );
+            playMusic();
+            break;
+#endif
 
           case SDL_ACTIVEEVENT:
             if ( event.active.gain ) flush();

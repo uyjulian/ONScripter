@@ -110,6 +110,7 @@ static struct FuncLUT{
     {"jumpb", &ONScripterLabel::jumpbCommand},
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
+    {"input", &ONScripterLabel::inputCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
@@ -359,7 +360,10 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     mp3_sample = NULL;
     music_file_name = NULL;
     mp3_buffer = NULL;
-    midi_info = NULL;
+    midi_info  = NULL;
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    music_info = NULL;
+#endif
     current_cd_track = -1;
 
     for ( i=0 ; i<ONS_MIX_CHANNELS ; i++ ) wave_sample[i] = NULL;

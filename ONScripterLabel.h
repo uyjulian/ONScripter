@@ -133,6 +133,7 @@ public:
     int jumpbCommand();
     int ispageCommand();
     int isdownCommand();
+    int inputCommand();
     int getversionCommand();
     int gettimerCommand();
     int gettextCommand();
@@ -439,9 +440,16 @@ private:
     unsigned char *mp3_buffer;
     SMPEG *mp3_sample;
     Mix_Music *midi_info;
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    Mix_Music *music_info;
+#endif
     
     Mix_Chunk *wave_sample[ONS_MIX_CHANNELS];
 
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    int playMusic();
+    int playMusicFile();
+#endif
     int playMIDIFile();
     int playMIDI();
     int playMP3( int cd_no );

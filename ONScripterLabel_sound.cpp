@@ -27,13 +27,20 @@
 #endif
 
 extern bool midi_play_once_flag;
+#if defined(EXTERNAL_MUSIC_PLAYER)
+extern bool ext_music_play_once_flag;
+#endif
 
 extern void mp3callback( void *userdata, Uint8 *stream, int len );
 extern Uint32 cdaudioCallback( Uint32 interval, void *param );
 extern void midiCallback( int sig );
+#if defined(EXTERNAL_MUSIC_PLAYER)
+extern void musicCallback( int sig );
+#endif
 extern SDL_TimerID timer_cdaudio_id;
 
 #define TMP_MIDI_FILE "tmp.mid"
+#define TMP_MUSIC_FILE "tmp.mus"
 
 int ONScripterLabel::playMIDIFile()
 {
@@ -92,15 +99,84 @@ int ONScripterLabel::playMIDI()
 
     if ( (midi_info = Mix_LoadMUS( midi_file )) == NULL ) {
         fprintf( stderr, "can't load MIDI file %s\n", midi_file );
+        delete[] midi_file;
         return -1;
     }
 
+    delete[] midi_file;
     Mix_VolumeMusic( mp3_volume );
     Mix_PlayMusic( midi_info, midi_looping );
     current_cd_track = -2; 
     
     return 0;
 }
+
+#if defined(EXTERNAL_MUSIC_PLAYER)
+int ONScripterLabel::playMusicFile()
+{
+    if ( !audio_open_flag ) return -1;
+    if ( music_file_name == NULL ) return -1;
+
+    char *player_cmd = getenv( "PLAYER_CMD" );
+    if ( player_cmd == NULL ){
+        playMP3( 0 );
+        return 0;
+    }
+
+    FILE *fp;
+
+    if ( (fp = fopen( TMP_MUSIC_FILE, "wb" )) == NULL ){
+        fprintf( stderr, "can't open temporaly Music file %s\n", TMP_MUSIC_FILE );
+        return -1;
+    }
+
+    unsigned long length = script_h.cBR->getFileLength( music_file_name );
+    if ( length == 0 ){
+        fprintf( stderr, " *** can't find file [%s] ***\n", music_file_name );
+        return -1;
+    }
+    unsigned char *buffer = new unsigned char[length];
+    script_h.cBR->getFile( music_file_name, buffer );
+    fwrite( buffer, 1, length, fp );
+    delete[] buffer;
+
+    fclose( fp );
+
+    ext_music_play_once_flag = music_play_once_flag;
+    
+    return playMusic();
+}
+
+int ONScripterLabel::playMusic()
+{
+    if ( !audio_open_flag ) return -1;
+    
+    int music_looping = music_play_once_flag ? 0 : -1;
+    char *music_file = new char[ strlen(archive_path) + strlen(TMP_MUSIC_FILE) + 1 ];
+    sprintf( music_file, "%s%s", archive_path, TMP_MUSIC_FILE );
+
+    char *player_cmd = getenv( "PLAYER_CMD" );
+
+#if defined(LINUX)
+    signal( SIGCHLD, musicCallback );
+    if ( player_cmd ) music_looping = 0;
+#endif
+
+    Mix_SetMusicCMD( player_cmd );
+
+    if ( (music_info = Mix_LoadMUS( music_file )) == NULL ) {
+        fprintf( stderr, "can't load Music file %s\n", music_file );
+        delete[] music_file;
+        return -1;
+    }
+
+    delete[] music_file;
+    // Mix_VolumeMusic( mp3_volume );
+    Mix_PlayMusic( music_info, music_looping );
+
+    return 0;
+}
+#endif
 
 int ONScripterLabel::playMP3( int cd_no )
 {
@@ -286,6 +362,15 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         setStr( &music_file_name, NULL );
     }
 
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    if ( music_info ){
+        ext_music_play_once_flag = true;
+        Mix_HaltMusic();
+        Mix_FreeMusic( music_info );
+        music_info = NULL;
+        setStr( &music_file_name, NULL );
+    }
+#endif
     if ( !continue_flag ) current_cd_track = -1;
 }
 

@@ -470,7 +470,7 @@ int ScriptParser::menusetwindowCommand()
     menu_font.is_shadow       = script_h.readInt()?true:false;
 
     const char *buf = script_h.readStr();
-    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+    if ( strlen(buf) ){ // Comma may or may not be appeared in this case.
         readColor( &menu_font.window_color, buf );
     }
     else{

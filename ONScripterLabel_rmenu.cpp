@@ -382,7 +382,11 @@ int ONScripterLabel::loadSaveFile( int no )
             playMIDIFile();
         else
             if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+#if defined(EXTERNAL_MUSIC_PLAYER)
+                playMusicFile();
+#else
                 playMP3( current_cd_track );
+#endif
     }
 
     /* ---------------------------------------- */

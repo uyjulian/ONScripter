@@ -30,7 +30,6 @@ ScriptHandler::ScriptHandler()
     int i;
     
     script_buffer = NULL;
-    svga_flag = false;
     end_status = END_NONE;
     num_of_labels = 0;
     num_of_labels_accessed = 0;
@@ -372,6 +371,9 @@ int ScriptHandler::readToken()
                    ch == ';' ||
                    ch == ')' || 
                    ch == '*' ) ) break;
+            if ( !text_flag && string_counter>0 &&
+                 ( ch == '-' ||
+                   ch == '/' ) ) break;
             addStringBuffer( ch, string_counter++ );
         }
             
@@ -516,6 +518,12 @@ void ScriptHandler::parseStr( char **buf )
         }
         alias_buf[alias_buf_len] = '\0';
         
+        if ( alias_buf_len == 0 ){
+            str_string_buffer[0] = '\0';
+            current_variable.type = VAR_NONE;
+            return;
+        }
+        
         StringAlias *p_str_alias = root_str_alias.next;
 
         while( p_str_alias ){
@@ -605,7 +613,8 @@ int ScriptHandler::parseInt( char **buf )
         bool direct_num_flag = false;
         bool num_alias_flag = false;
         bool minus_flag = false;
-        
+
+        char *buf_start = *buf;
         while( 1 ){
             ch = **buf;
             
@@ -634,6 +643,11 @@ int ScriptHandler::parseInt( char **buf )
         }
         if ( minus_flag ) alias_no = -alias_no;
 
+        if ( *buf - buf_start  == 0 ){
+            current_variable.type = VAR_NONE;
+            return 0;
+        }
+        
         /* ---------------------------------------- */
         /* Solve num aliases */
         if ( num_alias_flag ){
@@ -649,9 +663,10 @@ int ScriptHandler::parseInt( char **buf )
                 p_name_alias = p_name_alias->next;
             }
             if ( !p_name_alias ){
-                printf("can't find name alias for %s... assume 0.\n", alias_buf );
-                alias_no = 0;
-                exit(-1);
+                //printf("can't find name alias for %s... assume 0.\n", alias_buf );
+                current_variable.type = VAR_NONE;
+                *buf = buf_start;
+                return 0;
             }
         }
         current_variable.type = VAR_INT_CONST;
@@ -673,25 +688,33 @@ int ScriptHandler::parseInt( char **buf )
  */
 void ScriptHandler::readNextOp( char **buf, int *op, int *num )
 {
+    SKIP_SPACE(*buf);
+    char *buf_start = *buf;
+    
     if ( op ){
-        SKIP_SPACE(*buf);
-
         if      ( (*buf)[0] == '+' ) *op = OP_PLUS;
         else if ( (*buf)[0] == '-' ) *op = OP_MINUS;
         else if ( (*buf)[0] == '*' ) *op = OP_MULT;
         else if ( (*buf)[0] == '/' ) *op = OP_DIV;
         else if ( (*buf)[0] == 'm' &&
                   (*buf)[1] == 'o' &&
-                  (*buf)[2] == 'd' ) *op = OP_MOD;
+                  (*buf)[2] == 'd' &&
+                  ( (*buf)[3] == ' '  ||
+                    (*buf)[3] == '\t' ||
+                    (*buf)[3] == '$' ||
+                    (*buf)[3] == '%' ||
+                    (*buf)[3] == '?' ||
+                    ( (*buf)[3] >= '0' && (*buf)[3] <= '9') ))
+            *op = OP_MOD;
         else{
             *op = OP_INVALID;
             return;
         }
         if ( *op == OP_MOD ) *buf += 3;
         else                 (*buf)++;
+        SKIP_SPACE(*buf);
     }
 
-    SKIP_SPACE(*buf);
     if ( (*buf)[0] == '(' ){
         (*buf)++;
         *num = parseIntExpression( buf );
@@ -701,6 +724,10 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
     }
     else{
         *num = parseInt( buf );
+        if ( current_variable.type == VAR_NONE ){
+            *op = OP_INVALID;
+            *buf = buf_start;
+        }
     }
 }
 
@@ -924,10 +951,16 @@ int ScriptHandler::readScript( char *path )
     script_buffer_length = p_script_buffer - script_buffer;
     
     /* ---------------------------------------- */
-    /* 800 x 600 check */
-    if ( !strncmp( script_buffer, ";mode800", 8 ) )
-        svga_flag = true;
-        
+    /* screen size check */
+    if      ( !strncmp( script_buffer, ";mode800", 8 ) )
+        screen_size = SCREEN_SIZE_800x600;
+    else if ( !strncmp( script_buffer, ";mode400", 8 ) )
+        screen_size = SCREEN_SIZE_400x300;
+    else if ( !strncmp( script_buffer, ";mode320", 8 ) )
+        screen_size = SCREEN_SIZE_320x240;
+    else
+        screen_size = SCREEN_SIZE_640x480;
+
     return labelScript();
 }
 

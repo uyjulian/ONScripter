@@ -957,7 +957,11 @@ int ONScripterLabel::mp3Command()
     if ( buf[0] != '\0' ){
         setStr( &music_file_name, buf );
         if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+#if defined(EXTERNAL_MUSIC_PLAYER)
+            playMusicFile();
+#else
             playMP3( 0 );
+#endif
     }
         
     return RET_CONTINUE;
@@ -1150,6 +1154,32 @@ int ONScripterLabel::isdownCommand()
     else
         script_h.setInt( &script_h.current_variable, 0 );
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::inputCommand()
+{
+    script_h.readStr();
+    
+    if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) 
+        errorAndExit( "input: no string variable." );
+    int no = script_h.current_variable.var_no;
+
+    script_h.readStr(); // description
+    const char *buf = script_h.readStr(); // default value
+    setStr( &script_h.str_variables[no], buf );
+
+    printf( "*** inputCommand(): $%d is set to the default value: %s\n",
+            no, buf );
+    script_h.readInt(); // maxlen
+    script_h.readInt(); // widechar flag
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+        script_h.readInt(); // window width
+        script_h.readInt(); // window height
+        script_h.readInt(); // text box width
+        script_h.readInt(); // text box height
+    }
+
     return RET_CONTINUE;
 }
 
@@ -1440,6 +1470,12 @@ int ONScripterLabel::endCommand()
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
     }
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    if ( music_info ){
+        Mix_HaltMusic();
+        Mix_FreeMusic( music_info );
+    }
+#endif
     SDL_Quit();
     exit(0);
     return RET_CONTINUE; // dummy
@@ -1480,7 +1516,7 @@ int ONScripterLabel::dwaveCommand()
 
     int ch = script_h.readInt();
     const char *buf = NULL;
-    if ( !(skip_flag & WAVE_PLAY_LOADED) ){
+    if ( play_mode != WAVE_PLAY_LOADED ){
         buf = script_h.readStr();
     }
     playWave( buf, loop_flag, ch, play_mode );

@@ -135,7 +135,12 @@ public:
     char *str_variables[ VARIABLE_RANGE ];
     VariableInfo current_variable, pushed_variable;
     
-    bool svga_flag;
+    int screen_size;
+    enum { SCREEN_SIZE_640x480 = 0,
+           SCREEN_SIZE_800x600 = 1,
+           SCREEN_SIZE_400x300 = 2,
+           SCREEN_SIZE_320x240 = 3
+    };
 
     BaseReader *cBR;
     
