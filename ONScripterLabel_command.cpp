@@ -140,8 +140,8 @@ int ONScripterLabel::textonCommand()
 {
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
-        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-        refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
+        refreshSurface( picture_surface,      NULL, REFRESH_NORMAL_MODE );
+        refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
         flush();
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
     }
@@ -153,8 +153,8 @@ int ONScripterLabel::textoffCommand()
 {
     text_on_flag = false;
     if ( display_mode & TEXT_DISPLAY_MODE ){
-        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-        SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+        refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
+        SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
         dirty_rect.fill( screen_width, screen_height );
         flush();
         display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
@@ -283,7 +283,7 @@ int ONScripterLabel::splitstringCommand()
 int ONScripterLabel::spstrCommand()
 {
     const char *buf = script_h.readStr();
-    decodeExbtnControl( NULL, buf );
+    decodeExbtnControl( accumulation_surface, buf );
     
     return RET_CONTINUE;
 }
@@ -784,8 +784,8 @@ int ONScripterLabel::resetCommand()
     wavestopCommand();
     stopBGM( false );
 
-    setBackground( accumulation_surface );
-    SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+    setBackground( picture_surface );
+    SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
     dirty_rect.fill( screen_width, screen_height );
 
     return RET_JUMP;
@@ -793,8 +793,8 @@ int ONScripterLabel::resetCommand()
 
 int ONScripterLabel::repaintCommand()
 {
-    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
+    refreshSurface( accumulation_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
     flush();
     
     return RET_CONTINUE;
@@ -820,8 +820,8 @@ int ONScripterLabel::quakeCommand()
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         if ( effect_counter == 0 ){
-            //SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
-            SDL_BlitSurface( text_surface, NULL, effect_dst_surface, NULL );
+            //SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
+            SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
         }
         tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
         return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
@@ -973,7 +973,7 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscpyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, text_surface, NULL );
+    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -1167,6 +1167,7 @@ int ONScripterLabel::lookbackflushCommand()
         current_text_buffer->buffer2_count = 0;
         current_text_buffer = current_text_buffer->next;
     }
+    clearCurrentTextBuffer();
     start_text_buffer = current_text_buffer;
     
     return RET_CONTINUE;
@@ -1657,13 +1658,9 @@ int ONScripterLabel::gameCommand()
     for ( i=0 ; i<max_text_buffer-1 ; i++ ){
         text_buffer[i].next = &text_buffer[i+1];
         text_buffer[i+1].previous = &text_buffer[i];
-        text_buffer[i].buffer2 = NULL;
-        text_buffer[i].buffer2_count = 0;
     }
     text_buffer[0].previous = &text_buffer[max_text_buffer-1];
     text_buffer[max_text_buffer-1].next = &text_buffer[0];
-    text_buffer[max_text_buffer-1].buffer2 = NULL;
-    text_buffer[max_text_buffer-1].buffer2_count = 0;
     start_text_buffer = current_text_buffer = &text_buffer[0];
 
     clearCurrentTextBuffer();
@@ -2120,10 +2117,10 @@ int ONScripterLabel::btnwaitCommand()
                     s_link = s_link->next;
                 }
 
-                drawString( s_link->text, f_info.off_color, &f_info, false, text_surface );
+                drawString( s_link->text, f_info.off_color, &f_info, false, accumulation_surface );
                 dirty_rect.add( p_button_link->image_rect );
                 if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
@@ -2143,20 +2140,19 @@ int ONScripterLabel::btnwaitCommand()
             }
             else{
                 if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
 
             p_button_link = p_button_link->next;
         }
-        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-        //refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+        refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
 
         if ( isTextVisible() ){
             display_mode = next_display_mode = TEXT_DISPLAY_MODE;
         }
 
         if ( exbtn_d_button_link.exbtn_ctl ){
-            decodeExbtnControl( text_surface, exbtn_d_button_link.exbtn_ctl  );
+            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl  );
         }
         flush();
 
@@ -2277,7 +2273,7 @@ int ONScripterLabel::brCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     sentence_font.newLine();
-    current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
+    current_text_buffer->addBuffer( 0x0a );
     if ( internal_saveon_flag ){
         internal_saveon_flag = false;
         saveSaveFile(-1);
@@ -2345,7 +2341,7 @@ int ONScripterLabel::bltCommand()
         dirty_rect.clear();
     }
     else{
-        resizeSurface( btndef_info.image_surface, &src_rect, text_surface, &dst_rect );
+        resizeSurface( btndef_info.image_surface, &src_rect, accumulation_surface, &dst_rect );
         dirty_rect.add( dst_rect );
         flush( &dst_rect );
     }

@@ -75,7 +75,7 @@ int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, 
              minimum > anim->duration_list[ anim->current_cell ] )
             minimum = anim->duration_list[ anim->current_cell ];
         if ( anim->proceedAnimation() )
-            refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
+            refreshSurface( accumulation_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
     }
     else{
         if ( minimum == -1 ||
@@ -306,7 +306,7 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
         alphaBlend( dst_surface, anim->pos,
                     dst_surface, anim->pos.x, anim->pos.y,
                     anim->image_surface, anim->image_surface->w / anim->num_of_cells * cell, 0, 
-                    NULL, 0, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
+                    NULL, anim->image_surface->w / anim->num_of_cells * cell, AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
         return;
     }
     else if ( !anim->image_surface ) return;
@@ -348,7 +348,7 @@ void ONScripterLabel::stopAnimation( int click )
     }
 
     
-    refreshSurface( text_surface, &dst_rect, REFRESH_SHADOW_MODE );
+    refreshSurface( accumulation_surface, &dst_rect, REFRESH_SHADOW_MODE );
 
     flush( &dst_rect, false, true );
 }

@@ -49,7 +49,7 @@ int ScriptParser::versionstrCommand()
 
 int ScriptParser::usewheelCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "userwheel: not in the define section" );
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "usewheel: not in the define section" );
 
     usewheel_flag = true;
 

@@ -317,16 +317,18 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     gmask = 0x0000ff00;
     bmask = 0x000000ff;
 
-    accumulation_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( accumulation_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    picture_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
+    SDL_SetAlpha( picture_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( text_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    accumulation_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
+    SDL_SetAlpha( accumulation_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     effect_src_surface   = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( effect_src_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     effect_dst_surface   = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( effect_dst_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    shelter_text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( shelter_text_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    shelter_accumulation_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
+    SDL_SetAlpha( shelter_accumulation_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     screenshot_surface = NULL;
 
     internal_timer = SDL_GetTicks();
@@ -371,6 +373,7 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     /* ---------------------------------------- */
     /* Sound related variables */
     this->cdaudio_flag = cdaudio_flag;
+    cdrom_info = NULL;
     if ( cdaudio_flag ){
         if ( SDL_CDNumDrives() > 0 ) cdrom_info = SDL_CDOpen( 0 );
         if ( !cdrom_info ){
@@ -381,9 +384,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
             SDL_CDClose( cdrom_info );
             cdrom_info = NULL;
         }
-    }
-    else{
-        cdrom_info = NULL;
     }
 
     wave_play_loop_flag = false;
@@ -529,7 +529,7 @@ void ONScripterLabel::flush( SDL_Rect *rect, bool clear_dirty_flag, bool direct_
 {
 #if defined(USE_OVERLAY)
     SDL_LockYUVOverlay( screen_overlay );
-    SDL_LockSurface( text_surface );
+    SDL_LockSurface( accumulation_surface );
 #endif    
     if ( direct_flag ){
         flushSub( *rect );
@@ -549,7 +549,7 @@ void ONScripterLabel::flush( SDL_Rect *rect, bool clear_dirty_flag, bool direct_
         }
     }
 #if defined(USE_OVERLAY)
-    SDL_UnlockSurface( text_surface );
+    SDL_UnlockSurface( accumulation_surface );
     SDL_UnlockYUVOverlay( screen_overlay );
     
     SDL_Rect screen_rect;
@@ -567,7 +567,7 @@ void ONScripterLabel::flushSub( SDL_Rect &rect )
     //printf("flush %d %d %d %d\n", rect.x, rect.y, rect.w, rect.h );
 
 #if defined(USE_OVERLAY)
-    Uint32 *src = (Uint32*)text_surface->pixels + text_surface->w * rect.y + rect.x;
+    Uint32 *src = (Uint32*)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x;
     Uint8  *dst_y = screen_overlay->pixels[0] + screen_overlay->w * rect.y + rect.x;
     Uint8  *dst_u = screen_overlay->pixels[1] + screen_overlay->w * rect.y + rect.x;
     Uint8  *dst_v = screen_overlay->pixels[2] + screen_overlay->w * rect.y + rect.x;
@@ -577,17 +577,17 @@ void ONScripterLabel::flushSub( SDL_Rect &rect )
             *dst_u++ = 0x80;
             *dst_v++ = 0x80;
         }
-        src += text_surface->w - rect.w;
+        src += accumulation_surface->w - rect.w;
         dst_y += screen_overlay->w - rect.w;
         dst_u += (screen_overlay->w - rect.w)/2;
         dst_v += (screen_overlay->w - rect.w)/2;
     }
 #else    
 #ifndef SCREEN_ROTATION
-    SDL_BlitSurface( text_surface, &rect, screen_surface, &rect );
+    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
     SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
 #else
-    blitRotation( text_surface, &rect, screen_surface, &rect );
+    blitRotation( accumulation_surface, &rect, screen_surface, &rect );
     SDL_UpdateRect( screen_surface, screen_height - (rect.y +rect.h), rect.x, rect.h, rect.w );
 #endif
 #endif    
@@ -619,7 +619,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         dirty_rect.clear();
         if ( event_mode & WAIT_BUTTON_MODE && current_over_button != 0 ){
             if ( current_button_link->no_selected_surface ){
-                SDL_BlitSurface( current_button_link->no_selected_surface, NULL, text_surface, &current_button_link->image_rect );
+                SDL_BlitSurface( current_button_link->no_selected_surface, NULL, accumulation_surface, &current_button_link->image_rect );
             }
             if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                  current_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
@@ -641,20 +641,20 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                 }
 
                 if ( p_button_link->selected_surface ){
-                    SDL_BlitSurface( p_button_link->selected_surface, NULL, text_surface, &p_button_link->image_rect );
+                    SDL_BlitSurface( p_button_link->selected_surface, NULL, accumulation_surface, &p_button_link->image_rect );
                 }
                 if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                      p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                     if ( sprite_info[ p_button_link->sprite_no ].num_of_cells >= 1 )
                         sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                     if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                        decodeExbtnControl( text_surface, p_button_link->exbtn_ctl );
+                        decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl );
                     }
                     sprite_info[ p_button_link->sprite_no ].visible = true;
                 }
-                if ( nega_mode == 1 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( text_surface, &p_button_link->image_rect );
-                if ( monocro_flag && !(event_mode & WAIT_INPUT_MODE) ) makeMonochromeSurface( text_surface, &p_button_link->image_rect );
-                if ( nega_mode == 2 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( text_surface, &p_button_link->image_rect );
+                if ( nega_mode == 1 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( accumulation_surface, &p_button_link->image_rect );
+                if ( monocro_flag && !(event_mode & WAIT_INPUT_MODE) ) makeMonochromeSurface( accumulation_surface, &p_button_link->image_rect );
+                if ( nega_mode == 2 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( accumulation_surface, &p_button_link->image_rect );
                 dirty_rect.add( p_button_link->image_rect );
             }
             current_button_link = p_button_link;
@@ -662,7 +662,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         }
         else{
             if ( exbtn_d_button_link.exbtn_ctl ){
-                decodeExbtnControl( text_surface, exbtn_d_button_link.exbtn_ctl  );
+                decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl  );
             }
         }
         flush();
@@ -814,7 +814,7 @@ int ONScripterLabel::parseLine( )
         ret = RET_CONTINUE;
         if ( !new_line_skip_flag && script_h.isText() ){
             if ( sentence_font.xy[0] < sentence_font.num_xy[0] ) // otherwise already done in drawChar
-                current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
+                current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
             if ( internal_saveon_flag ){
                 internal_saveon_flag = false;
@@ -904,7 +904,7 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         return NULL;
     }
 
-    ret = SDL_ConvertSurface( tmp, text_surface->format, DEFAULT_SURFACE_FLAG );
+    ret = SDL_ConvertSurface( tmp, accumulation_surface->format, DEFAULT_SURFACE_FLAG );
     if ( ret &&
          screen_ratio2 != screen_ratio1 &&
          (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE) )
@@ -997,7 +997,7 @@ int ONScripterLabel::enterTextDisplayMode( int ret_wait )
         }
         else{
             next_display_mode = TEXT_DISPLAY_MODE;
-            refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+            refreshSurface( picture_surface,    NULL, REFRESH_NORMAL_MODE );
             refreshSurface( effect_dst_surface, NULL, REFRESH_SHADOW_MODE );
             dirty_rect.add( sentence_font_info.pos );
 
@@ -1148,7 +1148,35 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                            (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
                 mask |= (((*src1_buffer & 0x00ff00) * mask1 +
                           (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
-                *dst_buffer = (*dst_buffer & 0xff000000) | maskrb | mask;
+                *dst_buffer = maskrb | mask;
+            }
+            src1_buffer += src1_surface->w - dst_rect.w;
+            src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
+        }
+    }
+    else if ( trans_mode == AnimationInfo::TRANS_ALPHA_MULTIPLE ){
+
+        Uint32 an_1, an;
+        for ( i=0; i<dst_rect.h ; i++ ) {
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
+                mask = *((Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h) + (x3+j)%mask_surface->w) & 0xff000000;
+                mask2 = mask >> 24;
+                mask1 = ~mask2 & 0xff;
+
+                an_1 = *src1_buffer >> 24;
+                an = 0xff-((0xff-an_1)*(0xff-mask2) >> 8);
+
+                if ( an != 0 ){
+                    maskrb = (((((*src1_buffer & 0xff00ff) * mask1) >> 8) * an_1 +
+                               (*src2_buffer & 0xff00ff) * mask2) / an ) & 0xff00ff; // red and blue pixel
+                    mask = (((((*src1_buffer & 0x00ff00) * mask1) >> 8) * an_1 +
+                             (*src2_buffer & 0x00ff00) * mask2) / an ) & 0x00ff00; // green pixel
+
+                    *dst_buffer = (an << 24) | maskrb | mask;
+                }
+                else
+                    *dst_buffer = (an << 24);
             }
             src1_buffer += src1_surface->w - dst_rect.w;
             src2_buffer += src2_surface->w - dst_rect.w;
@@ -1267,6 +1295,9 @@ void ONScripterLabel::clearCurrentTextBuffer()
 
     current_text_buffer->buffer2_count = 0;
     num_chars_in_sentence = 0;
+
+    SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+    cached_text_buffer = current_text_buffer;
 }
 
 void ONScripterLabel::shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *src_surface, SDL_Rect *clip, FontInfo *info )
@@ -1319,8 +1350,8 @@ void ONScripterLabel::newPage( bool next_flag )
     if ( need_refresh_flag ){
         refreshSurfaceParameters();
     }
-    refreshSurface( accumulation_surface, &sentence_font_info.pos, REFRESH_NORMAL_MODE );
-    refreshSurface( text_surface, &sentence_font_info.pos, REFRESH_SHADOW_MODE );
+    refreshSurface( picture_surface,      &sentence_font_info.pos, REFRESH_NORMAL_MODE );
+    refreshSurface( accumulation_surface, &sentence_font_info.pos, REFRESH_SHADOW_MODE );
 
     flush();
 }
@@ -1335,25 +1366,25 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     
     /* ---------------------------------------- */
     /* Draw selected characters */
-    drawString( buffer, info->on_color, info, false, text_surface, &button_link->image_rect );
+    drawString( buffer, info->on_color, info, false, accumulation_surface, &button_link->image_rect );
 
     button_link->select_rect = button_link->image_rect;
 
     button_link->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, button_link->image_rect.w, button_link->image_rect.h, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( button_link->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    SDL_BlitSurface( text_surface, &button_link->image_rect, button_link->selected_surface, NULL );
+    SDL_BlitSurface( accumulation_surface, &button_link->image_rect, button_link->selected_surface, NULL );
 
     /* ---------------------------------------- */
     /* Draw shadowed characters */
     info->setXY( current_text_xy[0], current_text_xy[1] );
     if ( nofile_flag )
-        drawString( buffer, info->nofile_color, info, flush_flag, text_surface, NULL );
+        drawString( buffer, info->nofile_color, info, flush_flag, accumulation_surface, NULL );
     else
-        drawString( buffer, info->off_color, info, flush_flag, text_surface, NULL );
+        drawString( buffer, info->off_color, info, flush_flag, accumulation_surface, NULL );
 
     button_link->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, button_link->image_rect.w, button_link->image_rect.h, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( button_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    SDL_BlitSurface( text_surface, &button_link->image_rect, button_link->no_selected_surface, NULL );
+    SDL_BlitSurface( accumulation_surface, &button_link->image_rect, button_link->no_selected_surface, NULL );
 
     info->newLine();
     info->setXY( current_text_xy[0] );
@@ -1488,7 +1519,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
 
     if ( refresh_mode & REFRESH_SHADOW_MODE && windowback_flag ){
         shadowTextDisplay( surface, surface, clip );
-        restoreTextBuffer( surface, clip );
+        restoreTextBuffer( surface, clip, true );
     }
 
     if ( !all_sprite_hide_flag ){
@@ -1518,7 +1549,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
 
     if ( refresh_mode & REFRESH_SHADOW_MODE && !windowback_flag ){
         shadowTextDisplay( surface, surface, clip );
-        restoreTextBuffer( surface, clip );
+        restoreTextBuffer( surface, clip, true );
     }
     
     if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
@@ -1532,7 +1563,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
             drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip );
     }
 
-    if ( surface == text_surface ){
+    if ( surface == accumulation_surface ){
         if ( clip ) dirty_rect.add( *clip );
         else        dirty_rect.fill( screen_width, screen_height );
     }

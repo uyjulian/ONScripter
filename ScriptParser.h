@@ -290,6 +290,16 @@ protected:
         char *buffer2;
         int num_xy[2];
         int buffer2_count;
+
+        TextBuffer(){
+            buffer2 = NULL;
+            buffer2_count = 0;
+        }
+        int addBuffer( char ch ){
+            if ( buffer2_count >= (num_xy[0]*2+1)*(num_xy[1]+1) ) return -1;
+            buffer2[buffer2_count++] = ch;
+            return 0;
+        };
     } *text_buffer, *start_text_buffer, *current_text_buffer; // ring buffer
     int  max_text_buffer;
     int  clickstr_num;

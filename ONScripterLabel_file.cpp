@@ -194,19 +194,18 @@ int ONScripterLabel::loadSaveFile( int no )
     sentence_font.setTateyokoMode( i );
     int text_history_num;
     loadInt( fp, &text_history_num );
-    struct TextBuffer *tb = current_text_buffer;
     for ( i=0 ; i<text_history_num ; i++ ){
-        loadInt( fp, &tb->num_xy[0] );
-        loadInt( fp, &tb->num_xy[1] );
+        loadInt( fp, &current_text_buffer->num_xy[0] );
+        loadInt( fp, &current_text_buffer->num_xy[1] );
         int xy[2];
         loadInt( fp, &xy[0] );
         loadInt( fp, &xy[1] );
-        if ( tb->buffer2 ) delete[] tb->buffer2;
-        tb->buffer2_count = 0;
-        tb->buffer2 = new char[ (tb->num_xy[0]*2+1) * tb->num_xy[1] + 1 ];
+        if ( current_text_buffer->buffer2 ) delete[] current_text_buffer->buffer2;
+        current_text_buffer->buffer2 = new char[ (current_text_buffer->num_xy[0]*2+1) * current_text_buffer->num_xy[1] + 1 ];
+        current_text_buffer->buffer2_count = 0;
 
         char ch1, ch2;
-        for ( j=0, k=0 ; j<tb->num_xy[0] * tb->num_xy[1] ; j++ ){
+        for ( j=0, k=0 ; j<current_text_buffer->num_xy[0] * current_text_buffer->num_xy[1] ; j++ ){
             ch1 = fgetc( fp );
             ch2 = fgetc( fp );
             if ( ch1 == ((char*)"@")[0] &&
@@ -215,24 +214,24 @@ int ONScripterLabel::loadSaveFile( int no )
             }
             else{
                 if ( ch1 ){
-                    tb->buffer2[tb->buffer2_count++] = ch1;
+                    current_text_buffer->addBuffer( ch1 );
                     k++;
                 }
                 if ( ch1 & 0x80 || ch2 ){
-                    tb->buffer2[tb->buffer2_count++] = ch2;
+                    current_text_buffer->addBuffer( ch2 );
                     k++;
                 }
             }
-            if ( k >= tb->num_xy[0] * 2 ){
-                tb->buffer2[tb->buffer2_count++] = 0x0a;
+            if ( k >= current_text_buffer->num_xy[0] * 2 ){
+                current_text_buffer->addBuffer( 0x0a );
                 k = 0;
             }
         }
-        tb = tb->next;
+        current_text_buffer = current_text_buffer->next;
         if ( i==0 ){
             for ( j=0 ; j<max_text_buffer - text_history_num ; j++ )
-                tb = tb->next;
-            start_text_buffer = tb;
+                current_text_buffer = current_text_buffer->next;
+            start_text_buffer = current_text_buffer;
         }
     }
 
@@ -293,7 +292,7 @@ int ONScripterLabel::loadSaveFile( int no )
     if ( file_version >= 103 ){
         loadInt( fp, &erase_text_window_mode );
     }
-    
+
     /* ---------------------------------------- */
     /* Load link label info */
 
@@ -482,8 +481,14 @@ int ONScripterLabel::loadSaveFile( int no )
 
     fclose( fp );
 
-    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
+    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
+
+    SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+    cached_text_buffer = NULL; // to redraw text in a save file
+    num_chars_in_sentence = 0;
+    refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
+    cached_text_buffer = current_text_buffer;
+
     flush();
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 

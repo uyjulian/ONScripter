@@ -354,8 +354,8 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 
     fclose(fp);
 
-    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
+    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
+    refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
     flush();
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 

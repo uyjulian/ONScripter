@@ -304,12 +304,13 @@ private:
     
     int display_mode, next_display_mode;
     int event_mode;
-    SDL_Surface *accumulation_surface; // Text window + Sprite + Tachi image + background
-    SDL_Surface *text_surface; // Text + Select_image + Tachi image + background
+    SDL_Surface *picture_surface; // Picture
+    SDL_Surface *text_surface; // Text (+alpha)
+    SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
-    SDL_Surface *shelter_text_surface; // Intermediate buffer to store text_surface when entering system menu
+    SDL_Surface *shelter_accumulation_surface; // Intermediate buffer to store accumulation_surface when entering system menu
     SDL_Surface *screenshot_surface; // Screenshot
 #if defined(USE_OVERLAY)    
     SDL_Overlay *screen_overlay;
@@ -446,10 +447,10 @@ private:
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
 
-    void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
-    void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool buffering_flag = true, SDL_Rect *clip=NULL );
-    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, bool buffering_flag = false, SDL_Rect *clip=NULL );
-    void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip=NULL );
+    void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect );
+    void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool text_cache_flag, SDL_Rect *clip=NULL );
+    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL );
+    void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, bool text_cache_flag );
     int clickWait( char *out_text );
     int clickNewPage( char *out_text );
     int textCommand();
@@ -583,7 +584,7 @@ private:
     int  system_menu_mode;
 
     int shelter_event_mode;
-    struct TextBuffer *shelter_text_buffer;
+    struct TextBuffer *cached_text_buffer;
     
     void searchSaveFile( SaveFileInfo &info, int no );
     int loadSaveFile( int no );

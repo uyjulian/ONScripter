@@ -810,7 +810,7 @@ void ONScripterLabel::timerEvent( void )
 
             if ( effect_counter == 0 ){
                 next_display_mode = NORMAL_DISPLAY_MODE;
-                SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
+                SDL_BlitSurface( picture_surface, NULL, effect_dst_surface, NULL );
                 dirty_rect_tmp = dirty_rect;
                 dirty_rect.clear();
                 dirty_rect.add( sentence_font_info.pos );
