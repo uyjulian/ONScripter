@@ -135,6 +135,12 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, SDL
     /* ---------------------------------------- */
     /* Update text buffer */
     if ( !system_menu_enter_flag && buffering_flag ){
+        if ( info->num_xy[0] > current_text_buffer->num_xy[0] ||
+             info->num_xy[1] > current_text_buffer->num_xy[1] ||
+             info->xy[0] >= current_text_buffer->num_xy[0] ||
+             info->xy[1] >= current_text_buffer->num_xy[1] ){
+            return;
+        }
         current_text_buffer->buffer[ (info->xy[1] * info->num_xy[0] + info->xy[0]) * 2 ] = text[0];
         current_text_buffer->buffer[ (info->xy[1] * info->num_xy[0] + info->xy[0]) * 2 + 1 ] = text[1];
     }
@@ -223,7 +229,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 
 void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
 {
-    int i, end;
+    int i;
     char out_text[3] = { '\0','\0','\0' };
 
     if ( !surface ) surface = text_surface;
@@ -231,9 +237,7 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
     FontInfo f_info = sentence_font;
     f_info.xy[0] = 0;
     f_info.xy[1] = 0;
-    end = current_text_buffer->xy[1] * current_text_buffer->num_xy[0] + current_text_buffer->xy[0];
     for ( i=0 ; i<current_text_buffer->num_xy[1] * current_text_buffer->num_xy[0] ; i++ ){
-        if ( f_info.xy[1] * current_text_buffer->num_xy[0] + f_info.xy[0] >= end ) break;
         out_text[0] = current_text_buffer->buffer[ i * 2 ];
         if ( out_text[0] == 0x0 ){
             out_text[0] = ((char*)"Å@")[0];

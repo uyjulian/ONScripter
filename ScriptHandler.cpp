@@ -343,6 +343,7 @@ int ScriptHandler::readToken()
         else if ( ch == '@' || ch == '\\' )
         {
             if ( text_flag || string_counter == 0 ){
+                if ( string_counter == 0 ) text_flag = false;
                 addStringBuffer( ch, string_counter++ );
                 buf++;
             }
