@@ -11,7 +11,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Dec. 18, 2002<br>
+Last updated: Dec. 17, 2002<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -30,10 +30,9 @@ href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">高橋直樹</a>氏が開発された
 
 <P>ONScripter で何ができるのかについてはαβεさんの[<A HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照してください。</P>
 
-<P>現在はベータ版<A HREF="onscripter-beta-20021218.tar.gz">onscripter-beta-20021218.tar.gz</A>を配布しております。<br>
-(一つ前のベータ版<A HREF="onscripter-beta-20021215a.tar.gz">onscripter-beta-20021115a.tar.gz</A>)<br>
-<!--(テスト版<A HREF="onscripter-beta-exp20021218.tar.gz">onscripter-beta-exp20021218.tar.gz</A>。問題がなければベータ版になります)<br>-->
-</P>
+<P>現在はベータ版<A HREF="onscripter-beta-20021215a.tar.gz">onscripter-beta-20021215a.tar.gz</A>を配布しております。<br>
+(一つ前のベータ版<A HREF="onscripter-beta-20021121.tar.gz">onscripter-beta-20021121.tar.gz</A>)<br></P>
+(テスト版<A HREF="onscripter-beta-exp20021218.tar.gz">onscripter-beta-exp20021218.tar.gz</A>問題なければ正式版になります)<br>
 
 <P>バイナリパッケージ</P>
 <UL>
@@ -71,17 +70,17 @@ href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">高橋直樹</a>氏が開発された
        </UL>
   <LI> <A HREF="#todo">TODO</A>
   <LI> <A HREF="#link">リンク</A>
-  <LI> <A HREF="onscripter_faq.html">雑多なこと</A>
+  <LI> <A HREF="#misc">雑多なこと</A>
        <UL>
-	 <LI> <A HREF="onscripter_faq.html#keyboard_shortcut">キーボードショートカットについて</A>
-	 <LI> <A HREF="onscripter_faq.html#option">起動オプションについて</A>
-	 <LI> <A HREF="onscripter_faq.html#registry">レジストリ読み込みについて</A>
-	 <LI> <A HREF="onscripter_faq.html#edit_mode">音量及び変数編集モードについて</A>
-	 <LI> <A HREF="onscripter_faq.html#true_type_font">TrueType font による漢字表示について</A>
-	 <LI> <A HREF="onscripter_faq.html#cd_audio_mapping">CD audio 演奏の振り替えについて</A>
-	 <LI> <A HREF="onscripter_faq.html#midi">MIDI 演奏機能について</A>
-	 <LI> <A HREF="onscripter_faq.html#archive_compression">アーカイブ圧縮について</A><font color=red>(updated in Oct. 18, 2002)</font>
-	 <LI> <A HREF="onscripter_faq.html#mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A>
+	 <LI> <A HREF="#keyboard_shortcut">キーボードショートカットについて</A>
+	 <LI> <A HREF="#option">起動オプションについて</A>
+	 <LI> <A HREF="#registry">レジストリ読み込みについて</A>
+	 <LI> <A HREF="#edit_mode">音量及び変数編集モードについて</A>
+	 <LI> <A HREF="#true_type_font">TrueType font による漢字表示について</A>
+	 <LI> <A HREF="#cd_audio_mapping">CD audio 演奏の振り替えについて</A>
+	 <LI> <A HREF="#midi">MIDI 演奏機能について</A>
+	 <LI> <A HREF="#archive_compression">アーカイブ圧縮について</A><font color=red>(updated in Oct. 18, 2002)</font>
+	 <LI> <A HREF="#mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A>
        </UL>
 </UL>
 </td></tr>
@@ -233,6 +232,262 @@ TODO
        MacOS X 等に SDL をインストールする方法なども書かれています。
 </DL>
 
+
+</td></tr>
+</table>
+
+<table>
+<tr><th><A NAME="misc">
+雑多なこと
+</A></th></tr>
+<tr><td>
+
+<H3><A NAME="keyboard_shortcut">
+キーボードショートカットについて
+</A></H3>
+
+<P> ONScripter は全ての操作をキーボードで行うことができます。下にショートカット一覧を書きます。ただし、スクリプトの方でショートカットキーを設定している場合は、そちらが優先されます。</P>
+
+<table>
+<tr><td>キー</td><td>説明</td></tr>
+<tr><td>space</td><td>マウスの左クリックと同じだが、下にボタンがあってもボタン外を押したことになる</td></tr>
+<tr><td>return</td><td>マウスの左クリックと同じ</td></tr>
+<tr><td>escape</td><td>マウスの右クリックと同じ</td></tr>
+<tr><td>p, ↑</td><td>ボタン・文章選択時にマウスカーソルを前の選択肢に動かす</td></tr>
+<tr><td>n, ↓</td><td>ボタン・文章選択時にマウスカーソルを次の選択肢に動かす</td></tr>
+<tr><td>s, ←</td><td>次の選択肢まで飛ばすモードに切り替え</td></tr>
+<tr><td>o, →</td><td>１ページ表示をするかしないかの切り替え</td></tr>
+<tr><td> f </td><td>Full screen mode と Window mode の切り替え</td></tr>
+<tr><td> z </td><td>--edit オプションを指定して起動したときに、音量及び変数変更モードに入る</td></tr>
+<tr><td> 1, 2, 3 </td><td>文字の描画速度を変更</td></tr>
+</table>
+
+<P>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画している最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任意のタイミングで s キーにより通常の状態に戻すことができます。</P>
+
+<P>また、コンソール画面で Ctl-c することで ONScripter を終了できます。その場合、グローバル変数等は保存されるので、終了する場合はゲームのメニューから終了するか、これで強制終了するかしてください。</P>
+
+</td></tr><tr><td>
+
+<H3><A NAME="option">
+起動オプションについて
+</A></H3>
+
+<P>以下に示すオプションを指定できます。ただし、オプション無しがデフォルト動作です。</P>
+
+<table>
+<tr><th> オプション </th><th>説明</th></tr>
+<tr><td>-h,--help</td><td>へルプを表示して終了します。</td></tr>
+<tr><td>-v,--version</td><td>バージョンを表示して終了します。</td></tr>
+<tr><td>--cdaudio</td><td>CD Audio 演奏モードに変更します。CD Audio が使えなかったとしても MP3 ファイルは使用しません。</td></tr>
+<tr><td>-f,--font file</td><td>使用するフォントの path を指定します。</td></tr>
+<tr><td>--registry file</td><td>使用する registry file を指定します。</td></tr>
+<tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
+<tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
+<tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
+<tr><td>--edit</td><td>z キーを押したときに、音量及び変数の編集モードに入れるようになります。</td></tr>
+</table>
+
+</td></tr><tr><td>
+
+<H3><A NAME="registry">
+レジストリ読み込みについて
+</A></H3>
+
+<P>getreg コマンドは Windows の registry から指定されたデータを取得し
+ます。ONScripter では、テキストファイル registry.txt にデータを記述し、
+これを読み込むことでこの機能を実現します。</P>
+
+<P>registry.txt の書式は次の通りです。大文字・小文字は区別されます。ま
+た余計なスペース等を入れないようにして下さい。漢字が使われている場合、
+文字コードが Shift JIS になることに注意してください。</P>
+
+<table border=1>
+<TR><TD>
+<pre>
+[getreg の２番目の引数（ただし前後の""は除く）]
+getreg の３番目の引数（前後の""は必要です）=比較対象文字列（前後の""は必要です）
+</pre>
+</TD></TR>
+</table>
+
+registry.txt の例
+
+<table border=1>
+<TR><TD>
+<pre>
+[software\StudioOGA\ONScripter]
+"INSTALL"="FULL"
+
+[software\StudioOGA\のまど]
+"Download log file"="c:\nomad_down.log"
+"Upload log file"="c:\nomad_up.log"
+</pre>
+</TD></TR>
+</table>
+
+<P>ONScripter 起動時に --registry オプションを指定することで、
+registry.txt を一カ所にまとめておくことができます。--registry を指定し
+ない場合は、現在のディレクトリの registry.txt を読みにいきます。</P>
+
+
+</td></tr><tr><td>
+
+<H3><A NAME="edit_mode">
+音量及び変数編集モードについて
+</A></H3>
+
+<P>これは暫定的なおまけ機能であり、今後変更されたり無くなったりする可能性があります。</P>
+
+<P>ONScripter 起動時に --edit オプションを指定することで有効になります。</P>
+
+<P>任意のキー入力待ち状態時に z キーを押すことで、編集モードに入ります。この時、title bar に<br>
+<pre>
+[EDIT MODE]  MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)
+</pre>
+
+と表示されるはずです。この状態で、m, s, v, n のいずれかのキーを押すこ
+とで、それぞれの値を変更するサブモードに入ります。また、Esc キーを押す
+ことによってモードを抜けることができます。</P>
+
+<P>数字変数の場合は、値変更の前にどの変数を変更するのかを選択します。</P>
+
+<P>値変更サブモードでは、0 から 9 までの数字と -, BackSpace, Esc, リター
+ンキーが使えます。- キーは、対象が数字変数でかつ数字が0の時のみ有効に
+なります。既に数字が入力されている場合には、一旦 BackSpace で数字を全
+部消してから - キーを押してください。</P>
+
+</td></tr><tr><td>
+
+<H3><A NAME="true_type_font">
+TrueType font による漢字表示について
+</A></H3>
+
+<P> 漢字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TreuType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<BR>
+
+ここで注意しなければいけないのは、TrueType font によっては正常に漢字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</P>
+
+<DL>
+  <DT> ＭＳゴシック (msgothic.ttc)
+  <DD> embedded bitmap を使っており、ゲームで 22pt 以下のフォントを要求すると正常に表示できません。
+  <DT> 東風ゴシックフォント (kochi-gothic.ttf)
+  <DD> embedded bitmap を使っており、ゲームで 17pt 以下のフォントを要求すると正常に表示できません。
+  <DT> 和田研ゴシック (wadalab-gothic.ttf)
+  <DD> embedded bitmap は使っていませんが、UNICODE で記述されていないため使えません。
+  <DT> HG ゴシック (hgrsmp.ttf)
+  <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
+  <DT> <A HREF="http://mikachan-font.com/">みかちゃんフォント</A>(みかちゃん-pb.ttf)
+  <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
+</DL>
+
+<P> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</P>
+
+<P> ONScripter を起動する前に、使用する TreuType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</P>
+
+</td></tr><tr><td>
+
+<H3><A NAME="cd_audio_mapping">
+CD audio 演奏の振り替えについて
+</A></H3>
+
+<P>ゲームのスクリプトがある場所に cd というディレクトリを作り、そこに<BR>
+cd/track01.mp3<BR>
+cd/track02.mp3<BR>
+cd/track03.mp3<BR>
+...<BR>
+cd/track14.mp3<BR>
+...<BR>
+という名前で MP3 ファイルを置きます。</P>
+
+<P>すると、スクリプトで CD audio の１曲目を演奏するコマンドがあった場合に、対応する track01.mp3 を演奏するようになります。</P>
+
+<P>MP3 を必ず用意する必要はなく、その場合は音が鳴らないだけです。</P>
+
+</td></tr><tr><td>
+
+<H3><A NAME="midi">
+MIDI 演奏機能について
+</A></H3>
+
+<P>MIDI は SDL_mixer の機能を使って演奏します。<br>
+この時、現在のディレクトリに tmp.mid という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</P>
+
+<DL>
+  <DT> Unix系(動作確認は Linux と Zaurus)でソフトウェア音源で演奏する場合（デフォルト）。
+  <DD> SDL_mixer に取り込まれている timidity を使用してソフトウェア音源で演奏します。この場合、MIDIの音色データ<A HREF="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</A>をダウンロードして /usr/local/lib/ 以下に展開してください。
+  <DT> Windows の場合。
+  <DD> <A HREF="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</A>をダウンロードして c:\ 以下に展開してください。
+       これをしなくても MIDI が鳴ったと思っていたのですが、こうしないと落ちるようです。
+  <DT> Mac OS X の場合。
+  <DD> 上の Unix系でソフトウェア音源で演奏する場合に準じてください。（当方未確認）
+  <DT> Unix系(動作確認は Linux)で外部 MIDI 音源を利用して演奏する場合。
+  <DD> playmidi 等の外部音源を使用できる MIDI player をインストールし、環境変数 MUSIC_CMD を設定してください。（例 MUSIC_CMD=/usr/bin/playmidi）<br>
+       当方では、シリアル接続で外部音源を繋ぎ、MUSIC_CMD に '/usr/bin/midiplay -q -o /dev/ttyS0' を設定して動作確認をしています。<br>
+       <A HREF="http://sourceforge.net/projects/playmidi/">playmidi</A>は、カーネルで認識される MIDI ポートに対してしか演奏できませんが、<A HREF="http://member.nifty.ne.jp/Breeze/softwares/unix/midiplay+.html">midiplay</A>はシリアルに直接出せます。<br>
+       <A HREF="http://crystal.apana.org.au/ghansper/MidiAxis.html">シリアルポートをMIDIポートにする patch</A>を使えば、playmidi でもシリアル接続音源を使えそうですが、未確認です。       
+</DL>
+
+</td></tr><tr><td>
+
+<H3><A NAME="archive_compression">
+アーカイブ圧縮について
+</A></H3>
+
+<P> Zaurus ( SL-5500, SL-A300, SL-B500, SL-C700 ) でプレイする場合は、画面の大きさが 320x240 になります。（SL-C700の場合は、VGA表示可能）。そこで、あらかじめアーカイブ中の画像ファイルを 320x240 に合うように小さくしておくことで、アーカイブサイズの減少を図ることができ、少ない記憶デバイスを有効活用することができます。なお、SPB 圧縮の画像は、後述の -e オプションを指定しない場合、BMP として格納されます。</P>
+
+<P>
+画面のサイズが 640x480 で、拡張子が sar のアーカイブに対しては、
+<pre>
+&gt; sarconv 640 arc.sar zaurus_dir/arc.sar
+...
+</pre>
+
+画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン１）に対しては、
+<pre>
+&gt; nsaconv [-e] 800 arc.nsa zaurus_dir/arc.nsa
+&gt; nsaconv [-e] 800 arc1.nsa zaurus_dir/arc1.nsa
+...
+</pre>
+
+画面のサイズが 640x480 で、拡張子が nsa のアーカイブ（バージョン２）に対しては、
+<pre>
+&gt; nsaconv [-e] -ns2 640 arc.nsa zaurus_dir/arc.nsa
+&gt; nsaconv [-e] -ns2 640 arc1.nsa zaurus_dir/arc1.nsa
+...
+</pre>
+
+として変換してください。
+</P>
+
+<P> NSA アーカイブのバージョン１と２の区別は手動です。スクリプトで ns2 コマンドが使われていれば、バージョン２です。スクリプトが確認できない場合は、まず -ns2 を付けずに試し、うまくいかなかったら -ns2 を付けて試してください。</P>
+
+<P> -e オプションを付けると、wav と bmp ファイルを nbz 圧縮します。これを行うと、NSA アーカイブの圧縮の種類を示すフラグに ONScripter 独自の値を設定します。この独自拡張については、本家が将来アーカイブの仕様を拡張したときにバッティングする可能性がありますが、その時はそれを回避するようにコンバータを修正し、再コンバートすることで解決できます。その場合でも、save file 等には一切影響がありませんので、Zaurus で使用される方はこのオプションを付けてコンバートすることをお勧めします。wav を bzip2 で圧縮するので、wav を多用するゲームではかなりアーカイブが小さくなります。デメリットとしては、bzip2 の復号を行うため若干遅くなりますが、気がづかない程度です。</P>
+
+<P>さらに、サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
+
+なお、Linux 等でも、-DPDA をつけてコンパイルすることにより、320x240 画面でゲームをすることができます。
+</P>
+
+</td></tr><tr><td>
+
+<H3><A NAME="mp3_on_windows">
+Windows 上で MP3 の音がぶつぶつとぎれる問題について
+</A></H3>
+
+<P>Windows でコンパイル済の SMPEG のバイナリを持ってくると、MP3 によっては音がぶつぶつとぎれて演奏されます。これは、SMPEG を MSVC でコンパイルする時の最適化の問題で、下記の通りに MSVC の global optimization を一部抑制する指定をし、自分でコンパイルすることで解決できます。</P>
+
+
+<PRE>
+修正するファイル: audio/mpeglayer3.cpp
+関数 layer3reorderandantialias の前後に、下のように #pragma 指定を追加する。
+
+#pragma optimize( "g", off )
+void MPEGaudio::layer3reorderandantialias(int ch,int gr,
+                                          REAL  in[SBLIMIT][SSLIMIT],
+                                          REAL out[SBLIMIT][SSLIMIT]){
+  ......
+}
+#pragma optimize( "g", on )
+</PRE>
 
 </td></tr>
 </table>
