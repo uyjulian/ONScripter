@@ -55,6 +55,7 @@ int main( int argc, char **argv )
         while ( argc > 4 ){
             if      ( !strcmp( argv[1], "-e" ) )   enhanced_flag = true;
             else if ( !strcmp( argv[1], "-ns2" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+            else if ( !strcmp( argv[1], "-ns3" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS3;
             else if ( !strcmp( argv[1], "-vga" ) ) vga_flag = true;
             argc--;
             argv++;
@@ -65,8 +66,8 @@ int main( int argc, char **argv )
         else argc = 1;
     }
     if ( argc != 4 ){
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-vga] 640 arc_file rescaled_arc_file\n");
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-vga] 800 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] 640 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] 800 arc_file rescaled_arc_file\n");
         exit(-1);
     }
     if ( vga_flag ) scale_ratio_upper *= 2;

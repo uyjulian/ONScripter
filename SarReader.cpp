@@ -61,15 +61,21 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
     int i=0;
     
     /* Read header */
-    if ( archive_type >= ARCHIVE_TYPE_NS2 ){
+    if ( archive_type == ARCHIVE_TYPE_NS2 ){
+        i = readChar( ai->file_handle ); // FIXME: for what ?
+    }
+    if ( archive_type == ARCHIVE_TYPE_NS3 ){
+        i = readChar( ai->file_handle ); // FIXME: for what ?
         i = readChar( ai->file_handle ); // FIXME: for what ?
     }
     ai->num_of_files = readShort( ai->file_handle );
     ai->fi_list = new struct FileInfo[ ai->num_of_files ];
     
     ai->base_offset = readLong( ai->file_handle );
-    if ( archive_type >= ARCHIVE_TYPE_NS2 )
+    if ( archive_type == ARCHIVE_TYPE_NS2 )
         ai->base_offset++;
+    if ( archive_type == ARCHIVE_TYPE_NS3 )
+        ai->base_offset += 2;
     
     for ( i=0 ; i<ai->num_of_files ; i++ ){
         unsigned char ch;
@@ -114,9 +120,15 @@ int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type )
 
     fseek( fp, 0L, SEEK_SET );
     if ( archive_type == ARCHIVE_TYPE_NS2 ) fputc( 0, fp );
+    if ( archive_type == ARCHIVE_TYPE_NS3 ){
+        fputc( 0, fp );
+        fputc( 0, fp );
+    }
     writeShort( fp, ai->num_of_files  );
     if ( archive_type == ARCHIVE_TYPE_NS2 )
         writeLong( fp, ai->base_offset-1 );
+    else if ( archive_type == ARCHIVE_TYPE_NS3 )
+        writeLong( fp, ai->base_offset-2 );
     else
         writeLong( fp, ai->base_offset );
     

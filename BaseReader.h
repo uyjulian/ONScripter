@@ -51,7 +51,8 @@ struct BaseReader
         ARCHIVE_TYPE_NONE = 0,
         ARCHIVE_TYPE_SAR  = 1,
         ARCHIVE_TYPE_NSA  = 2,
-        ARCHIVE_TYPE_NS2  = 3
+        ARCHIVE_TYPE_NS2  = 3,
+        ARCHIVE_TYPE_NS3  = 4
     };
 
     struct FileInfo{

@@ -43,6 +43,7 @@
 #endif
 #define OGG_BUFFER 4096
 ogg_int16_t convbuffer[OGG_BUFFER];
+#endif
 struct WAVE_HEADER{
     char chunk_riff[4];
     char riff_length[4];
@@ -58,7 +59,6 @@ struct WAVE_HEADER{
     char chunk_id[4];
     char data_length[4];
 } header;
-#endif
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
 extern bool ext_music_play_once_flag;

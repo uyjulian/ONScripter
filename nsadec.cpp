@@ -44,13 +44,14 @@ int main( int argc, char **argv )
 
     if ( argc >= 2 ){
         while ( argc > 2 ){
-            if ( !strcmp( argv[1], "-ns2" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+            if      ( !strcmp( argv[1], "-ns2" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+            else if ( !strcmp( argv[1], "-ns3" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS3;
             argc--;
             argv++;
         }
     }
     if ( argc != 2 ){
-        fprintf( stderr, "Usage: nsadec [-ns2] arc_file\n");
+        fprintf( stderr, "Usage: nsadec [-ns2] [-ns3] arc_file\n");
         exit(-1);
     }
     cNR.openForConvert( argv[1], archive_type );

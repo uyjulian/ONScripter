@@ -69,6 +69,7 @@ static struct FuncLUT{
     {"notif",    &ScriptParser::ifCommand},
     {"next",    &ScriptParser::nextCommand},
     {"nsa",    &ScriptParser::arcCommand},
+    {"ns3",    &ScriptParser::nsaCommand},
     {"ns2",    &ScriptParser::nsaCommand},
     {"mul",      &ScriptParser::mulCommand},
     {"movl",      &ScriptParser::movCommand},

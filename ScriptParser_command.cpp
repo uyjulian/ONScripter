@@ -326,6 +326,9 @@ int ScriptParser::nsaCommand()
     if ( script_h.isName("ns2") ){
         archive_type = NsaReader::ARCHIVE_TYPE_NS2;
     }
+    else if ( script_h.isName("ns3") ){
+        archive_type = NsaReader::ARCHIVE_TYPE_NS3;
+    }
     
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path );

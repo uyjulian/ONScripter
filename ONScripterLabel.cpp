@@ -1564,10 +1564,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
     int sprite_no, cell_no;
 
     while( char com = *ctl_str++ ){
-        if ( com == '\0' ){
-            break;
-        }
-        else if ( com == 'C' ){
+        if ( com == 'C' ){
             sprite_no = getNumberFromBuffer( &ctl_str );
             if ( *ctl_str == ',' ){
                 ctl_str++;
@@ -1609,6 +1606,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             ctl_str++; // skip ','
             sprite_info[ sprite_no ].pos.y = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
             if ( surface ){
+                refreshSurface( surface, &rect );
                 refreshSurface( surface, &sprite_info[ sprite_no ].pos );
                 if ( surface==text_surface ){
                     dirty_rect.add( rect );
