@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.h - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -42,11 +42,7 @@ public:
            TRANS_DIRECT         = 5,
            TRANS_PALLET         = 6,
            TRANS_TOPRIGHT       = 7,
-           TRANS_MASK           = 8,
-           TRANS_FADE_MASK      = 9,
-           TRANS_CROSSFADE_MASK = 10,
-           TRANS_ALPHA_PRESERVE = 11,
-           TRANS_ALPHA_MULTIPLE = 12
+           TRANS_MASK           = 8
     };
 
     /* Variables from TaggedInfo */
@@ -63,6 +59,7 @@ public:
     uchar3 *color_list;
     int loop_mode;
     bool is_animatable;
+    bool is_single_line;
         
     char *file_name;
     char *mask_file_name;

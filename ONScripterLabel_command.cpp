@@ -45,17 +45,17 @@ int ONScripterLabel::waveCommand()
     wavestopCommand();
 
     setStr( &wave_file_name, script_h.readStr() );
-    playWave( wave_file_name, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
+    playWave( wave_file_name, wave_play_loop_flag, MIX_WAVE_CHANNEL );
         
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::wavestopCommand()
 {
-    if ( wave_sample[DEFAULT_WAVE_CHANNEL] ){
-        Mix_Pause( DEFAULT_WAVE_CHANNEL );
-        Mix_FreeChunk( wave_sample[DEFAULT_WAVE_CHANNEL] );
-        wave_sample[DEFAULT_WAVE_CHANNEL] = NULL;
+    if ( wave_sample[MIX_WAVE_CHANNEL] ){
+        Mix_Pause( MIX_WAVE_CHANNEL );
+        Mix_FreeChunk( wave_sample[MIX_WAVE_CHANNEL] );
+        wave_sample[MIX_WAVE_CHANNEL] = NULL;
     }
     setStr( &wave_file_name, NULL );
 
@@ -101,7 +101,7 @@ int ONScripterLabel::vCommand()
     char buf[256];
     
     sprintf( buf, RELATIVEPATH "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1 );
-    playWave( buf, false, DEFAULT_WAVE_CHANNEL );
+    playWave( buf, false, MIX_WAVE_CHANNEL );
     
     return RET_CONTINUE;
 }
@@ -274,7 +274,7 @@ int ONScripterLabel::systemcallCommand()
 int ONScripterLabel::stopCommand()
 {
     stopBGM( false );
-    stopWave();
+    wavestopCommand();
     
     return RET_CONTINUE;
 }
@@ -373,9 +373,12 @@ int ONScripterLabel::sevolCommand()
 {
     se_volume = script_h.readInt();
 
-    for ( int i=1 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ )
+    for ( int i=1 ; i<ONS_MIX_CHANNELS ; i++ )
         if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
-        
+
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * 128 / 100 );
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * 128 / 100 );
+    
     return RET_CONTINUE;
 }
 
@@ -497,7 +500,7 @@ int ONScripterLabel::selectCommand()
         if ( current_button_state.button == 0 ) return RET_WAIT | RET_REREAD;
         
         if ( selectvoice_file_name[SELECTVOICE_SELECT] )
-            playWave( selectvoice_file_name[SELECTVOICE_SELECT], false, DEFAULT_WAVE_CHANNEL );
+            playWave( selectvoice_file_name[SELECTVOICE_SELECT], false, MIX_WAVE_CHANNEL );
 
         event_mode = IDLE_EVENT_MODE;
 
@@ -542,7 +545,7 @@ int ONScripterLabel::selectCommand()
         xy[1] = sentence_font.xy[1];
 
         if ( selectvoice_file_name[SELECTVOICE_OPEN] )
-            playWave( selectvoice_file_name[SELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
+            playWave( selectvoice_file_name[SELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
 
         last_select_link = &root_select_link;
 
@@ -1060,11 +1063,7 @@ int ONScripterLabel::movemousecursorCommand()
     int x = script_h.readInt();
     int y = script_h.readInt();
 
-    if ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
-         mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA )
-        SDL_WarpMouse( x, y );
-    else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA )
-        SDL_WarpMouse( screen_height - y - 1, x );
+    SDL_WarpMouse( x, y );
     
     return RET_CONTINUE;
 }
@@ -2019,6 +2018,8 @@ int ONScripterLabel::dwaveCommand()
     }
 
     int ch = script_h.readInt();
+    if      (ch < 0) ch = 0;
+    else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
     const char *buf = NULL;
     if ( play_mode != WAVE_PLAY_LOADED ){
         buf = script_h.readStr();
@@ -2307,7 +2308,6 @@ int ONScripterLabel::cselbtnCommand()
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
         errorAndExit( "cselbtn: no select text" );
 
-    //csel_info.setLineArea( strlen(link->text)/2+1 );
     csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
     root_button_link.insert( button );

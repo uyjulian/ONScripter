@@ -45,7 +45,10 @@ int main( int argc, char **argv )
         fprintf( stderr, "Usage: sardec arc_file\n");
         exit(-1);
     }
-    cSR.open( argv[1] );
+    if (cSR.open( argv[1] ) != 0){
+        fprintf( stderr, "can't open file %s\n", argv[1] );
+        exit(-1);
+    }
     count = cSR.getNumFiles();
 
     SarReader::FileInfo sFI;

@@ -38,11 +38,9 @@ SarReader::~SarReader()
 
 int SarReader::open( char *name, int archive_type )
 {
-    printf("SarReader::open %s\n",name);
     ArchiveInfo* info = new ArchiveInfo();
 
     if ( (info->file_handle = fopen( name, "rb" ) ) == NULL ){
-        fprintf( stderr, "can't open file %s\n", name );
         delete info;
         return -1;
     }

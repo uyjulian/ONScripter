@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -112,6 +112,7 @@ void AnimationInfo::removeTag(){
     num_of_cells = 0;
     remaining_time = 0;
     is_animatable = false;
+    is_single_line = true;
     direction = 1;
 
     color[0] = color[1] = color[2] = 0;

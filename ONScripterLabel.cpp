@@ -246,7 +246,6 @@ void ONScripterLabel::initSDL()
     screen_bpp = 32;
 #endif
 
-    mouse_rotation_mode = MOUSE_ROTATION_NONE;
 #ifdef USE_OPENGL
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
@@ -262,14 +261,11 @@ void ONScripterLabel::initSDL()
         screen_width  /= 2;
         screen_height /= 2;
         screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
-        mouse_rotation_mode = MOUSE_ROTATION_PDA;
     }
     else{
         screen_ratio1 *= 2;
-        mouse_rotation_mode = MOUSE_ROTATION_PDA_VGA;
     }
 #endif
-    mouse_rotation_mode = MOUSE_ROTATION_NONE;
     underline_value = screen_height - 1;
 
     if ( screen_surface == NULL ) {
@@ -546,9 +542,6 @@ void ONScripterLabel::reset()
     mp3save_flag = false;
     current_cd_track = -1;
     
-    setStr(&loop_bgm_name[0], NULL);
-    setStr(&loop_bgm_name[1], NULL);
-
     resetSub();
 
     /* ---------------------------------------- */
@@ -591,8 +584,9 @@ void ONScripterLabel::resetSub()
     deleteButtonLink();
     deleteSelectLink();
 
-    stopBGM(false);
-    stopWave();
+    stopCommand();
+    loopbgmstopCommand();
+    setStr(&loop_bgm_name[1], NULL);
 
     // ----------------------------------------
     // reset AnimationInfo
@@ -723,11 +717,11 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             if ( event_mode & WAIT_BUTTON_MODE ){
                 if ( system_menu_mode != SYSTEM_NULL ){
                     if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
-                        playWave( menuselectvoice_file_name[MENUSELECTVOICE_OVER], false, DEFAULT_WAVE_CHANNEL );
+                        playWave( menuselectvoice_file_name[MENUSELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
                 }
                 else{
                     if ( selectvoice_file_name[SELECTVOICE_OVER] )
-                        playWave( selectvoice_file_name[SELECTVOICE_OVER], false, DEFAULT_WAVE_CHANNEL );
+                        playWave( selectvoice_file_name[SELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
                 }
                 check_dst_rect = p_button_link->image_rect;
                 if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
@@ -973,12 +967,7 @@ void ONScripterLabel::refreshMouseOverButton()
     current_over_button = 0;
     current_button_link = root_button_link.next;
     SDL_GetMouseState( &mx, &my );
-
-    if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
-              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA )
-        mouseOverCheck( mx, my );
-    else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA )
-        mouseOverCheck( my, screen_height - mx - 1 );
+    mouseOverCheck( mx, my );
 }
 
 /* ---------------------------------------- */
@@ -1106,6 +1095,7 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     button_link->anim[0] = anim;
     
     anim->trans_mode = AnimationInfo::TRANS_STRING;
+    anim->is_single_line = false;
     anim->num_of_cells = 2;
     anim->color_list = new uchar3[ anim->num_of_cells ];
     for (int i=0 ; i<3 ; i++){
@@ -1162,6 +1152,8 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
         }
         else if ( com == 'S' ){
             sprite_no = getNumberFromBuffer( &ctl_str );
+            if      (sprite_no < 0) sprite_no = 0;
+            else if (sprite_no >= ONS_MIX_CHANNELS) sprite_no = ONS_MIX_CHANNELS-1;
             if ( *ctl_str != ',' ) continue;
             ctl_str++;
             if ( *ctl_str != '(' ) continue;

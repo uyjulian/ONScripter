@@ -153,7 +153,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     dst_buffer  = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;
 
     Uint32 overflow_mask;
-    if ( trans_mode == AnimationInfo::TRANS_FADE_MASK )
+    if ( trans_mode == ALPHA_BLEND_FADE_MASK )
         overflow_mask = 0xffffffff;
     else
         overflow_mask = 0xffffff00;
@@ -163,15 +163,25 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
 
     for ( i=0; i<dst_rect.h ; i++ ) {
         for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
-            if ( trans_mode == AnimationInfo::TRANS_ALPHA_MULTIPLE ){
+            if ( trans_mode == ALPHA_BLEND_NORMAL ){
                 mask = *src2_buffer & amask;
                 mask2 = mask >> src2_surface->format->Ashift;
-                if ( mask < (*src1_buffer & amask))
-                    mask = *src1_buffer & amask;
                 mask1 = 256 - mask2;
+                mask = amask;
             }
-            else if ( trans_mode == AnimationInfo::TRANS_FADE_MASK ||
-                      trans_mode == AnimationInfo::TRANS_CROSSFADE_MASK ){
+            else if ( trans_mode == ALPHA_BLEND_MULTIPLE ){
+                mask = *src2_buffer & amask;
+                mask2 = mask >> src2_surface->format->Ashift;
+                mask1 = 256 - mask2;
+
+                Uint32 an_1 = (*src1_buffer & amask) >> src1_surface->format->Ashift;
+                Uint32 an = 0xff-((0xff-an_1)*(0xff-mask2) >> 8);
+                mask = an << dst_surface->format->Ashift;
+                mask1 = an_1 * mask1 / an;
+                mask2 = (mask2 << 8) / an;
+            }
+            else if ( trans_mode == ALPHA_BLEND_FADE_MASK ||
+                      trans_mode == ALPHA_BLEND_CROSSFADE_MASK ){
                 mask = *((Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h) + (x2+j)%mask_surface->w) & 0xff;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
@@ -183,7 +193,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                 mask = amask;
                 mask1 = 256 - mask2;
             }
-            else{
+            else{ // ALPHA_BLEND_CONST
                 mask = amask;
             }
             

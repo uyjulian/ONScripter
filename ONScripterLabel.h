@@ -56,11 +56,11 @@ typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLc
 #define CUSTOM_EFFECT_NO 100
 
 #define ONS_MIX_CHANNELS 50
-#define ONS_MIX_EXTRA_CHANNELS 3
-#define DEFAULT_WAVE_CHANNEL 1
-#define MIX_BGM_CHANNEL (ONS_MIX_CHANNELS+0)
-#define MIX_LOOPBGM_CHANNEL0 (ONS_MIX_CHANNELS+1)
-#define MIX_LOOPBGM_CHANNEL1 (ONS_MIX_CHANNELS+2)
+#define ONS_MIX_EXTRA_CHANNELS 4
+#define MIX_WAVE_CHANNEL (ONS_MIX_CHANNELS+0)
+#define MIX_BGM_CHANNEL (ONS_MIX_CHANNELS+1)
+#define MIX_LOOPBGM_CHANNEL0 (ONS_MIX_CHANNELS+2)
+#define MIX_LOOPBGM_CHANNEL1 (ONS_MIX_CHANNELS+3)
 
 #define DEFAULT_WM_TITLE "ONScripter"
 #define DEFAULT_WM_ICON  "ONScripter"
@@ -295,6 +295,12 @@ private:
                    BG_EFFECT_IMAGE     = 2,
                    TACHI_EFFECT_IMAGE  = 3
     } EFFECT_IMAGE;
+    enum { ALPHA_BLEND_NORMAL         = 0,
+           ALPHA_BLEND_CONST          = 1,
+           ALPHA_BLEND_MULTIPLE       = 2,
+           ALPHA_BLEND_FADE_MASK      = 3,
+           ALPHA_BLEND_CROSSFADE_MASK = 4
+    };
 
     // ----------------------------------------
     // start-up options
@@ -311,12 +317,6 @@ private:
 
     // ----------------------------------------
     // Global definitions
-    enum { MOUSE_ROTATION_NONE    = 0,
-           MOUSE_ROTATION_PDA     = 1,
-           MOUSE_ROTATION_PDA_VGA = 2
-    };
-    int mouse_rotation_mode;
-    
     long internal_timer;
     bool automode_flag;
     long automode_time;
@@ -612,7 +612,6 @@ private:
     };
     int playWave( const char *file_name, bool loop_flag, int channel, int play_mode=WAVE_PLAY );
     void stopBGM( bool continue_flag );
-    void stopWave();
     void playClickVoice();
     void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
     unsigned long decodeOggVorbis( unsigned char *buffer_in, unsigned char *buffer_out, unsigned long length, int &channels, int &rate );

@@ -374,8 +374,6 @@ int ONScripterLabel::playWave( const char *file_name, bool loop_flag, int channe
 
     if ( !audio_open_flag ) return -1;
     
-    if ( channel >= ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ) channel = ONS_MIX_CHANNELS-1;
-
     Mix_Pause( channel );
     if ( !(play_mode & WAVE_PLAY_LOADED) ){
         length = script_h.cBR->getFileLength( file_name );
@@ -471,28 +469,15 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( !continue_flag ) current_cd_track = -1;
 }
 
-void ONScripterLabel::stopWave()
-{
-    for (int i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++){
-        if ( wave_sample[i] ){
-            Mix_Pause( i );
-            Mix_FreeChunk( wave_sample[i] );
-            wave_sample[i] = NULL;
-        }
-    }
-
-    setStr( &wave_file_name, NULL );
-}
-
 void ONScripterLabel::playClickVoice()
 {
     if      ( clickstr_state == CLICK_NEWPAGE ){
         if ( clickvoice_file_name[CLICKVOICE_NEWPAGE] )
-            playWave( clickvoice_file_name[CLICKVOICE_NEWPAGE], false, DEFAULT_WAVE_CHANNEL );
+            playWave( clickvoice_file_name[CLICKVOICE_NEWPAGE], false, MIX_WAVE_CHANNEL );
     }
     else if ( clickstr_state == CLICK_WAIT ){
         if ( clickvoice_file_name[CLICKVOICE_NORMAL] )
-            playWave( clickvoice_file_name[CLICKVOICE_NORMAL], false, DEFAULT_WAVE_CHANNEL );
+            playWave( clickvoice_file_name[CLICKVOICE_NORMAL], false, MIX_WAVE_CHANNEL );
     }
 }
 

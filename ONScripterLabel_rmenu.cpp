@@ -77,11 +77,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         event_mode = shelter_event_mode;
         draw_cursor_flag = shelter_draw_cursor_flag;
         if ( event_mode & WAIT_BUTTON_MODE ){
-            if ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
-                 mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA )
-                SDL_WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
-            else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA )
-                SDL_WarpMouse( screen_height - shelter_mouse_state.y - 1, shelter_mouse_state.x );
+            SDL_WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
         }
     }
 
@@ -156,13 +152,13 @@ void ONScripterLabel::executeSystemMenu()
 
         if ( current_button_state.button == -1 ){
             if ( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], false, DEFAULT_WAVE_CHANNEL );
+                playWave( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], false, MIX_WAVE_CHANNEL );
             leaveSystemCall();
             return;
         }
     
         if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
-            playWave( menuselectvoice_file_name[MENUSELECTVOICE_CLICK], false, DEFAULT_WAVE_CHANNEL );
+            playWave( menuselectvoice_file_name[MENUSELECTVOICE_CLICK], false, MIX_WAVE_CHANNEL );
 
         link = root_rmenu_link.next;
         while ( link ){
@@ -177,7 +173,7 @@ void ONScripterLabel::executeSystemMenu()
     }
     else{
         if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
-            playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
+            playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
 
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
@@ -429,7 +425,7 @@ void ONScripterLabel::executeSystemYesNo()
 
         if ( current_button_state.button == 1 ){ // yes is selected
             if ( menuselectvoice_file_name[MENUSELECTVOICE_YES] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_YES], false, DEFAULT_WAVE_CHANNEL );
+                playWave( menuselectvoice_file_name[MENUSELECTVOICE_YES], false, MIX_WAVE_CHANNEL );
             if ( yesno_caller == SYSTEM_SAVE ){
                 saveSaveFile( yesno_selected_file_no );
                 leaveSystemCall();
@@ -464,7 +460,7 @@ void ONScripterLabel::executeSystemYesNo()
         }
         else{
             if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_NO], false, DEFAULT_WAVE_CHANNEL );
+                playWave( menuselectvoice_file_name[MENUSELECTVOICE_NO], false, MIX_WAVE_CHANNEL );
             system_menu_mode = yesno_caller & 0xf;
             advancePhase();
         }

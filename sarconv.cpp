@@ -64,7 +64,10 @@ int main( int argc, char **argv )
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );
         exit(-1);
     }
-    cSR.open( argv[2] );
+    if (cSR.open( argv[2] ) != 0){
+        fprintf( stderr, "can't open file %s\n", argv[2] );
+        exit(-1);
+    }
     count = cSR.getNumFiles();
 
     SarReader::FileInfo sFI;

@@ -133,8 +133,9 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
         if ( anim->font_size_xy[0] >= 0 ){ // in case of Sprite, not rclick menu
             f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
             f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
+            if (anim->is_single_line)
+                f_info.setLineArea( strlen(anim->file_name)/2+1 );
             f_info.clear();
-            //f_info.setLineArea( strlen(anim->file_name)/2+1 );
             
             f_info.pitch_xy[0] = f_info.pitch_xy[0] - f_info.font_size_xy[0] + anim->font_size_xy[0];
             f_info.font_size_xy[0] = anim->font_size_xy[0];

@@ -47,8 +47,6 @@ int ScriptParser::versionstrCommand()
     version_str = new char[ strlen( save_buf ) + strlen( buf ) + strlen("\n") * 2 + 1 ];
     sprintf( version_str, "%s\n%s\n", save_buf, buf );
 
-    printf("versionstr %s", version_str );
-    
     return RET_CONTINUE;
 }
 

@@ -248,7 +248,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         alphaBlend( accumulation_surface, dst_rect,
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    NULL, AnimationInfo::TRANS_COPY, height, &dirty_rect.bounding_box );
+                    NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
 #endif        
         break;
         
@@ -324,7 +324,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         alphaBlend( accumulation_surface, dst_rect,
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, AnimationInfo::TRANS_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
+                    effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
         drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
@@ -351,7 +351,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         alphaBlend( accumulation_surface, dst_rect,
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, AnimationInfo::TRANS_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
+                    effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
         drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );

@@ -102,7 +102,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         if ( cache_surface ){
             alphaBlend( cache_surface, dst_rect, cache_surface,
                         tmp_surface, 0, 0,
-                        NULL, AnimationInfo::TRANS_ALPHA_MULTIPLE, 256, clip );
+                        NULL, ALPHA_BLEND_MULTIPLE, 256, clip );
             src_rect.x = dst_rect.x;
             src_rect.y = dst_rect.y;
             tmp2_surface = cache_surface;
@@ -112,7 +112,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         if (dst_surface)
             alphaBlend( dst_surface, dst_rect, dst_surface,
                         tmp2_surface, src_rect.x, src_rect.y,
-                        NULL, AnimationInfo::TRANS_ALPHA_MULTIPLE, 256, clip );
+                        NULL, ALPHA_BLEND_NORMAL, 256, clip );
         
         SDL_FreeSurface( tmp_surface );
     }
@@ -277,7 +277,7 @@ void ONScripterLabel::refreshText( SDL_Surface *surface, SDL_Rect *clip, int ref
     else{
         alphaBlend( surface, rect, surface,
                     text_surface, rect.x, rect.y,
-                    NULL, AnimationInfo::TRANS_ALPHA_MULTIPLE );
+                    NULL, ALPHA_BLEND_NORMAL );
     }
 }
 

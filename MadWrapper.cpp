@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  MadWrapper.h - SMPEG compatible wrapper functions for MAD: Mpeg Audio Decoder
+ *  MadWrapper.cpp - SMPEG compatible wrapper functions for MAD: Mpeg Audio Decoder
  *
  *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *

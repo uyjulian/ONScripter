@@ -206,8 +206,9 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     
     // ----------------------------------------
     // Sound
-    stopBGM( false );
-    stopWave();
+    stopCommand();
+    loopbgmstopCommand();
+
     loadStr( fp, &midi_file_name ); // MIDI file
     loadStr( fp, &wave_file_name ); // wave, waveloop
     loadInt( fp, &i );
@@ -227,7 +228,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     if ( i==1 ) wave_play_loop_flag = true;
     else        wave_play_loop_flag = false;
     if ( wave_file_name && wave_play_loop_flag )
-        playWave( wave_file_name, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
+        playWave( wave_file_name, wave_play_loop_flag, MIX_WAVE_CHANNEL );
 
     loadInt( fp, &i ); // play, playonce
     if ( i==1 ) cd_play_loop_flag = true;

@@ -214,15 +214,9 @@ void ONScripterLabel::trapHandler()
  * **************************************** */
 void ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
 {
-    if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ){
-        current_button_state.x = event->x;
-        current_button_state.y = event->y;
-    }
-    else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA ||
-              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA ){
-        current_button_state.x = event->y;
-        current_button_state.y = screen_height - event->x - 1;
-    }
+    current_button_state.x = event->x;
+    current_button_state.y = event->y;
+
     if ( event_mode & WAIT_BUTTON_MODE )
         mouseOverCheck( current_button_state.x, current_button_state.y );
 }
@@ -247,15 +241,8 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         return;
     }
 
-    if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ){
-        current_button_state.x = event->x;
-        current_button_state.y = event->y;
-    }
-    else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA ||
-              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA ){
-        current_button_state.x = event->y;
-        current_button_state.y = screen_height - event->x - 1;
-    }
+    current_button_state.x = event->x;
+    current_button_state.y = event->y;
     current_button_state.down_flag = false;
 
     if ( event->button == SDL_BUTTON_RIGHT &&
@@ -378,8 +365,10 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 
           case EDIT_SE_VOLUME_MODE:
             se_volume = variable_edit_num;
-            for ( i=1 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++ )
+            for ( i=1 ; i<ONS_MIX_CHANNELS ; i++ )
                 if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
+            if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * 128 / 100 );
+            if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * 128 / 100 );
             break;
 
           case EDIT_VOICE_VOLUME_MODE:
@@ -465,15 +454,8 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
             button  = button->next;
     }
     if ( button ){
-        if ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
-             mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA ){
-            SDL_WarpMouse( button->select_rect.x + button->select_rect.w / 2,
-                           button->select_rect.y + button->select_rect.h / 2 );
-        }
-        else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA ){
-            SDL_WarpMouse( screen_height - (button->select_rect.y + button->select_rect.h / 2) - 1,
-                           button->select_rect.x + button->select_rect.w / 2);
-        }
+        SDL_WarpMouse( button->select_rect.x + button->select_rect.w / 2,
+                       button->select_rect.y + button->select_rect.h / 2 );
     }
 }
 
