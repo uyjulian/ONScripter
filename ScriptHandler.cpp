@@ -344,12 +344,13 @@ int ScriptHandler::readInt()
 void ScriptHandler::skipToken()
 {
     current_script = next_script;
+    SKIP_SPACE( current_script );
     char *buf = current_script;
 
     bool quat_flag = false;
     bool text_flag = false;
     while(1){
-        if ( *buf == 0x0a || 
+        if ( *buf == 0x0a ||
              (!quat_flag && !text_flag && (*buf == ':' || *buf == ';') ) ) break;
         if ( *buf == '"' ) quat_flag = !quat_flag;
         if ( IS_TWO_BYTE(*buf) ){
@@ -370,10 +371,9 @@ char *ScriptHandler::saveStringBuffer()
 }
 
 // script address direct manipulation function
-void ScriptHandler::setCurrent( char *pos, bool read_flag )
+void ScriptHandler::setCurrent(char *pos)
 {
     current_script = next_script = pos;
-    if ( read_flag ) readToken();
 }
 
 void ScriptHandler::pushCurrent( char *pos )

@@ -443,6 +443,7 @@ int ONScripterLabel::loadSaveFile( int no )
     /* ---------------------------------------- */
     /* Load current playing CD track */
     stopBGM( false );
+    stopWave();
     current_cd_track = (Sint8)fgetc( fp );
     bool play_once_flag = (fgetc( fp )==1)?true:false;
     if ( current_cd_track == -2 ){

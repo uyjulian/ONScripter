@@ -774,11 +774,19 @@ void ONScripterLabel::executeLabel()
         if ( script_h.getStringBuffer()[0] == '~' ){
             last_tilde.next_script = script_h.getNext();
             readToken();
+            if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
+                current_line++;
             continue;
         }
         if ( break_flag && !script_h.isName("next") ){
             if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
                 current_line++;
+
+            if ( script_h.getStringBuffer()[string_buffer_offset] != ':' &&
+                 script_h.getStringBuffer()[string_buffer_offset] != ';' &&
+                 script_h.getStringBuffer()[string_buffer_offset] != 0x0a )
+                script_h.skipToken();
+
             readToken();
             continue;
         }

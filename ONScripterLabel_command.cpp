@@ -266,8 +266,8 @@ int ONScripterLabel::systemcallCommand()
 
 int ONScripterLabel::stopCommand()
 {
-    wavestopCommand();
     stopBGM( false );
+    stopWave();
     
     return RET_CONTINUE;
 }

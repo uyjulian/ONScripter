@@ -100,7 +100,7 @@ public:
     // function for direct manipulation of script address 
     inline char *getCurrent(){ return current_script; };
     inline char *getNext(){ return next_script; };
-    void setCurrent( char *pos, bool read_flag=false );
+    void setCurrent(char *pos);
     void pushCurrent( char *pos );
     void popCurrent();
 

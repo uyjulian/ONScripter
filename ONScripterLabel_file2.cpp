@@ -207,6 +207,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     // ----------------------------------------
     // Sound
     stopBGM( false );
+    stopWave();
     loadStr( fp, &midi_file_name ); // MIDI file
     loadStr( fp, &wave_file_name ); // wave, waveloop
     loadInt( fp, &i );

@@ -574,7 +574,7 @@ void ScriptParser::deleteNestInfo()
     last_nest_info = &root_nest_info;
 }
 
-inline void ScriptParser::setStr( char **dst, const char *src, int num )
+void ScriptParser::setStr( char **dst, const char *src, int num )
 {
     if ( *dst ) delete[] *dst;
     if ( src ){
