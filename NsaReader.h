@@ -36,7 +36,6 @@ public:
     int open( char *nsa_path=NULL, int archive_type = ARCHIVE_TYPE_NSA );
     char *getArchiveName() const;
     int getNumFiles();
-    int getNumAccessed();
     
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf );

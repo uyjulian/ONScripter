@@ -196,11 +196,6 @@ int DirectReader::getNumFiles()
     return 0;
 }
     
-int DirectReader::getNumAccessed()
-{
-    return 0;
-}
-    
 void DirectReader::registerCompressionType( const char *ext, int type )
 {
     last_registered_compression_type->next = new RegisteredCompressionType(ext, type);

@@ -12,8 +12,8 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Aug. 10, 2003<br>
-本体とZaurus 用パッケージのライブラリを更新。<br>
+Last updated: Aug. 11, 2003<br>
+ベータ版を更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -38,12 +38,12 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20030704.tar.gz">onscripter-beta-20030704.tar.gz</A>
+<A HREF="onscripter-beta-20030811.tar.gz">onscripter-beta-20030811.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20030630.tar.gz">onscripter-beta-20030630.tar.gz</A>
+<A HREF="onscripter-beta-20030704.tar.gz">onscripter-beta-20030704.tar.gz</A>
 )<br>
-(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>
+<!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
 
 <P>バイナリパッケージ</P>
@@ -100,6 +100,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 	 <LI> <A HREF="#keyboard_shortcut">キーボードショートカットについて</A>
 	 <LI> <A HREF="#option">起動オプションについて</A>
 	 <LI> <A HREF="#registry">レジストリ読み込みについて</A>
+	 <LI> <A HREF="#dll">DLL 読み込みについて</A>
 	 <LI> <A HREF="#edit_mode">音量及び変数編集モードについて</A>
 	 <LI> <A HREF="#true_type_font">TrueType font による漢字表示について</A>
 	 <LI> <A HREF="#cd_audio_mapping">CD audio 演奏の振り替えについて</A>
@@ -292,6 +293,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>--cdaudio</td><td>CD Audio 演奏モードに変更します。CD Audio が使えなかったとしても MP3 ファイルは使用しません。</td></tr>
 <tr><td>-f,--font file</td><td>使用するフォントの path を指定します。</td></tr>
 <tr><td>--registry file</td><td>使用する registry file を指定します。</td></tr>
+<tr><td>--dll file</td><td>使用する dll file を指定します。</td></tr>
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
@@ -331,6 +333,43 @@ registry.txt の例
 registry.txt を一カ所にまとめておくことができます。--registry を指定し
 ない場合は、現在のディレクトリの registry.txt を読みにいきます。</P>
 
+
+</DIV>
+
+<DIV CLASS="block2">
+<H3><A NAME="dll">DLL 読み込みについて</A></H3>
+
+<P>exec_dll コマンドは Windows 上で実行可能な DLL (Dynamic Link
+Library) を実行します。ONScripter では、テキストファイル dll.txt に 
+DLL 名とその戻値の対応を記述し、これを読み込むことでこの機能を実現しま
+す。従って、実際に DLL が実行されるわけではなく、また戻値は固定になり
+ます。</P>
+
+<P>dll.txt の書式は次の通りです。大文字・小文字は区別されます。また余
+計なスペース等を入れないようにして下さい。漢字が使われている場合、文字
+コードが Shift JIS になることに注意してください。</P>
+
+<pre>
+[dll 名]
+str = "文字列(getret で受け取ることのできる文字列戻値))" 
+ret = 整数(getret で受け取ることのできる数字戻値)
+</pre>
+
+dll.txt の例
+
+<pre>
+[test.dll]
+str = "山田/太郎/やまだ/たろう"
+ret = 1
+
+[test2.dll]
+str = "StudioOGA"
+ret = 2
+</pre>
+
+<P>ONScripter 起動時に --dll オプションを指定することで、dll.txt を一
+カ所にまとめておくことができます。--dll を指定しない場合は、現在のディ
+レクトリの dll.txt を読みにいきます。</P>
 
 </DIV>
 

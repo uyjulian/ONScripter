@@ -103,9 +103,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
              ai->fi_list[i].compression_type == SPB_COMPRESSION ){
             ai->fi_list[i].original_length = getDecompressedFileLength( ai->fi_list[i].compression_type, ai->file_handle, ai->fi_list[i].offset );
         }
-        ai->fi_list[i].access_flag = false;
     }
-    ai->num_of_accessed = 0;
     
     return 0;
 }
@@ -227,19 +225,6 @@ int SarReader::getNumFiles(){
     return num;
 }
 
-int SarReader::getNumAccessed()
-{
-    ArchiveInfo *info = archive_info.next;
-    int num = 0;
-    
-    for ( int i=0 ; i<num_of_sar_archives ; i++ ){
-        num += info->num_of_accessed;
-        info = info->next;
-    }
-    
-    return num;
-}
-
 int SarReader::getIndexFromFile( ArchiveInfo *ai, const char *file_name )
 {
     unsigned int i, len;
@@ -274,11 +259,6 @@ size_t SarReader::getFileLength( const char *file_name )
     }
     if ( !info ) return 0;
     
-    if ( !info->fi_list[j].access_flag ){
-        info->num_of_accessed++;
-        info->fi_list[j].access_flag = true;
-    }
-
     if ( info->fi_list[j].compression_type == NO_COMPRESSION ){
         int type = getRegisteredCompressionType( file_name );
         if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION )

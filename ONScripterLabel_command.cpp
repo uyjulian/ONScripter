@@ -259,6 +259,31 @@ int ONScripterLabel::stopCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::splitstringCommand()
+{
+    script_h.readStr();
+    const char *save_buf = script_h.saveStringBuffer();
+    
+    const char *buf = script_h.readStr();
+    char delimiter = buf[0];
+
+    char token[256];
+    while( ScriptHandler::END_COMMA ){
+        script_h.readToken();
+        if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) return RET_CONTINUE;
+        int no = script_h.current_variable.var_no;
+
+        unsigned int c=0;
+        while( save_buf[c] != delimiter && save_buf[c] != '\0' ) c++;
+        memcpy( token, save_buf, c );
+        token[c] = '\0';
+        setStr( &script_h.str_variables[no], token );
+        save_buf += c+1;
+    }
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::spstrCommand()
 {
     const char *buf = script_h.readStr();
@@ -723,6 +748,7 @@ int ONScripterLabel::resetCommand()
         script_h.str_variables[i] = NULL;
     }
 
+    erase_text_window_mode = 1;
     clearCurrentTextBuffer();
     tateyoko_mode = 0;
     sentence_font.xy[0] = 0;
@@ -1339,9 +1365,25 @@ int ONScripterLabel::getpageupCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::getretCommand()
+{
+    script_h.readToken();
+
+    if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
+         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+        script_h.setInt( &script_h.current_variable, dll_ret );
+    }
+    else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
+        int no = script_h.current_variable.var_no;
+        setStr( &script_h.str_variables[no], dll_str );
+    }
+    else errorAndExit( "getret: no variable." );
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::getregCommand()
 {
-    char *path = NULL, *key = NULL;
     script_h.readStr();
     
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) 
@@ -1349,20 +1391,21 @@ int ONScripterLabel::getregCommand()
     int no = script_h.current_variable.var_no;
 
     const char *buf = script_h.readStr();
-    setStr( &path, buf );
+    char path[256], key[256];
+    strcpy( path, buf );
     buf = script_h.readStr();
-    setStr( &key, buf );
+    strcpy( key, buf );
 
     printf("  reading Registry file for [%s] %s\n", path, key );
         
-    char reg_buf[256], reg_buf2[256];
     FILE *fp;
-    bool found_flag = false;
-
     if ( ( fp = fopen( registry_file, "r" ) ) == NULL ){
         fprintf( stderr, "Cannot open file [%s]\n", registry_file );
         return RET_CONTINUE;
     }
+
+    char reg_buf[256], reg_buf2[256];
+    bool found_flag = false;
     while( fgets( reg_buf, 256, fp) && !found_flag ){
         if ( reg_buf[0] == '[' ){
             unsigned int c=0;
@@ -1531,6 +1574,67 @@ int ONScripterLabel::fileexistCommand()
 
     script_h.setInt( &script_h.pushed_variable, (script_h.cBR->getFileLength(buf)>0)?1:0 );
 
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::exec_dllCommand()
+{
+    const char *buf = script_h.readStr();
+    char dll_name[256];
+    unsigned int c=0;
+    while( buf[c] != '/' ) dll_name[c] = buf[c++];
+    dll_name[c] = '\0';
+
+    printf("  reading %s for %s\n", dll_file, dll_name );
+
+    FILE *fp;
+    if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){
+        fprintf( stderr, "Cannot open file [%s]\n", dll_file );
+        return RET_CONTINUE;
+    }
+
+    char dll_buf[256], dll_buf2[256];
+    bool found_flag = false;
+    while( fgets( dll_buf, 256, fp) && !found_flag ){
+        if ( dll_buf[0] == '[' ){
+            c=0;
+            while ( dll_buf[c] != ']' && dll_buf[c] != '\0' ) c++;
+            if ( !strncmp( dll_buf + 1, dll_name, (c-1>strlen(dll_name))?(c-1):strlen(dll_name) ) ){
+                found_flag = true;
+                while( fgets( dll_buf2, 256, fp) ){
+                    c=0;
+                    while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
+                    if ( !strncmp( &dll_buf2[c], "str", 3 ) ){
+                        c+=3;
+                        while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
+                        if ( dll_buf2[c] != '=' ) continue;
+                        c++;
+                        while ( dll_buf2[c] != '"' ) c++;
+                        unsigned int c2 = ++c;
+                        while ( dll_buf2[c2] != '"' && dll_buf2[c2] != '\0' ) c2++;
+                        dll_buf2[c2] = '\0';
+                        setStr( &dll_str, &dll_buf2[c] );
+                        printf("  dll_str = %s\n", dll_str );
+                    }
+                    else if ( !strncmp( &dll_buf2[c], "ret", 3 ) ){
+                        c+=3;
+                        while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
+                        if ( dll_buf2[c] != '=' ) continue;
+                        c++;
+                        while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
+                        dll_ret = atoi( &dll_buf2[c] );
+                        printf("  dll_ret = %d\n", dll_ret );
+                    }
+                    else if ( dll_buf2[c] == '[' )
+                        break;
+                }
+            }
+        }
+    }
+
+    if ( !found_flag ) fprintf( stderr, "  The DLL is not found in %s.\n", dll_file );
+    fclose( fp );
+    
     return RET_CONTINUE;
 }
 

@@ -30,6 +30,7 @@ void optionHelp()
     printf( "      --cdaudio\t\tuse CD audio if available\n");
     printf( "  -f, --font file\tuse file as a default font\n");
     printf( "      --registry file\tuse file as a default registry file\n");
+    printf( "      --dll file\tuse file as a default dll file\n");
     printf( "  -r, --root path\tuse path as a root path to the archives\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
@@ -56,6 +57,7 @@ int main( int argc, char **argv )
     bool cdaudio_flag = false;
     char *default_font = NULL;
     char *default_registry = NULL;
+    char *default_dll = NULL;
     char *default_archive_path = NULL;
     bool force_button_shortcut_flag = false;
     bool disable_rescale_flag = false;
@@ -89,6 +91,13 @@ int main( int argc, char **argv )
                 default_registry = new char[ strlen( argv[0] ) + 1 ];
                 memcpy( default_registry, argv[0], strlen( argv[0] ) + 1 );
             }
+            else if ( !strcmp( argv[0]+1, "-dll" ) ){
+                argc--;
+                argv++;
+                if ( default_dll ) delete[] default_dll;
+                default_dll = new char[ strlen( argv[0] ) + 1 ];
+                memcpy( default_dll, argv[0], strlen( argv[0] ) + 1 );
+            }
             else if ( !strcmp( argv[0]+1, "r" ) || !strcmp( argv[0]+1, "-root" ) ){
                 argc--;
                 argv++;
@@ -118,7 +127,7 @@ int main( int argc, char **argv )
     
     /* ---------------------------------------- */
     /* Run ONScripter */
-    ONScripterLabel *ons = new ONScripterLabel( cdaudio_flag, default_font, default_registry, default_archive_path, force_button_shortcut_flag, disable_rescale_flag, edit_flag );
+    ONScripterLabel *ons = new ONScripterLabel( cdaudio_flag, default_font, default_registry, default_dll, default_archive_path, force_button_shortcut_flag, disable_rescale_flag, edit_flag );
     ons->eventLoop();
     
     exit(0);

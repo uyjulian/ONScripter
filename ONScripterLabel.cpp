@@ -30,6 +30,7 @@ extern void initSJIS2UTF16();
 
 #define FONT_FILE "default.ttf"
 #define REGISTRY_FILE "registry.txt"
+#define DLL_FILE "dll.txt"
 #define DEFAULT_ENV_FONT "ÇlÇr ÉSÉVÉbÉN"
 #define DEFAULT_VOLUME 100
 
@@ -58,6 +59,7 @@ static struct FuncLUT{
     {"systemcall",   &ONScripterLabel::systemcallCommand},
     {"stop",   &ONScripterLabel::stopCommand},
     {"spstr",   &ONScripterLabel::spstrCommand},
+    {"splitstring",   &ONScripterLabel::splitstringCommand},
     {"spclclk",   &ONScripterLabel::spclclkCommand},
     {"spbtn",   &ONScripterLabel::spbtnCommand},
     {"skipoff",   &ONScripterLabel::skipoffCommand},
@@ -120,6 +122,7 @@ static struct FuncLUT{
     {"gettimer", &ONScripterLabel::gettimerCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
     {"gettab", &ONScripterLabel::gettabCommand},
+    {"getret", &ONScripterLabel::getretCommand},
     {"getreg", &ONScripterLabel::getregCommand},
     {"getpageup", &ONScripterLabel::getpageupCommand},
     {"getmousepos", &ONScripterLabel::getmouseposCommand},
@@ -132,6 +135,7 @@ static struct FuncLUT{
     {"game", &ONScripterLabel::gameCommand},
     {"fileexist", &ONScripterLabel::fileexistCommand},
     {"existspbtn", &ONScripterLabel::spbtnCommand},
+    {"exec_dll", &ONScripterLabel::exec_dllCommand},
     {"exbtn_d", &ONScripterLabel::exbtnCommand},
     {"exbtn", &ONScripterLabel::exbtnCommand},
     {"erasetextwindow", &ONScripterLabel::erasetextwindowCommand},
@@ -280,7 +284,7 @@ void ONScripterLabel::initSDL( bool cdaudio_flag )
     }
 }
 
-ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag )
+ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag )
         :ScriptParser( default_archive_path )
 {
     int i;
@@ -393,6 +397,14 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     registry_file = NULL;
     if ( default_registry ) setStr( &registry_file, default_registry );
     else                    setStr( &registry_file, REGISTRY_FILE );
+
+    /* ---------------------------------------- */
+    /* Initialize dll */
+    dll_file = NULL;
+    if ( default_dll ) setStr( &dll_file, default_dll );
+    else               setStr( &dll_file, DLL_FILE );
+    dll_str = NULL;
+    dll_ret = 0;
 
     /* ---------------------------------------- */
     /* Initialize font */

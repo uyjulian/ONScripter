@@ -78,6 +78,9 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
     if ( !fc->next ){
         fc->next = new FontContainer();
         fc->next->size = font_size;
+        FILE *fp = fopen( font_file, "r" );
+        if ( fp == NULL ) return NULL;
+        fclose( fp );
         fc->next->font = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
     }
 

@@ -70,7 +70,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
             refreshSurface( effect_dst_surface,
-                            &dirty_rect.bounding_box,
+                            NULL,
                             isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
             break;
         }

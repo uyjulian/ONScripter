@@ -60,7 +60,6 @@ struct BaseReader
         size_t offset;
         size_t length;
         size_t original_length;
-        bool access_flag;
     };
 
     struct ArchiveInfo{
@@ -68,7 +67,6 @@ struct BaseReader
         FILE *file_handle;
         struct FileInfo *fi_list;
         int num_of_files;
-        int num_of_accessed;
         unsigned long base_offset;
 
         ArchiveInfo(){
@@ -76,7 +74,6 @@ struct BaseReader
             file_handle = NULL;
             fi_list = NULL;
             num_of_files = 0;
-            num_of_accessed = 0;
         }
     };
 
@@ -87,7 +84,6 @@ struct BaseReader
     
     virtual char *getArchiveName() const = 0;
     virtual int getNumFiles() = 0;
-    virtual int getNumAccessed() = 0;
     virtual void registerCompressionType( const char *ext, int type ) = 0;
 
     virtual struct FileInfo getFileByIndex( int index ) = 0;

@@ -60,7 +60,7 @@
 class ONScripterLabel : public ScriptParser
 {
 public:
-    ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag );
+    ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag );
     ~ONScripterLabel();
 
     bool skip_flag;
@@ -92,6 +92,7 @@ public:
     int systemcallCommand();
     int stopCommand();
     int spstrCommand();
+    int splitstringCommand();
     int spclclkCommand();
     int spbtnCommand();
     int skipoffCommand();
@@ -144,6 +145,7 @@ public:
     int gettimerCommand();
     int gettextCommand();
     int gettabCommand();
+    int getretCommand();
     int getregCommand();
     int getpageupCommand();
     int getmouseposCommand();
@@ -154,6 +156,7 @@ public:
     int getcselnumCommand();
     int gameCommand();
     int fileexistCommand();
+    int exec_dllCommand();
     int exbtnCommand();
     int erasetextwindowCommand();
     int endCommand();
@@ -393,6 +396,12 @@ private:
     /* ---------------------------------------- */
     /* Registry related variables */
     char *registry_file;
+    
+    /* ---------------------------------------- */
+    /* DLL related variables */
+    char *dll_file;
+    char *dll_str;
+    int dll_ret;
     
     /* ---------------------------------------- */
     /* Text related variables */

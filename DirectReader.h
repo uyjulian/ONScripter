@@ -40,7 +40,6 @@ public:
 
     char *getArchiveName() const;
     int getNumFiles();
-    int getNumAccessed();
     void registerCompressionType( const char *ext, int type );
 
     struct FileInfo getFileByIndex( int index );

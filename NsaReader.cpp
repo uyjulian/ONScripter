@@ -106,24 +106,11 @@ int NsaReader::getNumFiles(){
     return total;
 }
 
-int NsaReader::getNumAccessed(){
-    int total = archive_info.num_of_accessed, i;
-
-    for ( i=0 ; i<num_of_nsa_archives ; i++ ) total += archive_info2[i].num_of_accessed;
-    
-    return total;
-}
-
 size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
 {
     int i = getIndexFromFile( ai, file_name );
 
     if ( i == ai->num_of_files ) return 0;
-
-    if ( !ai->fi_list[i].access_flag ){
-        ai->num_of_accessed++;
-        ai->fi_list[i].access_flag = true;
-    }
 
     if ( ai->fi_list[i].compression_type == NO_COMPRESSION ){
         int type = getRegisteredCompressionType( file_name );
