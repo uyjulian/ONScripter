@@ -653,12 +653,12 @@ void ONScripterLabel::timerEvent( void )
  * **************************************** */
 int ONScripterLabel::eventLoop()
 {
-	SDL_Event event;
+    SDL_Event event;
 
     advancePhase();
 
-	while ( SDL_WaitEvent(&event) ) {
-		switch (event.type) {
+    while ( SDL_WaitEvent(&event) ) {
+        switch (event.type) {
           case SDL_MOUSEMOTION:
             mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
             break;
@@ -723,8 +723,9 @@ int ONScripterLabel::eventLoop()
             
           default:
             break;
-		}
-	}
+        }
+    }
     return -1;
 }
+
 

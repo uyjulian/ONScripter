@@ -150,6 +150,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     int i, tmp_xy[2];
     uchar3 org_color;
     char text[3] = { '\0', '\0', '\0' };
+    SDL_Rect clipped_rect;
 
     tmp_xy[0] = info->xy[0];
     tmp_xy[1] = info->xy[1];
@@ -173,16 +174,16 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             }
             text[0] = *str++;
             text[1] = *str++;
-            drawChar( text, info, flush_flag, surface, buffering_flag, clip );
+            drawChar( text, info, false, surface, buffering_flag, clip );
         }
         else{
             text[0] = *str++;
             text[1] = '\0';
-            drawChar( text, info, flush_flag, surface, buffering_flag, clip );
+            drawChar( text, info, false, surface, buffering_flag, clip );
             info->xy[0]--;
             if ( *str ){
                 text[1] = *str++;
-                drawChar( text, info, flush_flag, surface, buffering_flag, clip );
+                drawChar( text, info, false, surface, buffering_flag, clip );
             }
         }
     }
@@ -190,32 +191,34 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 
     /* ---------------------------------------- */
     /* Calculate the area of selection */
-    if ( rect ){
-        if ( tateyoko_mode == 1 ){
-            rect->x = (info->top_xy[0] + (info->num_xy[1] - tmp_xy[1] - 1) * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-            rect->w = (info->pitch_xy[0] * (info->xy[1] - tmp_xy[1] + 1)) * screen_ratio1 / screen_ratio2;
-            if ( tmp_xy[1] == info->xy[1] ){
-                rect->y = (info->top_xy[1] + tmp_xy[0] * info->pitch_xy[1]) * screen_ratio1 / screen_ratio2;
-                rect->h = (info->pitch_xy[1] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-            }
-            else{
-                rect->y = info->top_xy[1] * screen_ratio1 / screen_ratio2;
-                rect->h = info->pitch_xy[1] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-            }
-        }
-        else{
-            if ( tmp_xy[1] == info->xy[1] ){
-                rect->x = (info->top_xy[0] + tmp_xy[0] * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-                rect->w = (info->pitch_xy[0] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-            }
-            else{
-                rect->x = info->top_xy[0] * screen_ratio1 / screen_ratio2;
-                rect->w = info->pitch_xy[0] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-            }
-            rect->y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
-            rect->h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
-        }
+    if ( tateyoko_mode == 1 ){
+      clipped_rect.x = (info->top_xy[0] + (info->num_xy[1] - tmp_xy[1] - 1) * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
+      clipped_rect.w = (info->pitch_xy[0] * (info->xy[1] - tmp_xy[1] + 1)) * screen_ratio1 / screen_ratio2;
+      if ( tmp_xy[1] == info->xy[1] ){
+	clipped_rect.y = (info->top_xy[1] + tmp_xy[0] * info->pitch_xy[1]) * screen_ratio1 / screen_ratio2;
+	clipped_rect.h = (info->pitch_xy[1] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
+      }
+      else{
+	clipped_rect.y = info->top_xy[1] * screen_ratio1 / screen_ratio2;
+	clipped_rect.h = info->pitch_xy[1] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
+      }
     }
+    else{
+      if ( tmp_xy[1] == info->xy[1] ){
+	clipped_rect.x = (info->top_xy[0] + tmp_xy[0] * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
+	clipped_rect.w = (info->pitch_xy[0] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
+      }
+      else{
+	clipped_rect.x = info->top_xy[0] * screen_ratio1 / screen_ratio2;
+	clipped_rect.w = info->pitch_xy[0] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
+      }
+      clipped_rect.y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
+      clipped_rect.h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
+    }
+
+    if ( flush_flag ) flush( &clipped_rect );
+    
+    if ( rect ) *rect = clipped_rect;
 }
 
 void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface )
