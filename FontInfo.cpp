@@ -2,7 +2,7 @@
  * 
  *  FontInfo.cpp - Font information storage class of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -96,26 +96,28 @@ int FontInfo::getTateyokoMode()
     return tateyoko_mode;
 }
 
-int FontInfo::x(bool do_hankaku_shift)
+int FontInfo::getRemainingLine()
 {
-    int ret = xy[0] * pitch_xy[0] + top_xy[0] + offset_xy[0];
-    if (do_hankaku_shift && tateyoko_mode==YOKO_MODE) ret += pitch_xy[0] / 2;
-        
-    return ret;
+    if (tateyoko_mode == YOKO_MODE)
+        return num_xy[1] - xy[1]/2;
+    else
+        return xy[0]/2 + 1;
 }
 
-int FontInfo::y(bool do_hankaku_shift)
+int FontInfo::x()
 {
-    int ret = xy[1] * pitch_xy[1] + top_xy[1] + offset_xy[1];
-    if (do_hankaku_shift && tateyoko_mode==TATE_MODE) ret += pitch_xy[1] / 2;
-    
-    return ret;
+    return xy[0]*pitch_xy[0]/2 + top_xy[0] + offset_xy[0];
+}
+
+int FontInfo::y()
+{
+    return xy[1]*pitch_xy[1]/2 + top_xy[1] + offset_xy[1];
 }
 
 void FontInfo::setXY( int x, int y )
 {
-    if ( x != -1 ) xy[0] = x;
-    if ( y != -1 ) xy[1] = y;
+    if ( x != -1 ) xy[0] = x*2;
+    if ( y != -1 ) xy[1] = y*2;
 }
 
 void FontInfo::clear()
@@ -131,10 +133,10 @@ void FontInfo::newLine()
 {
     if (tateyoko_mode == YOKO_MODE){
         xy[0] = 0;
-        xy[1]++;
+        xy[1] += 2;
     }
     else{
-        xy[0]--;
+        xy[0] -= 2;
         xy[1] = 0;
     }
     offset_xy[0] = offset_xy[1] = 0;
@@ -148,7 +150,7 @@ void FontInfo::setLineArea(int num)
 
 bool FontInfo::isEndOfLine(int margin)
 {
-    if (xy[tateyoko_mode] + margin >= num_xy[tateyoko_mode]) return true;
+    if (xy[tateyoko_mode] + margin*2 >= num_xy[tateyoko_mode]*2) return true;
 
     return false;
 }
@@ -160,7 +162,7 @@ bool FontInfo::isLineEmpty()
     return false;
 }
 
-void FontInfo::advanceChar(int offset)
+void FontInfo::advanceCharInHankaku(int offset)
 {
     xy[tateyoko_mode] += offset;
 }
@@ -176,26 +178,26 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
     
     if (tateyoko_mode == YOKO_MODE){
         if (start_xy[1] == xy[1]){
-            rect.x = top_xy[0] + pitch_xy[0] * start_xy[0];
-            rect.w = pitch_xy[0] * (xy[0] - start_xy[0] + 1);
+            rect.x = top_xy[0] + pitch_xy[0]*start_xy[0]/2;
+            rect.w = pitch_xy[0]*(xy[0]-start_xy[0]+2)/2;
         }
         else{
             rect.x = top_xy[0];
-            rect.w = pitch_xy[0] * num_xy[0];
+            rect.w = pitch_xy[0]*num_xy[0];
         }
-        rect.y = top_xy[1] + start_xy[1] * pitch_xy[1];
-        rect.h = pitch_xy[1] * (xy[1] - start_xy[1] + 1);
+        rect.y = top_xy[1] + start_xy[1]*pitch_xy[1]/2;
+        rect.h = pitch_xy[1]*(xy[1]-start_xy[1]+2)/2;
     }
     else{
-        rect.x = top_xy[0] + pitch_xy[0] * xy[0];
-        rect.w = pitch_xy[0] * (start_xy[0] - xy[0] + 1);
+        rect.x = top_xy[0] + pitch_xy[0]*xy[0]/2;
+        rect.w = pitch_xy[0]*(start_xy[0]-xy[0]+2)/2;
         if (start_xy[1] == xy[1]){
-            rect.y = top_xy[1] + pitch_xy[1] * start_xy[1];
-            rect.h = pitch_xy[1] * (xy[1] - start_xy[1] + 1);
+            rect.y = top_xy[1] + pitch_xy[1]*start_xy[1]/2;
+            rect.h = pitch_xy[1]*(xy[1]-start_xy[1]+2)/2;
         }
         else{
             rect.y = top_xy[1];
-            rect.h = pitch_xy[1] * num_xy[1];
+            rect.h = pitch_xy[1]*num_xy[1];
         }
     }
 

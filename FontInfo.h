@@ -2,7 +2,7 @@
  * 
  *  FontInfo.h - Font information storage class of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -55,8 +55,10 @@ public:
     void *openFont( char *font_file, int ratio1, int ratio2 );
     void setTateyokoMode( int tateyoko_mode );
     int getTateyokoMode();
-    int x(bool do_hankaku_shift=false); // return current x position
-    int y(bool do_hankaku_shift=false); // return current y position
+    int getRemainingLine();
+    
+    int x();
+    int y();
     void setXY( int x=-1, int y=-1 );
     void clear();
     void newLine();
@@ -64,7 +66,7 @@ public:
 
     bool isEndOfLine(int margin=0);
     bool isLineEmpty();
-    void advanceChar(int offset=1);
+    void advanceCharInHankaku(int offest);
     void addMargin(int margin);
 
     SDL_Rect calcUpdatedArea(int start_xy[2], int ratio1, int ratio2 );

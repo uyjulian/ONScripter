@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -869,7 +869,7 @@ int ONScripterLabel::parseLine( )
             for (int i=0 ; i<indent_offset ; i++){
                 current_text_buffer->addBuffer(((char*)"@")[0]);
                 current_text_buffer->addBuffer(((char*)"@")[1]);
-                sentence_font.advanceChar();
+                sentence_font.advanceCharInHankaku(2);
             }
         }
         //event_mode = IDLE_EVENT_MODE;
@@ -1103,9 +1103,9 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
 
     info->newLine();
     if (info->getTateyokoMode() == FontInfo::YOKO_MODE)
-        info->setXY( current_text_xy[0] );
+        info->xy[0] = current_text_xy[0];
     else
-        info->setXY( -1, current_text_xy[1] );
+        info->xy[1] = current_text_xy[1];
 
     dirty_rect.add( button_link->image_rect );
     

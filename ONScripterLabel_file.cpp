@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -250,8 +250,10 @@ int ONScripterLabel::loadSaveFile( int no )
     loadInt( fp, &sentence_font.top_xy[1] );
     loadInt( fp, &sentence_font.num_xy[0] );
     loadInt( fp, &sentence_font.num_xy[1] );
-    loadInt( fp, &sentence_font.xy[0] );
-    loadInt( fp, &sentence_font.xy[1] );
+    loadInt( fp, &i );
+    sentence_font.xy[0] = i*2;
+    loadInt( fp, &i );
+    sentence_font.xy[1] = i*2;
     loadInt( fp, &sentence_font.pitch_xy[0] );
     loadInt( fp, &sentence_font.pitch_xy[1] );
     loadInt( fp, &sentence_font.wait_time );
@@ -263,10 +265,10 @@ int ONScripterLabel::loadSaveFile( int no )
     sentence_font.is_transparent = (j==1)?true:false;
 
     for (j=0, k=0, i=0 ; i<current_text_buffer->buffer2_count ; i++){
-        if (k == sentence_font.xy[0]*2 && j == sentence_font.xy[1]) break;
+        if (k == sentence_font.xy[0] && j == sentence_font.xy[1]) break;
 
         if (current_text_buffer->buffer2[i] == 0x0a){
-            j++;
+            j+=2;
             k=0;
         }
         else

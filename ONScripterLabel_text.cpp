@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_text.cpp - Text parser of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -53,10 +53,6 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         unsigned index = ((unsigned char*)text)[0];
         index = index << 8 | ((unsigned char*)text)[1];
         unicode = convSJIS2UTF16( index );
-    }
-    else if ( text[1] ){
-        if ((text[1] & 0xe0) == 0xa0 || (text[1] & 0xe0) == 0xc0) unicode = ((unsigned char*)text)[1] - 0xa0 + 0xff60;
-        else unicode = text[1];
     }
     else{
         if ((text[0] & 0xe0) == 0xa0 || (text[0] & 0xe0) == 0xc0) unicode = ((unsigned char*)text)[0] - 0xa0 + 0xff60;
@@ -132,7 +128,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     if ( info->isEndOfLine() ){
         info->newLine();
         for (int i=0 ; i<indent_offset ; i++)
-            sentence_font.advanceChar();
+            sentence_font.advanceCharInHankaku(2);
 
         if ( lookback_flag ){
             current_text_buffer->addBuffer( 0x0a );
@@ -144,8 +140,8 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
 
     int xy[2];
-    xy[0] = info->x(!IS_TWO_BYTE(text[0]) && text[1]) * screen_ratio1 / screen_ratio2;
-    xy[1] = info->y(!IS_TWO_BYTE(text[0]) && text[1]) * screen_ratio1 / screen_ratio2;
+    xy[0] = info->x() * screen_ratio1 / screen_ratio2;
+    xy[1] = info->y() * screen_ratio1 / screen_ratio2;
     
     SDL_Color color;
     SDL_Rect dst_rect;
@@ -170,10 +166,14 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
 
     /* ---------------------------------------- */
     /* Update text buffer */
-    info->advanceChar();
+    if (IS_TWO_BYTE(text[0]))
+        info->advanceCharInHankaku(2);
+    else
+        info->advanceCharInHankaku(1);
+    
     if ( lookback_flag ){
         current_text_buffer->addBuffer( text[0] );
-        if ( IS_TWO_BYTE(text[0]) || text[1] )
+        if (IS_TWO_BYTE(text[0]))
             current_text_buffer->addBuffer( text[1] );
     }
 }
@@ -186,14 +186,11 @@ void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_fl
         drawChar( text, info, flush_flag, lookback_flag, surface, cache_surface, clip );
     }
     else if (text[1]){
-        drawChar( text2, info, flush_flag, false, surface, cache_surface, clip );
-        sentence_font.advanceChar(-1);
-        drawChar( text, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        text2[0] = text[1];
+        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
     }
     else{
-        drawChar( text, info, flush_flag, false, surface, cache_surface, clip );
-        sentence_font.advanceChar(-1);
-        text2[1] = ' ';
         drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
     }
 }
@@ -215,10 +212,8 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     bool skip_whitespace_flag = true;
     char text[3] = { '\0', '\0', '\0' };
     while( *str ){
-        if ( *str == ' ' && skip_whitespace_flag ){
-            str++;
-            continue;
-        }
+        while (*str == ' ' && skip_whitespace_flag) str++;
+
 #ifdef ENABLE_1BYTE_CHAR
         if ( *str == '`' ){
             str++;
@@ -231,7 +226,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )){
                 info->newLine();
                 for (int i=0 ; i<indent_offset ; i++){
-                    sentence_font.advanceChar();
+                    sentence_font.advanceCharInHankaku(2);
                 }
             }
             text[0] = *str++;
@@ -246,9 +241,8 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             text[0] = *str++;
             text[1] = '\0';
             drawChar( text, info, false, false, surface, cache_surface );
-            if (*str){
-                info->advanceChar(-1);
-                text[1] = *str++;
+            if (*str && *str != 0x0a){
+                text[0] = *str++;
                 drawChar( text, info, false, false, surface, cache_surface );
             }
         }
@@ -310,17 +304,18 @@ void ONScripterLabel::restoreTextBuffer()
                 }
                 continue;
             }
-            else
-#endif                
-                if ( !IS_TWO_BYTE(out_text[0]) ){
+#endif
+            if ( IS_TWO_BYTE(out_text[0]) ){
+                out_text[1] = current_text_buffer->buffer2[i+1];
+            }
+            else{
                 out_text[1] = '\0';
                 drawChar( out_text, &f_info, false, false, NULL, text_surface );
-                f_info.advanceChar(-1);
+                
+                if (i+1 == current_text_buffer->buffer2_count) break;
+                out_text[0] = current_text_buffer->buffer2[i+1];
+                if (out_text[0] == 0x0a) continue;
             }
-            
-            if (i+1 == current_text_buffer->buffer2_count) break;
-            out_text[1] = current_text_buffer->buffer2[i+1];
-            if (out_text[1] == 0x0a) continue;
             i++;
             drawChar( out_text, &f_info, false, false, NULL, text_surface );
         }
@@ -598,18 +593,9 @@ int ONScripterLabel::textCommand()
                     string_buffer_offset++;
             }
         }
-        else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
-            if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
-                if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
-                    !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
-                    string_buffer_offset += 2;
-                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
-                    string_buffer_offset++;
-            }
-            else{
-                string_buffer_offset++;
-            }
-            string_buffer_offset++;
+        else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
+                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
+            string_buffer_offset += 2;
         }
         else
             string_buffer_offset++;
@@ -650,7 +636,7 @@ int ONScripterLabel::textCommand()
                 for (int i=0 ; i<indent_offset ; i++){
                     current_text_buffer->addBuffer(((char*)"@")[0]);
                     current_text_buffer->addBuffer(((char*)"@")[1]);
-                    sentence_font.advanceChar();
+                    sentence_font.advanceCharInHankaku(2);
                 }
             }
         }
@@ -662,7 +648,7 @@ int ONScripterLabel::textCommand()
         }
         else{
             if (script_h.checkClickstr(&script_h.getStringBuffer()[string_buffer_offset]) > 0){
-                if ( sentence_font.xy[1] >= sentence_font.num_xy[1] - clickstr_line )
+                if (sentence_font.getRemainingLine() <= clickstr_line)
                     return clickNewPage( out_text );
                 else
                     return clickWait( out_text );
@@ -791,7 +777,7 @@ int ONScripterLabel::textCommand()
 
             if (matched_len > 0){
                 if (matched_len == 2) out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
-                if ( sentence_font.xy[1] >= sentence_font.num_xy[1] - clickstr_line )
+                if (sentence_font.getRemainingLine() <= clickstr_line)
                     return clickNewPage( out_text );
                 else
                     return clickWait( out_text );
@@ -810,7 +796,7 @@ int ONScripterLabel::textCommand()
                 }
                 else{
                     out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
-                    if ( sentence_font.xy[1] >= sentence_font.num_xy[1] - clickstr_line )
+                    if (sentence_font.getRemainingLine() <= clickstr_line)
                         return clickNewPage( out_text );
                     else
                         return clickWait( out_text );
@@ -824,33 +810,16 @@ int ONScripterLabel::textCommand()
         bool flush_flag = true;
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
             flush_flag = false;
-        if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
-            if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
-                if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
-                    !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
-                    out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 2 ];
-                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
-                    out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
-            }
-            else{
-                out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
-            }
-        }
+        if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
+             !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
+            out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
+
         drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
-            if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
-                if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
-                    if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
-                        !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
-                        string_buffer_offset += 2;
-                    else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
-                        string_buffer_offset++;
-                }
-                else{
-                    string_buffer_offset++;
-                }
-            }
+            if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
+                 !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
+                string_buffer_offset++;
             string_buffer_offset++;
             return RET_CONTINUE | RET_NOREAD;
         }

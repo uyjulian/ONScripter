@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -620,7 +620,8 @@ int ONScripterLabel::selectCommand()
         }
         skip_flag = false;
         automode_flag = false;
-        sentence_font.setXY( xy[0], xy[1] );
+        sentence_font.xy[0] = xy[0];
+        sentence_font.xy[1] = xy[1];
 
         flush( refreshMode() );
         
@@ -1664,7 +1665,7 @@ int ONScripterLabel::getregCommand()
                     buf = script_h.readStr();
                     setStr( &script_h.variable_data[no].str, buf );
                     script_h.popCurrent();
-                    printf("  $%d = %s\n", no, &script_h.variable_data[no].str );
+                    printf("  $%d = %s\n", no, script_h.variable_data[no].str );
                     found_flag = true;
                     break;
                 }
