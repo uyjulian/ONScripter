@@ -54,29 +54,41 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
     int i, j, s;
     int offset = src_total_width - src_width * byte_per_pixel;
 
+    unsigned int mx, my;
+
+    if ( src_width  > 1 ) mx = 1;
+    else                  mx = 0;
+    if ( src_height > 1 ) my = 1;
+    else                  my = 0;
+
     /* smoothing */
     if ( byte_per_pixel >= 3 ){
         /* top-left and top-right pixels are preserved */
         calcWeightedSum( &tmp_buf, &src_buf, 0, 0, 0, 0, src_total_width, byte_per_pixel );
         for ( j=1 ; j<src_width-1 ; j++ )
-            calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 1, 1, src_total_width, byte_per_pixel );
-        calcWeightedSum( &tmp_buf, &src_buf, 0, 0, 0, 0, src_total_width, byte_per_pixel );
+            calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 1, my, src_total_width, byte_per_pixel );
+        if ( src_width > 1 )
+            calcWeightedSum( &tmp_buf, &src_buf, 0, 0, 0, 0, src_total_width, byte_per_pixel );
         tmp_buf += offset;
         src_buf += offset;
 
         for ( i=1 ; i<src_height-1 ; i++ ){
-            calcWeightedSum( &tmp_buf, &src_buf, 0, -1, 1, 1, src_total_width, byte_per_pixel );
+            calcWeightedSum( &tmp_buf, &src_buf, 0, -1, mx, 1, src_total_width, byte_per_pixel );
             for ( j=1 ; j<src_width-1 ; j++ )
                 calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 1, 1, src_total_width, byte_per_pixel );
-            calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 0, 1, src_total_width, byte_per_pixel );
+            if ( src_width > 1 )
+                calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 0, 1, src_total_width, byte_per_pixel );
             tmp_buf += offset;
             src_buf += offset;
         }
-    
-        calcWeightedSum( &tmp_buf, &src_buf, 0, -1, 1, 0, src_total_width, byte_per_pixel );
-        for ( j=1 ; j<src_width+-1 ; j++ )
-            calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 1, 0, src_total_width, byte_per_pixel );
-        calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 0, 0, src_total_width, byte_per_pixel );
+
+        if ( src_height > 1 ){
+            calcWeightedSum( &tmp_buf, &src_buf, 0, -1, mx, 0, src_total_width, byte_per_pixel );
+            for ( j=1 ; j<src_width-1 ; j++ )
+                calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 1, 0, src_total_width, byte_per_pixel );
+            if ( src_width > 1 )
+                calcWeightedSum( &tmp_buf, &src_buf, -1, -1, 0, 0, src_total_width, byte_per_pixel );
+        }
     }
     else{
         tmp_buffer = src_buffer;
@@ -98,9 +110,9 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
             for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
                 unsigned int p;
                 p =  (8-dx)*(8-dy)*tmp_buffer[ k ];
-                p +=    dx *(8-dy)*tmp_buffer[ k+byte_per_pixel ];
-                p += (8-dx)*   dy *tmp_buffer[ k+src_total_width ];
-                p +=    dx *   dy *tmp_buffer[ k+byte_per_pixel+src_total_width ];
+                p +=    dx *(8-dy)*tmp_buffer[ k+mx*byte_per_pixel ];
+                p += (8-dx)*   dy *tmp_buffer[ k+my*src_total_width ];
+                p +=    dx *   dy *tmp_buffer[ k+mx*byte_per_pixel+my*src_total_width ];
                 *dst_buf++ = (unsigned char)(p>>6);
             }
         }
