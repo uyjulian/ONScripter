@@ -674,7 +674,11 @@ unsigned long ONScripterLabel::decodeOggVorbis( unsigned char *buffer_in, unsign
                                         if (val > 32767 )  val = 32767;
                                         if (val < -32768 ) val = -32768;
 #endif                                        
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
                                         *ptr=val;
+#else
+                                        *ptr=(val>>8 & 0xff)|(val<<8 & 0xff00);
+#endif
                                         ptr+=vi.channels;
                                     }
                                 }

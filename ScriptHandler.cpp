@@ -28,19 +28,6 @@
 #define IS_TWO_BYTE(x) \
         ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
 
-static struct {
-    char *first_file;
-    int  encrypt_mode;
-    char *format;
-} script_file_mode[] = {
-    {"0.txt", 0, "%d.txt"},
-    {"00.txt", 0, "%2.2d.txt"},
-    {"nscr_sec.dat", 2, ""},
-    {"nscript.dat", 1, ""},
-    {"nscript.___", 3, ""},
-    {NULL}
-};
-
 ScriptHandler::ScriptHandler()
 {
     int i;
@@ -770,53 +757,71 @@ int ScriptHandler::readScript( char *path )
     archive_path = new char[ strlen(path) + 1 ];
     strcpy( archive_path, path );
 
-    FILE *fp;
-    char file_name[10];
-    int  file_counter = 0;
-    int estimated_buffer_length = 0;
-
-    int no=0;
-    while( script_file_mode[no].first_file ){
-        if ( (fp = fopen( script_file_mode[no].first_file, "rb" )) != NULL ){
-            while(1){
-                fseek( fp, 0, SEEK_END );
-                estimated_buffer_length += ftell( fp ) + 1;
-                if (script_file_mode[no].encrypt_mode == 0){
-                    fclose( fp );
-                    sprintf( file_name, script_file_mode[no].format, ++file_counter );
-                    if ((fp = fopen( file_name, "rb" )) != NULL) continue;
-                }
-                break;
-            }
-            break;
-        }
-        no++;
+    FILE *fp = NULL;
+    char filename[10];
+    int i, encrypt_mode = 0;
+    if ((fp = fopen("0.txt", "rb")) != NULL){
+        encrypt_mode = 0;
     }
-    if (script_file_mode[no].first_file == NULL){
-        fprintf( stderr, "can't open file 0.txt or 00.txt or nscript.dat or nscript.___\n" );
+    else if ((fp = fopen("00.txt", "rb")) != NULL){
+        encrypt_mode = 0;
+    }
+    else if ((fp = fopen("nscript_sec.dat", "rb")) != NULL){
+        encrypt_mode = 2;
+    }
+    else if ((fp = fopen("nscript.___", "rb")) != NULL){
+        encrypt_mode = 3;
+    }
+    else if ((fp = fopen("nscript.dat", "rb")) != NULL){
+        encrypt_mode = 1;
+    }
+
+    if (fp == NULL){
+        fprintf( stderr, "can't open any of 0.txt or 00.txt or nscript.dat or nscript.___\n" );
         return -1;
     }
     
-    if ( script_buffer ) delete[] script_buffer;
-    if ( ( script_buffer = new char[ estimated_buffer_length ]) == NULL ){
-        fprintf( stderr, " *** can't allocate memory for the script ***\n");
-        exit( -1 );
+    fseek( fp, 0, SEEK_END );
+    int estimated_buffer_length = ftell( fp ) + 1;
+
+    if (encrypt_mode == 0){
+        fclose(fp);
+        for (i=1 ; i<100 ; i++){
+            sprintf(filename, "%d.txt", i);
+            if ((fp = fopen(filename, "rb")) == NULL){
+                sprintf(filename, "%02d.txt", i);
+                fp = fopen(filename, "rb");
+            }
+            if (fp){
+                fseek( fp, 0, SEEK_END );
+                estimated_buffer_length += ftell(fp)+1;
+                fclose(fp);
+            }
+        }
     }
+
+    if ( script_buffer ) delete[] script_buffer;
+    script_buffer = new char[ estimated_buffer_length ];
 
     char *p_script_buffer;
     current_script = p_script_buffer = script_buffer;
     
-    if (script_file_mode[no].encrypt_mode > 0){
+    if (encrypt_mode > 0){
         fseek( fp, 0, SEEK_SET );
-        readScriptSub( fp, &p_script_buffer, script_file_mode[no].encrypt_mode );
+        readScriptSub( fp, &p_script_buffer, encrypt_mode );
         fclose( fp );
     }
     else{
-        for ( int i=0 ; i<file_counter ; i++ ){
-            sprintf( file_name, script_file_mode[no].format, i );
-            fp = fopen( file_name, "rb" );
-            readScriptSub( fp, &p_script_buffer, script_file_mode[no].encrypt_mode );
-            fclose( fp );
+        for (i=0 ; i<100 ; i++){
+            sprintf(filename, "%d.txt", i);
+            if ((fp = fopen(filename, "rb")) == NULL){
+                sprintf(filename, "%02d.txt", i);
+                fp = fopen(filename, "rb");
+            }
+            if (fp){
+                readScriptSub( fp, &p_script_buffer, 0 );
+                fclose(fp);
+            }
         }
     }
 
