@@ -70,6 +70,10 @@ typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLc
 class ONScripterLabel : public ScriptParser
 {
 public:
+    typedef struct{
+        short x, y, w, h;
+    } Rect;
+    
     ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag, char *default_key_exe );
     ~ONScripterLabel();
 
@@ -506,7 +510,7 @@ private:
     
     int  setEffect( int effect_no );
     int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
-    void drawEffect( SDL_Rect dst_rect, SDL_Rect src_rect, SDL_Surface *surface );
+    void drawEffect( SDL_Rect &dst_rect, SDL_Rect &src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     
     /* ---------------------------------------- */
@@ -675,7 +679,7 @@ private:
     void refreshOpenGL( int refresh_mode );
     void loadTexture( SDL_Surface *surface, unsigned int tex_id );
     void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL );
-    void drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );
+    void drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );
     void refreshTexture();
 #ifdef USE_OPENGL
     PFNGLBLENDCOLORPROC glBlendColor_ptr;

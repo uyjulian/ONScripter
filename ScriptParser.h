@@ -384,7 +384,6 @@ protected:
     unsigned int  menu_link_num, menu_link_width;
 
     int getSystemCallNo( const char *buffer );
-    void getSJISFromInteger( char *buffer, int no, bool add_space_flag=true );
     unsigned char convHexToDec( char ch );
     void readColor( uchar3 *color, const char *buf );
     

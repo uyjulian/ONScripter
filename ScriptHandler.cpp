@@ -166,13 +166,21 @@ const char *ScriptHandler::readToken()
                         buf++;
                     }
                     ch = *buf;
-                    if (ch == 0x0a || ch == '\0' || !loop_flag) break;
+                    if (ch == 0x0a || ch == '\0' || !loop_flag
+#ifdef ENABLE_1BYTE_CHAR
+                        || ch == '`'
+#endif
+                        ) break;
                 }
                 SKIP_SPACE(buf);
                 ch = *buf;
             }
         }
-        while (ch != 0x0a && ch != '\0' && loop_flag);
+        while (ch != 0x0a && ch != '\0' && loop_flag
+#ifdef ENABLE_1BYTE_CHAR
+               && ch != '`'
+#endif
+               );
         if (linepage_flag) addStringBuffer( '\\' );
         if (loop_flag && ch == 0x0a){
             addStringBuffer( ch );
@@ -512,20 +520,13 @@ void ScriptHandler::loadKidokuData()
 
 void ScriptHandler::addIntVariable(char **buf)
 {
-    char num_buf[10], num_sjis_buf[3];
+    char num_buf[20];
     int no = parseInt(buf);
-    if (no < 0){
-        addStringBuffer( "|"[0] );
-        addStringBuffer( "|"[1] );
-        sprintf( num_buf, "%d", -no );
-    }
-    else{
-        sprintf( num_buf, "%d", no );
-    }
-    for (unsigned int i=0 ; i<strlen( num_buf ) ; i++){
-        getSJISFromInteger( num_sjis_buf, num_buf[i] - '0', false );
-        addStringBuffer( num_sjis_buf[0] );
-        addStringBuffer( num_sjis_buf[1] );
+
+    int len = getStringFromInteger( num_buf, no, -1 );
+    for (int i=0 ; i<len ; i++){
+        addStringBuffer( num_buf[i*2] );
+        addStringBuffer( num_buf[i*2+1] );
     }
 }
 
@@ -663,21 +664,55 @@ void ScriptHandler::setNumVariable( int no, int val )
     num_variables[no] = val;
 }
 
-void ScriptHandler::getSJISFromInteger( char *buffer, int no, bool add_space_flag )
+int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
 {
-    int c = 0;
-    char num_str[] = "‚O‚P‚Q‚R‚S‚T‚U‚V‚W‚X";
-    if ( no >= 10 ){
-        buffer[c++] = num_str[ no / 10 % 10 * 2];
-        buffer[c++] = num_str[ no / 10 % 10 * 2 + 1];
+    int i, num_space=0, num_minus = 0;
+    if (no < 0){
+        num_minus = 1;
+        no = -no;
     }
-    else if ( add_space_flag ){
+    int num_digit=1, no2 = no;
+    while(no2 >= 10){
+        no2 /= 10;
+        num_digit++;
+    }
+
+    if (num_column < 0) num_column = num_digit+num_minus;
+    if (num_digit+num_minus <= num_column)
+        num_space = num_column - (num_digit+num_minus);
+    else{
+        for (i=0 ; i<num_digit+num_minus-num_column ; i++)
+            no /= 10;
+        num_digit -= num_digit+num_minus-num_column;
+    }
+
+#if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
+    if (num_minus == 1) no = -no;
+    char format[5];
+    sprintf(format, "%%%dd", num_column);
+    sprintf(buffer, format, no);
+#else
+    int c = 0;
+    for (i=0 ; i<num_space ; i++){
         buffer[c++] = ((char*)"@")[0];
         buffer[c++] = ((char*)"@")[1];
     }
-    buffer[c++] = num_str[ no % 10 * 2];
-    buffer[c++] = num_str[ no % 10 * 2 + 1];
-    buffer[c++] = '\0';
+    if (num_minus == 1){
+        buffer[c++] = "|"[0];
+        buffer[c++] = "|"[1];
+    }
+    c = (num_column-1)*2;
+    char num_str[] = "‚O‚P‚Q‚R‚S‚T‚U‚V‚W‚X";
+    for (i=0 ; i<num_digit ; i++){
+        buffer[c]   = num_str[ no % 10 * 2];
+        buffer[c+1] = num_str[ no % 10 * 2 + 1];
+        no /= 10;
+        c -= 2;
+    }
+    buffer[num_column*2] = '\0';
+#endif    
+
+    return num_column;
 }
 
 int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )

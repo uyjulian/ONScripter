@@ -315,7 +315,7 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
         SDL_Rect tex_rect = anim->pos;
         tex_rect.x = anim->pos.w*anim->current_cell;
         tex_rect.y = 0;
-        drawTexture( anim->tex_id, poly_rect, tex_rect, anim->trans, anim );
+        drawTexture( anim->tex_id, (Rect&)poly_rect, (Rect&)tex_rect, anim->trans, anim );
     }
     else{
         anim->blendOnSurface( dst_surface, poly_rect.x, poly_rect.y,

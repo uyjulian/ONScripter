@@ -604,7 +604,7 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
 #endif    
 }
 
-void ONScripterLabel::drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, int alpha, AnimationInfo *anim )
+void ONScripterLabel::drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &tex_rect, int alpha, AnimationInfo *anim )
 {
     int image_height = screen_height;
     int texture_width = screen_texture_width;

@@ -237,11 +237,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         
       case 10: // Cross fade
 #ifdef USE_OPENGL
-        drawTexture( effect_src_id, src_rect, src_rect );
+        drawTexture( effect_src_id, (Rect&)src_rect, (Rect&)src_rect );
         
         glBlendColor_ptr(0.0, 0.0, 0.0, (float)effect_counter / effect->duration);
         glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-        drawTexture( effect_dst_id, src_rect, src_rect );
+        drawTexture( effect_dst_id, (Rect&)src_rect, (Rect&)src_rect );
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #else        
         height = 256 * effect_counter / effect->duration;
@@ -327,7 +327,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                     effect->anim.image_surface, AnimationInfo::TRANS_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, dst_rect, dst_rect );
+        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
 #endif    
         break;
 
@@ -335,7 +335,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         generateMosaic( effect_src_surface, 5 - 6 * effect_counter / effect->duration );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, dst_rect, dst_rect );
+        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
 #endif    
         break;
         
@@ -343,7 +343,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         generateMosaic( effect_dst_surface, 6 * effect_counter / effect->duration );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, dst_rect, dst_rect );
+        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
 #endif    
         break;
         
@@ -354,7 +354,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                     effect->anim.image_surface, AnimationInfo::TRANS_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
 #ifdef USE_OPENGL        
         loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, dst_rect, dst_rect );
+        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
 #endif    
         break;
 
@@ -414,7 +414,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             src_rect.x = src_rect.y = 0;
             src_rect.w = screen_width;
             src_rect.h = screen_height;
-            drawTexture( effect_dst_id, src_rect, src_rect );
+            drawTexture( effect_dst_id, (Rect&)src_rect, (Rect&)src_rect );
             glPopMatrix();
             SDL_GL_SwapBuffers();
 #else            
@@ -427,13 +427,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     }
 }
 
-void ONScripterLabel::drawEffect( SDL_Rect dst_rect, SDL_Rect src_rect, SDL_Surface *surface )
+void ONScripterLabel::drawEffect( SDL_Rect &dst_rect, SDL_Rect &src_rect, SDL_Surface *surface )
 {
 #ifdef USE_OPENGL
     if (surface == effect_dst_surface)
-        drawTexture( effect_dst_id, dst_rect, src_rect );
+        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)src_rect );
     else
-        drawTexture( effect_src_id, dst_rect, src_rect );
+        drawTexture( effect_src_id, (Rect&)dst_rect, (Rect&)src_rect );
 #else
     SDL_Rect clipped_rect;
     AnimationInfo::doClipping( &dst_rect, &dirty_rect.bounding_box, &clipped_rect );

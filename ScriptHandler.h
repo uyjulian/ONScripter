@@ -137,11 +137,11 @@ public:
     void pushVariable();
     int  getIntVariable( VariableInfo *var_info=NULL );
 
-    void getSJISFromInteger( char *buffer, int no, bool add_space_flag );
+    int  getStringFromInteger( char *buffer, int no, int num_column );
 
-    int readScriptSub( FILE *fp, char **buf, int encrypt_mode );
-    int readScript( char *path );
-    int labelScript();
+    int  readScriptSub( FILE *fp, char **buf, int encrypt_mode );
+    int  readScript( char *path );
+    int  labelScript();
 
     LabelInfo lookupLabel( const char* label );
     LabelInfo lookupLabelNext( const char* label );

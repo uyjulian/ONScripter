@@ -23,7 +23,7 @@ DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
 
 # with OggVorbis and AVI and English mode
 #LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis
-#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DENABLE_1BYTE_CHAR
+#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DENABLE_1BYTE_CHAR -DFORCE_1BYTE_CHAR
 
 EXESUFFIX =
 OBJSUFFIX = .o

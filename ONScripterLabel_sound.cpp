@@ -308,8 +308,8 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
             SDL_Delay( 100 );
         }
 
-        Mix_HookMusic( NULL, NULL );
         SMPEG_stop( mpeg_sample );
+        Mix_HookMusic( NULL, NULL );
         SMPEG_delete( mpeg_sample );
 #ifdef USE_OPENGL        
         screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG);
@@ -438,8 +438,8 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( mp3_sample ){
-        Mix_HookMusic( NULL, NULL );
         SMPEG_stop( mp3_sample );
+        Mix_HookMusic( NULL, NULL );
         SMPEG_delete( mp3_sample );
         mp3_sample = NULL;
 

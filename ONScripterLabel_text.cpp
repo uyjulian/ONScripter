@@ -259,7 +259,7 @@ void ONScripterLabel::refreshText( SDL_Surface *surface, SDL_Rect *clip, int ref
     if ( clip ) rect = *clip;
     
     if (refresh_mode & REFRESH_OPENGL_MODE){
-        drawTexture( text_id, rect, rect );
+        drawTexture( text_id, (Rect&)rect, (Rect&)rect );
     }
     else{
         alphaBlend( surface, rect, surface,
@@ -295,7 +295,7 @@ void ONScripterLabel::restoreTextBuffer()
         }
     }
 
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    Rect rect = {0, 0, screen_width, screen_height};
     drawTexture( text_id, rect, rect );
 }
 

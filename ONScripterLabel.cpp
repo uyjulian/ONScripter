@@ -903,7 +903,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
                              (float)current_font->window_color[2]/256.0,
                              0.0);
             glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
-            drawTexture(effect_src_id, rect, rect);
+            drawTexture(effect_src_id, (Rect&)rect, (Rect&)rect);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #endif            
         }

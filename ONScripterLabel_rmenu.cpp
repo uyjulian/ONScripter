@@ -23,6 +23,26 @@
 
 #include "ONScripterLabel.h"
 
+#if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
+#define MESSAGE_SAVE_EXIST "`%s%s    Date %s/%s    Time %s:%s"
+#define MESSAGE_SAVE_EMPTY "`%s%s    ------------------------"
+#define MESSAGE_SAVE_CONFIRM " will be saved. Are you sure?"
+#define MESSAGE_LOAD_CONFIRM " will be loaded. Are you sure?"
+#define MESSAGE_RESET_CONFIRM "`The game will be reset. Are you sure?"
+#define MESSAGE_END_CONFIRM "`Are you sure you want to exit?"
+#define MESSAGE_YES "Yes"
+#define MESSAGE_NO "No"
+#else
+#define MESSAGE_SAVE_EXIST "%s%s@%sŒŽ%s“ú%sŽž%s•ª"
+#define MESSAGE_SAVE_EMPTY "%s%s@||||||||||||"
+#define MESSAGE_SAVE_CONFIRM "‚ÉƒZ[ƒu‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H"
+#define MESSAGE_LOAD_CONFIRM "‚ðƒ[ƒh‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H"
+#define MESSAGE_RESET_CONFIRM "ƒŠƒZƒbƒg‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H"
+#define MESSAGE_END_CONFIRM "I—¹‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H"
+#define MESSAGE_YES "‚Í‚¢"
+#define MESSAGE_NO "‚¢‚¢‚¦"
+#endif
+
 void ONScripterLabel::enterSystemCall()
 {
     shelter_button_link = root_button_link.next;
@@ -284,7 +304,7 @@ void ONScripterLabel::executeSystemLoad()
             menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
             if ( save_file_info.valid ){
-                sprintf( buffer, "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
+                sprintf( buffer, MESSAGE_SAVE_EXIST,
                          save_item_name,
                          save_file_info.sjis_no,
                          save_file_info.sjis_month,
@@ -294,7 +314,7 @@ void ONScripterLabel::executeSystemLoad()
                 nofile_flag = false;
             }
             else{
-                sprintf( buffer, "%s%s@||||||||||||",
+                sprintf( buffer, MESSAGE_SAVE_EMPTY,
                          save_item_name,
                          save_file_info.sjis_no );
                 nofile_flag = true;
@@ -356,7 +376,7 @@ void ONScripterLabel::executeSystemSave()
             menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
             if ( save_file_info.valid ){
-                sprintf( buffer, "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
+                sprintf( buffer, MESSAGE_SAVE_EXIST,
                          save_item_name,
                          save_file_info.sjis_no,
                          save_file_info.sjis_month,
@@ -366,7 +386,7 @@ void ONScripterLabel::executeSystemSave()
                 nofile_flag = false;
             }
             else{
-                sprintf( buffer, "%s%s@||||||||||||",
+                sprintf( buffer, MESSAGE_SAVE_EMPTY,
                          save_item_name,
                          save_file_info.sjis_no );
                 nofile_flag = true;
@@ -449,13 +469,13 @@ void ONScripterLabel::executeSystemYesNo()
         }
 
         if ( yesno_caller == SYSTEM_SAVE )
-            strcat( name, "‚ÉƒZ[ƒu‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H" );
+            strcat( name, MESSAGE_SAVE_CONFIRM );
         else if ( yesno_caller == SYSTEM_LOAD )
-            strcat( name, "‚ðƒ[ƒh‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H" );
+            strcat( name, MESSAGE_LOAD_CONFIRM );
         else if ( yesno_caller & SYSTEM_RESET )
-            strcpy( name, "ƒŠƒZƒbƒg‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H" );
+            strcpy( name, MESSAGE_RESET_CONFIRM );
         else if ( yesno_caller & SYSTEM_END )
-            strcpy( name, "I—¹‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H" );
+            strcpy( name, MESSAGE_END_CONFIRM );
         
         
         menu_font.num_xy[0] = strlen(name)/2;
@@ -470,14 +490,14 @@ void ONScripterLabel::executeSystemYesNo()
         
         int offset1 = strlen(name)/5;
         int offset2 = strlen(name)/2 - offset1;
-        strcpy( name, "‚Í‚¢" );
+        strcpy( name, MESSAGE_YES );
         menu_font.setXY(offset1-2, 2);
         ButtonLink *button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 1;
         flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
 
-        strcpy( name, "‚¢‚¢‚¦" );
+        strcpy( name, MESSAGE_NO );
         menu_font.setXY(offset2, 2);
         button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );

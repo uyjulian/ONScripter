@@ -360,23 +360,6 @@ int ScriptParser::open( char *path )
     return 0;
 }
 
-void ScriptParser::getSJISFromInteger( char *buffer, int no, bool add_space_flag )
-{
-    int c = 0;
-    char num_str[] = "ÇOÇPÇQÇRÇSÇTÇUÇVÇWÇX";
-    if ( no >= 10 ){
-        buffer[c++] = num_str[ no / 10 % 10 * 2];
-        buffer[c++] = num_str[ no / 10 % 10 * 2 + 1];
-    }
-    else if ( add_space_flag ){
-        buffer[c++] = ((char*)"Å@")[0];
-        buffer[c++] = ((char*)"Å@")[1];
-    }
-    buffer[c++] = num_str[ no % 10 * 2];
-    buffer[c++] = num_str[ no % 10 * 2 + 1];
-    buffer[c++] = '\0';
-}
-
 unsigned char ScriptParser::convHexToDec( char ch )
 {
     if      ( '0' <= ch && ch <= '9' ) return ch - '0';

@@ -879,30 +879,9 @@ int ONScripterLabel::prnumCommand()
     const char *buf = script_h.readStr();
     readColor( &prnum_info[no]->color_list[0], buf );
 
-    char num_buf[12], buf2[7];
-    int ptr = 0;
-
-    sprintf( num_buf, "%3d", prnum_info[no]->param );
-    if ( prnum_info[no]->param<0 ){
-        if ( prnum_info[no]->param>-10 ) {
-            buf2[ptr++] = "@"[0];
-            buf2[ptr++] = "@"[1];
-        }
-        buf2[ptr++] = "|"[0];
-        buf2[ptr++] = "|"[1];
-        sprintf( num_buf, "%d", -prnum_info[no]->param );
-    }
-    for ( int i=0 ; i<(int)strlen( num_buf ) ; i++ ){
-        if ( num_buf[i] == ' ' ) {
-            buf2[ptr++] = "@"[0];
-            buf2[ptr++] = "@"[1];
-            continue;
-        }
-        getSJISFromInteger( &buf2[ptr], num_buf[i] - '0', false );
-        ptr += 2;
-        if ( ptr >= 6 ) break; // up to 3 columns (NScripter's restriction)
-    }
-    setStr( &prnum_info[no]->file_name, buf2 );
+    char num_buf[7];
+    script_h.getStringFromInteger( num_buf, prnum_info[no]->param, 3 );
+    setStr( &prnum_info[no]->file_name, num_buf );
 
     setupAnimationInfo( prnum_info[no] );
     dirty_rect.add( prnum_info[no]->pos );
@@ -1974,7 +1953,7 @@ int ONScripterLabel::drawsp2Command()
     SDL_Rect tex_rect = si.pos;
     tex_rect.x = si.pos.w*si.current_cell;
     tex_rect.y = 0;
-    drawTexture( si.tex_id, poly_rect, tex_rect, alpha, &si );
+    drawTexture( si.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, alpha, &si );
 
     glPopMatrix();
 #else    
@@ -2008,7 +1987,7 @@ int ONScripterLabel::drawspCommand()
     SDL_Rect tex_rect = si.pos;
     tex_rect.x = si.pos.w*si.current_cell;
     tex_rect.y = 0;
-    drawTexture( si.tex_id, poly_rect, tex_rect, alpha, &si );
+    drawTexture( si.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, alpha, &si );
 
     glPopMatrix();
 #else    
@@ -2028,7 +2007,7 @@ int ONScripterLabel::drawfillCommand()
 #ifdef USE_OPENGL
     glColor4f(r/256.0, g/256.0, b/256.0, 1.0);
     glDisable(GL_TEXTURE_2D);
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    Rect rect = {0, 0, screen_width, screen_height};
     drawTexture( effect_src_id, rect, rect, -1 );
     glEnable(GL_TEXTURE_2D);
 #else    
@@ -2056,7 +2035,7 @@ int ONScripterLabel::drawbgCommand()
     glPushMatrix();
     glLoadIdentity() ;
 
-    drawTexture( bg_info.tex_id, bg_info.pos, bg_info.pos, 256, &bg_info );
+    drawTexture( bg_info.tex_id, (Rect&)bg_info.pos, (Rect&)bg_info.pos, 256, &bg_info );
 
     glPopMatrix();
 #else    
@@ -2089,7 +2068,7 @@ int ONScripterLabel::drawbg2Command()
     SDL_Rect tex_rect = bg_info.pos;
     tex_rect.x = 0;
     tex_rect.y = 0;
-    drawTexture( bg_info.tex_id, poly_rect, tex_rect, 256, &bg_info );
+    drawTexture( bg_info.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, 256, &bg_info );
 
     glPopMatrix();
 #else    
@@ -2535,7 +2514,7 @@ int ONScripterLabel::brCommand()
 
 int ONScripterLabel::bltCommand()
 {
-    SDL_Rect src_rect, dst_rect;
+    Rect src_rect, dst_rect;
 
     dst_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     dst_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -2546,6 +2525,61 @@ int ONScripterLabel::bltCommand()
     src_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
+    if (btndef_info.image_surface == NULL) return RET_CONTINUE;
+    if (dst_rect.w == 0 || dst_rect.h == 0 ||
+        src_rect.w == 0 || src_rect.h == 0) return RET_CONTINUE;
+        
+    int w, w_margin[2]={0,0};
+    if (src_rect.w > 0){
+        w = src_rect.w;
+        if (src_rect.x < 0) w_margin[0] = -src_rect.x;
+        if (src_rect.x+src_rect.w > btndef_info.pos.w) w_margin[1] = src_rect.x+src_rect.w-btndef_info.pos.w;
+        src_rect.x += w_margin[0];
+        src_rect.w -= w_margin[0]+w_margin[1];
+    }
+    else{
+        w = -src_rect.w;
+        if (src_rect.x+src_rect.w+1 < 0) w_margin[0] = -(src_rect.x+src_rect.w+1);
+        if (src_rect.x >= btndef_info.pos.w) w_margin[1] = src_rect.x-btndef_info.pos.w+1;
+        src_rect.x -= w_margin[1];
+        src_rect.w += w_margin[0]+w_margin[1];
+    }
+    int h, h_margin[2]={0,0};
+    if (src_rect.h > 0){
+        h = src_rect.h;
+        if (src_rect.y < 0) h_margin[0] = -src_rect.y;
+        if (src_rect.y+src_rect.h > btndef_info.pos.h) h_margin[1] = src_rect.y+src_rect.h-btndef_info.pos.h;
+        src_rect.y += h_margin[0];
+        src_rect.h -= h_margin[0]+h_margin[1];
+    }
+    else{
+        h = -src_rect.h;
+        if (src_rect.y+src_rect.h+1 < 0) h_margin[0] = -(src_rect.y+src_rect.h+1);
+        if (src_rect.y >= btndef_info.pos.h) h_margin[1] = src_rect.y-btndef_info.pos.h+1;
+        src_rect.y -= h_margin[1];
+        src_rect.h += h_margin[0]+h_margin[1];
+    }
+
+    if (dst_rect.w > 0)
+        dst_rect.x += dst_rect.w*w_margin[0]/w;
+    else
+        dst_rect.x += dst_rect.w*w_margin[1]/w;
+    dst_rect.w -= dst_rect.w*(w_margin[0]+w_margin[1])/w;
+    
+    if (dst_rect.h > 0)
+        dst_rect.y += dst_rect.h*h_margin[0]/h;
+    else
+        dst_rect.y += dst_rect.h*h_margin[1]/h;
+    dst_rect.h -= dst_rect.h*(h_margin[0]+h_margin[1])/h;
+
+    if (dst_rect.w == 0 || dst_rect.h == 0 ||
+        src_rect.w == 0 || src_rect.h == 0) return RET_CONTINUE;
+    
+    //printf("w_margin %d %d %d\n", w_margin[0], w_margin[1], w);
+    //printf("h_margin %d %d %d\n", h_margin[0], h_margin[1], h);
+    //printf("dst %d %d %d %d\n", dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h);
+    //printf("src %d %d %d %d\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
+    
 #ifdef USE_OPENGL
     glMatrixMode(GL_MODELVIEW) ;
     glPushMatrix();
@@ -2559,17 +2593,33 @@ int ONScripterLabel::bltCommand()
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 
         SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
-        AnimationInfo::doClipping( &dst_rect, &clip, &clipped );
-        shiftRect( src_rect, clipped );
+        AnimationInfo::doClipping( (SDL_Rect*)&dst_rect, &clip, &clipped );
+        shiftRect( (SDL_Rect&)src_rect, clipped );
 
-        SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
+        SDL_BlitSurface( btndef_info.image_surface, (SDL_Rect*)&src_rect, screen_surface, (SDL_Rect*)&dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
         dirty_rect.clear();
     }
     else{
-        resizeSurface( btndef_info.image_surface, &src_rect, accumulation_surface, &dst_rect );
-        //dirty_rect.add( dst_rect );
-        flushDirect( dst_rect, REFRESH_NONE_MODE );
+        SDL_LockSurface(accumulation_surface);
+        SDL_LockSurface(btndef_info.image_surface);
+        Uint32 *dst_buf = (Uint32*)accumulation_surface->pixels;
+        Uint32 *src_buf = (Uint32*)btndef_info.image_surface->pixels;
+        int src_w = btndef_info.image_surface->w;
+        for (int i=dst_rect.y ; i<dst_rect.y+dst_rect.h ; i++){
+            if (i<0 || i>=screen_height) continue;
+            for (int j=dst_rect.x ; j<dst_rect.x+dst_rect.w ; j++){
+                if (j<0 || j>=screen_width) continue;
+
+                int x = src_rect.x+src_rect.w*(j-dst_rect.x)/dst_rect.w;
+                int y = src_rect.y+src_rect.h*(i-dst_rect.y)/dst_rect.h;
+                *(dst_buf+i*screen_width+j) = *(src_buf+y*src_w+x)|amask;
+            }
+        }
+        SDL_UnlockSurface(btndef_info.image_surface);
+        SDL_UnlockSurface(accumulation_surface);
+    
+        flushDirect( (SDL_Rect&)dst_rect, REFRESH_NONE_MODE );
     }
 #endif    
     return RET_CONTINUE;
