@@ -81,11 +81,17 @@ Uint32 cdaudioCallback( Uint32 interval, void *param )
     return interval;
 }
 
+void ONScripterLabel::flushEvent()
+{
+    SDL_Event event;
+    while( SDL_PollEvent( &event ) );
+}
+
 void ONScripterLabel::startTimer( int count )
 {
     int duration = proceedAnimation();
 
-    if ( duration > MINIMUM_TIMER_RESOLUTION && duration < count ){
+    if ( duration > 0 && duration < count ){
         resetRemainingTime( duration );
         advancePhase( duration );
         event_mode |= WAIT_ANIMATION_MODE;
@@ -101,10 +107,15 @@ void ONScripterLabel::advancePhase( int count )
     if ( timer_id != NULL ){
         SDL_RemoveTimer( timer_id );
     }
-    if ( count > MINIMUM_TIMER_RESOLUTION )
+
+    if ( count > 0 ){
         timer_id = SDL_AddTimer( count, timerCallback, NULL );
-    else
-        timer_id = SDL_AddTimer( MINIMUM_TIMER_RESOLUTION, timerCallback, NULL );
+    }
+    else{
+        SDL_Event event;
+        event.type = ONS_TIMER_EVENT;
+        SDL_PushEvent( &event );
+    }
 }
 
 void midiCallback( int sig )
@@ -800,7 +811,7 @@ int ONScripterLabel::eventLoop()
                 rect.x = rect.y = 0;
                 rect.w = screen_width;
                 rect.h = screen_height;
-                flushSub( rect );
+                flush( &rect, false, true );
             }
             break;
             

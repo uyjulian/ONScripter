@@ -273,7 +273,8 @@ int ONScripterLabel::spbtnCommand()
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
+    AnimationInfo *sp = &sprite_info[ sprite_no ];
+    if ( sp->num_of_cells == 0 ) return RET_CONTINUE;
 
     last_button_link->next = new ButtonLink();
     last_button_link = last_button_link->next;
@@ -282,19 +283,35 @@ int ONScripterLabel::spbtnCommand()
     last_button_link->sprite_no   = sprite_no;
     last_button_link->no          = no;
 
-    if ( sprite_info[ sprite_no ].image_surface || sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ){
-        last_button_link->image_rect = last_button_link->select_rect = sprite_info[ last_button_link->sprite_no ].pos;
-        last_button_link->selected_surface    = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                                      sprite_info[ last_button_link->sprite_no ].pos.w,
-                                                                      sprite_info[ last_button_link->sprite_no ].pos.h,
-                                                                      32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( last_button_link->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        last_button_link->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                                      sprite_info[ last_button_link->sprite_no ].pos.w,
-                                                                      sprite_info[ last_button_link->sprite_no ].pos.h,
-                                                                      32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( last_button_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        sprite_info[ sprite_no ].valid = true;
+    if ( sp->image_surface || sp->trans_mode == AnimationInfo::TRANS_STRING ){
+        last_button_link->image_rect = last_button_link->select_rect = sp->pos;
+
+        bool create_flag = false;
+        if ( sp->selected_surface ){
+            if ( sp->selected_surface->w != sp->pos.w ||
+                 sp->selected_surface->h != sp->pos.h ){
+                SDL_FreeSurface( sp->selected_surface );
+                SDL_FreeSurface( sp->no_selected_surface );
+                create_flag = true;
+            }
+        }
+        else{
+            create_flag = true;
+        }
+
+        if ( create_flag ){
+            sp->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                         sp->pos.w, sp->pos.h,
+                                                         32, rmask, gmask, bmask, amask );
+            sp->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                            sp->pos.w, sp->pos.h,
+                                                            32, rmask, gmask, bmask, amask );
+            SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetAlpha( sp->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+        }
+        last_button_link->selected_surface = sp->selected_surface;
+        last_button_link->no_selected_surface = sp->no_selected_surface;
+        sp->valid = true;
     }
 
     return RET_CONTINUE;
@@ -561,6 +578,7 @@ int ONScripterLabel::selectCommand()
         sentence_font.xy[0] = xy[0];
         sentence_font.xy[1] = xy[1];
 
+        flushEvent();
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_ANIMATION_MODE;
         advancePhase();
         refreshMouseOverButton();
@@ -1825,6 +1843,7 @@ int ONScripterLabel::btnwaitCommand()
         return RET_CONTINUE;
     }
     else{
+        flushEvent();
         shortcut_mouse_line = 0;
         skip_flag = false;
         event_mode = WAIT_BUTTON_MODE;
@@ -1854,14 +1873,14 @@ int ONScripterLabel::btnwaitCommand()
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                int cell_no = sprite_info[p_button_link->sprite_no].current_cell;
                 sprite_info[p_button_link->sprite_no].current_cell = 1;
                 refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
                 SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
                 sprite_info[p_button_link->sprite_no].current_cell = 0;
-                refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-            }
-            else{
-                refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                if ( cell_no != 0 && sprite_info[p_button_link->sprite_no].valid ){
+                    refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                }
             }
             if ( p_button_link->no_selected_surface )
                 SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
@@ -2015,7 +2034,34 @@ int ONScripterLabel::bltCommand()
         clip.h = screen_height;
         doClipping( &dst_rect, &clip, &clipped );
         shiftRect( src_rect, clipped );
-        
+
+#if defined(USE_OVERLAY)
+        SDL_LockYUVOverlay( screen_overlay );
+        SDL_LockSurface( btndef_info.image_surface );
+        Uint32 *src = (Uint32*)btndef_info.image_surface->pixels + btndef_info.image_surface->w * src_rect.y + src_rect.x;
+        Uint8  *dst_y = screen_overlay->pixels[0] + screen_overlay->w * dst_rect.y + dst_rect.x;
+        Uint8  *dst_u = screen_overlay->pixels[1] + screen_overlay->w * dst_rect.y + dst_rect.x;
+        Uint8  *dst_v = screen_overlay->pixels[2] + screen_overlay->w * dst_rect.y + dst_rect.x;
+        for ( int i=dst_rect.y ; i<dst_rect.y+dst_rect.h ; i++ ){
+            for ( int j=dst_rect.x ; j<dst_rect.x+dst_rect.w ; j++, src++ ){
+                *dst_y++ = *src & 0xff;
+                *dst_u++ = 0x80;
+                *dst_v++ = 0x80;
+            }
+            src += btndef_info.image_surface->w - dst_rect.w;
+            dst_y += screen_overlay->w - dst_rect.w;
+            dst_u += (screen_overlay->w - dst_rect.w)/2;
+            dst_v += (screen_overlay->w - dst_rect.w)/2;
+        }
+        SDL_UnlockSurface( btndef_info.image_surface );
+        SDL_UnlockYUVOverlay( screen_overlay );
+
+        SDL_Rect screen_rect;
+        screen_rect.x = screen_rect.y = 0;
+        screen_rect.w = screen_width;
+        screen_rect.h = screen_height;
+        SDL_DisplayYUVOverlay( screen_overlay, &screen_rect );
+#else    
 #ifndef SCREEN_ROTATION    
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
@@ -2023,6 +2069,7 @@ int ONScripterLabel::bltCommand()
         blitRotation( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.y, screen_width - dst_rect.x - dst_rect.w, dst_rect.h, dst_rect.w );
 #endif
+#endif        
         dirty_rect.clear();
     }
     else{

@@ -54,18 +54,19 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo 
                         tmp_surface, src_rect.x, src_rect.y,
                         NULL, 0,
                         AnimationInfo::TRANS_ALPHA_PRESERVE, 255, clip );
-            if ( !clip || doClipping( &dst_rect, clip ) == 0 ){
-                if ( dst_surface == text_surface && !flush_flag ){
-                    dirty_rect.add( dst_rect );
-                }
+            if ( shadow_offset == 0 &&
+                 dst_surface == text_surface &&
+                 !flush_flag &&
+                 (!clip || doClipping( &dst_rect, clip ) == 0) ){
+                dirty_rect.add( dst_rect );
             }
         }
         SDL_FreeSurface( tmp_surface );
     }
 
     if ( flush_flag ){
-        dst_rect.w += 1;
-        dst_rect.h += 1;
+        dst_rect.w += shadow_offset;
+        dst_rect.h += shadow_offset;
         flush( &dst_rect, false, true );
     }
 }

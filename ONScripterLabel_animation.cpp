@@ -145,7 +145,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
             f_info.xy[0] = f_info.xy[1] = 0;
             drawString( anim->file_name, anim->color_list[ i ], &f_info, false, anim->image_surface );
-            f_info.top_xy[0] += anim->pos.w;
+            f_info.top_xy[0] += anim->pos.w * screen_ratio2 / screen_ratio1;
         }
     }
     else{
@@ -327,7 +327,6 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
 
 void ONScripterLabel::stopAnimation( int click )
 {
-    SDL_Rect dst_rect;
     int no;
 
     if ( !(event_mode & WAIT_ANIMATION_MODE) ) return;
@@ -339,7 +338,7 @@ void ONScripterLabel::stopAnimation( int click )
     else if ( click == CLICK_NEWPAGE ) no = CURSOR_NEWPAGE_NO;
     else return;
     
-    dst_rect = cursor_info[ no ].pos;
+    SDL_Rect dst_rect = cursor_info[ no ].pos;
 
     if ( !cursor_info[ no ].abs_flag ){
         dst_rect.x += sentence_font.x( tateyoko_mode ) * screen_ratio1 / screen_ratio2;
@@ -349,5 +348,5 @@ void ONScripterLabel::stopAnimation( int click )
     
     refreshSurface( text_surface, &dst_rect, REFRESH_SHADOW_MODE );
 
-    flushSub( dst_rect );
+    flush( &dst_rect, false, true );
 }

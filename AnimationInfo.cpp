@@ -39,6 +39,8 @@ AnimationInfo::AnimationInfo(){
     image_name = NULL;
     image_surface = NULL;
     mask_surface = NULL;
+    selected_surface = NULL;
+    no_selected_surface = NULL;
     trans = 255;
 
     font_size_xy[0] = font_size_xy[1] = -1;
@@ -66,6 +68,10 @@ void AnimationInfo::deleteSurface(){
     image_surface = NULL;
     if ( mask_surface ) SDL_FreeSurface( mask_surface );
     mask_surface = NULL;
+    if ( selected_surface ) SDL_FreeSurface( selected_surface );
+    selected_surface = NULL;
+    if ( no_selected_surface ) SDL_FreeSurface( no_selected_surface );
+    no_selected_surface = NULL;
 }
 
 void AnimationInfo::remove(){

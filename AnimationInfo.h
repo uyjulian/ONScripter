@@ -70,6 +70,8 @@ public:
     char *image_name;
     SDL_Surface *image_surface;
     SDL_Surface *mask_surface;
+    SDL_Surface *selected_surface;
+    SDL_Surface *no_selected_surface;
 
     int font_size_xy[2]; // used by prnum and lsp string
     int font_pitch; // used by lsp string

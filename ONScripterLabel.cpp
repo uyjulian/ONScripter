@@ -209,7 +209,11 @@ void ONScripterLabel::initSDL( bool cdaudio_flag )
 #else    
     screen_surface = SDL_SetVideoMode( screen_height, screen_width, bpp, DEFAULT_SURFACE_FLAG );
 #endif
-
+#if defined(USE_OVERLAY)    
+    screen_overlay = SDL_CreateYUVOverlay( screen_width, screen_height, SDL_YV12_OVERLAY, screen_surface );
+    printf("overlay %d\n", screen_overlay->hw_overlay );
+#endif
+    
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
 #if defined(PDA) && defined(PDA_VGA)
@@ -483,6 +487,10 @@ void ONScripterLabel::blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect
 
 void ONScripterLabel::flush( SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
+#if defined(USE_OVERLAY)
+    SDL_LockYUVOverlay( screen_overlay );
+    SDL_LockSurface( text_surface );
+#endif    
     if ( direct_flag ){
         flushSub( *rect );
     }
@@ -498,6 +506,16 @@ void ONScripterLabel::flush( SDL_Rect *rect, bool clear_dirty_flag, bool direct_
             }
         }
     }
+#if defined(USE_OVERLAY)
+    SDL_UnlockSurface( text_surface );
+    SDL_UnlockYUVOverlay( screen_overlay );
+    
+    SDL_Rect screen_rect;
+    screen_rect.x = screen_rect.y = 0;
+    screen_rect.w = screen_width;
+    screen_rect.h = screen_height;
+    SDL_DisplayYUVOverlay( screen_overlay, &screen_rect );
+#endif    
     
     if ( clear_dirty_flag ) dirty_rect.clear();
 }
@@ -506,6 +524,23 @@ void ONScripterLabel::flushSub( SDL_Rect &rect )
 {
     //printf("flush %d %d %d %d\n", rect.x, rect.y, rect.w, rect.h );
 
+#if defined(USE_OVERLAY)
+    Uint32 *src = (Uint32*)text_surface->pixels + text_surface->w * rect.y + rect.x;
+    Uint8  *dst_y = screen_overlay->pixels[0] + screen_overlay->w * rect.y + rect.x;
+    Uint8  *dst_u = screen_overlay->pixels[1] + screen_overlay->w * rect.y + rect.x;
+    Uint8  *dst_v = screen_overlay->pixels[2] + screen_overlay->w * rect.y + rect.x;
+    for ( int i=rect.y ; i<rect.y+rect.h ; i++ ){
+        for ( int j=rect.x ; j<rect.x+rect.w ; j++, src++ ){
+            *dst_y++ = *src & 0xff;
+            *dst_u++ = 0x80;
+            *dst_v++ = 0x80;
+        }
+        src += text_surface->w - rect.w;
+        dst_y += screen_overlay->w - rect.w;
+        dst_u += (screen_overlay->w - rect.w)/2;
+        dst_v += (screen_overlay->w - rect.w)/2;
+    }
+#else    
 #ifndef SCREEN_ROTATION
     SDL_BlitSurface( text_surface, &rect, screen_surface, &rect );
     SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
@@ -513,6 +548,7 @@ void ONScripterLabel::flushSub( SDL_Rect &rect )
     blitRotation( text_surface, &rect, screen_surface, &rect );
     SDL_UpdateRect( screen_surface, screen_height - (rect.y +rect.h), rect.x, rect.h, rect.w );
 #endif
+#endif    
 }
 
 void ONScripterLabel::mouseOverCheck( int x, int y )
@@ -1225,11 +1261,10 @@ void ONScripterLabel::newPage( bool next_flag )
     if ( need_refresh_flag ){
         refreshSurfaceParameters();
     }
-    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
-    //SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+    refreshSurface( accumulation_surface, &sentence_font_info.pos, REFRESH_NORMAL_MODE );
+    refreshSurface( text_surface, &sentence_font_info.pos, REFRESH_SHADOW_MODE );
 
-    flush( &sentence_font_info.pos );
+    flush();
 }
 
 struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char *buffer, FontInfo *info, bool flush_flag, bool nofile_flag )

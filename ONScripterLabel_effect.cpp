@@ -36,8 +36,8 @@ int ONScripterLabel::setEffect( int effect_no )
     effect_counter = 0;
     event_mode = EFFECT_EVENT_MODE;
     advancePhase();
-    //return RET_WAIT_NEXT;
-    return RET_WAIT; // RET_WAIT de yoi?
+
+    return RET_WAIT;
 }
 
 int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_image )
@@ -59,7 +59,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     if ( effect_cut_flag && skip_flag ) effect_no = 1;
     
     if ( effect_counter == 0 ){
-        SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
+        SDL_BlitSurface( text_surface, &dirty_rect.bounding_box, effect_src_surface, &dirty_rect.bounding_box );
 
         if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
@@ -70,7 +70,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
             refreshSurface( effect_dst_surface,
-                            NULL,
+                            &dirty_rect.bounding_box,
                             isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
             break;
         }
@@ -369,8 +369,8 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     }
     else{
         //monocro_flag = false;
-        SDL_BlitSurface( effect_dst_surface, NULL, text_surface, NULL );
-        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+        SDL_BlitSurface( effect_dst_surface, &dirty_rect.bounding_box, text_surface, &dirty_rect.bounding_box );
+        refreshSurface( accumulation_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE );
 
         if ( effect_no != 0 ) flush();
         if ( effect_no == 1 ) effect_counter = 0;

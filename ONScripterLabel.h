@@ -55,6 +55,8 @@
 
 #define DEFAULT_FONT_SIZE 26
 
+//#define USE_OVERLAY
+
 class ONScripterLabel : public ScriptParser
 {
 public:
@@ -205,8 +207,9 @@ protected:
     void mousePressEvent( SDL_MouseButtonEvent *event );
     void mouseMoveEvent( SDL_MouseMotionEvent *event );
     void timerEvent();
+    void flushEvent();
     void startTimer( int count );
-    void advancePhase( int count=MINIMUM_TIMER_RESOLUTION );
+    void advancePhase( int count=0 );
     void trapHandler();
     void initSDL( bool cdaudio_flag );
     
@@ -282,7 +285,10 @@ private:
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
     SDL_Surface *shelter_text_surface; // Intermediate buffer to store text_surface when entering system menu
-
+#if defined(USE_OVERLAY)    
+    SDL_Overlay *screen_overlay;
+#endif
+    
     /* ---------------------------------------- */
     /* Button related variables */
     AnimationInfo btndef_info;
@@ -317,9 +323,9 @@ private:
             no_selected_surface = NULL;
         };
         ~ButtonLink(){
-            if ( selected_surface )    SDL_FreeSurface( selected_surface );
-            if ( no_selected_surface ) SDL_FreeSurface( no_selected_surface );
-            if ( exbtn_ctl )           delete[] exbtn_ctl;
+            if ( button_type != SPRITE_BUTTON && selected_surface )    SDL_FreeSurface( selected_surface );
+            if ( button_type != SPRITE_BUTTON && no_selected_surface ) SDL_FreeSurface( no_selected_surface );
+            if ( exbtn_ctl ) delete[] exbtn_ctl;
         };
     } root_button_link, *last_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
 

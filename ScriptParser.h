@@ -40,7 +40,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define MINIMUM_TIMER_RESOLUTION 1
 #define MAX_TEXT_BUFFER 10
 
 typedef unsigned char uchar3[3];

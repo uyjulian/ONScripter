@@ -262,7 +262,7 @@ ScriptParser::ScriptParser( char *path )
     /* System customize related variables */
     textgosub_label = NULL;
 
-    effect_blank = MINIMUM_TIMER_RESOLUTION;
+    effect_blank = 10;
     effect_cut_flag = false;
 
     /* ---------------------------------------- */
