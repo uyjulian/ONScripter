@@ -526,7 +526,7 @@ private:
             if ( label ) delete[] label;
         };
     } root_select_link, *shelter_select_link;
-    struct LinkLabelInfo select_label_info;
+    struct NestInfo select_label_info;
     int shortcut_mouse_line;
 
     void deleteSelectLink();
@@ -594,7 +594,7 @@ private:
     void clearCurrentTextBuffer();
     void newPage( bool next_flag );
     
-    void deleteLabelLink();
+    void deleteNestInfo();
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
     void executeLabel();

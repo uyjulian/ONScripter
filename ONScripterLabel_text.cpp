@@ -373,8 +373,6 @@ int ONScripterLabel::clickWait( char *out_text )
     else{
         clickstr_state = CLICK_WAIT;
         key_pressed_flag = false;
-        if ( sentence_font.wait_time == 0 ||
-             ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ) flush(REFRESH_SHADOW_TEXT_MODE);
         if ( out_text ){
             drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
             num_chars_in_sentence++;
@@ -418,9 +416,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
     }
-    if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
-         ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
-         ctrl_pressed_status ) flush( REFRESH_SHADOW_TEXT_MODE );
+    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( REFRESH_SHADOW_TEXT_MODE );
     
     if ( (skip_flag || ctrl_pressed_status) && !textgosub_label  ){
         event_mode = WAIT_SLEEP_MODE;
@@ -553,9 +549,7 @@ int ONScripterLabel::textCommand()
             }
         }
         
-        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
-             ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
-             ctrl_pressed_status ){
+        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             drawChar( out_text, &sentence_font, false, true, accumulation_surface, text_surface );
             num_chars_in_sentence++;
                 
@@ -619,9 +613,7 @@ int ONScripterLabel::textCommand()
     else if ( ch == ')' ){
         if ( rubyon_flag ){
             bool flush_flag = true;
-            if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
-                 ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
-                 ctrl_pressed_status )
+            if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
                 flush_flag = false;
         
             ruby_font.clear();
@@ -774,9 +766,7 @@ int ONScripterLabel::textCommand()
         }
         
         bool flush_flag = true;
-        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
-             ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
-             ctrl_pressed_status )
+        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
             flush_flag = false;
         if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
              !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
@@ -786,9 +776,7 @@ int ONScripterLabel::textCommand()
         }
         drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
-        if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
-             ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
-             ctrl_pressed_status ){
+        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
                    ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' ||

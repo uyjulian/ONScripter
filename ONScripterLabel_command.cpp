@@ -234,7 +234,7 @@ int ONScripterLabel::tablegotoCommand()
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
         const char *buf = script_h.readLabel();
         if ( count++ == no ){
-            setCurrentLinkLabel( buf+1 );
+            setCurrentLabel( buf+1 );
             break;
         }
     }
@@ -477,18 +477,16 @@ int ONScripterLabel::selectCommand()
         }
 
         if ( select_mode  == SELECT_GOTO_MODE ){
-            setCurrentLinkLabel( last_select_link->label );
+            setCurrentLabel( last_select_link->label );
             ret = RET_CONTINUE;
         }
         else if ( select_mode == SELECT_GOSUB_MODE ){
-            current_link_label_info->current_line = select_label_info.current_line;
             gosubReal( last_select_link->label, select_label_info.next_script );
 
             ret = RET_CONTINUE;
         }
         else{ // selnum
             script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
-            current_link_label_info->current_line = select_label_info.current_line;
             script_h.setCurrent( select_label_info.next_script );
             ret = RET_CONTINUE;
         }
@@ -515,7 +513,6 @@ int ONScripterLabel::selectCommand()
             playWave( selectvoice_file_name[SELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
 
         last_select_link = &root_select_link;
-        select_label_info.current_line = current_link_label_info->current_line;
 
         while(1){
             if ( script_h.getNext()[0] != 0x0a && comma_flag == true ){
@@ -593,7 +590,7 @@ int ONScripterLabel::selectCommand()
         }
 
         if ( select_mode == SELECT_CSEL_MODE ){
-            setCurrentLinkLabel( "customsel" );
+            setCurrentLabel( "customsel" );
             return RET_CONTINUE;
         }
         sentence_font.setXY( xy[0], xy[1] );
@@ -764,8 +761,8 @@ int ONScripterLabel::resetCommand()
     clickstr_state = CLICK_NONE;
     rubyon_flag    = false;
     
-    deleteLabelLink();
-    setCurrentLinkLabel( "start" );
+    deleteNestInfo();
+    setCurrentLabel( "start" );
     
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     barclearCommand();
@@ -1315,18 +1312,17 @@ int ONScripterLabel::jumpfCommand()
     if (*buf == '~') buf++;
     
     script_h.setCurrent(buf);
-    current_link_label_info->label_info = script_h.getLabelByAddress(buf);
-    current_link_label_info->current_line = script_h.getLineByAddress(buf);
+    current_label_info = script_h.getLabelByAddress(buf);
+    current_line = script_h.getLineByAddress(buf);
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::jumpbCommand()
 {
-    current_link_label_info->label_info = last_tilde.label_info;
-    current_link_label_info->current_line = last_tilde.current_line;
-
     script_h.setCurrent( last_tilde.next_script );
+    current_label_info = script_h.getLabelByAddress( last_tilde.next_script );
+    current_line = script_h.getLineByAddress( last_tilde.next_script );
 
     return RET_CONTINUE;
 }
@@ -1698,7 +1694,7 @@ int ONScripterLabel::gameCommand()
 {
     int i;
 
-    setCurrentLinkLabel( "start" );
+    setCurrentLabel( "start" );
     current_mode = NORMAL_MODE;
 
     //text_speed_no = 1;
@@ -2170,7 +2166,7 @@ int ONScripterLabel::cselgotoCommand()
     }
     if ( !link ) errorAndExit( "cselgoto: no select link" );
 
-    setCurrentLinkLabel( link->label );
+    setCurrentLabel( link->label );
     
     deleteSelectLink();
     newPage( true );

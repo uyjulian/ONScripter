@@ -183,7 +183,7 @@ int ONScripterLabel::loadSaveFile( int no )
     if ( file_version >= 200 )
         return loadSaveFile2( fp, file_version );
     
-    deleteLabelLink();
+    deleteNestInfo();
 
     /* ---------------------------------------- */
     /* Load text history */
@@ -308,24 +308,23 @@ int ONScripterLabel::loadSaveFile( int no )
     /* ---------------------------------------- */
     /* Load link label info */
 
+    int offset = 0;
     while( 1 ){
         loadStr( fp, &str );
-        current_link_label_info->label_info = script_h.lookupLabel( str );
+        current_label_info = script_h.lookupLabel( str );
         
-        loadInt( fp, &current_link_label_info->current_line );
-        current_link_label_info->current_line += 2;
-        char *buf = current_link_label_info->label_info.label_header;
-        while( buf < current_link_label_info->label_info.start_address ){
-            if ( *buf == 0x0a )
-                current_link_label_info->current_line--;
+        loadInt( fp, &current_line );
+        current_line += 2;
+        char *buf = current_label_info.label_header;
+        while( buf < current_label_info.start_address ){
+            if ( *buf == 0x0a ) current_line--;
             buf++;
         }
 
-        int offset;
         loadInt( fp, &offset );
             
-        script_h.setCurrent( current_link_label_info->label_info.label_header );
-        script_h.skipLine( current_link_label_info->current_line );
+        script_h.setCurrent( current_label_info.label_header );
+        script_h.skipLine( current_line );
 
         if ( file_version <= 104 )
         {
@@ -338,16 +337,15 @@ int ONScripterLabel::loadSaveFile( int no )
             loadInt( fp, &i );
             offset += i;
         }
-        current_link_label_info->next_script = script_h.getCurrent() + offset;
         
         if ( fgetc( fp ) == 0 ) break;
 
-        current_link_label_info->next = new LinkLabelInfo();
-        current_link_label_info->next->previous = current_link_label_info;
-        current_link_label_info = current_link_label_info->next;
-        current_link_label_info->next = NULL;
+        last_nest_info->next = new NestInfo();
+        last_nest_info->next->previous = last_nest_info;
+        last_nest_info = last_nest_info->next;
+        last_nest_info->next_script = script_h.getCurrent() + offset;
     }
-    script_h.setCurrent( current_link_label_info->next_script );
+    script_h.setCurrent( script_h.getCurrent() + offset );
     
     int tmp_event_mode = fgetc( fp );
 

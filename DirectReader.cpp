@@ -508,7 +508,7 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
 size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offset )
 {
     fpos_t pos;
-    size_t length;
+    size_t length=0;
     fgetpos( fp, &pos );
     fseek( fp, offset, SEEK_SET );
     

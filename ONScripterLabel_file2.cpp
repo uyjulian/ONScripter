@@ -25,7 +25,7 @@
 
 int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 {
-    deleteLabelLink();
+    deleteNestInfo();
     
     int i, j;
     
@@ -158,23 +158,42 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 
     loadVariables( fp, 0, script_h.global_variable_border );
 
-    // nested link label
+    // nested info
     int num_nest = 0;
     loadInt( fp, &num_nest );
-    LinkLabelInfo *info = &root_link_label_info;
-    while( num_nest > 0 ){
-        loadInt( fp, &i );
-        info->next_script = script_h.getAddress( i );
-        info->current_line = script_h.getLineByAddress( info->next_script );
-        info->label_info = script_h.getLabelByAddress( info->next_script );
-        num_nest--;
-
-        info->next = new LinkLabelInfo();
-        info->next->previous = info;
-        info = info->next;
+    last_nest_info = &root_nest_info;
+    if (num_nest > 0){
+        fseek( fp, (num_nest-1)*4, SEEK_CUR );
+        while( num_nest > 0 ){
+            NestInfo *info = new NestInfo();
+            if (last_nest_info == &root_nest_info) last_nest_info = info;
+        
+            loadInt( fp, &i );
+            if (i > 0){
+                info->nest_mode = NEST_LABEL;
+                info->next_script = script_h.getAddress( i );
+                fseek( fp, -8, SEEK_CUR );
+                num_nest--;
+            }
+            else{
+                info->nest_mode = NEST_FOR;
+                info->next_script = script_h.getAddress( -i );
+                fseek( fp, -16, SEEK_CUR );
+                loadInt( fp, &info->var_no );
+                loadInt( fp, &info->to );
+                loadInt( fp, &info->step );
+                fseek( fp, -16, SEEK_CUR );
+                num_nest -= 4;
+            }
+            info->next = root_nest_info.next;
+            if (root_nest_info.next) root_nest_info.next->previous = info;
+            root_nest_info.next = info;
+            info->previous = &root_nest_info;
+        }
+        loadInt( fp, &num_nest );
+        fseek(fp, num_nest*4, SEEK_CUR);
     }
-    current_link_label_info = info;
-    
+
     loadInt( fp, &i );
     if (i == 1) monocro_flag_new = true;
     else        monocro_flag_new = false;
@@ -346,9 +365,9 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     clearCurrentTextBuffer();
 
     loadInt( fp, &i );
-    current_link_label_info->label_info = script_h.getLabelByLine( i );
-    current_link_label_info->current_line = i - current_link_label_info->label_info.start_line;
-    //printf("load %d:%d\n", current_link_label_info->label_info.start_line, current_link_label_info->current_line);
+    current_label_info = script_h.getLabelByLine( i );
+    current_line = i - current_label_info.start_line;
+    //printf("load %d:%d(%d-%d)\n", current_label_info.start_line, current_line, i, current_label_info.start_line);
     char *buf = script_h.getAddressByLine( i );
     
     loadInt( fp, &j );
@@ -440,17 +459,26 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
 
     saveVariables( fp, 0, script_h.global_variable_border );
 
-    // nested link label
+    // nested info
     int num_nest = 0;
-    LinkLabelInfo *info = root_link_label_info.next;
+    NestInfo *info = root_nest_info.next;
     while( info ){
+        if      (info->nest_mode == NEST_LABEL) num_nest++;
+        else if (info->nest_mode == NEST_FOR)   num_nest+=4;
         info = info->next;
-        num_nest++;
     }
     saveInt( fp, num_nest );
-    info = &root_link_label_info;
-    for ( i=0 ; i<num_nest ; i++ ){
-        saveInt( fp, script_h.getOffset( info->next_script ) );
+    info = root_nest_info.next;
+    while( info ){
+        if  (info->nest_mode == NEST_LABEL){
+            saveInt( fp, script_h.getOffset( info->next_script ) );
+        }
+        else if (info->nest_mode == NEST_FOR){
+            saveInt( fp, info->var_no );
+            saveInt( fp, info->to );
+            saveInt( fp, info->step );
+            saveInt( fp, -script_h.getOffset( info->next_script ) );
+        }
         info = info->next;
     }
     
@@ -561,9 +589,9 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
         tb = tb->next;
     }
 
-    saveInt( fp, current_link_label_info->label_info.start_line + current_link_label_info->current_line );
-    char *buf = script_h.getAddressByLine( current_link_label_info->label_info.start_line + current_link_label_info->current_line );
-    //printf("save %d:%d\n", current_link_label_info->label_info.start_line, current_link_label_info->current_line);
+    saveInt( fp, current_label_info.start_line + current_line );
+    char *buf = script_h.getAddressByLine( current_label_info.start_line + current_line );
+    //printf("save %d:%d\n", current_label_info.start_line, current_line);
 
     i = 0;
     if (!script_h.isText()){

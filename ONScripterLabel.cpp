@@ -637,30 +637,28 @@ void ONScripterLabel::executeLabel()
 {
   executeLabelTop:    
 
-    while ( current_link_label_info->current_line<current_link_label_info->label_info.num_of_lines ){
+    while ( current_line<current_label_info.num_of_lines ){
         if ( debug_level > 0 )
             printf("*****  executeLabel %s:%d/%d:%d:%d *****\n",
-                   current_link_label_info->label_info.name,
-                   current_link_label_info->current_line,
-                   current_link_label_info->label_info.num_of_lines,
+                   current_label_info.name,
+                   current_line,
+                   current_label_info.num_of_lines,
                    string_buffer_offset, display_mode );
         
         const char *s_buf = script_h.getStringBuffer();
-        if ( s_buf[string_buffer_offset] == '~' )
-        {
-            last_tilde.label_info = current_link_label_info->label_info;
-            last_tilde.current_line = current_link_label_info->current_line;
+        if ( s_buf[string_buffer_offset] == '~' ){
             last_tilde.next_script = script_h.getNext();
-
-            script_h.readToken(); string_buffer_offset = 0;
+            script_h.readToken();
+            string_buffer_offset = 0;
             continue;
         }
         if ( break_flag && strncmp( &s_buf[string_buffer_offset], "next", 4 ) )
         {
             if ( s_buf[string_buffer_offset] == 0x0a ){
-                current_link_label_info->current_line++;
+                current_line++;
             }
-            script_h.readToken(); string_buffer_offset = 0;
+            script_h.readToken();
+            string_buffer_offset = 0;
             continue;
         }
 
@@ -672,7 +670,7 @@ void ONScripterLabel::executeLabel()
         
         if ( ret & RET_SKIP_LINE ){
             script_h.skipLine();
-            if (++current_link_label_info->current_line >= current_link_label_info->label_info.num_of_lines) break;
+            if (++current_line >= current_label_info.num_of_lines) break;
         }
         
         if ( ret & RET_REREAD ) script_h.setCurrent( current );
@@ -680,7 +678,7 @@ void ONScripterLabel::executeLabel()
         
         if (!(ret & RET_NOREAD)){
             if ( script_h.getStringBuffer()[ string_buffer_offset ] == 0x0a ){
-                if (++current_link_label_info->current_line >= current_link_label_info->label_info.num_of_lines) break;
+                if (++current_line >= current_label_info.num_of_lines) break;
             }
             script_h.readToken();
             string_buffer_offset = 0;
@@ -689,11 +687,11 @@ void ONScripterLabel::executeLabel()
         if ( ret & RET_WAIT ) return;
     }
 
-    current_link_label_info->label_info = script_h.lookupLabelNext( current_link_label_info->label_info.name );
-    current_link_label_info->current_line = 0;
+    current_label_info = script_h.lookupLabelNext( current_label_info.name );
+    current_line = 0;
 
-    if ( current_link_label_info->label_info.start_address != NULL ){
-        script_h.setCurrent( current_link_label_info->label_info.label_header );
+    if ( current_label_info.start_address != NULL ){
+        script_h.setCurrent( current_label_info.label_header );
         script_h.readToken();
         string_buffer_offset = 0;
         goto executeLabelTop;
@@ -805,18 +803,15 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
 
 /* ---------------------------------------- */
 /* Delete label link */
-void ONScripterLabel::deleteLabelLink()
+void ONScripterLabel::deleteNestInfo()
 {
-    LinkLabelInfo *info;
-    
-    current_link_label_info = root_link_label_info.next;
-    while ( current_link_label_info ){
-        info = current_link_label_info;
-        current_link_label_info = current_link_label_info->next;
-        delete info;
+    NestInfo *info = last_nest_info;
+    while ( info->previous ){
+        info = info->previous;
+        delete info->next;
     }
-    root_link_label_info.next = NULL;
-    current_link_label_info = &root_link_label_info;
+    root_nest_info.next = NULL;
+    last_nest_info = &root_nest_info;
 }
 
 /* ---------------------------------------- */

@@ -144,16 +144,18 @@ protected:
             if (command) delete[] command;
         };
     } root_user_func, *last_user_func;
-    
-    struct LinkLabelInfo{
-        struct LinkLabelInfo *previous, *next;
-        ScriptHandler::LabelInfo label_info;
-        int current_line; // line number in the current label
-        char *next_script;
 
-        LinkLabelInfo(){
+    enum { NEST_LABEL = 0,
+           NEST_FOR   = 1 };
+    struct NestInfo{
+        struct NestInfo *previous, *next;
+        int  nest_mode;
+        char *next_script; // used in gosub and for
+        int  var_no, to, step; // used in for
+
+        NestInfo(){
             previous = next = NULL;
-            current_line = 0;
+            nest_mode = NEST_LABEL;
         };
     } last_tilde;
 
@@ -205,7 +207,9 @@ protected:
     
     int string_buffer_offset;
 
-    struct LinkLabelInfo root_link_label_info, *current_link_label_info;
+    NestInfo root_nest_info, *last_nest_info;
+    ScriptHandler::LabelInfo current_label_info;
+    int current_line;
 
     /* ---------------------------------------- */
     /* Global definitions */
@@ -219,7 +223,7 @@ protected:
     void setStr( char **dst, const char *src, int num=-1 );
     
     void gosubReal( const char *label, char *next_script );
-    void setCurrentLinkLabel( const char *label );
+    void setCurrentLabel( const char *label );
 
     /* ---------------------------------------- */
     /* Effect related variables */
@@ -259,21 +263,6 @@ protected:
     
     /* ---------------------------------------- */
     /* For loop related variables */
-    struct ForInfo{
-        struct ForInfo *previous, *next;
-        ScriptHandler::LabelInfo label_info;
-        int current_line;
-        int offset;
-        char *next_script;
-        ScriptHandler::VariableInfo var;
-        int to;
-        int step;
-
-        ForInfo(){
-            next = NULL;
-        };
-    } root_for_link, *current_for_link;
-    int for_stack_depth;
     bool break_flag;
     
     /* ---------------------------------------- */

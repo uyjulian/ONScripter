@@ -155,11 +155,11 @@ int ScriptParser::soundpressplginCommand()
 
 int ScriptParser::skipCommand()
 {
-    int line = current_link_label_info->label_info.start_line + current_link_label_info->current_line + script_h.readInt();
+    int line = current_label_info.start_line + current_line + script_h.readInt();
 
     char *buf = script_h.getAddressByLine( line );
-    current_link_label_info->label_info = script_h.getLabelByAddress( buf );
-    current_link_label_info->current_line = script_h.getLineByAddress( buf );
+    current_label_info = script_h.getLabelByAddress( buf );
+    current_line = script_h.getLineByAddress( buf );
     
     script_h.setCurrent( buf );
 
@@ -297,13 +297,16 @@ int ScriptParser::rmenuCommand()
 
 int ScriptParser::returnCommand()
 {
-    if ( current_link_label_info->previous == NULL ) errorAndExit( "return: too many returns" );
+    if ( !last_nest_info->previous || last_nest_info->nest_mode != NEST_LABEL )
+        errorAndExit( "return: not in gosub" );
     
-    current_link_label_info = current_link_label_info->previous;
-    script_h.setCurrent( current_link_label_info->next_script );
-
-    delete current_link_label_info->next;
-    current_link_label_info->next = NULL;
+    current_label_info = script_h.getLabelByAddress( last_nest_info->next_script );
+    current_line = script_h.getLineByAddress( last_nest_info->next_script );
+    script_h.setCurrent( last_nest_info->next_script );
+    
+    last_nest_info = last_nest_info->previous;
+    delete last_nest_info->next;
+    last_nest_info->next = NULL;
     
     return RET_CONTINUE;
 }
@@ -367,29 +370,30 @@ int ScriptParser::nsaCommand()
 
 int ScriptParser::nextCommand()
 {
-    int val;
+    if (!last_nest_info->previous || last_nest_info->nest_mode != NEST_FOR)
+        errorAndExit("next: not in for loop\n");
     
+    int val;
     if ( !break_flag ){
-        val   = script_h.getIntVariable( &current_for_link->var );
-        script_h.setInt( &current_for_link->var, val + current_for_link->step );
+        val   = script_h.num_variables[ last_nest_info->var_no ];
+        script_h.setNumVariable( last_nest_info->var_no, val + last_nest_info->step );
     }
 
-    val = script_h.getIntVariable( &current_for_link->var );
+    val = script_h.num_variables[ last_nest_info->var_no ];
     
     if ( break_flag ||
-         current_for_link->step >= 0 && val > current_for_link->to ||
-         current_for_link->step < 0  && val < current_for_link->to ){
+         last_nest_info->step >= 0 && val > last_nest_info->to ||
+         last_nest_info->step < 0  && val < last_nest_info->to ){
         break_flag = false;
-        for_stack_depth--;
-        current_for_link = current_for_link->previous;
+        last_nest_info = last_nest_info->previous;
 
-        delete current_for_link->next;
-        current_for_link->next = NULL;
+        delete last_nest_info->next;
+        last_nest_info->next = NULL;
     }
     else{
-        current_link_label_info->label_info   = current_for_link->label_info;
-        current_link_label_info->current_line = current_for_link->current_line;
-        script_h.setCurrent( current_for_link->next_script );
+        script_h.setCurrent( last_nest_info->next_script );
+        current_label_info = script_h.getLabelByAddress( last_nest_info->next_script );
+        current_line = script_h.getLineByAddress( last_nest_info->next_script );
     }
     
     return RET_CONTINUE;
@@ -756,22 +760,20 @@ int ScriptParser::humanzCommand()
 
 int ScriptParser::gotoCommand()
 {
-    setCurrentLinkLabel( script_h.readLabel()+1 );
+    setCurrentLabel( script_h.readLabel()+1 );
     
     return RET_CONTINUE;
 }
 
 void ScriptParser::gosubReal( const char *label, char *next_script )
 {
-    current_link_label_info->next_script = next_script;
+    last_nest_info->next = new NestInfo();
+    last_nest_info->next->previous = last_nest_info;
 
-    LinkLabelInfo *info = new LinkLabelInfo();
-    info->previous = current_link_label_info;
-    current_link_label_info->next = new LinkLabelInfo();
-    current_link_label_info->next->previous = current_link_label_info;
-    current_link_label_info = current_link_label_info->next;
+    last_nest_info = last_nest_info->next;
+    last_nest_info->next_script = next_script;
 
-    setCurrentLinkLabel( label );
+    setCurrentLabel( label );
 }
 
 int ScriptParser::gosubCommand()
@@ -797,8 +799,10 @@ int ScriptParser::getparamCommand()
         script_h.readVariable();
         script_h.pushVariable();
         
-        if ( current_link_label_info->previous == NULL ) errorAndExit( "getpapam: not in a subroutine" );
-        script_h.pushCurrent(current_link_label_info->previous->next_script);
+        if ( !last_nest_info->previous || last_nest_info->nest_mode != NEST_LABEL )
+            errorAndExit( "getpapam: not in a subroutine" );
+        
+        script_h.pushCurrent(last_nest_info->next_script);
 
         script_h.readVariable();
         end_status = script_h.getEndStatus();
@@ -816,7 +820,7 @@ int ScriptParser::getparamCommand()
             setStr( &script_h.str_variables[ script_h.pushed_variable.var_no ], buf );
         }
         
-        current_link_label_info->previous->next_script = script_h.getNext();
+        last_nest_info->next_script = script_h.getNext();
         script_h.popCurrent();
     }
     while(end_status & ScriptHandler::END_COMMA);
@@ -826,45 +830,43 @@ int ScriptParser::getparamCommand()
 
 int ScriptParser::forCommand()
 {
-    for_stack_depth++;
-    ForInfo *info = new ForInfo();
+    last_nest_info->next = new NestInfo();
+    last_nest_info->next->previous = last_nest_info;
+
+    last_nest_info = last_nest_info->next;
+    last_nest_info->nest_mode = NEST_FOR;
 
     script_h.readVariable();
-    info->var = script_h.current_variable;
+    if ( script_h.current_variable.type != ScriptHandler::VAR_INT )
+        errorAndExit( "for: no integer variable." );
+    
+    last_nest_info->var_no = script_h.current_variable.var_no;
+    script_h.pushVariable();
 
     if ( !script_h.compareString("=") ) 
         errorAndExit( "for: no =" );
 
     script_h.setCurrent(script_h.getNext() + 1);
-    script_h.setInt( &info->var, script_h.readInt() );
+    script_h.setInt( &script_h.pushed_variable, script_h.readInt() );
     
     if ( !script_h.compareString("to") )
         errorAndExit( "for: no to" );
 
     script_h.readLabel();
     
-    info->to = script_h.readInt();
+    last_nest_info->to = script_h.readInt();
 
     if ( script_h.compareString("step") ){
         script_h.readLabel();
-        info->step = script_h.readInt();
+        last_nest_info->step = script_h.readInt();
     }
     else{
-        info->step = 1;
+        last_nest_info->step = 1;
     }
     
     /* ---------------------------------------- */
     /* Step forward callee's label info */
-    info->label_info = current_link_label_info->label_info;
-    info->current_line = current_link_label_info->current_line;
-    info->next_script = script_h.getNext();
-
-    info->previous = current_for_link;
-    current_for_link->next = info;
-    current_for_link = current_for_link->next;
-
-    //printf("stack %d forCommand %d = %d to %d step %d\n", for_stack_depth,
-    //info->var.var_no, script_h.getIntVariable(&info->var), info->to, info->step );
+    last_nest_info->next_script = script_h.getNext();
 
     return RET_CONTINUE;
 }
@@ -1056,9 +1058,16 @@ int ScriptParser::clickstrCommand()
 
 int ScriptParser::breakCommand()
 {
+    if (!last_nest_info->previous || last_nest_info->nest_mode != NEST_FOR)
+        errorAndExit("break: not in for loop\n");
+
     char *buf = script_h.getNext();
     if ( buf[0] == '*' ){
-        setCurrentLinkLabel( script_h.readLabel()+1 );
+        last_nest_info = last_nest_info->previous;
+        delete last_nest_info->next;
+        last_nest_info->next = NULL;
+        
+        setCurrentLabel( script_h.readLabel()+1 );
     }
     else{
         break_flag = true;

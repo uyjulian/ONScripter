@@ -401,7 +401,7 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
 {
     if (surface == NULL) return;
     SDL_LockSurface( surface );
-    Uint32 *buffer = (Uint32 *)surface->pixels, *buffer_m;
+    Uint32 *buffer = (Uint32 *)surface->pixels;
 
     int w = surface->w;
     int h = surface->h;
@@ -442,6 +442,7 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
     }
     else if ( trans_mode == TRANS_MASK ){
         int mw=0, mh=0;
+        Uint32 *buffer_m = NULL;
         if (surface_m){
             SDL_LockSurface( surface_m );
             buffer_m  = (Uint32 *)surface_m->pixels;

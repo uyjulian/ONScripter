@@ -197,8 +197,6 @@ ScriptParser::ScriptParser( char *path, char *key_exe )
     
     /* ---------------------------------------- */
     /* For loop related variables */
-    current_for_link = &root_for_link;
-    for_stack_depth = 0;
     break_flag = false;
     
     /* ---------------------------------------- */
@@ -295,8 +293,8 @@ ScriptParser::ScriptParser( char *path, char *key_exe )
     script_h.readToken();
     effectCommand();
 
-    current_link_label_info = &root_link_label_info;
-    setCurrentLinkLabel( "define" );
+    last_nest_info = &root_nest_info;
+    setCurrentLabel( "define" );
     script_h.readToken();
     string_buffer_offset = 0;
 }
@@ -549,13 +547,13 @@ void ScriptParser::errorAndExit( const char *str, const char *reason )
 {
     if ( reason )
         fprintf( stderr, " *** Parse error at %s:%d [%s]; %s ***\n",
-                 current_link_label_info->label_info.name,
-                 current_link_label_info->current_line,
+                 current_label_info.name,
+                 current_line,
                  str, reason );
     else
         fprintf( stderr, " *** Parse error at %s:%d [%s] ***\n",
-                 current_link_label_info->label_info.name,
-                 current_link_label_info->current_line,
+                 current_label_info.name,
+                 current_line,
                  str );
     exit(-1);
 }
@@ -578,11 +576,11 @@ void ScriptParser::setStr( char **dst, const char *src, int num )
         *dst = NULL;
 }
 
-void ScriptParser::setCurrentLinkLabel( const char *label )
+void ScriptParser::setCurrentLabel( const char *label )
 {
-    current_link_label_info->label_info = script_h.lookupLabel( label );
-    current_link_label_info->current_line = script_h.getLineByAddress( current_link_label_info->label_info.start_address );
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
+    current_label_info = script_h.lookupLabel( label );
+    current_line = script_h.getLineByAddress( current_label_info.start_address );
+    script_h.setCurrent( current_label_info.start_address );
 }
 
 int ScriptParser::readEffect( EffectLink *effect )

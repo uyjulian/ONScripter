@@ -91,13 +91,13 @@ public:
     void skipToken();
 
     // function for string access
-    char *getStringBuffer();
+    inline char *getStringBuffer(){ return string_buffer; };
     char *saveStringBuffer();
     void addStringBuffer( char ch );
     
     // function for direct manipulation of script address 
-    char *getCurrent();
-    char *getNext();
+    inline char *getCurrent(){ return current_script; };
+    inline char *getNext(){ return next_script; };
     void setCurrent( char *pos, bool read_flag=false );
     void pushCurrent( char *pos );
     void popCurrent();
@@ -113,7 +113,7 @@ public:
     bool isText();
     bool compareString( const char *buf );
     void setText( bool val ); // exception: for select command to handle string variables in the second line or below
-    int  getEndStatus();
+    inline int getEndStatus(){ return end_status; };
     void skipLine( int no=1 );
     void setLinepage( bool val );
 

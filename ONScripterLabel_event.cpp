@@ -202,7 +202,7 @@ void musicCallback( int sig )
 void ONScripterLabel::trapHandler()
 {
     trap_mode = TRAP_NONE;
-    setCurrentLinkLabel( trap_dist );
+    setCurrentLabel( trap_dist );
     script_h.readToken();
     string_buffer_offset = 0;
     stopAnimation( clickstr_state );

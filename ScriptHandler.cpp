@@ -333,11 +333,6 @@ void ScriptHandler::skipToken()
 }
 
 // string access function
-char *ScriptHandler::getStringBuffer()
-{
-    return string_buffer;
-}
-
 char *ScriptHandler::saveStringBuffer()
 {
     strcpy( saved_string_buffer, string_buffer );
@@ -345,16 +340,6 @@ char *ScriptHandler::saveStringBuffer()
 }
 
 // script address direct manipulation function
-char *ScriptHandler::getCurrent()
-{
-    return current_script;
-}
-
-char *ScriptHandler::getNext()
-{
-    return next_script;
-}
-
 void ScriptHandler::setCurrent( char *pos, bool read_flag )
 {
     current_script = next_script = pos;
@@ -458,11 +443,6 @@ bool ScriptHandler::compareString(const char *buf)
 void ScriptHandler::setText( bool val )
 {
     text_flag = val;
-}
-
-int ScriptHandler::getEndStatus()
-{
-    return end_status;
 }
 
 void ScriptHandler::skipLine( int no )
@@ -766,7 +746,7 @@ int ScriptHandler::readScript( char *path )
     else if ((fp = fopen("00.txt", "rb")) != NULL){
         encrypt_mode = 0;
     }
-    else if ((fp = fopen("nscript_sec.dat", "rb")) != NULL){
+    else if ((fp = fopen("nscr_sec.dat", "rb")) != NULL){
         encrypt_mode = 2;
     }
     else if ((fp = fopen("nscript.___", "rb")) != NULL){
@@ -1045,7 +1025,7 @@ void ScriptHandler::saveArrayVariable( FILE *fp )
         
         for ( i=0 ; i<dim ; i++ ){
             unsigned long ch = av->data[i];
-            char buf[4];
+            unsigned char buf[4];
             buf[3] = (ch>>24) & 0xff;
             buf[2] = (ch>>16) & 0xff;
             buf[1] = (ch>>8)  & 0xff;
@@ -1067,7 +1047,7 @@ void ScriptHandler::loadArrayVariable( FILE *fp )
         
         for ( i=0 ; i<dim ; i++ ){
             unsigned long ret;
-            char buf[4];
+            unsigned char buf[4];
             fread( &buf, 1, 4, fp );
             ret = buf[3];
             ret = ret << 8 | buf[2];
@@ -1442,7 +1422,7 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
 
 int ScriptHandler::calcArithmetic( int num1, int op, int num2 )
 {
-    int ret;
+    int ret=0;
     
     if      ( op == OP_PLUS )  ret = num1+num2;
     else if ( op == OP_MINUS ) ret = num1-num2;
