@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -227,6 +227,13 @@ int ONScripterLabel::playMP3( int cd_no )
         length = script_h.cBR->getFileLength( music_file_name );
         mp3_buffer = new unsigned char[length];
         script_h.cBR->getFile( music_file_name, mp3_buffer );
+        if ( mp3_buffer[0] == 0x30 && mp3_buffer[1] == 0x26 &&
+             mp3_buffer[2] == 0xb2 && mp3_buffer[3] == 0x75 ){
+            /* WMA */
+            delete [] mp3_buffer;
+            mp3_buffer = NULL;
+            return 0;
+        }
         mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( mp3_buffer, length ), NULL, 0 );
     }
 

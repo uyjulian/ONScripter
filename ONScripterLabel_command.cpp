@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1186,7 +1186,9 @@ int ONScripterLabel::lookbackbuttonCommand()
 
 int ONScripterLabel::locateCommand()
 {
-    sentence_font.setXY( script_h.readInt(), script_h.readInt() );
+    int x = script_h.readInt();
+    int y = script_h.readInt();
+    sentence_font.setXY( x, y );
 
     return RET_CONTINUE;
 }

@@ -2,7 +2,7 @@
 /*
  *  DirectReader.h - Reader from independent files
  *
- *  Copyright (c) 2001-2003 Ogapee
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *

@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1083,13 +1083,20 @@ int ScriptParser::arcCommand()
     while ( buf2[i] != '|' && buf2[i] != '\0' ) i++;
     buf2[i] = '\0';
 
-    if ( strcmp( script_h.cBR->getArchiveName(), "sar" ) ){
+    if ( strcmp( script_h.cBR->getArchiveName(), "direct" ) == 0 ){
         delete script_h.cBR;
         script_h.cBR = new SarReader( archive_path );
+        if ( script_h.cBR->open( buf2 ) ){
+            fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
+        }
     }
-    if ( script_h.cBR->open( buf2 ) ){
-        fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
+    else if ( strcmp( script_h.cBR->getArchiveName(), "sar" ) == 0 ){
+        if ( script_h.cBR->open( buf2 ) ){
+            fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
+        }
     }
+    // skip "arc" commands after "ns?" command
+    
     delete[] buf2;
     
     return RET_CONTINUE;

@@ -2,7 +2,7 @@
  * 
  *  resize_image.h - resize image using smoothing and resampling
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *

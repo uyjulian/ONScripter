@@ -2,7 +2,7 @@
  * 
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -181,7 +181,10 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 
     if ( buffer[0] == ':' ){
         buffer++;
-        if ( buffer[0] == 'a' ){
+        if ( buffer[0] == '/' || buffer[0] == ';' ){
+            // default trans mode
+        }
+        else if ( buffer[0] == 'a' ){
             anim->trans_mode = AnimationInfo::TRANS_ALPHA;
             buffer++;
         }

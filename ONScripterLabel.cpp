@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -175,6 +175,7 @@ static struct FuncLUT{
     {"btn",     &ONScripterLabel::btnCommand},
     {"br",      &ONScripterLabel::brCommand},
     {"blt",      &ONScripterLabel::bltCommand},
+    {"bgmstop", &ONScripterLabel::playstopCommand},
     {"bgmonce", &ONScripterLabel::mp3Command}, 
     {"bgm", &ONScripterLabel::mp3Command}, 
     {"bg",      &ONScripterLabel::bgCommand},

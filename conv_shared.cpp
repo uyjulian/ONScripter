@@ -2,7 +2,7 @@
  * 
  *  conv_shared.cpp - Shared code of sarconv and nsaconv
  *
- *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
