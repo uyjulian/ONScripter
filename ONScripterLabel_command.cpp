@@ -307,8 +307,7 @@ int ONScripterLabel::spbtnCommand()
     if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
 
     ButtonLink *button = new ButtonLink();
-    button->next = root_button_link.next;
-    root_button_link.next = button;
+    root_button_link.insert( button );
 
     button->button_type = ButtonLink::SPRITE_BUTTON;
     button->sprite_no   = sprite_no;
@@ -573,8 +572,7 @@ int ONScripterLabel::selectCommand()
             while( last_select_link ){
                 if ( *last_select_link->text ){
                     ButtonLink *button = getSelectableSentence( last_select_link->text, &sentence_font );
-                    button->next = root_button_link.next;
-                    root_button_link.next = button;
+                    root_button_link.insert( button );
                     button->no = counter;
                 }
                 counter++;
@@ -1684,8 +1682,7 @@ int ONScripterLabel::exbtnCommand()
         }
         
         button = new ButtonLink();
-        button->next = root_button_link.next;
-        root_button_link.next = button;
+        root_button_link.insert( button );
     }
 
     const char *buf = script_h.readStr();
@@ -1861,8 +1858,7 @@ int ONScripterLabel::cselbtnCommand()
         errorAndExit( "cselbtn: no select text" );
 
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
-    button->next = root_button_link.next;
-    root_button_link.next = button;
+    root_button_link.insert( button );
     button->button_type = ButtonLink::CUSTOM_SELECT_BUTTON;
     button->no          = button_no;
     button->sprite_no   = csel_no;
@@ -2181,8 +2177,7 @@ int ONScripterLabel::btnCommand()
     SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     SDL_BlitSurface( btndef_info.image_surface, &src_rect, button->selected_surface, NULL );
 
-    button->next = root_button_link.next;
-    root_button_link.next = button;
+    root_button_link.insert( button );
     
     return RET_CONTINUE;
 }

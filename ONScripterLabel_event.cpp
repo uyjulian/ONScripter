@@ -398,34 +398,33 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 void ONScripterLabel::shiftCursorOnButton( int diff )
 {
     int i;
-    
     shortcut_mouse_line += diff;
     if ( shortcut_mouse_line < 0 ) shortcut_mouse_line = 0;
 
-    ButtonLink *p_button_link = root_button_link.next;
+    ButtonLink *button = root_button_link.next;
     
-    for ( i=0 ; i<shortcut_mouse_line && p_button_link ; i++ ) 
-        p_button_link  = p_button_link->next;
+    for ( i=0 ; i<shortcut_mouse_line && button ; i++ ) 
+        button = button->next;
     
-    if ( !p_button_link ){
+    if ( !button ){
         if ( diff == -1 )
             shortcut_mouse_line = 0;
         else
             shortcut_mouse_line = i-1;
 
-        p_button_link = root_button_link.next;
+        button = root_button_link.next;
         for ( i=0 ; i<shortcut_mouse_line ; i++ ) 
-            p_button_link  = p_button_link->next;
+            button  = button->next;
     }
-    if ( p_button_link ){
+    if ( button ){
         if ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA ){
-            SDL_WarpMouse( p_button_link->select_rect.x + p_button_link->select_rect.w / 2,
-                           p_button_link->select_rect.y + p_button_link->select_rect.h / 2 );
+            SDL_WarpMouse( button->select_rect.x + button->select_rect.w / 2,
+                           button->select_rect.y + button->select_rect.h / 2 );
         }
         else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA ){
-            SDL_WarpMouse( screen_height - (p_button_link->select_rect.y + p_button_link->select_rect.h / 2) - 1,
-                           p_button_link->select_rect.x + p_button_link->select_rect.w / 2);
+            SDL_WarpMouse( screen_height - (button->select_rect.y + button->select_rect.h / 2) - 1,
+                           button->select_rect.x + button->select_rect.w / 2);
         }
     }
 }
@@ -524,13 +523,13 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         if ( ( !getcursor_flag && event->keysym.sym == SDLK_UP ) ||
              event->keysym.sym == SDLK_p ){
 
-            shiftCursorOnButton( -1 );
+            shiftCursorOnButton( 1 );
             return;
         }
         else if ( ( !getcursor_flag && event->keysym.sym == SDLK_DOWN ) ||
                   event->keysym.sym == SDLK_n ){
 
-            shiftCursorOnButton( 1 );
+            shiftCursorOnButton( -1 );
             return;
         }
         else if ( ( !getenter_flag  && event->keysym.sym == SDLK_RETURN ) ||

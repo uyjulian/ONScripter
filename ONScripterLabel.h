@@ -351,6 +351,10 @@ private:
                 SDL_FreeSurface( no_selected_surface );
             if ( exbtn_ctl ) delete[] exbtn_ctl;
         };
+        void insert( ButtonLink *button ){
+            button->next = this->next;
+            this->next = button;
+        };
     } root_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
 
     int current_over_button;

@@ -161,8 +161,7 @@ void ONScripterLabel::executeSystemMenu()
         link = root_menu_link.next;
         while( link ){
             ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
-            button->next = root_button_link.next;
-            root_button_link.next = button;
+            root_button_link.insert( button );
             button->no = counter++;
 
             link = link->next;
@@ -277,8 +276,7 @@ void ONScripterLabel::executeSystemLoad()
                 nofile_flag = true;
             }
             ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
-            button->next = root_button_link.next;
-            root_button_link.next = button;
+            root_button_link.insert( button );
             button->no = i;
             flush( &button->image_rect );
         }
@@ -344,8 +342,7 @@ void ONScripterLabel::executeSystemSave()
                 nofile_flag = true;
             }
             ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
-            button->next = root_button_link.next;
-            root_button_link.next = button;
+            root_button_link.insert( button );
             button->no = i;
             flush( &button->image_rect );
         }
@@ -430,8 +427,7 @@ void ONScripterLabel::executeSystemYesNo()
         system_font.xy[0] = 12;
         system_font.xy[1] = 12;
         ButtonLink *button = getSelectableSentence( name, &system_font, false );
-        button->next = root_button_link.next;
-        root_button_link.next = button;
+        root_button_link.insert( button );
         button->no = 1;
         flush( &button->image_rect );
 
@@ -439,8 +435,7 @@ void ONScripterLabel::executeSystemYesNo()
         system_font.xy[0] = 18;
         system_font.xy[1] = 12;
         button = getSelectableSentence( name, &system_font, false );
-        button->next = root_button_link.next;
-        root_button_link.next = button;
+        root_button_link.insert( button );
         button->no = 2;
         flush( &button->image_rect );
         
@@ -462,8 +457,7 @@ void ONScripterLabel::setupLookbackButton()
     if ( (current_text_buffer->previous->buffer2_count > 0 ) &&
          current_text_buffer != start_text_buffer ){
         ButtonLink *button = new ButtonLink();
-        button->next = root_button_link.next;
-        root_button_link.next = button;
+        root_button_link.insert( button );
     
         button->no = 1;
         button->select_rect.x = sentence_font_info.pos.x;
@@ -532,8 +526,7 @@ void ONScripterLabel::setupLookbackButton()
     /* Next button check */
     if ( current_text_buffer->next != shelter_text_buffer ){
         ButtonLink *button = new ButtonLink();
-        button->next = root_button_link.next;
-        root_button_link.next = button;
+        root_button_link.insert( button );
     
         button->no = 2;
         button->select_rect.x = sentence_font_info.pos.x;
