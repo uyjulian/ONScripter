@@ -20,7 +20,15 @@ color: black;
 background-color: white;
 }
 
-P{line-height:1.2em;}
+P{
+margin-top 0.5em;
+text-indent: 1em;
+}
+
+P.noindent{
+margin-top 0.5em;
+text-indent: 0em;
+}
 
 H1{
 margin-left: auto;
@@ -37,6 +45,7 @@ DIV.block{
 top:              0px;
 left:             0px;
 width:            80%;
+width:            90%;
 font-size: medium;
 background: white;
 margin:           0.1em;
@@ -73,6 +82,21 @@ border-bottom-color: #cccccc;
 border-bottom-style: solid;
 }
 
+DIV.block_log{
+position:         relative;
+top:              0px;
+left:             5%;
+width: 95%;
+font-size: medium;
+color: black;
+background: white;
+margin:           1.0em;
+padding:          0.5em;
+border-width: 1pt 1pt 1pt 1pt;
+border-color: #4444ff;
+border-style: solid;
+}
+
 H3{
 text-indent: 0.5em;
 position: relative;
@@ -84,21 +108,6 @@ border-left-color: #8888ff;
 border-right-color: #ddddff;
 border-bottom-color: #8888ff;
 border-style: solid;
-}
-
-DIV.quat{
-position:         relative;
-top:              0px;
-left:             0px;
-font-size: medium;
-color: black;
-background: white;
-margin:           1.0em;
-padding-left:          0.5em;
-padding-right:          0.5em;
-border-width: 2pt 2pt 2pt 2pt;
-border-color: brown;
-border-style: dashed;
 }
 
 TABLE {
@@ -136,7 +145,17 @@ width: 80%;
 text-align: center;
 }
 
-PRE { text-indent: 0; }
+PRE {
+width: 80%;
+margin: 0.5em;
+padding: 0.5em;
+color: white;
+background: black;
+text-indent: 0; 
+border-width: 1pt 1pt 1pt 1pt;
+border-color: brown;
+border-style: solid;
+}
 
 UL LI { list-style-type: square; }
 UL LI LI { list-style-type: circle; }

@@ -211,7 +211,7 @@ int ONScripterLabel::tablegotoCommand()
     int count = 0;
     int no = script_h.readInt();
 
-    while( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
+    while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
         script_h.readToken();
         const char *buf = script_h.getStringBuffer();
         if ( count++ == no ){
@@ -470,7 +470,7 @@ int ONScripterLabel::selectCommand()
         while(1){
             //printf("sel [%s] comma %d\n", buf, comma_flag  );
             if ( buf[0] != 0x0a && comma_flag == true ){
-                comma_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
+                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
                 count++;
                 if ( select_mode == SELECT_NUM_MODE || count % 2 ){
                     buf = script_h.readStr( true );
@@ -907,7 +907,7 @@ int ONScripterLabel::mspCommand()
     int no = script_h.readInt();
     sprite_info[ no ].pos.x += script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y += script_h.readInt() * screen_ratio1 / screen_ratio2;
-    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans += script_h.readInt();
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
@@ -1028,7 +1028,7 @@ int ONScripterLabel::lspCommand()
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
     else
         sprite_info[ no ].trans = 255;
@@ -1224,7 +1224,7 @@ int ONScripterLabel::getregCommand()
     
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) 
         errorAndExit( "getreg: no string variable." );
-    int no = script_h.pushed_variable.var_no;
+    int no = script_h.current_variable.var_no;
 
     const char *buf = script_h.readStr();
     setStr( &path, buf );
@@ -1249,7 +1249,7 @@ int ONScripterLabel::getregCommand()
                 while( fgets( reg_buf2, 256, fp) ){
 
                     script_h.pushCurrent( reg_buf2 );
-                    buf = script_h.readStr( true );
+                    buf = script_h.readStr();
                     if ( strncmp( buf,
                                   key,
                                   (strlen(buf)>strlen(key))?strlen(buf):strlen(key) ) ){
@@ -1264,8 +1264,8 @@ int ONScripterLabel::getregCommand()
                     }
 
                     buf = script_h.readStr();
-                    script_h.popCurrent();
                     setStr( &script_h.str_variables[no], buf );
+                    script_h.popCurrent();
                     printf("  $%d = %s\n", no, script_h.str_variables[no] );
                     found_flag = true;
                     break;
@@ -2053,7 +2053,7 @@ int ONScripterLabel::amspCommand()
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA )
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
 
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;

@@ -39,7 +39,8 @@ class ScriptHandler
 public:
     enum { END_NONE  = 0,
            END_COMMA = 1,
-           END_COLON = 2
+           END_COLON = 2,
+           END_QUAT  = 4
     };
     struct LabelInfo{
         char *name;
@@ -106,7 +107,7 @@ public:
 
     void getSJISFromInteger( char *buffer, int no, bool add_space_flag );
 
-    int readScriptSub( FILE *fp, char **buf, bool encrypt_flag );
+    int readScriptSub( FILE *fp, char **buf, int encrypt_mode );
     int readScript( char *path );
     int labelScript();
 

@@ -12,7 +12,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Feb. 2, 2003<br>
+Last updated: Feb. 4, 2003<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -36,7 +36,7 @@ href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">ダウンロード</a>
 HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
-<P>現在はベータ版<A HREF="onscripter-beta-20030202.tar.gz">onscripter-beta-20030202.tar.gz</A>を配布しております。<br>
+<P>現在はベータ版<A HREF="onscripter-beta-20030204.tar.gz">onscripter-beta-20030204.tar.gz</A>を配布しております。<br>
 (一つ前のベータ版<A HREF="onscripter-beta-20030128.tar.gz">onscripter-beta-20030128.tar.gz</A>)<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20021218.tar.gz">onscripter-beta-exp20021218.tar.gz</A>。問題がなければベータ版になります)<br>-->
 </P>
@@ -297,16 +297,13 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 た余計なスペース等を入れないようにして下さい。漢字が使われている場合、
 文字コードが Shift JIS になることに注意してください。</P>
 
-<DIV CLASS="quat">
 <pre>
 [getreg の２番目の引数（ただし前後の""は除く）]
 getreg の３番目の引数（前後の""は必要です）=比較対象文字列（前後の""は必要です）
 </pre>
-</DIV>
 
 registry.txt の例
 
-<DIV CLASS="quat">
 <pre>
 [software\StudioOGA\ONScripter]
 "INSTALL"="FULL"
@@ -315,7 +312,6 @@ registry.txt の例
 "Download log file"="c:\nomad_down.log"
 "Upload log file"="c:\nomad_up.log"
 </pre>
-</DIV>
 
 <P>ONScripter 起動時に --registry オプションを指定することで、
 registry.txt を一カ所にまとめておくことができます。--registry を指定し
@@ -424,32 +420,26 @@ cd/track14.mp3<BR>
 
 <P>画面のサイズが 640x480 で、拡張子が sar のアーカイブを 320x240 にする場合は、</P>
 
-<DIV CLASS="quat">
 <pre>
 &gt; sarconv 640 arc.sar zaurus_dir/arc.sar
 ...
 </pre>
-</DIV>
 
 <P>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン１）を 320x240 にする場合は、</P>
 
-<DIV CLASS="quat">
 <pre>
 &gt; nsaconv [-e] 800 arc.nsa zaurus_dir/arc.nsa
 &gt; nsaconv [-e] 800 arc1.nsa zaurus_dir/arc1.nsa
 ...
 </pre>
-</DIV>
 
 <P>画面のサイズが 640x480 で、拡張子が nsa のアーカイブ（バージョン２）を 640x480 にする場合は、</P>
 
-<DIV CLASS="quat">
 <pre>
 &gt; nsaconv [-e] -ns2 640 arc.nsa zaurus_dir/arc.nsa
 &gt; nsaconv [-e] -ns2 640 arc1.nsa zaurus_dir/arc1.nsa
 ...
 </pre>
-</DIV>
 
 <P>として変換してください。</P>
 
@@ -474,11 +464,12 @@ cd/track14.mp3<BR>
 <P>Windows でコンパイル済の SMPEG のバイナリを持ってくると、MP3 によっては音がぶつぶつとぎれて演奏されます。これは、SMPEG を MSVC でコンパイルする時の最適化の問題で、下記の通りに MSVC の global optimization を一部抑制する指定をし、自分でコンパイルすることで解決できます。</P>
 
 
-<DIV CLASS="quat">
-<PRE>
-修正するファイル: audio/mpeglayer3.cpp
-関数 layer3reorderandantialias の前後に、下のように #pragma 指定を追加する。
+<P>修正するファイル: audio/mpeglayer3.cpp<BR>
 
+関数 layer3reorderandantialias の前後に、下のように #pragma 指定を追加
+する。</P>
+
+<PRE>
 #pragma optimize( "g", off )
 void MPEGaudio::layer3reorderandantialias(int ch,int gr,
                                           REAL  in[SBLIMIT][SSLIMIT],
@@ -487,7 +478,6 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
 }
 #pragma optimize( "g", on )
 </PRE>
-</DIV>
 
 </DIV>
 </DIV>

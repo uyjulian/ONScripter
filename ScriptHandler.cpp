@@ -115,6 +115,7 @@ void ScriptHandler::pushCurrent( char *pos )
     last_stack_info->next = info;
     last_stack_info = last_stack_info->next;
 
+    current_script = pos;
     next_script = pos;
 }
 
@@ -243,6 +244,7 @@ int ScriptHandler::readToken()
             ch = *buf++;
         }
         buf++;
+        end_status |= END_QUAT;
     }
     else while ( ch != 0x0a && ch != '\0' && ch != '"' )
     {
@@ -381,12 +383,12 @@ int ScriptHandler::readToken()
     SKIP_SPACE( buf );
     if ( *buf == ',' )
     {
-        end_status = END_COMMA;
+        end_status |= END_COMMA;
         buf++;
         SKIP_SPACE( buf );
     }
     else if ( *buf == ':' ){
-        end_status = END_COLON;
+        end_status |= END_COLON;
     }
 
     if ( linepage_flag && text_flag )
@@ -479,6 +481,7 @@ void ScriptHandler::parseStr( char **buf )
         str_string_buffer[c] = '\0';
         if ( **buf == '"' ) (*buf)++;
         current_variable.type = VAR_STR_CONST;
+        end_status |= END_QUAT;
     }
     else if ( **buf == '#' ){ // for color
         for ( int i=0 ; i<7 ; i++ )
@@ -531,21 +534,22 @@ void ScriptHandler::parseStr( char **buf )
 
 const char *ScriptHandler::readStr( bool reread_flag )
 {
+    end_status = END_NONE;
     if ( reread_flag ) next_script = current_script;
     current_script = next_script;
     char *buf = current_script;
-
+    
     parseStr(&buf);
 
     SKIP_SPACE( buf );
     if ( *buf == ',' )
     {
-        end_status = END_COMMA;
+        end_status |= END_COMMA;
         buf++;
         SKIP_SPACE( buf );
     }
     else if ( *buf == ':' ){
-        end_status = END_COLON;
+        end_status |= END_COLON;
     }
     next_script = buf;
     
@@ -559,18 +563,18 @@ int ScriptHandler::readInt( bool reread_flag )
     if ( reread_flag ) next_script = current_script;
     current_script = next_script;
     char *buf = current_script;
-
+    
     int ret = parseIntExpression(&buf);
     
     SKIP_SPACE( buf );
     if ( *buf == ',' )
     {
-        end_status = END_COMMA;
+        end_status |= END_COMMA;
         buf++;
         SKIP_SPACE( buf );
     }
     else if ( *buf == ':' ){
-        end_status = END_COLON;
+        end_status |= END_COLON;
     }
     next_script = buf;
 
@@ -812,16 +816,24 @@ void ScriptHandler::getSJISFromInteger( char *buffer, int no, bool add_space_fla
     buffer[c++] = '\0';
 }
 
-int ScriptHandler::readScriptSub( FILE *fp, char **buf, bool encrypt_flag )
+int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
 {
+    char magic[5] = {0x79, 0x57, 0x0d, 0x80, 0x04 };
+    int  magic_counter = 0;
     bool newline_flag = true;
     bool cr_flag = false;
 
     while(1)
     {
         int ch = fgetc( fp );
-        if ( ch != EOF && encrypt_flag ) ch ^= 0x84;
-        
+        if ( ch != EOF ){
+            if      ( encrypt_mode == 1 ) ch ^= 0x84;
+            else if ( encrypt_mode == 2 ){
+                ch = (ch ^ magic[magic_counter++]) & 0xff;
+                if ( magic_counter == 5 ) magic_counter = 0;
+            }
+        }
+
         if ( cr_flag && ch != 0x0a ){
             *(*buf)++ = 0x0a;
             newline_flag = true;
@@ -860,7 +872,7 @@ int ScriptHandler::readScript( char *path )
     int  i, file_counter = 0;
     char *p_script_buffer;
     int estimated_buffer_length = 0;
-    bool encrypt_flag = false;
+    int encrypt_mode = 0;
     
     if ( (fp = fopen( "0.txt", "rb" )) != NULL ){
         do{
@@ -871,11 +883,17 @@ int ScriptHandler::readScript( char *path )
         }
         while( (fp = fopen( file_name, "rb" )) != NULL );
     }
-    else if ( (fp = fopen( "nscript.dat", "rb" )) != NULL ){
-        encrypt_flag = true;
+    else if ( (fp = fopen( "nscr_sec.dat", "rb" )) != NULL ){
+        encrypt_mode = 2;
         fseek( fp, 0, SEEK_END );
         estimated_buffer_length = ftell( fp ) + 1;
-        fclose( fp );
+        fseek( fp, 0, SEEK_SET );
+    }
+    else if ( (fp = fopen( "nscript.dat", "rb" )) != NULL ){
+        encrypt_mode = 1;
+        fseek( fp, 0, SEEK_END );
+        estimated_buffer_length = ftell( fp ) + 1;
+        fseek( fp, 0, SEEK_SET );
     }
     else{
         fprintf( stderr, "can't open file 0.txt or nscript.dat\n" );
@@ -889,16 +907,15 @@ int ScriptHandler::readScript( char *path )
     }
     current_script = p_script_buffer = script_buffer;
     
-    if ( encrypt_flag ){
-        fp = fopen( "nscript.dat", "rb" );
-        readScriptSub( fp, &p_script_buffer, encrypt_flag );
+    if ( encrypt_mode ){
+        readScriptSub( fp, &p_script_buffer, encrypt_mode );
         fclose( fp );
     }
     else{
         for ( i=0 ; i<file_counter ; i++ ){
             sprintf( file_name, "%d.txt", i );
             fp = fopen( file_name, "rb" );
-            readScriptSub( fp, &p_script_buffer, encrypt_flag );
+            readScriptSub( fp, &p_script_buffer, encrypt_mode );
             fclose( fp );
         }
     }
@@ -1116,7 +1133,6 @@ int ScriptHandler::findLabel( const char *label )
         capital_label[i] = label[i];
         if ( 'a' <= capital_label[i] && capital_label[i] <= 'z' ) capital_label[i] += 'A' - 'a';
     }
-
     for ( i=0 ; i<num_of_labels ; i++ )
         if ( !strcmp( label_info[i].name, capital_label ) ){
             delete[] capital_label;

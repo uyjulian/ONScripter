@@ -229,6 +229,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             anim->trans_mode = AnimationInfo::TRANS_MASK;
             buffer++;
             script_h.pushCurrent( buffer );
+            script_h.readToken();
             setStr( &anim->mask_file_name, script_h.getStringBuffer() );
             buffer = script_h.getNext();
             script_h.popCurrent();

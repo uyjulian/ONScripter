@@ -599,10 +599,10 @@ int ScriptParser::readEffect( EffectLink *effect )
     int num = 1;
     
     effect->effect = script_h.readInt();
-    if ( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
         num++;
         effect->duration = script_h.readInt();
-        if ( script_h.getEndStatus() == ScriptHandler::END_COMMA ){
+        if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
             num++;
             const char *buf = script_h.readStr();
             effect->anim.setImageName( buf );

@@ -88,111 +88,12 @@ void rescaleImage( unsigned char *original_buffer, int width, int height, int by
             int k = wd * y + x * byte_per_pixel;
             
             for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
-
-                unsigned long p1, p2=0, p3=0;
-
-                p1 =  (8-dx)*(8-dy)*original_buffer[ k ];
-                if ( x>=width-1 ){
-                    p1 +=    dx *(8-dy)*original_buffer[ k ];
-                    if ( y>=height-1 )
-                        p1 +=    dx *   dy *original_buffer[ k ];
-                    else
-                        p1 +=    dx *   dy *original_buffer[ k+wd ];
-                }
-                else{
-                    p1 +=    dx *(8-dy)*original_buffer[ k+byte_per_pixel ];
-                    if ( y>=height-1 )
-                        p1 +=    dx *   dy *original_buffer[ k+byte_per_pixel ];
-                    else
-                        p1 +=    dx *   dy *original_buffer[ k+byte_per_pixel+wd ];
-                }
-                if ( y>=height-1 )
-                    p1 += (8-dx)*   dy *original_buffer[ k ];
-                else
-                    p1 += (8-dx)*   dy *original_buffer[ k+wd ];
-
-                if ( y==0 ){
-                    p2 += (16-dx)*(16-dy)*original_buffer[ k ];
-                    p2 +=  (8+dx)*(16-dy)*original_buffer[ k+byte_per_pixel ];
-                    if ( x==0 ){
-                        p3 += (16-dx)*(16-dy)*original_buffer[ k ];
-                    }
-                    else{
-                        p3 += (16-dx)*(16-dy)*original_buffer[ k-byte_per_pixel ];
-                    }
-                    
-                    if ( x>=wd-2 ){
-                        p3 += ( 8+dx)*(16-dy)*original_buffer[ k+byte_per_pixel ];
-                    }
-                    else{
-                        p3 += ( 8+dx)*(16-dy)*original_buffer[ k+byte_per_pixel*2 ];
-                    }
-                }
-                else{
-                    p2 += (16-dx)*(16-dy)*original_buffer[ k-wd ];
-                    p2 +=  (8+dx)*(16-dy)*original_buffer[ k-wd+byte_per_pixel ];
-                    if ( x==0 ){
-                        p3 += (16-dx)*(16-dy)*original_buffer[ k-wd ];
-                    }
-                    else{
-                        p3 += (16-dx)*(16-dy)*original_buffer[ k-wd-byte_per_pixel ];
-                    }
-                    if ( x>=wd-2 ){
-                        p3 += ( 8+dx)*(16-dy)*original_buffer[ k-wd+byte_per_pixel ];
-                    }
-                    else{
-                        p3 += ( 8+dx)*(16-dy)*original_buffer[ k-wd+byte_per_pixel*2 ];
-                    }
-                }
-                if ( y>=height-2 ){
-                    p2 += (16-dx)*( 8+dy)*original_buffer[ k+wd ];
-                    p2 +=  (8+dx)*( 8+dy)*original_buffer[ k+wd+byte_per_pixel ];
-                    if ( x==0 ){
-                        p3 += (16-dx)* (8+dy)*original_buffer[ k+wd ];
-                    }
-                    else{
-                        p3 += (16-dx)* (8+dy)*original_buffer[ k+wd-byte_per_pixel ];
-                    }
-                    if ( x>=wd-2 ){
-                        p3 += ( 8+dx)* (8+dy)*original_buffer[ k+wd+byte_per_pixel ];
-                    }
-                    else{
-                        p3 += ( 8+dx)* (8+dy)*original_buffer[ k+wd+byte_per_pixel*2 ];
-                    }
-                }
-                else{
-                    p2 += (16-dx)*( 8+dy)*original_buffer[ k+wd*2 ];
-                    p2 +=  (8+dx)*( 8+dy)*original_buffer[ k+wd*2+byte_per_pixel ];
-                    if ( x==0 ){
-                        p3 += (16-dx)* (8+dy)*original_buffer[ k+wd*2 ];
-                    }
-                    else{
-                        p3 += (16-dx)* (8+dy)*original_buffer[ k+wd*2-byte_per_pixel ];
-                    }
-                    if ( x>=wd-2 ){
-                        p3 += ( 8+dx)* (8+dy)*original_buffer[ k+wd*2+byte_per_pixel ];
-                    }
-                    else{
-                        p3 += ( 8+dx)* (8+dy)*original_buffer[ k+wd*2+byte_per_pixel*2 ];
-                    }
-                }
-                if ( x==0 ){
-                    p2 += (16-dx)*(16-dy)*original_buffer[ k ];
-                    p2 += (16-dx)*( 8+dy)*original_buffer[ k+wd ];
-                }
-                else{
-                    p2 += (16-dx)*(16-dy)*original_buffer[ k-byte_per_pixel ];
-                    p2 += (16-dx)*( 8+dy)*original_buffer[ k+wd-byte_per_pixel ];
-                }
-                if ( x>=wd-2 ){
-                    p2 += ( 8+dx)*(16-dy)*original_buffer[ k+byte_per_pixel ];
-                    p2 += ( 8+dx)*( 8+dy)*original_buffer[ k+wd+byte_per_pixel ];
-                }
-                else{
-                    p2 += ( 8+dx)*(16-dy)*original_buffer[ k+byte_per_pixel*2 ];
-                    p2 += ( 8+dx)*( 8+dy)*original_buffer[ k+wd+byte_per_pixel*2 ];
-                }
-                *buf_p++ = (unsigned char)(((p1 >> 4) + (p2 / 576) + (p3 / 576)) / 7);
+                unsigned int p;
+                p =  (8-dx)*(8-dy)*original_buffer[ k ];
+                p +=    dx *(8-dy)*original_buffer[ k+byte_per_pixel ];
+                p += (8-dx)*   dy *original_buffer[ k+wd ];
+                p +=    dx *   dy *original_buffer[ k+byte_per_pixel+wd ];
+                *buf_p++ = (unsigned char)(p>>6);
             }
         }
         for ( j=0 ; j<w_pad ; j++ )

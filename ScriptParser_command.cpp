@@ -236,7 +236,7 @@ int ScriptParser::rmenuCommand()
     menu_link_width = 0;
 
     bool first_flag = true;
-    while ( script_h.getEndStatus() == ScriptHandler::END_COMMA || first_flag ){
+    while ( script_h.getEndStatus() & ScriptHandler::END_COMMA || first_flag ){
         MenuLink *menu = new MenuLink();
 
         const char *buf = script_h.readStr();
@@ -387,11 +387,11 @@ int ScriptParser::movCommand()
     if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
          script_h.current_variable.type == ScriptHandler::VAR_PTR ){
         script_h.pushVariable();
-        bool loop_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
+        bool loop_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
         int i=0;
         while ( (count==-1 || i<count) && loop_flag ){
             no = script_h.readInt();
-            loop_flag = (script_h.getEndStatus() == ScriptHandler::END_COMMA);
+            loop_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
             script_h.setInt( &script_h.pushed_variable, no, i++ );
         }
     }

@@ -720,7 +720,7 @@ int ONScripterLabel::parseLine( )
     if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
          // for puttext
          ( script_h.getStringBuffer()[string_buffer_offset] == '\0' && 
-           script_h.getEndStatus() == ScriptHandler::END_COLON ) ){
+           script_h.getEndStatus() & ScriptHandler::END_QUAT ) ){
         ret = RET_CONTINUE;
         if ( !new_line_skip_flag && script_h.isText() ){
             sentence_font.xy[0] = 0;
