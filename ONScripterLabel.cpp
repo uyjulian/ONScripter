@@ -232,6 +232,7 @@ void ONScripterLabel::initSDL( bool cdaudio_flag )
         mouse_rotation_mode = MOUSE_ROTATION_PDA_VGA;
     }
 #endif
+    mouse_rotation_mode = MOUSE_ROTATION_NONE;
     underline_value = screen_height - 1;
 
     if ( screen_surface == NULL ) {

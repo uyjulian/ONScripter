@@ -924,7 +924,7 @@ int ScriptParser::dateCommand()
     struct tm *tm = localtime( &t );
 
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, tm->tm_year + 1900 );
+    script_h.setInt( &script_h.current_variable, tm->tm_year % 100 );
 
     script_h.readInt();
     script_h.setInt( &script_h.current_variable, tm->tm_mon + 1 );

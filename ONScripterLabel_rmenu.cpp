@@ -173,6 +173,7 @@ void ONScripterLabel::executeSystemMenu()
             flush( &last_button_link->image_rect );
         }
 
+        flushEvent();
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();
         system_menu_mode = SYSTEM_MENU;

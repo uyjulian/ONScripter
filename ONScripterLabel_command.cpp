@@ -1843,11 +1843,8 @@ int ONScripterLabel::btnwaitCommand()
         return RET_CONTINUE;
     }
     else{
-        flushEvent();
         shortcut_mouse_line = 0;
         skip_flag = false;
-        event_mode = WAIT_BUTTON_MODE;
-        if ( textbtn_flag ) event_mode |= WAIT_TEXTBTN_MODE;
 
         /* ---------------------------------------- */
         /* Resotre csel button */
@@ -1900,6 +1897,9 @@ int ONScripterLabel::btnwaitCommand()
         flush();
         refreshMouseOverButton();
 
+        flushEvent();
+        event_mode = WAIT_BUTTON_MODE;
+        if ( textbtn_flag ) event_mode |= WAIT_TEXTBTN_MODE;
         if ( btntime_value > 0 ){
             event_mode |= WAIT_SLEEP_MODE;
             startTimer( btntime_value );

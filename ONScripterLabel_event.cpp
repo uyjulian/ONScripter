@@ -761,7 +761,9 @@ int ONScripterLabel::eventLoop()
 
           case SDL_KEYDOWN:
             keyDownEvent( (SDL_KeyboardEvent*)&event );
-            if ( !btndown_flag ) break;
+            if ( btndown_flag )
+                keyPressEvent( (SDL_KeyboardEvent*)&event );
+            break;
           case SDL_KEYUP:
             keyUpEvent( (SDL_KeyboardEvent*)&event );
             keyPressEvent( (SDL_KeyboardEvent*)&event );
