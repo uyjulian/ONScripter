@@ -245,9 +245,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
         else if ( buffer[0] == '!' ){
             anim->trans_mode = AnimationInfo::TRANS_PALLET;
             buffer++;
-            anim->pallet_number = 0;
-            while ( *buffer >= '0' && *buffer <= '9' )
-                anim->pallet_number = anim->pallet_number * 10 + *buffer++ - '0';
+            anim->pallet_number = getNumberFromBuffer( (const char**)&buffer );
         }
         else{
             buffer++; // skip an illegal trans_mode
@@ -256,9 +254,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 
     if ( buffer[0] == '/' ){
         buffer++;
-        anim->num_of_cells = 0;
-        while ( *buffer >= '0' && *buffer <= '9' )
-            anim->num_of_cells = anim->num_of_cells * 10 + *buffer++ - '0';
+        anim->num_of_cells = getNumberFromBuffer( (const char**)&buffer );
         buffer++;
         if ( anim->num_of_cells == 0 ){
             fprintf( stderr, "ONScripterLabel::parseTaggedString  The number of cells is 0\n");
@@ -270,17 +266,13 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
         if ( *buffer == '<' ){
             buffer++;
             for ( i=0 ; i<anim->num_of_cells ; i++ ){
-                anim->duration_list[i] = 0;
-                while ( *buffer >= '0' && *buffer <= '9' )
-                    anim->duration_list[i] = anim->duration_list[i] * 10 + *buffer++ - '0';
+                anim->duration_list[i] = getNumberFromBuffer( (const char**)&buffer );
                 buffer++;
             }
             buffer++; // skip '>'
         }
         else{
-            anim->duration_list[0] = 0;
-            while ( *buffer >= '0' && *buffer <= '9' )
-                anim->duration_list[0] = anim->duration_list[0] * 10 + *buffer++ - '0';
+            anim->duration_list[0] = getNumberFromBuffer( (const char**)&buffer );
             for ( i=1 ; i<anim->num_of_cells ; i++ )
                 anim->duration_list[i] = anim->duration_list[0];
             buffer++;

@@ -38,7 +38,7 @@ public:
     int getNumFiles();
     
     size_t getFileLength( const char *file_name );
-    size_t getFile( const char *file_name, unsigned char *buf );
+    size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
     struct FileInfo getFileByIndex( int index );
 
     int openForConvert( char *nsa_name, int archive_type=ARCHIVE_TYPE_NSA );

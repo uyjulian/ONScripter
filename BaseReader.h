@@ -88,7 +88,7 @@ struct BaseReader
 
     virtual struct FileInfo getFileByIndex( int index ) = 0;
     virtual size_t getFileLength( const char *file_name ) = 0;
-    virtual size_t getFile( const char *file_name, unsigned char *buffer ) = 0;
+    virtual size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL ) = 0;
 };
 
 #endif // __BASE_READER_H__

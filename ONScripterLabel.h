@@ -380,6 +380,7 @@ private:
     void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no );
     void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str );
     void disableGetButtonFlag();
+    int getNumberFromBuffer( const char **buf );
     
     /* ---------------------------------------- */
     /* Background related variables */
@@ -533,6 +534,8 @@ private:
     int playWave( const char *file_name, bool loop_flag, int channel, int play_mode=WAVE_PLAY );
     void stopBGM( bool continue_flag );
     void playClickVoice();
+    void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
+    unsigned long decodeOggVorbis( unsigned char *buffer_in, unsigned char *buffer_out, unsigned long length, int &channels, int &rate );
     
     /* ---------------------------------------- */
     /* Text event related variables */
@@ -562,6 +565,7 @@ private:
     int enterTextDisplayMode( int ret_wait = RET_WAIT );
     int resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     SDL_Surface *loadImage( char *file_name );
+
     void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip );
     void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
     void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL, FontInfo *info=NULL );

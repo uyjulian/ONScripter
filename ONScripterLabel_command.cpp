@@ -637,8 +637,18 @@ int ONScripterLabel::savescreenshotCommand()
     }
 
     const char *buf = script_h.readStr();
-
-    printf("savescreen %s\n", buf );
+    char filename[256];
+    
+    char *ext = strrchr( buf, '.' );
+    if ( ext && (!strcmp( ext+1, "BMP" ) || !strcmp( ext+1, "bmp" ) ) ){
+        sprintf( filename, "%s%s", archive_path, buf );
+        for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
+            if ( filename[i] == '/' || filename[i] == '\\' )
+                filename[i] = DELIMITER;
+        SDL_SaveBMP( screenshot_surface, filename );
+    }
+    else
+        printf("savescreenshot: file %s is not supported.\n", buf );
 
     return RET_CONTINUE;
 }
@@ -1391,14 +1401,23 @@ int ONScripterLabel::gettabCommand()
 
 int ONScripterLabel::getscreenshotCommand()
 {
-    if ( screenshot_surface )
-        SDL_FreeSurface( screenshot_surface );
-
     unsigned int w = script_h.readInt();
     unsigned int h = script_h.readInt();
-    screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
+    if ( w == 0 ) w = 1;
+    if ( h == 0 ) h = 1;
 
-    resizeSurface( screen_surface, NULL, screenshot_surface, NULL );
+    if ( screenshot_surface &&
+         screenshot_surface->w != w &&
+         screenshot_surface->h != h ){
+        SDL_FreeSurface( screenshot_surface );
+        screenshot_surface = NULL;
+    }
+
+    if ( screenshot_surface == NULL )
+        screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
+
+    SDL_BlitSurface( screen_surface, NULL, effect_dst_surface, NULL ); // Bucause screen_surface may be in 16bit depth
+    resizeSurface( effect_dst_surface, NULL, screenshot_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -1544,7 +1563,8 @@ int ONScripterLabel::getcursorposCommand()
 
 int ONScripterLabel::getcursorCommand()
 {
-    getcursor_flag = true;
+    if ( !force_button_shortcut_flag )
+        getcursor_flag = true;
     
     return RET_CONTINUE;
 }

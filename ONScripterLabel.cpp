@@ -73,8 +73,8 @@ static struct FuncLUT{
     {"selectbtnwait", &ONScripterLabel::btnwaitCommand},
     {"select",   &ONScripterLabel::selectCommand},
     {"savetime",   &ONScripterLabel::savetimeCommand},
-    //    {"savescreenshot2",   &ONScripterLabel::savescreenshotCommand},
-    //    {"savescreenshot",   &ONScripterLabel::savescreenshotCommand},
+    {"savescreenshot2",   &ONScripterLabel::savescreenshotCommand},
+    {"savescreenshot",   &ONScripterLabel::savescreenshotCommand},
     {"saveon",   &ONScripterLabel::saveonCommand},
     {"saveoff",   &ONScripterLabel::saveoffCommand},
     {"savegame",   &ONScripterLabel::savegameCommand},
@@ -885,7 +885,8 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         script_h.findAndAddLog( ScriptHandler::FILE_LOG, file_name, true );
     //printf(" ... loading %s length %ld\n", file_name, length );
     buffer = new unsigned char[length];
-    script_h.cBR->getFile( file_name, buffer );
+    int location;
+    script_h.cBR->getFile( file_name, buffer, &location );
     tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ),1);
 
     char *ext = strrchr(file_name, '.');
@@ -903,7 +904,10 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
     }
 
     ret = SDL_ConvertSurface( tmp, text_surface->format, DEFAULT_SURFACE_FLAG );
-    if ( ret && screen_ratio2 != screen_ratio1 && !disable_rescale_flag ){
+    if ( ret &&
+         screen_ratio2 != screen_ratio1 &&
+         (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE) )
+    {
         SDL_Surface *ret2 = ret;
 
         SDL_Rect src_rect, dst_rect;
@@ -1538,11 +1542,6 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
 
 void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no )
 {
-    if ( sprite_no == -1 ){
-        sprite_no = cell_no;
-        cell_no = -1;
-    }
-
     if ( sprite_info[sprite_no].image_name && 
          ( sprite_info[ sprite_no ].visible != active_flag ||
            (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ) )
@@ -1562,54 +1561,61 @@ void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool a
 void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str )
 {
     char sound_name[256];
-    int num = 0, sprite_no = -1;
-    bool active_flag = false;
-    bool first_flag = true;
-    bool sound_flag = false;
+    int sprite_no, cell_no;
 
-    while( *ctl_str ){
-        if ( *ctl_str == 'C' ){
-            if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
-            active_flag = false;
-            num = 0;
-            sprite_no = -1;
+    while( char com = *ctl_str++ ){
+        if ( com == '\0' ){
+            break;
         }
-        else if ( *ctl_str == 'P' ){
-            if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
-            active_flag = true;
-            num = 0;
-            sprite_no = -1;
+        else if ( com == 'C' ){
+            sprite_no = getNumberFromBuffer( &ctl_str );
+            if ( *ctl_str == ',' ){
+                ctl_str++;
+                cell_no = getNumberFromBuffer( &ctl_str );
+            }
+            else
+                cell_no = -1;
+            refreshSprite( surface, sprite_no, false, cell_no );
         }
-        else if ( *ctl_str == 'S' ){
-            if ( !first_flag ) refreshSprite( surface, sprite_no, active_flag, num );
-            sound_flag = true;
-            num = 0;
-            sprite_no = -1;
+        else if ( com == 'P' ){
+            sprite_no = getNumberFromBuffer( &ctl_str );
+            if ( *ctl_str == ',' ){
+                ctl_str++;
+                cell_no = getNumberFromBuffer( &ctl_str );
+            }
+            else
+                cell_no = -1;
+            refreshSprite( surface, sprite_no, true, cell_no );
         }
-        else if ( *ctl_str == ',' ){
-            sprite_no = num;
-            num = 0;
-        }
-        else if ( *ctl_str == '(' ){
+        else if ( com == 'S' ){
+            sprite_no = getNumberFromBuffer( &ctl_str );
+            if ( *ctl_str != ',' ) continue;
+            ctl_str++;
+            if ( *ctl_str != '(' ) continue;
             ctl_str++;
             char *buf = sound_name;
             while (*ctl_str != ')' && *ctl_str != '\0' ) *buf++ = *ctl_str++;
             *buf++ = '\0';
-            playWave( sound_name, false, DEFAULT_WAVE_CHANNEL );
+            playWave( sound_name, false, sprite_no );
             if ( *ctl_str == ')' ) ctl_str++;
         }
-        else{
-            num = num * 10 + *ctl_str - '0';
+        else if ( com == 'M' ){
+            sprite_no = getNumberFromBuffer( &ctl_str );
+            SDL_Rect rect = sprite_info[ sprite_no ].pos;
+            if ( *ctl_str != ',' ) continue;
+            ctl_str++; // skip ','
+            sprite_info[ sprite_no ].pos.x = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
+            if ( *ctl_str != ',' ) continue;
+            ctl_str++; // skip ','
+            sprite_info[ sprite_no ].pos.y = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
+            if ( surface ){
+                refreshSurface( surface, &sprite_info[ sprite_no ].pos );
+                if ( surface==text_surface ){
+                    dirty_rect.add( rect );
+                    dirty_rect.add( sprite_info[ sprite_no ].pos );
+                }
+            }
         }
-        first_flag = false;
-        ctl_str++;
-    }
-
-    if ( sound_flag ){
-        /* not implemented */
-    }
-    else if ( !first_flag ){
-        refreshSprite( surface, sprite_no, active_flag, num );
     }
 }
 
@@ -1808,4 +1814,13 @@ void ONScripterLabel::disableGetButtonFlag()
     getenter_flag = false;
     getcursor_flag = false;
     spclclk_flag = false;
+}
+
+int ONScripterLabel::getNumberFromBuffer( const char **buf )
+{
+    int ret = 0;
+    while ( **buf >= '0' && **buf <= '9' )
+        ret = ret*10 + *(*buf)++ - '0';
+
+    return ret;
 }

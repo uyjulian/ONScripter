@@ -273,7 +273,7 @@ size_t DirectReader::getFileLength( const char *file_name )
     return len;
 }
 
-size_t DirectReader::getFile( const char *file_name, unsigned char *buffer )
+size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int *location )
 {
     int compression_type;
     size_t len, c, total = 0;
@@ -292,6 +292,7 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer )
             buffer += c;
         }
         fclose( fp );
+        if ( location ) *location = ARCHIVE_TYPE_NONE;
     }
 
     return total;

@@ -44,7 +44,7 @@ public:
 
     struct FileInfo getFileByIndex( int index );
     size_t getFileLength( const char *file_name );
-    size_t getFile( const char *file_name, unsigned char *buffer );
+    size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL );
 
 protected:
     char *archive_path;

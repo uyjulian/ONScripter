@@ -38,7 +38,7 @@ public:
     int getNumFiles();
     
     size_t getFileLength( const char *file_name );
-    size_t getFile( const char *file_name, unsigned char *buf );
+    size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
     struct FileInfo getFileByIndex( int index );
 
     int writeHeader( FILE *fp );

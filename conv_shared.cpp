@@ -166,8 +166,8 @@ size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char
     jpeg_read_header(&cinfo, TRUE);
     jpeg_start_decompress(&cinfo);
 
-    if ( cinfo.output_width * cinfo.output_height * cinfo.output_components > restored_length ){
-        restored_length = cinfo.output_width * cinfo.output_height * cinfo.output_components;
+    if ( cinfo.output_width * cinfo.output_height * cinfo.output_components + 0x400 > restored_length ){
+        restored_length = cinfo.output_width * cinfo.output_height * cinfo.output_components + 0x400;
         if ( restored_buffer ) delete[] restored_buffer;
         restored_buffer = new unsigned char[ restored_length ];
         if ( *rescaled_buffer ) delete[] *rescaled_buffer;
@@ -201,7 +201,7 @@ size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char
     my_destination_mgr * dest = (my_destination_mgr *) cinfo2.dest;
 
     dest->buf = *rescaled_buffer;
-    dest->left = cinfo.output_width * cinfo.output_height * cinfo.output_components;
+    dest->left = restored_length;
 
     dest->pub.init_destination = init_destination;
     dest->pub.empty_output_buffer = empty_output_buffer;

@@ -139,19 +139,25 @@ size_t NsaReader::getFileLength( const char *file_name )
     return 0;
 }
 
-size_t NsaReader::getFile( const char *file_name, unsigned char *buffer )
+size_t NsaReader::getFile( const char *file_name, unsigned char *buffer, int *location )
 {
     int i;
     size_t ret;
 
-    if ( sar_flag ) return SarReader::getFile( file_name, buffer );
+    if ( sar_flag ) return SarReader::getFile( file_name, buffer, location );
 
-    if ( ( ret = DirectReader::getFile( file_name, buffer ) ) ) return ret;
+    if ( ( ret = DirectReader::getFile( file_name, buffer, location ) ) ) return ret;
 
-    if ( (ret = getFileSub( &archive_info, file_name, buffer )) ) return ret;
+    if ( (ret = getFileSub( &archive_info, file_name, buffer )) ){
+        if ( location ) *location = ARCHIVE_TYPE_NSA;
+        return ret;
+    }
 
     for ( i=0 ; i<num_of_nsa_archives ; i++ ){
-        if ( (ret = getFileSub( &archive_info2[i], file_name, buffer )) ) return ret;
+        if ( (ret = getFileSub( &archive_info2[i], file_name, buffer )) ){
+            if ( location ) *location = ARCHIVE_TYPE_NSA;
+            return ret;
+        }
     }
 
     return 0;

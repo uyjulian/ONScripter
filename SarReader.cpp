@@ -290,10 +290,10 @@ size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned c
     return fread( buf, 1, ai->fi_list[i].length, ai->file_handle );
 }
 
-size_t SarReader::getFile( const char *file_name, unsigned char *buf )
+size_t SarReader::getFile( const char *file_name, unsigned char *buf, int *location )
 {
     size_t ret;
-    if ( ( ret = DirectReader::getFile( file_name, buf ) ) ) return ret;
+    if ( ( ret = DirectReader::getFile( file_name, buf, location ) ) ) return ret;
 
     ArchiveInfo *info = archive_info.next;
     size_t j = 0;
@@ -301,7 +301,8 @@ size_t SarReader::getFile( const char *file_name, unsigned char *buf )
         if ( (j = getFileSub( info, file_name, buf )) > 0 ) break;
         info = info->next;
     }
-
+    if ( location ) *location = ARCHIVE_TYPE_SAR;
+    
     return j;
 }
 

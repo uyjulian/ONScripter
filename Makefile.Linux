@@ -7,8 +7,10 @@
 #LIBS = `sdl-config --libs` `smpeg-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
 #DEFS = -DLINUX
 INCS = `sdl-config --cflags` `smpeg-config --cflags` `avifile-config --cflags`
-LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
-DEFS = -DLINUX -DUSE_AVIFILE
+LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis
+#LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbisidec
+DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
+#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS -DPDA -DPDA_VGA
 
 EXESUFFIX =
 OBJSUFFIX = .o
