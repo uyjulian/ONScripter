@@ -111,6 +111,7 @@ static struct FuncLUT{
     {"menu_automode", &ONScripterLabel::menu_automodeCommand},
     {"lsph", &ONScripterLabel::lspCommand},
     {"lsp", &ONScripterLabel::lspCommand},
+    {"lr_trap",   &ONScripterLabel::trapCommand},
     {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
     {"loopbgm", &ONScripterLabel::loopbgmCommand},
     {"lookbacksp", &ONScripterLabel::lookbackspCommand},
@@ -354,7 +355,7 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     monocro_flag = monocro_flag_new = false;
     nega_mode = 0;
-    trap_flag = false;
+    trap_mode = TRAP_NONE;
     trap_dist = NULL;
     
     system_menu_enter_flag = false;

@@ -297,7 +297,13 @@ private:
     bool need_refresh_flag;
     int  nega_mode;
 
-    bool trap_flag;
+    enum { TRAP_NONE        = 0,
+           TRAP_LEFT_CLICK  = 1,
+           TRAP_RIGHT_CLICK = 2,
+           TRAP_NEXT_SELECT = 4,
+           TRAP_STOP        = 8
+    };
+    int  trap_mode;
     char *trap_dist;
     char *wm_title_string;
     char *wm_icon_string;

@@ -109,16 +109,24 @@ int ONScripterLabel::vCommand()
 
 int ONScripterLabel::trapCommand()
 {
+    if      ( script_h.isName( "lr_trap" ) ){
+        trap_mode = TRAP_LEFT_CLICK | TRAP_RIGHT_CLICK;
+    }
+    else if ( script_h.isName( "trap" ) ){
+        trap_mode = TRAP_LEFT_CLICK;
+    }
+
+    if ( script_h.compareString("off") ){
+        script_h.readLabel();
+        trap_mode = TRAP_NONE;
+        return RET_CONTINUE;
+    }
+
     const char *buf = script_h.readLabel();
-    
     if ( buf[0] == '*' ){
-        trap_flag = true;
         if ( trap_dist ) delete[] trap_dist;
         trap_dist = new char[ strlen(buf) ];
         memcpy( trap_dist, buf+1, strlen(buf) );
-    }
-    else if ( !strcmp( buf, "off" ) ){
-        trap_flag = false;
     }
     else{
         printf("trapCommand: [%s] is not supported\n", buf );
@@ -1037,21 +1045,24 @@ int ONScripterLabel::mp3volCommand()
 
 int ONScripterLabel::mp3Command()
 {
+    bool loop_flag = false;
     if      ( script_h.isName( "mp3save" ) ){
         mp3save_flag = true;
-        music_play_loop_flag = false;
+    }
+    else if ( script_h.isName( "bgmonce" ) ){
+        mp3save_flag = false;
     }
     else if ( script_h.isName( "mp3loop" ) ||
               script_h.isName( "bgm" ) ){
-        mp3save_flag = false;
-        music_play_loop_flag = true;
+        mp3save_flag = true;
+        loop_flag = true;
     }
     else{
         mp3save_flag = false;
-        music_play_loop_flag = false;
     }
 
     stopBGM( false );
+    music_play_loop_flag = loop_flag;
 
     const char *buf = script_h.readStr();
     if ( buf[0] != '\0' ){

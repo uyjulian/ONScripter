@@ -201,7 +201,7 @@ void musicCallback( int sig )
 
 void ONScripterLabel::trapHandler()
 {
-    trap_flag = false;
+    trap_mode = TRAP_NONE;
     setCurrentLinkLabel( trap_dist );
     script_h.readToken();
     string_buffer_offset = 0;
@@ -237,6 +237,16 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         automode_flag = false;
         return;
     }
+    if ( event->button == SDL_BUTTON_RIGHT &&
+         trap_mode & TRAP_RIGHT_CLICK ){
+        trapHandler();
+        return;
+    }
+    else if ( event->button == SDL_BUTTON_LEFT &&
+              trap_mode & TRAP_LEFT_CLICK ){
+        trapHandler();
+        return;
+    }
 
     if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ){
         current_button_state.x = event->x;
@@ -261,10 +271,6 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         volatile_button_state.button = current_over_button;
         if ( event->type == SDL_MOUSEBUTTONDOWN )
                 current_button_state.down_flag = true;
-        if ( trap_flag ){
-            trapHandler();
-            return;
-        }
     }
 #if SDL_VERSION_ATLEAST(1, 2, 5)
     else if ( event->button == SDL_BUTTON_WHEELUP &&
@@ -554,8 +560,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         endCommand();
     }
 
-    if ( trap_flag && (event->keysym.sym == SDLK_RETURN ||
-                       event->keysym.sym == SDLK_SPACE ) ){
+    if ( (trap_mode & TRAP_LEFT_CLICK) && 
+         (event->keysym.sym == SDLK_RETURN ||
+          event->keysym.sym == SDLK_SPACE ) ){
+        trapHandler();
+        return;
+    }
+    else if ( (trap_mode & TRAP_RIGHT_CLICK) && 
+              (event->keysym.sym == SDLK_ESCAPE) ){
         trapHandler();
         return;
     }

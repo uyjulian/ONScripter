@@ -225,8 +225,8 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     if ( i==1 ) music_play_loop_flag = true;
     else        music_play_loop_flag = false;
     loadInt( fp, &i );
-    if ( i==1 && !music_play_loop_flag ) mp3save_flag = true;
-    else                                 mp3save_flag = false;
+    if ( i==1 ) mp3save_flag = true;
+    else        mp3save_flag = false;
     loadStr( fp, &music_file_name );
     if ( music_file_name ){
         if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
@@ -473,8 +473,11 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     saveInt( fp, (wave_play_loop_flag)?1:0 ); // wave, waveloop
     saveInt( fp, (cd_play_loop_flag)?1:0 ); // play, playonce
     saveInt( fp, (music_play_loop_flag)?1:0 ); // bgm, mp3, mp3loop
-    saveInt( fp, (mp3save_flag|music_play_loop_flag)?1:0 );
-    saveStr( fp, music_file_name );
+    saveInt( fp, (mp3save_flag)?1:0 );
+    if (mp3save_flag)
+        saveStr( fp, music_file_name );
+    else
+        saveStr( fp, NULL );
     
     saveInt( fp, (erase_text_window_mode>0)?1:0 );
     saveInt( fp, 1 );

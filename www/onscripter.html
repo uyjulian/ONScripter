@@ -12,8 +12,9 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Sep. 10, 2004<br>
+Last updated: Sep. 11, 2004<br>
 ソース更新。<br>
+異なるプラットフォーム上で同時に遊ぶ方法について補足。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
 
@@ -38,10 +39,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040910.tar.gz">onscripter-beta-20040910.tar.gz</A>
+<A HREF="onscripter-beta-20040911.tar.gz">onscripter-beta-20040911.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040909.tar.gz">onscripter-beta-20040909.tar.gz</A>
+<A HREF="onscripter-beta-20040910.tar.gz">onscripter-beta-20040910.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -103,7 +104,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
        <UL>
 	 <LI> <A HREF="#keyboard_shortcut">キーボードショートカットについて</A>
 	 <LI> <A HREF="#option">起動オプションについて</A>
-	 <LI> <A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A>
+	 <LI> <A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A><font color=red>(updated in Sep. 11, 2004)</font>
 	 <LI> <A HREF="#registry">レジストリ読み込みについて</A>
 	 <LI> <A HREF="#dll">DLL 読み込みについて</A>
 	 <LI> <A HREF="#edit_mode">音量及び変数編集モードについて</A>
@@ -139,7 +140,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <H3><A NAME="feature_engine">実行環境としての特徴</A></H3>
 
 <OL>
-  <LI> セーブ・ロードができます。セーブファイルには、互換性維持のためのバージョン番号の入ったヘッダが付きますが、ゲームのスクリプトがある場所に sav というディレクトリがある場合はヘッダ無しのセーブファイルを sav 以下にも同時に作成します。このバージョン番号はセーブファイルのバージョンであり、ONScripter のバージョンとは関係ありません。セーブファイルの構造が変わるとバージョンアップします。読み込みは、ヘッダ付きセーブファイルか、もしくは ONScripter がサポートする最新バージョンのヘッダ無しセーブファイルを読み込むことができます。読み込みは常にアーカイブと同じ場所からなので、他から持ってくる場合にはそこに置いてください。<BR>
+
+  <LI> セーブ・ロードができます。現時点(2004.09.11)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A>を参照してください。<BR>
   <LI> sar, nsa (nbz lzss を含む) アーカイブのデコードを実装しています。<BR>
   <LI> 全ての画面効果（quake 系, 効果番号 1 - 18）を実装しています。<BR>
   <LI> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<BR>
@@ -319,17 +321,17 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <H3><A NAME="save">異なるプラットフォーム上で同時に遊ぶ方法</A></H3>
 
 <P>例えば家では Windows、通勤中は Zaurus、職場では Linux といったよう
-に、同じゲームを別々のプラットフォーム上で同時に進行させるための方法を
-書きます。基本的には、それぞれの環境にゲームのアーカイブをセットアップ
-し、プラットフォームを移る度に ONScripter(もしくは NScripter) の書き出
-すファイルを全てコピーすれば良いのですが、注意点があります。</P>
+に、同じゲームを別々のプラットフォーム上で同時に進行させることができま
+す。基本的には、それぞれの環境にゲームのアーカイブをセットアップし、プ
+ラットフォームを移るたびに ONScripter(もしくは NScripter) の書き出すファ
+イルを全てコピーすればよいのですが、注意点があります。</P>
 
 <P>NScripter もしくは ONScripter が書き出すファイルには次のものがあり
 ます。この内一部のファイルはゲームによっては書き出されませんので、無い
 場合もあります。</P>
 
 <table>
-<tr><th>ファイル</th><th>説明</th></tr>
+<tr><th>書き出しファイル</th><th>説明</th></tr>
 <tr><td><i>archive_path/</i>gloval.sav</td><td>グローバル変数の格納</td></tr>
 <tr><td><i>archive_path/</i>envdata</td><td>環境変数の格納</td></tr>
 <tr><td><i>archive_path/</i>kidoku.dat</td><td>既読テキスト情報の格納</td></tr>
@@ -340,28 +342,49 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td><i>archive_path/</i>その他画像ファイル</td><td>スクリーンショットを画像ファイルとして保存している場合があります。これはゲームによって場所や名前が異なるので、ゲーム毎に対応してください。</td></tr>
 </table>
 
-<h4>ONScripter 環境から ONScripter 環境へ</h4>
-上記のファイルを全てのそのままコピーしてください。<br>
-別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。
+<P>上記のうち save*.dat (以下セーブファイル)の構造については、
+NScripter (ONScripter) のバージョンアップの際に拡張されることがあるた
+め、ONScripter の出力するセーブファイルには、構造識別のためにバージョ
+ン番号の入ったヘッダが付きます。ただし、ゲームのスクリプトがある場所に 
+sav というディレクトリがある場合には、ヘッダ無しのセーブファイルを sav 
+以下にも同時に作成します。このバージョン番号はセーブファイルのバージョ
+ンであり、ONScripter のバージョンとは関係ありません。セーブファイルの
+構造が変わるとバージョンアップします。</P>
 
-<h4>NScripter 環境から ONScripter 環境へ</h4>
-上記のファイルを全て（save*.datを含む）そのままコピーしてください。<br>
+<P>save*.dat の読み込みに関しては、ONScripter は、ヘッダ付きセーブファ
+イルか、もしくは ONScripter がサポートする最新バージョンのヘッダ無しセー
+ブファイルを読み込むことができます。読み込みは常にアーカイブと同じディ
+レクトリからであり、sav/ 以下から読み込むことはありません。</P>
+
+<h4>ONScripter 環境から ONScripter 環境へデータを移動</h4>
+
+上記の書き出しファイルを全てそのままコピーしてください。<br>
+別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。<br>
+
+ONScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)<br>
+ONScripter_dir/sav/save*.dat -> ONScripter_dir/sav/save*.dat<br>
+
+<h4>NScripter 環境から ONScripter 環境へデータを移動</h4>
+
+上記の書き出しファイルを全て（save*.datを含む）そのままコピーしてください。<br>
 さらに save*.dat については、sav というディレクトリ以下にもファイルをコピーしてください。この作業は、後で ONScripter 環境から NScripter 環境にデータを移す場合に必要になります。<br>
+
+NScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)<br>
 NScripter_dir/save*.dat -> ONScripter_dir/sav/save*.dat<br>
 
-<h4>ONScripter 環境から NScripter 環境へ</h4>
-save*.dat を除く上記のファイルを全てのそのままコピーしてください。<br>
+<h4>ONScripter 環境から NScripter 環境へデータを移動</h4>
+save*.dat を除く上記の書き出しファイルを全てそのままコピーしてください。<br>
 
 save*.dat については、sav というディレクトリ以下に生成されたファイルをコピーしてください。<br>
-ONScripter_dir/sav/save*.dat -> NScripter_dir/save*.dat<br>
+ONScripter_dir/* -> NScripter_dir/* (save*.dat を除く上記の書き出しファイルのみ)<br>
+ONScripter_dir/sav/save*.dat -> NScripter_dir/save*.dat <br>
 
 <h4>注意点</h4>
 <UL>
-  <!--<LI>NScripter は、現時点(2003/10/16)で配布されているものを使用してください。これより古いものとは、セーブデータの互換性がありません。-->
-  <LI>NScripter は、現時点(2003/11/29)で配布されているものを使用してください。これより古いものとは、セーブデータの互換性がありません。
+  <LI>NScripter は、現時点(2004/09/11)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
   <LI>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
-  <LI>過去のほぼ全ての NScripter 用のゲームは、上記の最新 NScripter で問題なく遊ぶことができます。したがって、Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の NScripter に差し換えて使ってください。ただし、現時点(2003/10/16)でごく最近出たゲームのスクリプトについては、上記 NScripter が対応してない場合もあります。その場合は、もしかしたらゲーム付属の実行ファイルが ONScripter と互換性があるかもしれません。互換性が無い場合は、ONScripter の Windows バイナリをご使用下さい。
-  <LI>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所に sav というディレクトリを作成しておいてください。
+  <LI>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
+  <LI>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。
 </DIV>
 
 <DIV CLASS="block2">

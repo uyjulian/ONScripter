@@ -79,11 +79,11 @@ int ScriptParser::transmodeCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "transmode: not in the define section" );
 
-    const char *buf = script_h.readLabel();
-    if      ( !strcmp( buf, "leftup" ) )   trans_mode = AnimationInfo::TRANS_TOPLEFT;
-    else if ( !strcmp( buf, "copy" ) )     trans_mode = AnimationInfo::TRANS_COPY;
-    else if ( !strcmp( buf, "alpha" ) )    trans_mode = AnimationInfo::TRANS_ALPHA;
-    else if ( !strcmp( buf, "righttup" ) ) trans_mode = AnimationInfo::TRANS_TOPRIGHT;
+    if      ( script_h.compareString("leftup") )   trans_mode = AnimationInfo::TRANS_TOPLEFT;
+    else if ( script_h.compareString("copy") )     trans_mode = AnimationInfo::TRANS_COPY;
+    else if ( script_h.compareString("alpha") )    trans_mode = AnimationInfo::TRANS_ALPHA;
+    else if ( script_h.compareString("righttup") ) trans_mode = AnimationInfo::TRANS_TOPRIGHT;
+    script_h.readLabel();
 
     return RET_CONTINUE;
 }

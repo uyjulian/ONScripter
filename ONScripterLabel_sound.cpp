@@ -437,7 +437,6 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             SDL_CDStop( cdrom_info );
     }
 
-    mp3save_flag = false;
     if ( mp3_sample ){
         Mix_HookMusic( NULL, NULL );
         SMPEG_stop( mp3_sample );
@@ -449,8 +448,10 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             mp3_buffer = NULL;
         }
     }
-    if ( !continue_flag )
+    if ( !continue_flag ){
         setStr( &music_file_name, NULL );
+        music_play_loop_flag = false;
+    }
 
     if ( midi_info ){
         Mix_HaltMusic();
