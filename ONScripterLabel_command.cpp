@@ -2383,12 +2383,12 @@ int ONScripterLabel::btnCommand()
     src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     if (btndef_info.image_surface &&
-        src_rect.x + button->image_rect.w > btndef_info.image_surface->w * screen_ratio1 / screen_ratio2){
-        button->image_rect.w = btndef_info.image_surface->w * screen_ratio1 / screen_ratio2 - src_rect.x;
+        src_rect.x + button->image_rect.w > btndef_info.image_surface->w){
+        button->image_rect.w = btndef_info.image_surface->w - src_rect.x;
     }
     if (btndef_info.image_surface &&
-        src_rect.y + button->image_rect.h > btndef_info.image_surface->h * screen_ratio1 / screen_ratio2){
-        button->image_rect.h = btndef_info.image_surface->h * screen_ratio1 / screen_ratio2 - src_rect.y;
+        src_rect.y + button->image_rect.h > btndef_info.image_surface->h){
+        button->image_rect.h = btndef_info.image_surface->h - src_rect.y;
     }
     src_rect.w = button->image_rect.w;
     src_rect.h = button->image_rect.h;
