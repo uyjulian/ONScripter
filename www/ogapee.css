@@ -23,7 +23,14 @@ background-color: white;
 P{line-height:1.2em;}
 
 H1{
+margin-left: auto;
+margin-right: auto;
+border-width: 0pt 8pt 1pt 8pt;
+border-color: #0000ff;
+border-style: solid;
+width: 50%;
 text-align: center;
+align: center;
 }
 
 DIV.block{

@@ -448,6 +448,7 @@ void ScriptHandler::parseStr( char **buf )
         parseStr(buf);
         SKIP_SPACE( *buf );
         if ( (*buf)[0] != ')' ) errorAndExit("parseStr: ) is not found.");
+        (*buf)++;
 
         if ( cBR->getAccessFlag( str_string_buffer ) ){
             parseStr(buf);

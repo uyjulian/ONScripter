@@ -278,13 +278,12 @@ size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char
     jpeg_start_decompress(&cinfo);
 
     if ( cinfo.output_width * cinfo.output_height * cinfo.output_components > restored_length ){
-        if ( restored_buffer ) delete[] restored_buffer;
-        restored_buffer = new unsigned char[ cinfo.output_width * cinfo.output_height * cinfo.output_components ];
-        if ( *rescaled_buffer ) delete[] *rescaled_buffer;
-        *rescaled_buffer = new unsigned char[ cinfo.output_width * cinfo.output_height * cinfo.output_components ];
         restored_length = cinfo.output_width * cinfo.output_height * cinfo.output_components;
+        if ( restored_buffer ) delete[] restored_buffer;
+        restored_buffer = new unsigned char[ restored_length ];
+        if ( *rescaled_buffer ) delete[] *rescaled_buffer;
+        *rescaled_buffer = new unsigned char[ restored_length ];
     }
-
     int row_stride = cinfo.output_width * cinfo.output_components;
 
     JSAMPARRAY buf = (*cinfo.mem->alloc_sarray)
@@ -375,9 +374,11 @@ size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char 
 
     size_t total_size = (width2 * byte_per_pixel + width2_pad) * height2 + 54 + color_num*4;
     if ( total_size > restored_length ){
-        if ( *rescaled_buffer ) delete[] *rescaled_buffer;
-        *rescaled_buffer = new unsigned char[ total_size ];
         restored_length = total_size;
+        if ( restored_buffer ) delete[] restored_buffer;
+        restored_buffer = new unsigned char[ restored_length ];
+        if ( *rescaled_buffer ) delete[] *rescaled_buffer;
+        *rescaled_buffer = new unsigned char[ restored_length ];
     }
 
     memcpy( *rescaled_buffer, original_buffer, 54 + color_num*4 );
