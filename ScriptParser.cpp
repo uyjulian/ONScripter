@@ -456,6 +456,7 @@ int ScriptParser::getSystemCallNo( const char *buffer )
     else if ( !strcmp( buffer, "lookback" ) )    return SYSTEM_LOOKBACK;
     else if ( !strcmp( buffer, "windowerase" ) ) return SYSTEM_WINDOWERASE;
     else if ( !strcmp( buffer, "rmenu" ) )       return SYSTEM_MENU;
+    else if ( !strcmp( buffer, "automode" ) )    return SYSTEM_AUTOMODE;
     else if ( !strcmp( buffer, "end" ) )         return SYSTEM_END;
     else{
         printf("Unsupported system call %s\n", buffer );

@@ -177,6 +177,7 @@ protected:
            SYSTEM_WINDOWERASE = 6,
            SYSTEM_MENU        = 7,
            SYSTEM_YESNO       = 8,
+           SYSTEM_AUTOMODE    = 9,
            SYSTEM_END         = 0x20 // used in logical operation
     };
     enum { RET_NOMATCH   = 0,

@@ -197,6 +197,7 @@ public:
     int getenterCommand();
     int getcursorposCommand();
     int getcursorCommand();
+    int getcselstrCommand();
     int getcselnumCommand();
     int gameCommand();
     int fileexistCommand();
@@ -686,6 +687,7 @@ private:
     
     void executeSystemMenu();
     void executeSystemSkip();
+    void executeSystemAutomode();
     void executeSystemReset();
     void executeSystemEnd();
     void executeWindowErase();

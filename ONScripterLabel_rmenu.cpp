@@ -130,6 +130,9 @@ void ONScripterLabel::executeSystemCall()
       case SYSTEM_MENU:
         executeSystemMenu();
         break;
+      case SYSTEM_AUTOMODE:
+        executeSystemAutomode();
+        break;
       case SYSTEM_END:
         executeSystemEnd();
         break;
@@ -210,6 +213,14 @@ void ONScripterLabel::executeSystemSkip()
     skip_flag = true;
     if ( !(shelter_event_mode & WAIT_BUTTON_MODE) )
         shelter_event_mode &= ~WAIT_TIMER_MODE;
+    leaveSystemCall();
+}
+
+void ONScripterLabel::executeSystemAutomode()
+{
+    automode_flag = true;
+    skip_flag = false;
+    printf("systemcall_automode: change to automode\n");
     leaveSystemCall();
 }
 

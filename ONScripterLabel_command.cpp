@@ -319,10 +319,24 @@ int ONScripterLabel::spclclkCommand()
 
 int ONScripterLabel::spbtnCommand()
 {
+    bool cellcheck_flag;
+
+    if ( script_h.isName( "cellcheckspbtn" ) ){
+        cellcheck_flag = true;
+    }
+    else{
+        cellcheck_flag = false;
+    }
+
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
+    if ( cellcheck_flag ){
+        if ( sprite_info[ sprite_no ].num_of_cells < 2 ) return RET_CONTINUE;
+    }
+    else{
+        if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
+    }
 
     ButtonLink *button = new ButtonLink();
     root_button_link.insert( button );
@@ -516,8 +530,6 @@ int ONScripterLabel::selectCommand()
         }
         shortcut_mouse_line = -1;
 
-        skip_flag = false;
-        automode_flag = false;
         int xy[2];
         xy[0] = sentence_font.xy[0];
         xy[1] = sentence_font.xy[1];
@@ -606,6 +618,8 @@ int ONScripterLabel::selectCommand()
             setCurrentLabel( "customsel" );
             return RET_CONTINUE;
         }
+        skip_flag = false;
+        automode_flag = false;
         sentence_font.setXY( xy[0], xy[1] );
 
         flush( refreshMode() );
@@ -1734,6 +1748,25 @@ int ONScripterLabel::getcursorCommand()
     if ( !force_button_shortcut_flag )
         getcursor_flag = true;
     
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getcselstrCommand()
+{
+    script_h.readVariable();
+    script_h.pushVariable();
+
+    int csel_no = script_h.readInt();
+
+    int counter = 0;
+    SelectLink *link = root_select_link.next;
+    while (link){
+        if (csel_no == counter++) break;
+        link = link->next;
+    }
+    if (!link) errorAndExit("getcselstr: no select link");
+    setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, link->text);
+
     return RET_CONTINUE;
 }
 
