@@ -63,12 +63,11 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
 
     /* smoothing */
     if ( byte_per_pixel >= 3 ){
-        /* top-left and top-right pixels are preserved */
-        calcWeightedSum( &tmp_buf, &src_buf, 0, 0, 0, 0, src_total_width, byte_per_pixel );
+        calcWeightedSum( &tmp_buf, &src_buf, 0, 0, mx, my, src_total_width, byte_per_pixel );
         for ( j=1 ; j<src_width-1 ; j++ )
             calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 1, my, src_total_width, byte_per_pixel );
         if ( src_width > 1 )
-            calcWeightedSum( &tmp_buf, &src_buf, 0, 0, 0, 0, src_total_width, byte_per_pixel );
+            calcWeightedSum( &tmp_buf, &src_buf, -1, 0, 0, my, src_total_width, byte_per_pixel );
         tmp_buf += offset;
         src_buf += offset;
 
@@ -118,5 +117,14 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
         }
         for ( j=0 ; j<dst_total_width - dst_width*byte_per_pixel ; j++ )
             *dst_buf++ = 0;
+    }
+
+    /* pixels at the corners are preserved */
+    for ( i=0 ; i<3 ; i++ ){
+        dst_buffer[i] = src_buffer[i];
+        dst_buffer[(dst_width-1)*byte_per_pixel+i] = src_buffer[(src_width-1)*byte_per_pixel+i];
+        dst_buffer[(dst_height-1)*dst_total_width+i] = src_buffer[(src_height-1)*src_total_width+i];
+        dst_buffer[(dst_height-1)*dst_total_width+(dst_width-1)*byte_per_pixel+i] =
+            src_buffer[(src_height-1)*src_total_width+(src_width-1)*byte_per_pixel+i];
     }
 }
