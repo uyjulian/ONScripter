@@ -527,10 +527,10 @@ void ONScripterLabel::setupWaveHeader( unsigned char *buffer, int channels, int 
     header.sample_bit_size[1] = 0;
 
     memcpy( header.chunk_id, "data", 4 );
-    header.data_length[0] = data_length & 0xff;
-    header.data_length[1] = (data_length >> 8) & 0xff;
-    header.data_length[2] = (data_length >> 16) & 0xff;
-    header.data_length[3] = (data_length >> 24) & 0xff;
+    header.data_length[0] = (char)(data_length & 0xff);
+    header.data_length[1] = (char)((data_length >> 8) & 0xff);
+    header.data_length[2] = (char)((data_length >> 16) & 0xff);
+    header.data_length[3] = (char)((data_length >> 24) & 0xff);
 
     memcpy( buffer, &header, sizeof(header) );
 }

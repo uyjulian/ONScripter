@@ -1061,10 +1061,10 @@ void ScriptHandler::saveArrayVariable( FILE *fp )
         for ( i=0 ; i<dim ; i++ ){
             unsigned long ch = av->data[i];
             unsigned char buf[4];
-            buf[3] = (ch>>24) & 0xff;
-            buf[2] = (ch>>16) & 0xff;
-            buf[1] = (ch>>8)  & 0xff;
-            buf[0] = ch & 0xff;
+            buf[3] = (unsigned char)((ch>>24) & 0xff);
+            buf[2] = (unsigned char)((ch>>16) & 0xff);
+            buf[1] = (unsigned char)((ch>>8)  & 0xff);
+            buf[0] = (unsigned char)(ch & 0xff);
             fwrite( &buf, 1, 4, fp );
         }
         av = av->next;

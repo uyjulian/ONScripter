@@ -456,7 +456,8 @@ int ONScripterLabel::init()
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
 
-    for (int i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++) wave_sample[i] = NULL;
+    int i;
+    for (i=0 ; i<ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS ; i++) wave_sample[i] = NULL;
 
     // ----------------------------------------
     // Initialize misc variables
@@ -465,8 +466,9 @@ int ONScripterLabel::init()
 
     trap_dist = NULL;
     texture_buffer = NULL;
+    texture_buffer_size = 0;
 
-    for (int i=0 ; i<MAX_PARAM_NUM ; i++) bar_info[i] = prnum_info[i] = NULL;
+    for (i=0 ; i<MAX_PARAM_NUM ; i++) bar_info[i] = prnum_info[i] = NULL;
 
     initOpenGL();
 
@@ -1006,9 +1008,9 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
 
         if (refresh_mode & REFRESH_OPENGL_MODE){
 #ifdef USE_OPENGL
-            glBlendColor_ptr((float)current_font->window_color[0]/256.0,
-                             (float)current_font->window_color[1]/256.0,
-                             (float)current_font->window_color[2]/256.0,
+            glBlendColor_ptr(current_font->window_color[0]/256.0f,
+                             current_font->window_color[1]/256.0f,
+                             current_font->window_color[2]/256.0f,
                              0.0);
             glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
             drawTexture(effect_src_id, (Rect&)rect, (Rect&)rect);

@@ -677,7 +677,7 @@ private:
     int  system_menu_mode;
 
     int  shelter_event_mode;
-    int  shelter_draw_cursor_flag;
+    bool shelter_draw_cursor_flag;
     struct TextBuffer *cached_text_buffer;
     
     void enterSystemCall();

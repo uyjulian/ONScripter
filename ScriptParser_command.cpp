@@ -673,13 +673,13 @@ int ScriptParser::ifCommand()
         if (script_h.compareString("fchk")){
             script_h.readLabel();
             buf = script_h.readStr();
-            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ));
+            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ) != NULL);
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
             buf = script_h.readStr();
-            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ));
+            f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ) != NULL);
             //printf("lchk %s(%d,%d) ", tmp_string_buffer, script_h.fineAndAddLabelLog( tmp_string_buffer+1, false ), condition_flag );
         }
         else{

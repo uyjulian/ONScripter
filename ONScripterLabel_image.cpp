@@ -623,7 +623,7 @@ void ONScripterLabel::drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &t
 #endif    
 #ifdef USE_OPENGL
     if (alpha >= 0)
-        glColor4f(1.0, 1.0, 1.0, alpha/256.0);
+        glColor4f(1.0, 1.0, 1.0, alpha/256.0f);
 
     glBindTexture(GL_TEXTURE_2D, tex_id);
     

@@ -2023,9 +2023,9 @@ int ONScripterLabel::drawsp2Command()
     glPushMatrix();
     glLoadIdentity() ;
 
-    glTranslatef( x, screen_height-y, 0.0 );
+    glTranslatef( (float)x, (float)(screen_height-y), 0.0 );
     glRotatef( (float)rot, 0.0, 0.0, 1.0 );
-    glScalef( scale_x * 0.01, scale_y * 0.01, 1.0 );
+    glScalef( scale_x * 0.01f, scale_y * 0.01f, 1.0 );
 
     SDL_Rect poly_rect = si.pos;
     poly_rect.x = -si.pos.w/2;
@@ -2085,7 +2085,7 @@ int ONScripterLabel::drawfillCommand()
     int b = script_h.readInt();
 
 #ifdef USE_OPENGL
-    glColor4f(r/256.0, g/256.0, b/256.0, 1.0);
+    glColor4f(r/256.0f, g/256.0f, b/256.0f, 1.0);
     glDisable(GL_TEXTURE_2D);
     Rect rect = {0, 0, screen_width, screen_height};
     drawTexture( effect_src_id, rect, rect, -1 );
@@ -2138,9 +2138,9 @@ int ONScripterLabel::drawbg2Command()
     glPushMatrix();
     glLoadIdentity() ;
 
-    glTranslatef( x, screen_height-y, 0.0 );
+    glTranslatef( (float)x, (float)(screen_height-y), 0.0 );
     glRotatef( (float)rot, 0.0, 0.0, 1.0 );
-    glScalef( scale_x * 0.01, scale_y * 0.01, 1.0 );
+    glScalef( scale_x * 0.01f, scale_y * 0.01f, 1.0 );
     
     SDL_Rect poly_rect = bg_info.pos;
     poly_rect.x = -bg_info.pos.w/2;
