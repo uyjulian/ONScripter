@@ -65,8 +65,6 @@ typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLc
 #define DEFAULT_WM_TITLE "ONScripter"
 #define DEFAULT_WM_ICON  "ONScripter"
 
-#define DEFAULT_FONT_SIZE 26
-
 class ONScripterLabel : public ScriptParser
 {
 public:

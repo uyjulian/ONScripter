@@ -40,6 +40,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#define DEFAULT_FONT_SIZE 26
+
 typedef unsigned char uchar3[3];
 
 class ScriptParser

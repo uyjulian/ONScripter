@@ -42,6 +42,10 @@
 
 DirectReader::DirectReader( char *path, const unsigned char *key_table )
 {
+    file_full_path = NULL;
+    file_sub_path = NULL;
+    file_path_len = 0;
+
     if ( path ){
         archive_path = new char[ strlen(path) + 1 ];
         memcpy( archive_path, path, strlen(path) + 1 );
@@ -68,6 +72,8 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
 
 DirectReader::~DirectReader()
 {
+    if (file_full_path) delete[] file_full_path;
+    if (file_sub_path)  delete[] file_sub_path;
     last_registered_compression_type = root_registered_compression_type.next;
     while ( last_registered_compression_type ){
         RegisteredCompressionType *cur = last_registered_compression_type;
@@ -78,54 +84,63 @@ DirectReader::~DirectReader()
 
 FILE *DirectReader::fopen(const char *path, const char *mode)
 {
-    char *file_name = new char[ strlen(archive_path) + strlen(path) + 1 ];
+    size_t len = strlen(archive_path) + strlen(path) + 1;
+    if (file_path_len < len){
+        file_path_len = len;
+        if (file_full_path) delete[] file_full_path;
+        file_full_path = new char[file_path_len];
+        if (file_sub_path) delete[] file_sub_path;
+        file_sub_path = new char[file_path_len];
+    }
+    sprintf( file_full_path, "%s%s", archive_path, path );
 
-    sprintf( file_name, "%s%s", archive_path, path );
-    FILE *fp = ::fopen( file_name, mode );
-    if ( fp ){
-        delete[] file_name;
-        return fp;
-    }
-    
+    FILE *fp = ::fopen( file_full_path, mode );
+    if (fp) return fp;
+
 #if !defined(WIN32) && !defined(MACOS9)
-    char *p = strrchr( file_name, (char)DELIMITER );
-    if ( !p ){
-        DIR *dp = opendir( "." );
-        if ( dp ){
-            struct dirent *entp;
-            while ( (entp = readdir( dp )) != NULL ){
-                if ( !strcasecmp( file_name, entp->d_name ) ){
-                    fp = ::fopen( entp->d_name, mode );
-                    if ( fp ) break;
-                }
-            }
-            closedir( dp );
+    char *cur_p = NULL;
+    DIR *dp = NULL;
+    len = strlen(archive_path);
+    if (len > 0) dp = opendir(archive_path);
+    else         dp = opendir(".");
+    cur_p = file_full_path+len;
+
+    while(1){
+        if (dp == NULL) return NULL;
+
+        char *delim_p = NULL;
+        while(1){
+            delim_p = strchr( cur_p, (char)DELIMITER );
+            if (delim_p != cur_p) break;
+            cur_p++;
         }
-    }
-    else {
-        int dlen = p - file_name;
-        char *fname = new char[ strlen(file_name) + 1 ];
-        char *fbase = p + 1;
-        strncpy( fname, file_name, dlen );
-        fname[dlen++] = (char)DELIMITER;
-        fname[dlen] = '\0';
-        DIR *dp = opendir( fname );
-        if ( dp ){
-            struct dirent *entp;
-            while ( (entp = readdir( dp )) != NULL ){
-                if ( !strcasecmp( fbase, entp->d_name ) ){
-                    strcat( fname, entp->d_name );
-                    fp = ::fopen( fname, mode );
-                    if ( fp ) break;
-                    fname[dlen] = '\0';
-                }
+        
+        if (delim_p) len = delim_p - cur_p;
+        else         len = strlen(cur_p);
+        memcpy(file_sub_path, cur_p, len);
+        file_sub_path[len] = '\0';
+        
+        struct dirent *entp;
+        while ( (entp = readdir(dp)) != NULL ){
+            if ( !strcasecmp( file_sub_path, entp->d_name ) ){
+                memcpy(cur_p, entp->d_name, len);
+                break;
             }
-            closedir( dp );
         }
-        delete[] fname;
+        closedir( dp );
+
+        if (entp == NULL) return NULL;
+        if (delim_p == NULL) break;
+
+        memcpy(file_sub_path, file_full_path, delim_p-file_full_path);
+        file_sub_path[delim_p-file_full_path]='\0';
+        dp = opendir(file_sub_path);
+
+        cur_p = delim_p+1;
     }
+
+    fp = ::fopen( file_full_path, mode );
 #endif
-    delete[] file_name;
 
     return fp;
 }

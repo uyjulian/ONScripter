@@ -630,6 +630,8 @@ int ScriptParser::itoaCommand()
 
 int ScriptParser::intlimitCommand()
 {
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "intlimit: not in the define section" );
+    
     int no = script_h.readInt();
 
     script_h.num_limit_flag[ no ]  = true;

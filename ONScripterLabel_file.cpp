@@ -47,7 +47,7 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
 {
     char file_name[256];
 
-    script_h.getStringFromInteger( save_file_info.sjis_no, no, 2 );
+    script_h.getStringFromInteger( save_file_info.sjis_no, no, (num_save_file >= 10)?2:1 );
 #if defined(LINUX) || defined(MACOSX)
     sprintf( file_name, "%ssave%d.dat", archive_path, no );
     struct stat buf;

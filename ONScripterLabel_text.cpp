@@ -496,13 +496,14 @@ int ONScripterLabel::textCommand()
             if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
                 if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] == '_' &&
                     !IS_TWO_BYTE(script_h.getStringBuffer()[string_buffer_offset + 1]))
-                    string_buffer_offset += 3;
-                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
                     string_buffer_offset += 2;
+                else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a)
+                    string_buffer_offset++;
             }
             else{
-                string_buffer_offset+=2;
+                string_buffer_offset++;
             }
+            string_buffer_offset++;
         }
         else
             string_buffer_offset++;

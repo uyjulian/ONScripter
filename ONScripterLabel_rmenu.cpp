@@ -26,8 +26,8 @@
 #if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
 #define MESSAGE_SAVE_EXIST "`%s%s    Date %s/%s    Time %s:%s"
 #define MESSAGE_SAVE_EMPTY "`%s%s    ------------------------"
-#define MESSAGE_SAVE_CONFIRM " will be saved. Are you sure?"
-#define MESSAGE_LOAD_CONFIRM " will be loaded. Are you sure?"
+#define MESSAGE_SAVE_CONFIRM "`%s%s will be saved. Are you sure?"
+#define MESSAGE_LOAD_CONFIRM "`%s%s will be loaded. Are you sure?"
 #define MESSAGE_RESET_CONFIRM "`The game will be reset. Are you sure?"
 #define MESSAGE_END_CONFIRM "`Are you sure you want to exit?"
 #define MESSAGE_YES "Yes"
@@ -35,8 +35,8 @@
 #else
 #define MESSAGE_SAVE_EXIST "%s%s　%s月%s日%s時%s分"
 #define MESSAGE_SAVE_EMPTY "%s%s　－－－－－－－－－－－－"
-#define MESSAGE_SAVE_CONFIRM "にセーブします。よろしいですか？"
-#define MESSAGE_LOAD_CONFIRM "をロードします。よろしいですか？"
+#define MESSAGE_SAVE_CONFIRM "%s%sにセーブします。よろしいですか？"
+#define MESSAGE_LOAD_CONFIRM "%s%sをロードします。よろしいですか？"
 #define MESSAGE_RESET_CONFIRM "リセットします。よろしいですか？"
 #define MESSAGE_END_CONFIRM "終了します。よろしいですか？"
 #define MESSAGE_YES "はい"
@@ -284,7 +284,7 @@ void ONScripterLabel::executeSystemLoad()
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
         
-        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13+1;
+        menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
@@ -355,7 +355,7 @@ void ONScripterLabel::executeSystemSave()
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
 
-        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
+        menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
@@ -460,18 +460,20 @@ void ONScripterLabel::executeSystemYesNo()
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
 
-        if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD ){
+        if ( yesno_caller == SYSTEM_SAVE ){
             SaveFileInfo save_file_info;
             searchSaveFile( save_file_info, yesno_selected_file_no );
-            sprintf( name, "%s%s", 
+            sprintf( name, MESSAGE_SAVE_CONFIRM,
                      save_item_name,
                      save_file_info.sjis_no );
         }
-
-        if ( yesno_caller == SYSTEM_SAVE )
-            strcat( name, MESSAGE_SAVE_CONFIRM );
-        else if ( yesno_caller == SYSTEM_LOAD )
-            strcat( name, MESSAGE_LOAD_CONFIRM );
+        else if ( yesno_caller == SYSTEM_LOAD ){
+            SaveFileInfo save_file_info;
+            searchSaveFile( save_file_info, yesno_selected_file_no );
+            sprintf( name, MESSAGE_LOAD_CONFIRM,
+                     save_item_name,
+                     save_file_info.sjis_no );
+        }
         else if ( yesno_caller & SYSTEM_RESET )
             strcpy( name, MESSAGE_RESET_CONFIRM );
         else if ( yesno_caller & SYSTEM_END )

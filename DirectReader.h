@@ -47,6 +47,9 @@ public:
     size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL );
 
 protected:
+    char *file_full_path;
+    char *file_sub_path;
+    size_t file_path_len;
     char *archive_path;
     unsigned char key_table[256];
     bool key_table_flag;
