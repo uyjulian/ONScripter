@@ -23,6 +23,10 @@
 
 #include "ONScripterLabel.h"
 
+#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208)
+#include <iconv.h>
+#endif
+
 #define ONSCRIPTER_VERSION 200
 
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
@@ -2435,6 +2439,19 @@ int ONScripterLabel::captionCommand()
         }
         i++;
     }
+#elif defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
+    iconv_t cd = iconv_open("UTF-8", "SJIS");
+    delete[] buf2;
+    size_t len = strlen(buf)+1;
+    size_t left = len * 2;
+    buf2 = new char[left];
+    const char *buf_p = buf;
+    char *buf2_p = buf2;
+     
+    int ret = iconv(cd, &buf_p, &len, &buf2_p, &left);
+    if(ret == -1) strcpy(buf2,buf);
+     
+    iconv_close(cd);
 #endif
 
     setStr( &wm_title_string, buf2 );

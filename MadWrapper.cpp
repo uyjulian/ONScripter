@@ -2,7 +2,7 @@
  * 
  *  MadWrapper.h - SMPEG compatible wrapper functions for MAD: Mpeg Audio Decoder
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -27,10 +27,14 @@
 #define DEFAULT_AUDIOBUF  4096
 #define INPUT_BUFFER_SIZE       (5*8192)
 
-static unsigned short MadFixedToUshort( mad_fixed_t Fixed )
+static inline unsigned short MadFixedToUshort( mad_fixed_t Fixed )
 {
-	Fixed = Fixed >> (MAD_F_FRACBITS-15);
-	return ((unsigned short)Fixed);
+    if (Fixed >= MAD_F_ONE)
+        Fixed = MAD_F_ONE - 1;
+    else if (Fixed < -MAD_F_ONE)
+        Fixed = -MAD_F_ONE;
+    Fixed = Fixed >> (MAD_F_FRACBITS-15);
+    return ((unsigned short)Fixed);
 }
 
 struct _MAD_WRAPPER{

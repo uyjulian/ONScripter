@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_effect.cpp - Effect executer of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -104,12 +104,12 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     switch ( effect_no ){
       case 0: // Instant display
       case 1: // Instant display
-        //drawEffect( src_rect, src_rect, effect_dst_surface );
+        //drawEffect( &src_rect, &src_rect, effect_dst_surface );
         break;
 
       case 2: // Left shutter
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
@@ -117,13 +117,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             src_rect.y = 0;
             src_rect.w = width;
             src_rect.h = screen_height;
-            drawEffect( src_rect, src_rect, effect_dst_surface );
+            drawEffect(&src_rect, &src_rect, effect_dst_surface);
         }
         break;
 
       case 3: // Right shutter
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
@@ -131,13 +131,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             src_rect.y = 0;
             src_rect.w = width;
             src_rect.h = screen_height;
-            drawEffect( src_rect, src_rect, effect_dst_surface );
+            drawEffect(&src_rect, &src_rect, effect_dst_surface);
         }
         break;
 
       case 4: // Top shutter
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
@@ -145,13 +145,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             src_rect.y = i * EFFECT_STRIPE_WIDTH;
             src_rect.w = screen_width;
             src_rect.h = height;
-            drawEffect( src_rect, src_rect, effect_dst_surface );
+            drawEffect(&src_rect, &src_rect, effect_dst_surface);
         }
         break;
 
       case 5: // Bottom shutter
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
@@ -159,13 +159,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             src_rect.y = i * EFFECT_STRIPE_WIDTH - height - 1;
             src_rect.w = screen_width;
             src_rect.h = height;
-            drawEffect( src_rect, src_rect, effect_dst_surface );
+            drawEffect(&src_rect, &src_rect, effect_dst_surface);
         }
         break;
 
       case 6: // Left curtain
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
@@ -175,14 +175,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                 src_rect.y = 0;
                 src_rect.w = width2;
                 src_rect.h = screen_height;
-                drawEffect( src_rect, src_rect, effect_dst_surface );
+                drawEffect(&src_rect, &src_rect, effect_dst_surface);
             }
         }
         break;
 
       case 7: // Right curtain
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
@@ -193,14 +193,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                 src_rect.y = 0;
                 src_rect.w = width2;
                 src_rect.h = screen_height;
-                drawEffect( src_rect, src_rect, effect_dst_surface );
+                drawEffect(&src_rect, &src_rect, effect_dst_surface);
             }
         }
         break;
 
       case 8: // Top curtain
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
@@ -210,14 +210,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                 src_rect.y = i * EFFECT_STRIPE_CURTAIN_WIDTH;
                 src_rect.w = screen_width;
                 src_rect.h = height2;
-                drawEffect( src_rect, src_rect, effect_dst_surface );
+                drawEffect(&src_rect, &src_rect, effect_dst_surface);
             }
         }
         break;
 
       case 9: // Bottom curtain
 #ifdef USE_OPENGL        
-        drawEffect( src_rect, src_rect, effect_src_surface );
+        drawEffect(&src_rect, &src_rect, effect_src_surface);
 #endif        
         height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
@@ -227,7 +227,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                 src_rect.y = screen_height - i * EFFECT_STRIPE_CURTAIN_WIDTH - height2;
                 src_rect.w = screen_width;
                 src_rect.h = height2;
-                drawEffect( src_rect, src_rect, effect_dst_surface );
+                drawEffect(&src_rect, &src_rect, effect_dst_surface);
             }
         }
         break;
@@ -259,14 +259,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         src_rect.y = dst_rect.y = 0;
         src_rect.w = dst_rect.w = screen_width - width;
         src_rect.h = dst_rect.h = screen_height;
-        drawEffect( dst_rect, src_rect, effect_src_surface );
+        drawEffect(&dst_rect, &src_rect, effect_src_surface);
         
         src_rect.x = screen_width - width - 1;
         dst_rect.x = 0;
         src_rect.y = dst_rect.y = 0;
         src_rect.w = dst_rect.w = width;
         src_rect.h = dst_rect.h = screen_height;
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
 
       case 12: // Right scroll
@@ -276,14 +276,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         src_rect.y = dst_rect.y = 0;
         src_rect.w = dst_rect.w = screen_width - width;
         src_rect.h = dst_rect.h = screen_height;
-        drawEffect( dst_rect, src_rect, effect_src_surface );
+        drawEffect(&dst_rect, &src_rect, effect_src_surface);
 
         src_rect.x = 0;
         dst_rect.x = screen_width - width - 1;
         src_rect.y = dst_rect.y = 0;
         src_rect.w = dst_rect.w = width;
         src_rect.h = dst_rect.h = screen_height;
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
 
       case 13: // Top scroll
@@ -293,14 +293,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.y = width;
         src_rect.w = dst_rect.w = screen_width;
         src_rect.h = dst_rect.h = screen_height - width;
-        drawEffect( dst_rect, src_rect, effect_src_surface );
+        drawEffect(&dst_rect, &src_rect, effect_src_surface);
 
         src_rect.x = dst_rect.x = 0;
         src_rect.y = screen_height - width - 1;
         dst_rect.y = 0;
         src_rect.w = dst_rect.w = screen_width;
         src_rect.h = dst_rect.h = width;
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
 
       case 14: // Bottom scroll
@@ -310,14 +310,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.y = 0;
         src_rect.w = dst_rect.w = screen_width;
         src_rect.h = dst_rect.h = screen_height - width;
-        drawEffect( dst_rect, src_rect, effect_src_surface );
+        drawEffect(&dst_rect, &src_rect, effect_src_surface);
 
         src_rect.x = dst_rect.x = 0;
         src_rect.y = 0;
         dst_rect.y = screen_height - width - 1;
         src_rect.w = dst_rect.w = screen_width;
         src_rect.h = dst_rect.h = width;
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
 
       case 15: // Fade with mask
@@ -365,7 +365,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.y = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
         SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
         
       case (CUSTOM_EFFECT_NO + 1 ): // quakex
@@ -374,14 +374,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.x = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
         dst_rect.y = 0;
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
         
       case (CUSTOM_EFFECT_NO + 2 ): // quake
         dst_rect.x = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         dst_rect.y = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
-        drawEffect( dst_rect, src_rect, effect_dst_surface );
+        drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
     }
 
@@ -427,18 +427,19 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     }
 }
 
-void ONScripterLabel::drawEffect( SDL_Rect &dst_rect, SDL_Rect &src_rect, SDL_Surface *surface )
+void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)
 {
 #ifdef USE_OPENGL
     if (surface == effect_dst_surface)
-        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)src_rect );
+        drawTexture( effect_dst_id, (Rect&)*dst_rect, (Rect&)*src_rect );
     else
-        drawTexture( effect_src_id, (Rect&)dst_rect, (Rect&)src_rect );
+        drawTexture( effect_src_id, (Rect&)*dst_rect, (Rect&)*src_rect );
 #else
     SDL_Rect clipped_rect;
-    if (AnimationInfo::doClipping( &dst_rect, &dirty_rect.bounding_box, &clipped_rect )) return;
-    shiftRect( src_rect, clipped_rect );
-    blitSurface( surface, &src_rect, accumulation_surface, &dst_rect );
+    if (AnimationInfo::doClipping(dst_rect, &dirty_rect.bounding_box, &clipped_rect)) return;
+    if (src_rect != dst_rect)
+        shiftRect(*src_rect, clipped_rect);
+    blitSurface(surface, src_rect, accumulation_surface, dst_rect);
 #endif    
 }
 

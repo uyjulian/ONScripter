@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -537,7 +537,7 @@ private:
     
     int  setEffect( int effect_no );
     int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
-    void drawEffect( SDL_Rect &dst_rect, SDL_Rect &src_rect, SDL_Surface *surface );
+    void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     
     /* ---------------------------------------- */

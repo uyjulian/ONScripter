@@ -864,12 +864,12 @@ int ONScripterLabel::parseLine( )
 #if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
     if (script_h.getStringBuffer()[string_buffer_offset] == ' '){
         char *tmp = strchr(script_h.getStringBuffer()+string_buffer_offset+1, ' ');
-        if (tmp){
-            int len = tmp - script_h.getStringBuffer() - string_buffer_offset - 1;
-            if (len > 0 && sentence_font.isEndOfLine(len/2)){
-                current_text_buffer->addBuffer( 0x0a );
-                sentence_font.newLine();
-            }
+        if (!tmp)
+            tmp = script_h.getStringBuffer() + strlen(script_h.getStringBuffer());
+        int len = tmp - script_h.getStringBuffer() - string_buffer_offset - 1;
+        if (len > 0 && sentence_font.isEndOfLine(len)){
+            current_text_buffer->addBuffer( 0x0a );
+            sentence_font.newLine();
         }
     }
 #endif    

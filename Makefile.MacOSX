@@ -8,10 +8,14 @@ INCS = `sdl-config --cflags` `smpeg-config --cflags`
 
 # without OpenGL
 LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime
+# SDL >= 1.2.8 without OpenGL 
+#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -liconv -framework QuickTime
 DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM
 
 # with OpenGL
 #LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime
+# SDL >= 1.2.8 with OpenGL 
+#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -liconv -framework QuickTime
 #DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM -DUSE_OPENGL
 
 EXESUFFIX =

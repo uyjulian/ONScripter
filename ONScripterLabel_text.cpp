@@ -223,7 +223,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 #endif            
         if ( IS_TWO_BYTE(*str) ){
             /* Kinsoku process */
-            if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )){
+            if (info->isEndOfLine(2) && IS_KINSOKU( str+2 )){
                 info->newLine();
                 for (int i=0 ; i<indent_offset ; i++){
                     sentence_font.advanceCharInHankaku(2);
@@ -625,12 +625,12 @@ int ONScripterLabel::textCommand()
         /* Kinsoku process */
         if (IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2)){
             int i = 2;
-            while (!sentence_font.isEndOfLine(i/2) &&
+            while (!sentence_font.isEndOfLine(i) &&
                    IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + i + 2)){
                 i += 2;
             }
 
-            if (sentence_font.isEndOfLine(i/2)){
+            if (sentence_font.isEndOfLine(i)){
                 current_text_buffer->addBuffer( 0x0a );
                 sentence_font.newLine();
                 for (int i=0 ; i<indent_offset ; i++){

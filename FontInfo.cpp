@@ -150,7 +150,7 @@ void FontInfo::setLineArea(int num)
 
 bool FontInfo::isEndOfLine(int margin)
 {
-    if (xy[tateyoko_mode] + margin*2 >= num_xy[tateyoko_mode]*2) return true;
+    if (xy[tateyoko_mode] + margin >= num_xy[tateyoko_mode]*2) return true;
 
     return false;
 }
