@@ -50,8 +50,7 @@ ScriptHandler::ScriptHandler()
     for ( i=0 ; i<VARIABLE_RANGE ; i++ ){
         num_variables[i] = 0;
         num_limit_flag[i] = false;
-        str_variables[i] = new char[1];
-        str_variables[i][0] = '\0';
+        str_variables[i] = NULL;
     }
 
     last_name_alias = &root_name_alias;
@@ -479,7 +478,10 @@ void ScriptHandler::parseStr( char **buf )
     else if ( **buf == '$' ){
         (*buf)++;
         int no = parseInt(buf);
-        strcpy( str_string_buffer, str_variables[no] );
+        if ( str_variables[no] )
+            strcpy( str_string_buffer, str_variables[no] );
+        else
+            str_string_buffer[0] = '\0';
         current_variable.type = VAR_STR;
         current_variable.var_no = no;
     }

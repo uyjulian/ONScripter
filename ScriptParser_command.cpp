@@ -451,7 +451,7 @@ int ScriptParser::midCommand()
     int start = script_h.readInt();
     int len   = script_h.readInt();
 
-    delete[] script_h.str_variables[no];
+    if ( script_h.str_variables[no] ) delete[] script_h.str_variables[no];
     script_h.str_variables[no] = new char[len+1];
     memcpy( script_h.str_variables[no], save_buf+start, len );
     script_h.str_variables[no][len] = '\0';
@@ -1056,11 +1056,16 @@ int ScriptParser::addCommand()
         const char *buf = script_h.readStr();
         char *tmp_buffer = script_h.str_variables[no];
 
-        script_h.str_variables[ no ] = new char[ strlen( tmp_buffer ) + strlen( buf ) + 1 ];
-        strcpy( script_h.str_variables[ no ], tmp_buffer );
-        strcat( script_h.str_variables[ no ], buf );
-
-        delete[] tmp_buffer;
+        if ( tmp_buffer ){
+            script_h.str_variables[ no ] = new char[ strlen( tmp_buffer ) + strlen( buf ) + 1 ];
+            strcpy( script_h.str_variables[ no ], tmp_buffer );
+            strcat( script_h.str_variables[ no ], buf );
+            delete[] tmp_buffer;
+        }
+        else{
+            script_h.str_variables[ no ] = new char[ strlen( buf ) + 1 ];
+            strcpy( script_h.str_variables[ no ], buf );
+        }
     }
     else errorAndExit( "add: no variable." );
 

@@ -686,7 +686,7 @@ int ONScripterLabel::resetCommand()
 {
     int i;
 
-    for ( i=0 ; i<199 ; i++ ){
+    for ( i=0 ; i<200 ; i++ ){
         script_h.num_variables[i] = 0;
         if ( script_h.str_variables[i] ) delete[] script_h.str_variables[i];
         script_h.str_variables[i] = NULL;
@@ -1436,8 +1436,7 @@ int ONScripterLabel::gameCommand()
     for ( i=0 ; i<200 ; i++ ){
         script_h.num_variables[i] = 0;
         delete[] script_h.str_variables[i];
-        script_h.str_variables[i] = new char[1];
-        script_h.str_variables[i][0] = '\0';
+        script_h.str_variables[i] = NULL;
     }
 
     return RET_JUMP;
@@ -2149,6 +2148,7 @@ int ONScripterLabel::autoclickCommand()
 int ONScripterLabel::amspCommand()
 {
     int no = script_h.readInt();
+    dirty_rect.add( sprite_info[ no ].pos );
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 

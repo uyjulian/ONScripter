@@ -988,7 +988,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     clip_rect.w = dst_surface->w;
     clip_rect.h = dst_surface->h;
 
-    doClipping( &dst_rect, &clip_rect, &clipped_rect );
+    if ( doClipping( &dst_rect, &clip_rect, &clipped_rect ) ) return;
     
     x1 += clipped_rect.x;
     x2 += clipped_rect.x;
@@ -1011,7 +1011,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     
     src1_buffer = (Uint32 *)src1_surface->pixels + src1_surface->w * y1 + x1;
     src2_buffer = (Uint32 *)src2_surface->pixels + src2_surface->w * y2 + x2;
-    dst_buffer  = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;;
+    dst_buffer  = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;
     
     if ( mask_surface && src2_surface != mask_surface ){
         SDL_LockSurface( mask_surface );

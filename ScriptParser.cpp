@@ -546,26 +546,19 @@ void ScriptParser::saveStr( FILE *fp, char *str )
 void ScriptParser::loadStr( FILE *fp, char **str )
 {
     int counter = 0, counter_max = INITIAL_LOAD_STR;
-    char tmp_buffer[INITIAL_LOAD_STR], *p_buffer = tmp_buffer, *p_buffer2;
+    char *p_buffer = new char[counter_max];
     
     while( (p_buffer[ counter++ ] = fgetc( fp )) != '\0' ){
         if ( counter >= counter_max ){
-            p_buffer2 = p_buffer;
+            char *p_buffer2 = p_buffer;
             p_buffer = new char[ counter_max + INITIAL_LOAD_STR ];
             memcpy( p_buffer, p_buffer2, counter_max );
-            if ( counter_max != INITIAL_LOAD_STR ) delete[] p_buffer2;
+            delete[] p_buffer2;
             counter_max += INITIAL_LOAD_STR;
         }
     }
-    if ( *str ) delete[] *str;
-    if ( counter == 1 ){
-        *str = NULL;
-    }
-    else{
-        *str = new char[ counter ];
-        memcpy( *str, p_buffer, counter );
-        if ( counter_max != INITIAL_LOAD_STR ) delete[] p_buffer;
-    }
+    setStr( str, p_buffer );
+    delete[] p_buffer;
 }
 
 void ScriptParser::saveVariables( FILE *fp, int from, int to )
@@ -581,10 +574,6 @@ void ScriptParser::loadVariables( FILE *fp, int from, int to )
     for ( int i=from ; i<to ; i++ ){
         loadInt( fp, &script_h.num_variables[i] );
         loadStr( fp, &script_h.str_variables[i] );
-        if ( script_h.str_variables[i] == NULL ){
-            script_h.str_variables[i] = new char[1];
-            script_h.str_variables[i][0] = '\0';
-        }
     }
 }
 
@@ -606,7 +595,7 @@ void ScriptParser::errorAndExit( const char *str, const char *reason )
 void ScriptParser::setStr( char **dst, const char *src )
 {
     if ( *dst ) delete[] *dst;
-    if ( src ){
+    if ( src && src[0] ){
         *dst = new char[ strlen( src ) + 1 ];
         strcpy( *dst, src );
     }
