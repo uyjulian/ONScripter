@@ -36,9 +36,9 @@ typedef unsigned char uchar3[3];
 class ScriptHandler
 {
 public:
-    enum { END_NONE  = 0,
-           END_COMMA = 1,
-           END_QUAT  = 2
+    enum { END_NONE       = 0,
+           END_COMMA      = 1,
+           END_1BYTE_CHAR = 2
     };
     struct LabelInfo{
         char *name;
@@ -58,55 +58,79 @@ public:
             next = NULL;
             data = NULL;
         };
+        ArrayVariable(const ArrayVariable &av){
+            next = NULL;
+            data = NULL;
+        };
     };
 
-    enum { VAR_NONE,      // text, color, etc.
-           VAR_INT,       // integer variable
-           VAR_INT_CONST, // integer const
-           VAR_STR,       // string variable
-           VAR_STR_CONST, // string const
-           VAR_PTR        // array variable
+    enum { VAR_NONE  = 0,
+           VAR_INT   = 1,  // integer
+           VAR_ARRAY = 2,  // array
+           VAR_STR   = 4,  // string
+           VAR_CONST = 8,  // direct value or alias, not variable
+           VAR_PTR   = 16  // poiter to a variable, e.g. i%0, s%0
     };
     struct VariableInfo{
         int type;
-        int var_no;   // for integer(%), array(?), string($)
+        int var_no;   // for integer(%), array(?), string($) variable
         ArrayVariable array; // for array(?)
     };
 
     ScriptHandler();
     ~ScriptHandler();
     FILE *fopen( const char *path, const char *mode );
+    void setKeyTable( const unsigned char *key_table );
 
+    // basic parser function
+    const char *readToken();
+    const char *readLabel();
+    void readVariable( bool reread_flag=false );
+    const char *readStr();
+    int  readInt();
+    void skipToken();
+
+    // function for string access
+    char *getStringBuffer();
     char *saveStringBuffer();
+    void addStringBuffer( char ch );
+    
+    // function for direct manipulation of script address 
+    char *getCurrent();
+    char *getNext();
+    void setCurrent( char *pos, bool read_flag=false );
+    void pushCurrent( char *pos );
+    void popCurrent();
+
     int  getOffset( char *pos );
     char *getAddress( int offset );
-    char *getCurrent();
-    void setCurrent( char *pos, bool reread_flag=true );
-    int getLineByAddress( char *address );
+    int  getLineByAddress( char *address );
     char *getAddressByLine( int line );
     LabelInfo getLabelByAddress( char *address );
     LabelInfo getLabelByLine( int line );
-    char *getNext();
-    void pushCurrent( char *pos );
-    void popCurrent();
-    char *getStringBuffer();
 
     bool isName( const char *name );
     bool isText();
+    bool compareString( const char *buf );
     void setText( bool val ); // exception: for select command to handle string variables in the second line or below
     int  getEndStatus();
     void skipLine( int no=1 );
     void setLinepage( bool val );
 
+    // function for kidoku history
     bool isKidoku();
     void markAsKidoku( char *address=NULL );
+    void setKidokuskip( bool kidokuskip_flag );
+    void saveKidokuData();
+    void loadKidokuData();
 
-    int  rereadToken();
-    int  readToken();
-    const char *readStr( bool reread_flag=false );
-    int  readInt( bool reread_flag=false );
+    void addStrVariable(char **buf);
+    void addIntVariable(char **buf);
     void declareDim();
-    void skipToken();
+
+    void enableTextgosub(bool val);
+    void setClickstr( int num, const char *list );
+    bool checkClickstr(const char *buf);
 
     void setInt( VariableInfo *var_info, int val, int offset=0 );
     void setNumVariable( int no, int val );
@@ -123,9 +147,6 @@ public:
     LabelInfo lookupLabelNext( const char* label );
     void errorAndExit( char *str );
 
-    void setKidokuskip( bool kidokuskip_flag );
-    void saveKidokuData();
-    void loadKidokuData();
     void saveArrayVariable( FILE *fp );
     void loadArrayVariable( FILE *fp );
     
@@ -179,19 +200,6 @@ private:
            OP_MOD     = 6  // 110
     };
     
-    struct StackInfo{
-        struct StackInfo *next;
-        char *current_script;
-
-        StackInfo(){
-            StackInfo(NULL);
-        };
-        StackInfo( char *current ){
-            next = NULL;
-            current_script = current;
-        };
-    };
-
     struct NameAlias{
         struct NameAlias *next;
         char *alias;
@@ -226,18 +234,16 @@ private:
     };
 
 
-    void addStringBuffer( char ch, int string_counter );
     int findLabel( const char* label );
 
-    int parseInt( char **buf );
-    int parseIntExpression( char **buf );
+    char *checkComma( char *buf );
     void parseStr( char **buf );
-
+    int  parseInt( char **buf );
+    int  parseIntExpression( char **buf );
     void readNextOp( char **buf, int *op, int *num );
-    int calcArithmetic( int num1, int op, int num2 );
-    int decodeArray( char **buf, ArrayVariable &array );
-    int *getArrayPtr( int no, ArrayVariable &array, int offset );
-
+    int  calcArithmetic( int num1, int op, int num2 );
+    int  parseArray( char **buf, ArrayVariable &array );
+    int  *getArrayPtr( int no, ArrayVariable &array, int offset );
 
     /* ---------------------------------------- */
     /* Variable */
@@ -247,11 +253,12 @@ private:
     ArrayVariable *root_array_variable, *current_array_variable;
 
     char *archive_path;
-    int script_buffer_length;
+    int  script_buffer_length;
     char *script_buffer;
     
-    int string_buffer_length;
+    int  string_buffer_length;
     char *string_buffer; // update only be readToken
+    int  string_counter;
     char *saved_string_buffer; // updated only by saveStringBuffer
     char *str_string_buffer; // updated only by readStr
 
@@ -269,14 +276,20 @@ private:
     char *kidoku_buffer;
 
     bool text_flag; // true if the current token is text
-    bool line_head_flag; // true if the current token is the first token of the line
     int  end_status;
     bool linepage_flag;
+    bool textgosub_flag;
+    int  clickstr_num;
+    char *clickstr_list;
 
-    StackInfo root_stack_info, *last_stack_info;
     char *current_script;
     char *next_script;
-    char *stack_script;
+
+    char *pushed_current_script;
+    char *pushed_next_script;
+
+    unsigned char key_table[256];
+    bool key_table_flag;
 };
 
 #endif // __SCRIPT_HANDLER_H__

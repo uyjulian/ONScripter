@@ -45,7 +45,7 @@ typedef unsigned char uchar3[3];
 class ScriptParser
 {
 public:
-    ScriptParser( char *path );
+    ScriptParser( char *path, char *key_exe );
     ~ScriptParser();
 
     int open( char *path );
@@ -77,6 +77,7 @@ public:
     int roffCommand();
     int rmenuCommand();
     int returnCommand();
+    int pretextgosubCommand();
     int numaliasCommand();
     int nsadirCommand();
     int nsaCommand();
@@ -106,6 +107,7 @@ public:
     int gotoCommand();
     int gosubCommand();
     int globalonCommand();
+    int getparamCommand();
     //int gameCommand();
     int forCommand();
     int filelogCommand();
@@ -115,6 +117,7 @@ public:
     int divCommand();
     int dimCommand();
     int defvoicevolCommand();
+    int defsubCommand();
     int defsevolCommand();
     int defmp3volCommand();
     int defaultspeedCommand();
@@ -130,13 +133,23 @@ public:
     int addCommand();
     
 protected:
+    struct UserFuncLUT{
+        struct UserFuncLUT *next;
+        char *command;
+        UserFuncLUT(){
+            next = NULL;
+            command = NULL;
+        };
+        ~UserFuncLUT(){
+            if (command) delete[] command;
+        };
+    } root_user_func, *last_user_func;
+    
     struct LinkLabelInfo{
         struct LinkLabelInfo *previous, *next;
         ScriptHandler::LabelInfo label_info;
         int current_line; // line number in the current label
-        bool textgosub_flag; // Set if the current token is in text line, used when encountered an atmark while textgosub
-        int string_buffer_offset;
-        char *current_script;
+        char *next_script;
 
         LinkLabelInfo(){
             previous = next = NULL;
@@ -155,20 +168,18 @@ protected:
            SYSTEM_YESNO       = 8,
            SYSTEM_END         = 0x20 // used in logical operation
     };
-    enum { RET_COMMENT         = 0,
-           RET_NOMATCH         = 1,
-           RET_CONTINUE        = 2,
-           RET_CONTINUE_NOREAD = 3,
-           RET_SKIP_LINE       = 4,
-           RET_WAIT            = 5,
-           RET_WAIT_NEXT       = 6,
-           RET_WAIT_NOREAD     = 7,
-           RET_JUMP            = 8
+    enum { RET_NOMATCH   = 0,
+           RET_SKIP_LINE = 1,
+           RET_CONTINUE  = 2,
+           RET_WAIT      = 4,
+           RET_NOREAD    = 8,
+           RET_REREAD    = 16
     };
     enum { CLICK_NONE    = 0,
            CLICK_WAIT    = 1,
            CLICK_NEWPAGE = 2,
-           CLICK_IGNORE  = 3
+           CLICK_IGNORE  = 3,
+           CLICK_EOL     = 4
     };
     enum{ NORMAL_MODE, DEFINE_MODE };
     int current_mode;
@@ -182,7 +193,6 @@ protected:
     bool kidokuskip_flag;
     bool kidokumode_flag;
 
-    bool jumpf_flag;
     int z_order;
     bool rmode_flag;
     bool windowback_flag;
@@ -208,7 +218,8 @@ protected:
 
     void setStr( char **dst, const char *src, int num=-1 );
     
-    void gosubReal( const char *label, bool textgosub_flag, char *current );
+    void gosubReal( const char *label, char *next_script );
+    void setCurrentLinkLabel( const char *label );
 
     /* ---------------------------------------- */
     /* Effect related variables */
@@ -253,7 +264,7 @@ protected:
         ScriptHandler::LabelInfo label_info;
         int current_line;
         int offset;
-        char *current_script;
+        char *next_script;
         ScriptHandler::VariableInfo var;
         int to;
         int step;
@@ -402,12 +413,15 @@ protected:
     /* ---------------------------------------- */
     /* System customize related variables */
     char *textgosub_label;
+    char *pretextgosub_label;
 
 protected:
     ScriptHandler script_h;
     
 private:
+    unsigned char *key_table;
 
+    void createKeyTable( const char *key_exe );
 };
 
 #endif // __SCRIPT_PARSER_H__

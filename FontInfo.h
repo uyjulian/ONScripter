@@ -64,6 +64,7 @@ public:
     void setLineArea(int num);
 
     bool isEndOfLine(int margin=0);
+    bool isLineEmpty();
     void advanceChar(int offset=1);
     void addMargin(int margin);
 

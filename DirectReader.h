@@ -32,7 +32,7 @@
 class DirectReader : public BaseReader
 {
 public:
-    DirectReader( char *path=NULL );
+    DirectReader( char *path=NULL, const unsigned char *key_table=NULL );
     ~DirectReader();
 
     int open( char *name=NULL, int archive_type = ARCHIVE_TYPE_NONE );
@@ -48,6 +48,8 @@ public:
 
 protected:
     char *archive_path;
+    unsigned char key_table[256];
+    bool key_table_flag;
     int  getbit_mask;
     struct RegisteredCompressionType{
         RegisteredCompressionType *next;

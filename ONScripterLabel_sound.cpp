@@ -325,11 +325,9 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
 void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
 #if defined(USE_AVIFILE)
-    int i;
-
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
     sprintf( absolute_filename, "%s%s", archive_path, filename );
-    for ( i=0 ; i<strlen( absolute_filename ) ; i++ )
+    for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
         if ( absolute_filename[i] == '/' ||
              absolute_filename[i] == '\\' )
             absolute_filename[i] = DELIMITER;

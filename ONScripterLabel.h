@@ -70,7 +70,7 @@ typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLc
 class ONScripterLabel : public ScriptParser
 {
 public:
-    ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag );
+    ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag, char *default_key_exe );
     ~ONScripterLabel();
 
     bool skip_flag;
@@ -102,7 +102,7 @@ public:
     int systemcallCommand();
     int stopCommand();
     int spstrCommand();
-    int splitstringCommand();
+    int splitCommand();
     int spclclkCommand();
     int spbtnCommand();
     int skipoffCommand();
@@ -198,6 +198,7 @@ public:
     int cselbtnCommand();
     int clickCommand();
     int clCommand();
+    int chvolCommand();
     int cellCommand();
     int captionCommand();
     int btnwait2Command();
@@ -286,8 +287,7 @@ private:
 
     FILE *tmp_save_fp;
     bool saveon_flag;
-    bool internal_saveon_flag;
-    bool shelter_soveon_flag; // used by csel
+    bool internal_saveon_flag; // to saveoff at the head of text
     int yesno_caller;
     int yesno_selected_file_no;
 
@@ -473,6 +473,8 @@ private:
     char *font_file;
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
+    bool draw_cursor_flag;
+    int  textgosub_clickstr_state;
 
     int  refreshMode();
     
@@ -481,6 +483,8 @@ private:
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, SDL_Surface *cache_surface=NULL );
     void refreshText( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode=0 );
     void restoreTextBuffer();
+    int  enterTextDisplayMode();
+    int  leaveTextDisplayMode();
     int  clickWait( char *out_text );
     int  clickNewPage( char *out_text );
     int  textCommand();
@@ -590,7 +594,6 @@ private:
     SDL_Surface *loadImage( char *file_name );
     int parseLine();
     int shiftRect( SDL_Rect &dst, SDL_Rect &clip );
-    int enterTextDisplayMode( int ret_wait = RET_WAIT );
 
     void mouseOverCheck( int x, int y );
     
@@ -639,6 +642,7 @@ private:
     int  system_menu_mode;
 
     int  shelter_event_mode;
+    int  shelter_draw_cursor_flag;
     struct TextBuffer *cached_text_buffer;
     
     void enterSystemCall();

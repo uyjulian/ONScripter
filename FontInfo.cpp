@@ -157,6 +157,13 @@ bool FontInfo::isEndOfLine(int margin)
     return false;
 }
 
+bool FontInfo::isLineEmpty()
+{
+    if (xy[tateyoko_mode] == 0) return true;
+
+    return false;
+}
+
 void FontInfo::advanceChar(int offset)
 {
     xy[tateyoko_mode] += offset;

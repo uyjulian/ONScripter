@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Jun 14, 2004<br>
+Last updated: Sep. 2, 2004<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040614.tar.gz">onscripter-beta-20040614.tar.gz</A>
+<A HREF="onscripter-beta-20040902.tar.gz">onscripter-beta-20040902.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040608.tar.gz">onscripter-beta-20040608.tar.gz</A>
+<A HREF="onscripter-beta-20040614.tar.gz">onscripter-beta-20040614.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -144,6 +144,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <LI> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<BR>
   <LI> 右クリックメニュー（セーブ・ロード・回想・ウィンドウを消す・リセット・スキップ）を実装しています。<BR>
   <LI> カーソル・立ち絵・スプライトのアニメーションを実装しています。<BR>
+  <LI> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<BR>
 </OL>
 
 </DIV>
@@ -225,11 +226,11 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
 
 <OL>
-  <LI> (<FONT color="#ff0000">高</FONT>)defsub を実装する。
+  <LI> (<FONT color="#ff0000">高</FONT>)pretextgosub を実装する。
+  <LI> (<FONT color="#ff0000">高</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
   <LI> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
   <LI> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
   <LI> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
-  <LI> (<FONT color="#00ff00">低</FONT>)skip でマイナス方向にラベルをまたぐと破綻するバグ？を取る。lchk とのからみも考えて調べる。
   <LI> (<FONT color="#00ff00">低</FONT>)コードの clean up。
 </OL>       
 

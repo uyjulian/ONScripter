@@ -40,20 +40,27 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &i ); // 0
     loadInt( fp, &i );
     rmode_flag = (i==1)?true:false;
-    loadInt( fp, &i ); // 0xff
-    loadInt( fp, &i ); // 0xff
-    loadInt( fp, &i ); // 0xff
+    loadInt( fp, &i );
+    sentence_font.color[0] = i;
+    loadInt( fp, &i );
+    sentence_font.color[1] = i;
+    loadInt( fp, &i );
+    sentence_font.color[2] = i;
     cursor_info[0].remove();
     loadStr( fp, &cursor_info[0].image_name );
     if ( cursor_info[0].image_name ){
         parseTaggedString( &cursor_info[0] );
         setupAnimationInfo( &cursor_info[0] );
+        if ( cursor_info[0].image_surface )
+            cursor_info[0 ].visible = true;
     }
     cursor_info[1].remove();
     loadStr( fp, &cursor_info[1].image_name );
     if ( cursor_info[1].image_name ){
         parseTaggedString( &cursor_info[1] );
         setupAnimationInfo( &cursor_info[1] );
+        if ( cursor_info[1].image_surface )
+            cursor_info[1 ].visible = true;
     }
 
     loadInt( fp, &window_effect.effect );
@@ -157,11 +164,9 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     LinkLabelInfo *info = &root_link_label_info;
     while( num_nest > 0 ){
         loadInt( fp, &i );
-        info->current_script = script_h.getAddress( i );
-        info->string_buffer_offset = 0;
-        info->textgosub_flag = false;
-        info->current_line = script_h.getLineByAddress( info->current_script );
-        info->label_info = script_h.getLabelByAddress( info->current_script );
+        info->next_script = script_h.getAddress( i );
+        info->current_line = script_h.getLineByAddress( info->next_script );
+        info->label_info = script_h.getLabelByAddress( info->next_script );
         num_nest--;
 
         info->next = new LinkLabelInfo();
@@ -169,7 +174,6 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
         info = info->next;
     }
     current_link_label_info = info;
-    current_link_label_info->textgosub_flag = false;
     
     loadInt( fp, &i );
     if (i == 1) monocro_flag_new = true;
@@ -344,15 +348,15 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &i );
     current_link_label_info->label_info = script_h.getLabelByLine( i );
     current_link_label_info->current_line = i - current_link_label_info->label_info.start_line;
+    //printf("load %d:%d\n", current_link_label_info->label_info.start_line, current_link_label_info->current_line);
     char *buf = script_h.getAddressByLine( i );
-
+    
     loadInt( fp, &j );
     for ( i=0 ; i<j ; i++ ){
         while( *buf != ':' ) buf++;
         buf++;
     }
     script_h.setCurrent( buf );
-    string_buffer_offset = 0;
 
     fclose(fp);
 
@@ -362,6 +366,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 
     clickstr_state = CLICK_NONE;
     event_mode = 0;//WAIT_SLEEP_MODE;
+    draw_cursor_flag = false;
     
     return 0;
 }
@@ -376,9 +381,9 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
 
     saveInt( fp, 0 );
     saveInt( fp, (rmode_flag)?1:0 );
-    saveInt( fp, 0xff );
-    saveInt( fp, 0xff );
-    saveInt( fp, 0xff );
+    saveInt( fp, sentence_font.color[0] );
+    saveInt( fp, sentence_font.color[1] );
+    saveInt( fp, sentence_font.color[2] );
     saveStr( fp, cursor_info[0].image_name );
     saveStr( fp, cursor_info[1].image_name );
 
@@ -445,7 +450,7 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     saveInt( fp, num_nest );
     info = &root_link_label_info;
     for ( i=0 ; i<num_nest ; i++ ){
-        saveInt( fp, script_h.getOffset( info->current_script ) );
+        saveInt( fp, script_h.getOffset( info->next_script ) );
         info = info->next;
     }
     
@@ -554,12 +559,15 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     }
 
     saveInt( fp, current_link_label_info->label_info.start_line + current_link_label_info->current_line );
-
     char *buf = script_h.getAddressByLine( current_link_label_info->label_info.start_line + current_link_label_info->current_line );
+    //printf("save %d:%d\n", current_link_label_info->label_info.start_line, current_link_label_info->current_line);
+
     i = 0;
-    while( buf != script_h.getCurrent() ){
-        if ( *buf == ':' ) i++;
-        buf++;
+    if (!script_h.isText()){
+        while( buf != script_h.getCurrent() ){
+            if ( *buf == ':' ) i++;
+            buf++;
+        }
     }
     saveInt( fp, i );
 }

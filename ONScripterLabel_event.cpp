@@ -202,9 +202,8 @@ void musicCallback( int sig )
 void ONScripterLabel::trapHandler()
 {
     trap_flag = false;
-    current_link_label_info->label_info = script_h.lookupLabel( trap_dist );
-    current_link_label_info->current_line = 0;
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
+    setCurrentLinkLabel( trap_dist );
+    script_h.readToken();
     string_buffer_offset = 0;
     stopAnimation( clickstr_state );
     event_mode = IDLE_EVENT_MODE;
@@ -803,32 +802,10 @@ void ONScripterLabel::timerEvent( void )
         }
     }
     else if ( event_mode & EFFECT_EVENT_MODE ){
-
-        if ( display_mode & TEXT_DISPLAY_MODE &&
-             erase_text_window_mode != 0 &&
-             strncmp( script_h.getStringBuffer(), "quake", 5 ) ){
-
-            if ( effect_counter == 0 ){
-                next_display_mode = NORMAL_DISPLAY_MODE;
-                refreshSurface( effect_dst_surface, NULL, REFRESH_NORMAL_MODE );
-                dirty_rect_tmp = dirty_rect;
-                dirty_rect.clear();
-                dirty_rect.add( sentence_font_info.pos );
-            }
-            if ( doEffect( WINDOW_EFFECT, NULL, DIRECT_EFFECT_IMAGE ) == RET_CONTINUE ){
-                display_mode = NORMAL_DISPLAY_MODE;
-                effect_counter = 0;
-                event_mode = EFFECT_EVENT_MODE;
-                dirty_rect = dirty_rect_tmp;
-            }
-            advancePhase();
-            return;
-        }
-
         char *current = script_h.getCurrent();
         ret = this->parseLine();
         
-        if ( ret == RET_CONTINUE || ret == RET_CONTINUE_NOREAD){
+        if ( ret & RET_CONTINUE ){
             if ( ret == RET_CONTINUE ){
                 script_h.readToken(); // skip tailing \0 and mark kidoku
                 string_buffer_offset = 0;
@@ -838,6 +815,7 @@ void ONScripterLabel::timerEvent( void )
         }
         else{
             script_h.setCurrent( current );
+            script_h.readToken();
             advancePhase();
         }
         return;

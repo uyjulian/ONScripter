@@ -29,15 +29,13 @@
 
 int ONScripterLabel::setEffect( int effect_no )
 {
-    if ( effect_no == 0 ){
-        return RET_CONTINUE;
-    }
+    if ( effect_no == 0 ) return RET_CONTINUE;
 
     effect_counter = 0;
     event_mode = EFFECT_EVENT_MODE;
     advancePhase();
     
-    return RET_WAIT;
+    return RET_WAIT | RET_REREAD;
 }
 
 int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_image )
@@ -401,11 +399,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
 #ifdef USE_OPENGL            
             glPopMatrix();
             SDL_GL_SwapBuffers();
-#else            
+#else
             flush( REFRESH_NONE_MODE, NULL, false );
 #endif            
         }
-        return RET_WAIT;
+        return RET_WAIT | RET_REREAD;
     }
     else{
         //monocro_flag = false;

@@ -223,7 +223,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
             
             maskrb = (((*src1_buffer & 0xff00ff) * mask1 + 
                        (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
-            mask |= (((*src1_buffer & 0x00ff00) * mask1 + \
+            mask |= (((*src1_buffer & 0x00ff00) * mask1 +
                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
             *dst_buffer = maskrb | mask;
         }

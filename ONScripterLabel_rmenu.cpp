@@ -36,6 +36,8 @@ void ONScripterLabel::enterSystemCall()
     system_menu_enter_flag = true;
     yesno_caller = SYSTEM_NULL;
     next_display_mode = TEXT_DISPLAY_MODE;
+    shelter_draw_cursor_flag = draw_cursor_flag;
+    draw_cursor_flag = false;
 }
 
 void ONScripterLabel::leaveSystemCall( bool restore_flag )
@@ -46,12 +48,14 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         
         current_text_buffer = cached_text_buffer;
         restoreTextBuffer();
+        root_button_link.next = shelter_button_link;
+        root_select_link.next = shelter_select_link;
+
         dirty_rect.fill( screen_width, screen_height );
         flush( refreshMode() );
         
-        root_button_link.next = shelter_button_link;
-        root_select_link.next = shelter_select_link;
         event_mode = shelter_event_mode;
+        draw_cursor_flag = shelter_draw_cursor_flag;
         if ( event_mode & WAIT_BUTTON_MODE ){
             if ( mouse_rotation_mode == MOUSE_ROTATION_NONE ||
                  mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA )
@@ -260,7 +264,7 @@ void ONScripterLabel::executeSystemLoad()
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
         
-        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
+        menu_font.num_xy[0] = strlen(save_item_name)/2+2+13+1;
         menu_font.num_xy[1] = num_save_file+2;
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
@@ -410,11 +414,14 @@ void ONScripterLabel::executeSystemYesNo()
                 leaveSystemCall( false );
                 saveon_flag = true;
                 internal_saveon_flag = true;
+                script_h.readToken();
+                string_buffer_offset = 0;
             }
             else if ( yesno_caller & SYSTEM_RESET ){
-
                 resetCommand();
-                event_mode = WAIT_SLEEP_MODE;
+                script_h.readToken();
+                //event_mode = WAIT_SLEEP_MODE;
+                event_mode = IDLE_EVENT_MODE;
                 leaveSystemCall( false );
             }
             else if ( yesno_caller & SYSTEM_END ){

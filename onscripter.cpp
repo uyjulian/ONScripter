@@ -35,6 +35,7 @@ void optionHelp()
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
+    printf( "      --key-exe file\tuse file (EXE) which contains a key table\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);
@@ -59,6 +60,7 @@ int main( int argc, char **argv )
     char *default_registry = NULL;
     char *default_dll = NULL;
     char *default_archive_path = NULL;
+    char *default_key_exe = NULL;
     bool force_button_shortcut_flag = false;
     bool disable_rescale_flag = false;
     bool edit_flag = false;
@@ -114,6 +116,13 @@ int main( int argc, char **argv )
             else if ( !strcmp( argv[0]+1, "-edit" ) ){
                 edit_flag = true;
             }
+            else if ( !strcmp( argv[0]+1, "-key-exe" ) ){
+                argc--;
+                argv++;
+                if ( default_key_exe ) delete[] default_key_exe;
+                default_key_exe = new char[ strlen( argv[0] ) + 1 ];
+                memcpy( default_key_exe, argv[0], strlen( argv[0] ) + 1 );
+            }
             else{
                 printf(" unknown option %s\n", argv[0] );
             }
@@ -127,7 +136,7 @@ int main( int argc, char **argv )
     
     /* ---------------------------------------- */
     /* Run ONScripter */
-    ONScripterLabel *ons = new ONScripterLabel( cdaudio_flag, default_font, default_registry, default_dll, default_archive_path, force_button_shortcut_flag, disable_rescale_flag, edit_flag );
+    ONScripterLabel *ons = new ONScripterLabel( cdaudio_flag, default_font, default_registry, default_dll, default_archive_path, force_button_shortcut_flag, disable_rescale_flag, edit_flag, default_key_exe );
     ons->eventLoop();
     
     exit(0);

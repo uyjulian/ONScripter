@@ -75,7 +75,7 @@ int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, 
             minimum = anim->duration_list[ anim->current_cell ];
 
         if ( anim->proceedAnimation() )
-            flushDirect( rect, REFRESH_SHADOW_TEXT_MODE | REFRESH_CURSOR_MODE );
+            flushDirect( rect, refreshMode() | (draw_cursor_flag?REFRESH_CURSOR_MODE:0) );
     }
     else{
         if ( minimum == -1 ||
@@ -127,15 +127,15 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
     anim->abs_flag = true;
 
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
-        if (info == NULL) info = &sentence_font;
+        FontInfo f_info = sentence_font;
+        if (info) f_info = *info;
 
-        FontInfo f_info = *info;
-        f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
-        f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
-        f_info.setLineArea( strlen(anim->file_name)/2+1 );
-        f_info.clear();
-
-        if ( anim->font_size_xy[0] >= 0 ){
+        if ( anim->font_size_xy[0] >= 0 ){ // in case of Sprite, not rclick menu
+            f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
+            f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
+            f_info.clear();
+            f_info.setLineArea( strlen(anim->file_name)/2+1 );
+            
             f_info.font_size_xy[0] = f_info.pitch_xy[0] = anim->font_size_xy[0];
             f_info.font_size_xy[1] = f_info.pitch_xy[1] = anim->font_size_xy[1];
             if ( anim->font_pitch >= 0 )
@@ -144,6 +144,11 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
         }
 
         drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
+        if (info != NULL){
+            info->xy[0] = f_info.xy[0];
+            info->xy[1] = f_info.xy[1];
+        }
+        
         surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h,
                                         32, rmask, gmask, bmask, amask );
         SDL_FillRect( surface, NULL, SDL_MapRGBA( surface->format, 0, 0, 0, 0 ) );
@@ -203,8 +208,10 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             anim->trans_mode = AnimationInfo::TRANS_STRING;
             buffer++;
             anim->num_of_cells = 0;
-            if ( buffer[0] == '/' ){
+            if ( *buffer == '/' ){
                 buffer++;
+                script_h.getNext();
+                
                 script_h.pushCurrent( buffer );
                 anim->font_size_xy[0] = script_h.readInt();
                 anim->font_size_xy[1] = script_h.readInt();
@@ -214,13 +221,13 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
                 }
                 buffer = script_h.getNext();
                 script_h.popCurrent();
-                buffer++;
             }
             else{
                 anim->font_size_xy[0] = sentence_font.font_size_xy[0];
                 anim->font_size_xy[1] = sentence_font.font_size_xy[1];
                 anim->font_pitch = sentence_font.pitch_xy[0];
             }
+            if ( *buffer == ';' ) buffer++;
             i=0;
             while( buffer[i] == '#' ){
                 anim->num_of_cells++;

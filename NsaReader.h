@@ -30,7 +30,7 @@
 class NsaReader : public SarReader
 {
 public:
-    NsaReader( char *path=NULL );
+    NsaReader( char *path=NULL, const unsigned char *key_table=NULL );
     ~NsaReader();
 
     int open( char *nsa_path=NULL, int archive_type = ARCHIVE_TYPE_NSA );
@@ -49,6 +49,7 @@ private:
     bool sar_flag;
     struct ArchiveInfo archive_info2[MAX_EXTRA_ARCHIVE];
     int num_of_nsa_archives;
+    char *nsa_archive_ext;
 
     size_t getFileLengthSub( ArchiveInfo *ai, const char *file_name );
 };

@@ -66,6 +66,7 @@ static struct FuncLUT{
     {"roff",    &ScriptParser::roffCommand},
     {"rmenu",    &ScriptParser::rmenuCommand},
     {"return",   &ScriptParser::returnCommand},
+    {"pretextgosub", &ScriptParser::pretextgosubCommand},
     {"numalias", &ScriptParser::numaliasCommand},
     {"nsadir",    &ScriptParser::nsadirCommand},
     {"nsa",    &ScriptParser::nsaCommand},
@@ -109,6 +110,7 @@ static struct FuncLUT{
     {"goto",     &ScriptParser::gotoCommand},
     {"gosub",    &ScriptParser::gosubCommand},
     {"globalon",    &ScriptParser::globalonCommand},
+    {"getparam",    &ScriptParser::getparamCommand},
     //{"game",    &ScriptParser::gameCommand},
     {"for",   &ScriptParser::forCommand},
     {"filelog",   &ScriptParser::filelogCommand},
@@ -118,6 +120,7 @@ static struct FuncLUT{
     {"div",   &ScriptParser::divCommand},
     {"dim",   &ScriptParser::dimCommand},
     {"defvoicevol",   &ScriptParser::defvoicevolCommand},
+    {"defsub",   &ScriptParser::defsubCommand},
     {"defsevol",   &ScriptParser::defsevolCommand},
     {"defmp3vol",   &ScriptParser::defmp3volCommand},
     {"defaultspeed", &ScriptParser::defaultspeedCommand},
@@ -135,7 +138,7 @@ static struct FuncLUT{
     {"", NULL}
 };
 
-ScriptParser::ScriptParser( char *path )
+ScriptParser::ScriptParser( char *path, char *key_exe )
 {
     int i;
     
@@ -156,8 +159,8 @@ ScriptParser::ScriptParser( char *path )
     mode_ext_flag = false;
     rubyon_flag = false;
     
-    string_buffer_offset = 0;
-
+    last_user_func = &root_user_func;
+    
     /* ---------------------------------------- */
     /* Global definitions */
     version_str = new char[strlen(VERSION_STR1)+
@@ -166,7 +169,6 @@ ScriptParser::ScriptParser( char *path )
                           strlen("\n")+
                           +1];
     sprintf( version_str, "%s\n%s\n", VERSION_STR1, VERSION_STR2 );
-    jumpf_flag = false;
     srand( time(NULL) );
     z_order = 25;
     //script_h->end_with_comma_flag = false;
@@ -264,6 +266,7 @@ ScriptParser::ScriptParser( char *path )
     /* ---------------------------------------- */
     /* System customize related variables */
     textgosub_label = NULL;
+    pretextgosub_label = NULL;
 
     effect_blank = 10;
     effect_cut_flag = false;
@@ -278,20 +281,26 @@ ScriptParser::ScriptParser( char *path )
     last_effect_link = &root_effect_link;
     last_effect_link->next = NULL;
 
+    key_table = NULL;
+    if (key_exe){
+        createKeyTable( key_exe );
+        script_h.setKeyTable( key_table );
+    }
+    
     if ( open( path ) ) exit(-1);
     
     script_h.loadLog( ScriptHandler::LABEL_LOG );
     
-    root_link_label_info.label_info = script_h.lookupLabel("define");
-    script_h.setCurrent( root_link_label_info.label_info.start_address );
-    current_link_label_info = &root_link_label_info;
-
     current_mode = DEFINE_MODE;
 
-    script_h.pushCurrent( "effect 1,1" );
+    script_h.setCurrent( "effect 1,1" );
     script_h.readToken();
     effectCommand();
-    script_h.popCurrent();
+
+    current_link_label_info = &root_link_label_info;
+    setCurrentLinkLabel( "define" );
+    script_h.readToken();
+    string_buffer_offset = 0;
 }
 
 ScriptParser::~ScriptParser()
@@ -304,7 +313,7 @@ int ScriptParser::open( char *path )
         archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
         sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
     }
-    script_h.cBR = new DirectReader( archive_path );
+    script_h.cBR = new DirectReader( archive_path, key_table );
     script_h.cBR->open();
     
     if ( script_h.readScript( archive_path ) ) return -1;
@@ -391,16 +400,31 @@ void ScriptParser::readColor( uchar3 *color, const char *buf ){
 
 int ScriptParser::parseLine()
 {
-    int lut_counter = 0;
-
     if ( debug_level > 0 ) printf("ScriptParser::Parseline %s\n", script_h.getStringBuffer() );
 
-    if ( script_h.getStringBuffer()[0] == ';' ) return RET_COMMENT;
+    if ( script_h.getStringBuffer()[0] == ';' ) return RET_CONTINUE;
+    else if ( script_h.getStringBuffer()[0] == '*' ) return RET_CONTINUE;
     else if ( script_h.getStringBuffer()[0] == ':' ) return RET_CONTINUE;
     else if ( script_h.isText() ) return RET_NOMATCH;
 
+    const char *cmd = script_h.getStringBuffer();
+    if (cmd[0] != '_'){
+        UserFuncLUT *uf = root_user_func.next;
+        while( uf ){
+            if ( !strcmp( uf->command, cmd ) ){
+                gosubReal( cmd, script_h.getNext() );
+                return RET_CONTINUE;
+            }
+            uf = uf->next;
+        }
+    }
+    else{
+        cmd++;
+    }
+
+    int lut_counter = 0;
     while( func_lut[ lut_counter ].method ){
-        if ( !strcmp( func_lut[ lut_counter ].command, script_h.getStringBuffer() ) ){
+        if ( !strcmp( func_lut[ lut_counter ].command, cmd ) ){
             return (this->*func_lut[ lut_counter ].method)();
         }
         lut_counter++;
@@ -556,6 +580,13 @@ void ScriptParser::setStr( char **dst, const char *src, int num )
         *dst = NULL;
 }
 
+void ScriptParser::setCurrentLinkLabel( const char *label )
+{
+    current_link_label_info->label_info = script_h.lookupLabel( label );
+    current_link_label_info->current_line = script_h.getLineByAddress( current_link_label_info->label_info.start_address );
+    script_h.setCurrent( current_link_label_info->label_info.start_address );
+}
+
 int ScriptParser::readEffect( EffectLink *effect )
 {
     int num = 1;
@@ -586,4 +617,48 @@ FILE *ScriptParser::fopen(const char *path, const char *mode)
     delete[] file_name;
 
     return fp;
+}
+
+void ScriptParser::createKeyTable( const char *key_exe )
+{
+    key_table = new unsigned char[256];
+
+    int i;
+    for (i=0 ; i<256 ; i++) key_table[i] = i;
+
+    if (!key_exe) return;
+    
+    FILE *fp = ::fopen(key_exe, "rb");
+    if (fp == NULL){
+        fprintf(stderr, "createKeyTable: can't open key exe %s\n", key_exe);
+        return;
+    }
+
+    unsigned char ring_buffer[256];
+    int ring_start = 0, ring_last = 0;
+    
+    int ch, count;
+    while((ch = fgetc(fp)) != EOF){
+        i = ring_start;
+        count = 0;
+        while (i != ring_last &&
+               ring_buffer[i] != ch ){
+            count++;
+            i = (i+1)%256;
+        }
+        if (i == ring_last && count == 255) break;
+        if (i != ring_last)
+            ring_start = (i+1)%256;
+        ring_buffer[ring_last] = ch;
+        ring_last = (ring_last+1)%256;
+    }
+    fclose(fp);
+
+    if (ch == EOF)
+        errorAndExit( "createKeyTable: can't find a key table." );
+
+    // Key table creation
+    ring_buffer[ring_last] = ch;
+    for (i=0 ; i<256 ; i++)
+        key_table[ring_buffer[(ring_start+i)%256]] = i;
 }

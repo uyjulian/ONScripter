@@ -24,8 +24,8 @@
 #include "SarReader.h"
 #define WRITE_LENGTH 4096
 
-SarReader::SarReader( char *path )
-        :DirectReader( path )
+SarReader::SarReader( char *path, const unsigned char *key_table )
+        :DirectReader( path, key_table )
 {
     root_archive_info = last_archive_info = &archive_info;
     num_of_sar_archives = 0;
@@ -81,7 +81,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
         unsigned char ch;
         int count = 0;
 
-        while( (ch = fgetc( ai->file_handle ) ) ){
+        while( (ch = key_table[fgetc( ai->file_handle )] ) ){
             if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
             ai->fi_list[i].name[count++] = ch;
         }
@@ -299,7 +299,9 @@ size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned c
     }
 
     fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
-    return fread( buf, 1, ai->fi_list[i].length, ai->file_handle );
+    size_t ret = fread( buf, 1, ai->fi_list[i].length, ai->file_handle );
+    for (size_t j=0 ; j<ret ; j++) buf[j] = key_table[buf[j]];
+    return ret;
 }
 
 size_t SarReader::getFile( const char *file_name, unsigned char *buf, int *location )

@@ -45,9 +45,8 @@ int ONScripterLabel::waveCommand()
 
     wavestopCommand();
 
-    const char *buf = script_h.readStr();
-    setStr( &wave_file_name, buf );
-    playWave( buf, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
+    setStr( &wave_file_name, script_h.readStr() );
+    playWave( wave_file_name, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
         
     return RET_CONTINUE;
 }
@@ -69,14 +68,14 @@ int ONScripterLabel::waittimerCommand()
     int count = script_h.readInt() + internal_timer - SDL_GetTicks();
     startTimer( count );
     
-    return RET_WAIT_NEXT;
+    return RET_WAIT;
 }
 
 int ONScripterLabel::waitCommand()
 {
     startTimer( script_h.readInt() );
 
-    return RET_WAIT_NEXT;
+    return RET_WAIT;
 }
 
 int ONScripterLabel::vspCommand()
@@ -110,8 +109,7 @@ int ONScripterLabel::vCommand()
 
 int ONScripterLabel::trapCommand()
 {
-    script_h.readToken();
-    const char *buf = script_h.getStringBuffer();
+    const char *buf = script_h.readLabel();
     
     if ( buf[0] == '*' ){
         trap_flag = true;
@@ -168,12 +166,18 @@ int ONScripterLabel::textclearCommand()
 
 int ONScripterLabel::texecCommand()
 {
-    if ( clickstr_state == CLICK_NEWPAGE ){
-        new_line_skip_flag = true;
+    if ( textgosub_clickstr_state == CLICK_NEWPAGE ){
         newPage( true );
         clickstr_state = CLICK_NONE;
     }
-
+    else if ( textgosub_clickstr_state == (CLICK_WAIT | CLICK_EOL) ){
+        if ( !sentence_font.isLineEmpty() &&
+             !new_line_skip_flag ){
+            current_text_buffer->addBuffer( 0x0a );
+            sentence_font.newLine();
+        }
+    }
+    
     return RET_CONTINUE;
 }
 
@@ -186,8 +190,10 @@ int ONScripterLabel::tateyokoCommand()
 
 int ONScripterLabel::talCommand()
 {
-    script_h.readToken();
-    char loc = script_h.getStringBuffer()[0];
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+    
+    char loc = script_h.readLabel()[0];
     int trans = script_h.readInt();
 
     if ( event_mode & EFFECT_EVENT_MODE ){
@@ -220,15 +226,10 @@ int ONScripterLabel::tablegotoCommand()
     int no = script_h.readInt();
 
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-        script_h.readToken();
-        const char *buf = script_h.getStringBuffer();
+        const char *buf = script_h.readLabel();
         if ( count++ == no ){
-            current_link_label_info->label_info = script_h.lookupLabel( buf+1 );
-            current_link_label_info->current_line = 0;
-            script_h.setCurrent( current_link_label_info->label_info.start_address );
-            string_buffer_offset = 0;
-    
-            return RET_JUMP;
+            setCurrentLinkLabel( buf+1 );
+            break;
         }
     }
 
@@ -237,13 +238,11 @@ int ONScripterLabel::tablegotoCommand()
 
 int ONScripterLabel::systemcallCommand()
 {
-    script_h.readToken();
-    system_menu_mode = getSystemCallNo( script_h.getStringBuffer() );
-
+    system_menu_mode = getSystemCallNo( script_h.readLabel() );
     enterSystemCall();
-
     advancePhase();
-    return RET_WAIT_NEXT;
+    
+    return RET_WAIT;
 }
 
 int ONScripterLabel::stopCommand()
@@ -254,25 +253,31 @@ int ONScripterLabel::stopCommand()
     return RET_CONTINUE;
 }
 
-int ONScripterLabel::splitstringCommand()
+int ONScripterLabel::splitCommand()
 {
     script_h.readStr();
     const char *save_buf = script_h.saveStringBuffer();
     
-    const char *buf = script_h.readStr();
-    char delimiter = buf[0];
+    char delimiter = script_h.readStr()[0];
 
     char token[256];
-    while( ScriptHandler::END_COMMA ){
-        script_h.readToken();
-        if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) return RET_CONTINUE;
-        int no = script_h.current_variable.var_no;
+    while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
 
         unsigned int c=0;
         while( save_buf[c] != delimiter && save_buf[c] != '\0' ) c++;
         memcpy( token, save_buf, c );
         token[c] = '\0';
-        setStr( &script_h.str_variables[no], token );
+        
+        script_h.readVariable();
+        if ( script_h.current_variable.type & ScriptHandler::VAR_INT ||
+             script_h.current_variable.type & ScriptHandler::VAR_ARRAY ){
+            script_h.setInt( &script_h.current_variable, atoi(token) );
+        }
+        else if ( script_h.current_variable.type & ScriptHandler::VAR_STR ){
+            setStr( &script_h.str_variables[ script_h.current_variable.var_no ], token );
+        }
+
+        if (save_buf[c] == '\0') return RET_CONTINUE;
         save_buf += c+1;
     }
     
@@ -281,8 +286,7 @@ int ONScripterLabel::splitstringCommand()
 
 int ONScripterLabel::spstrCommand()
 {
-    const char *buf = script_h.readStr();
-    decodeExbtnControl( accumulation_surface, buf );
+    decodeExbtnControl( accumulation_surface, script_h.readStr() );
     
     return RET_CONTINUE;
 }
@@ -415,7 +419,8 @@ int ONScripterLabel::setcursorCommand()
     }
     
     int no = script_h.readInt();
-    const char* buf = script_h.readStr();
+    script_h.readStr();
+    const char* buf = script_h.saveStringBuffer();
     int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
@@ -426,17 +431,15 @@ int ONScripterLabel::setcursorCommand()
 
 int ONScripterLabel::selectCommand()
 {
-    int ret = enterTextDisplayMode( RET_WAIT_NOREAD );
+    int ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
 
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
-    char *p_buf;
 
     if ( script_h.isName( "selnum" ) ){
         select_mode = SELECT_NUM_MODE;
-        p_buf = script_h.getCurrent();
-        script_h.readInt();
+        script_h.readVariable();
         script_h.pushVariable();
     }
     else if ( script_h.isName( "selgosub" ) ){
@@ -450,8 +453,8 @@ int ONScripterLabel::selectCommand()
     }
 
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
-
-        if ( current_button_state.button == 0 ) return RET_WAIT;
+        
+        if ( current_button_state.button == 0 ) return RET_WAIT | RET_REREAD;
         
         if ( selectvoice_file_name[SELECTVOICE_SELECT] )
             playWave( selectvoice_file_name[SELECTVOICE_SELECT], false, DEFAULT_WAVE_CHANNEL );
@@ -468,25 +471,20 @@ int ONScripterLabel::selectCommand()
         }
 
         if ( select_mode  == SELECT_GOTO_MODE ){
-            current_link_label_info->label_info = script_h.lookupLabel( last_select_link->label );
-            current_link_label_info->current_line = 0;
-            script_h.setCurrent( current_link_label_info->label_info.start_address );
-            string_buffer_offset = 0;
-
-            ret = RET_JUMP;
+            setCurrentLinkLabel( last_select_link->label );
+            ret = RET_CONTINUE;
         }
         else if ( select_mode == SELECT_GOSUB_MODE ){
             current_link_label_info->current_line = select_label_info.current_line;
-            string_buffer_offset = 0;
-            gosubReal( last_select_link->label, false, select_label_info.current_script );
+            gosubReal( last_select_link->label, select_label_info.next_script );
 
-            ret = RET_JUMP;
+            ret = RET_CONTINUE;
         }
         else{ // selnum
             script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
             current_link_label_info->current_line = select_label_info.current_line;
-            script_h.setCurrent( select_label_info.current_script );
-            ret = RET_CONTINUE_NOREAD;
+            script_h.setCurrent( select_label_info.next_script );
+            ret = RET_CONTINUE;
         }
         deleteSelectLink();
 
@@ -497,10 +495,8 @@ int ONScripterLabel::selectCommand()
     else{
         bool comma_flag = true;
         if ( select_mode == SELECT_CSEL_MODE ){
-            shelter_soveon_flag = saveon_flag;
             saveoffCommand();
         }
-        SelectLink *link = NULL;
         shortcut_mouse_line = -1;
 
         skip_flag = false;
@@ -514,48 +510,65 @@ int ONScripterLabel::selectCommand()
 
         last_select_link = &root_select_link;
         select_label_info.current_line = current_link_label_info->current_line;
-        script_h.readToken();
-        const char *buf = script_h.getStringBuffer();
-        int count = 0;
-        while(1){
-            //printf("sel [%s] comma %d\n", buf, comma_flag  );
-            if ( buf[0] != 0x0a && comma_flag == true ){
-                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
-                count++;
-                if ( select_mode == SELECT_NUM_MODE || count % 2 ){
-                    buf = script_h.readStr( true );
-                    if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
-                    link = new SelectLink();
-                    setStr( &link->text, buf );
-                    //printf("Select text %s\n", link->text);
-                }
-                if ( select_mode == SELECT_NUM_MODE || !(count % 2) ){
-                    if ( select_mode != SELECT_NUM_MODE )
-                        setStr( &link->label, buf+1 );
-                    //printf("Select label %s\n", link->label );
-                    last_select_link->next = link;
-                    last_select_link = last_select_link->next;
-                }
-                script_h.readToken();
-                buf = script_h.getStringBuffer();
-            }
-            else{
-                if ( select_mode != SELECT_NUM_MODE && (count & 1) == 1 ) errorAndExit( "select: label must be in the same line." );
-                do{
-                    if ( buf[0] == 0x0a || buf[0] == ',' ){
-                        select_label_info.current_line++;
-                        script_h.setText( false );
-                        script_h.readToken();
-                        buf = script_h.getStringBuffer();
-                    }
-                    select_label_info.current_script = script_h.getCurrent();
-                    if ( buf[0] == ',' ){
-                        if ( comma_flag ) errorAndExit( "select: double comma." );
-                        else comma_flag = true;
-                    }
-                } while ( buf[0] == 0x0a || buf[0] == ',' );
 
-                if ( !comma_flag ) break;
+        while(1){
+            if ( script_h.getNext()[0] != 0x0a && comma_flag == true ){
+
+                const char *buf = script_h.readStr();
+                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
+                if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
+
+                // Text part
+                SelectLink *slink = new SelectLink();
+                setStr( &slink->text, buf );
+                //printf("Select text %s\n", slink->text);
+
+                // Label part
+                if (select_mode != SELECT_NUM_MODE){
+                    script_h.readLabel();
+                    setStr( &slink->label, script_h.getStringBuffer()+1 );
+                    //printf("Select label %s\n", slink->label );
+                }
+                last_select_link->next = slink;
+                last_select_link = last_select_link->next;
+
+                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
+                //printf("2 comma %d %c %x\n", comma_flag, script_h.getCurrent()[0], script_h.getCurrent()[0]);
+            }
+            else if (script_h.getNext()[0] == 0x0a){
+                //printf("comma %d\n", comma_flag);
+                char *buf = script_h.getNext() + 1; // consume eol
+                while ( *buf == ' ' || *buf == '\t' ) buf++;
+                
+                if (comma_flag && *buf == ',')
+                    errorAndExit( "select: double comma." );
+
+                bool comma2_flag = false;
+                if (*buf == ','){
+                    comma2_flag = true;
+                    buf++;
+                    while ( *buf == ' ' || *buf == '\t' ) buf++;
+                }
+                script_h.setCurrent(buf);
+                
+                if (*buf == 0x0a){
+                    comma_flag |= comma2_flag;
+                    continue;
+                }
+                
+                if (!comma_flag && !comma2_flag){
+                    select_label_info.next_script = buf;
+                    //printf("select: stop at the end of line\n");
+                    break;
+                }
+
+                //printf("continue\n");
+                comma_flag = true;
+            }
+            else{ // if select ends at the middle of the line
+                select_label_info.next_script = script_h.getNext();
+                //printf("select: stop at the middle of the line\n");
+                break;
             }
         }
 
@@ -574,12 +587,8 @@ int ONScripterLabel::selectCommand()
         }
 
         if ( select_mode == SELECT_CSEL_MODE ){
-            current_link_label_info->label_info = script_h.lookupLabel( "customsel" );
-            current_link_label_info->current_line = 0;
-            script_h.setCurrent( current_link_label_info->label_info.start_address );
-            string_buffer_offset = 0;
-
-            return RET_JUMP;
+            setCurrentLinkLabel( "customsel" );
+            return RET_CONTINUE;
         }
         sentence_font.setXY( xy[0], xy[1] );
 
@@ -590,7 +599,7 @@ int ONScripterLabel::selectCommand()
         advancePhase();
         refreshMouseOverButton();
 
-        return RET_WAIT;
+        return RET_WAIT | RET_REREAD;
     }
 }
 
@@ -598,15 +607,14 @@ int ONScripterLabel::savetimeCommand()
 {
     int no = script_h.readInt();
 
-    script_h.readInt();
-
     SaveFileInfo info;
     searchSaveFile( info, no );
 
+    script_h.readVariable();
     if ( !info.valid ){
         script_h.setInt( &script_h.current_variable, 0 );
         for ( int i=0 ; i<3 ; i++ )
-            script_h.readToken();
+            script_h.readVariable();
         return RET_CONTINUE;
     }
 
@@ -654,9 +662,7 @@ int ONScripterLabel::saveonCommand()
 
 int ONScripterLabel::saveoffCommand()
 {
-    if ( saveon_flag && internal_saveon_flag )
-        saveSaveFile( -1 );
-    
+    if (saveon_flag && internal_saveon_flag) saveSaveFile( -1 ); 
     saveon_flag = false;
 
     return RET_CONTINUE;
@@ -671,7 +677,7 @@ int ONScripterLabel::savegameCommand()
     else{
         shelter_event_mode = event_mode;
         //char *p_buf = script_h.getNext();
-        //script_h.readToken(); // save point is the next token to no
+        //script_h.readLabel(); // save point is the next token to no
         saveSaveFile( no ); 
         //script_h.setCurrent( p_buf, false );
     }
@@ -695,7 +701,7 @@ int ONScripterLabel::savefileexistCommand()
 
 int ONScripterLabel::rndCommand()
 {
-    int  upper, lower;
+    int upper, lower;
     
     if ( script_h.isName( "rnd2" ) ){
         script_h.readInt();
@@ -753,10 +759,7 @@ int ONScripterLabel::resetCommand()
     rubyon_flag    = false;
     
     deleteLabelLink();
-    current_link_label_info->label_info = script_h.lookupLabel( "start" );
-    current_link_label_info->current_line = 0;
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
-    string_buffer_offset = 0;
+    setCurrentLinkLabel( "start" );
     
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     barclearCommand();
@@ -778,7 +781,7 @@ int ONScripterLabel::resetCommand()
 
     dirty_rect.fill( screen_width, screen_height );
 
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::repaintCommand()
@@ -818,7 +821,7 @@ int ONScripterLabel::quakeCommand()
     else{
         dirty_rect.fill( screen_width, screen_height );
         setEffect( 2 ); // 2 is dummy value
-        return RET_WAIT; // RET_WAIT de yoi?
+        return RET_WAIT | RET_REREAD; // RET_WAIT de yoi?
         //return RET_WAIT_NEXT;
     }
 }
@@ -829,11 +832,11 @@ int ONScripterLabel::puttextCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     script_h.readStr();
+    script_h.addStringBuffer(0x0a);
     string_buffer_offset = 0;
     script_h.setText( true );
-    /*line_head_flag = true*/
 
-    return RET_CONTINUE_NOREAD;
+    return RET_CONTINUE | RET_NOREAD;
 }
 
 int ONScripterLabel::prnumclearCommand()
@@ -904,6 +907,9 @@ int ONScripterLabel::prnumCommand()
 
 int ONScripterLabel::printCommand()
 {
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+
     if ( event_mode & EFFECT_EVENT_MODE )
     {
         int num = readEffect( &tmp_effect );
@@ -1082,15 +1088,13 @@ int ONScripterLabel::movemousecursorCommand()
 
 int ONScripterLabel::monocroCommand()
 {
-    script_h.readToken();
-    const char *buf = script_h.getStringBuffer();
-
-    if ( !strcmp( buf, "off" ) ){
+    if ( script_h.compareString( "off" ) ){
+        script_h.readLabel();
         monocro_flag_new = false;
     }
     else{
         monocro_flag_new = true;
-        readColor( &monocro_color_new, buf );
+        readColor( &monocro_color_new, script_h.readStr() );
     }
     need_refresh_flag = true;
 
@@ -1251,16 +1255,21 @@ int ONScripterLabel::loadgameCommand()
         deleteSelectLink();
         key_pressed_flag = false;
         saveon_flag = true;
-        if ( event_mode & WAIT_INPUT_MODE ) return RET_WAIT;
-        return RET_JUMP;
+        
+        script_h.readToken();
+        string_buffer_offset = 0;
+        
+        if ( event_mode & WAIT_INPUT_MODE ) return RET_WAIT | RET_NOREAD;
+        return RET_CONTINUE | RET_NOREAD;
     }
 }
 
 int ONScripterLabel::ldCommand()
 {
-    script_h.readToken();
-    char loc = script_h.getStringBuffer()[0];
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
 
+    char loc = script_h.readLabel()[0];
     const char *buf = script_h.readStr();
     
     if ( event_mode & EFFECT_EVENT_MODE ){
@@ -1292,9 +1301,14 @@ int ONScripterLabel::ldCommand()
 
 int ONScripterLabel::jumpfCommand()
 {
-    jumpf_flag = true;
-    script_h.setKidokuskip( false );
-
+    char *buf = script_h.getNext();
+    while(*buf != '\0' && *buf != '~') buf++;
+    if (*buf == '~') buf++;
+    
+    script_h.setCurrent(buf);
+    current_link_label_info->label_info = script_h.getLabelByAddress(buf);
+    current_link_label_info->current_line = script_h.getLineByAddress(buf);
+    
     return RET_CONTINUE;
 }
 
@@ -1303,17 +1317,16 @@ int ONScripterLabel::jumpbCommand()
     current_link_label_info->label_info = last_tilde.label_info;
     current_link_label_info->current_line = last_tilde.current_line;
 
-    script_h.setCurrent( last_tilde.current_script );
-    string_buffer_offset = 0;
+    script_h.setCurrent( last_tilde.next_script );
 
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::ispageCommand()
 {
     script_h.readInt();
 
-    if ( clickstr_state == CLICK_NEWPAGE )
+    if ( textgosub_clickstr_state == CLICK_NEWPAGE )
         script_h.setInt( &script_h.current_variable, 1 );
     else
         script_h.setInt( &script_h.current_variable, 0 );
@@ -1383,6 +1396,9 @@ int ONScripterLabel::inputCommand()
 
 int ONScripterLabel::humanorderCommand()
 {
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+    
     const char *buf = script_h.readStr();
     int i;
     for ( i=0 ; i<3 ; i++ ){
@@ -1470,8 +1486,8 @@ int ONScripterLabel::gettabCommand()
 
 int ONScripterLabel::getscreenshotCommand()
 {
-    unsigned int w = script_h.readInt();
-    unsigned int h = script_h.readInt();
+    int w = script_h.readInt();
+    int h = script_h.readInt();
     if ( w == 0 ) w = 1;
     if ( h == 0 ) h = 1;
 
@@ -1524,10 +1540,10 @@ int ONScripterLabel::getpageCommand()
 
 int ONScripterLabel::getretCommand()
 {
-    script_h.readToken();
+    script_h.readVariable();
 
     if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
-         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+         script_h.current_variable.type == ScriptHandler::VAR_ARRAY ){
         script_h.setInt( &script_h.current_variable, dll_ret );
     }
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
@@ -1541,7 +1557,7 @@ int ONScripterLabel::getretCommand()
 
 int ONScripterLabel::getregCommand()
 {
-    script_h.readStr();
+    script_h.readVariable();
     
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR ) 
         errorAndExit( "getreg: no string variable." );
@@ -1579,11 +1595,11 @@ int ONScripterLabel::getregCommand()
                         continue;
                     }
                     
-                    script_h.readToken();
-                    if ( script_h.getStringBuffer()[0] != '=' ){
+                    if ( !script_h.compareString("=") ){
                         script_h.popCurrent();
                         continue;
                     }
+                    script_h.setCurrent(script_h.getNext()+1);
 
                     buf = script_h.readStr();
                     setStr( &script_h.str_variables[no], buf );
@@ -1672,11 +1688,8 @@ int ONScripterLabel::getcselnumCommand()
 int ONScripterLabel::gameCommand()
 {
     int i;
-    
-    current_link_label_info->label_info = script_h.lookupLabel( "start" );
-    current_link_label_info->current_line = 0;
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
-    string_buffer_offset = 0;
+
+    setCurrentLinkLabel( "start" );
     current_mode = NORMAL_MODE;
 
     //text_speed_no = 1;
@@ -1732,7 +1745,7 @@ int ONScripterLabel::gameCommand()
         script_h.str_variables[i] = NULL;
     }
 
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::fileexistCommand()
@@ -2108,7 +2121,7 @@ int ONScripterLabel::delayCommand()
         event_mode = WAIT_INPUT_MODE;
         key_pressed_flag = false;
         startTimer( t );
-        return RET_WAIT;
+        return RET_WAIT | RET_REREAD;
     }
 }
 
@@ -2149,17 +2162,12 @@ int ONScripterLabel::cselgotoCommand()
     }
     if ( !link ) errorAndExit( "cselgoto: no select link" );
 
-    current_link_label_info->label_info   = script_h.lookupLabel( link->label );
-    current_link_label_info->current_line = 0;
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
-    string_buffer_offset = 0;
+    setCurrentLinkLabel( link->label );
     
-    saveon_flag = shelter_soveon_flag;
-
     deleteSelectLink();
     newPage( true );
     
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::cselbtnCommand()
@@ -2202,14 +2210,16 @@ int ONScripterLabel::clickCommand()
         skip_flag = false;
         event_mode = WAIT_INPUT_MODE;
         key_pressed_flag = false;
-        return RET_WAIT;
+        return RET_WAIT | RET_REREAD;
     }
 }
 
 int ONScripterLabel::clCommand()
 {
-    script_h.readToken();
-    char loc = script_h.getStringBuffer()[0];
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+    
+    char loc = script_h.readLabel()[0];
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -2233,6 +2243,18 @@ int ONScripterLabel::clCommand()
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
     }
+}
+
+int ONScripterLabel::chvolCommand()
+{
+    int ch  = script_h.readInt();
+    int vol = script_h.readInt();
+
+    if ( wave_sample[ch] ){
+        Mix_Volume( ch, vol * 128 / 100 );
+    }
+    
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::cellCommand()
@@ -2354,10 +2376,26 @@ int ONScripterLabel::btnwaitCommand()
             SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
             decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect );
         }
+
+        ButtonLink *p_button_link = root_button_link.next;
+        while( p_button_link ){
+            p_button_link->show_flag = 0;
+            if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
+                 p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+            }
+            else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
+                p_button_link->show_flag = 1;
+            }
+            else if ( p_button_link->anim[1] != NULL ){
+                p_button_link->show_flag = 2;
+            }
+            p_button_link = p_button_link->next;
+        }
+
         flush( refreshMode() );
 
         flushEvent();
-        event_mode = WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
         refreshMouseOverButton();
 
         if ( btntime_value > 0 ){
@@ -2386,7 +2424,7 @@ int ONScripterLabel::btnwaitCommand()
                 }
             }
         }
-        return RET_WAIT;
+        return RET_WAIT | RET_REREAD;
     }
 }
 
@@ -2411,10 +2449,11 @@ int ONScripterLabel::btndownCommand()
 
 int ONScripterLabel::btndefCommand()
 {
-    script_h.readToken();
-    
-    if (strcmp( script_h.getStringBuffer(), "clear" )){
-        const char *buf = script_h.readStr( true );
+    if (script_h.compareString("clear")){
+        script_h.readLabel();
+    }
+    else{
+        const char *buf = script_h.readStr();
 
         btndef_info.remove();
 
@@ -2486,17 +2525,13 @@ int ONScripterLabel::brCommand()
 
     sentence_font.newLine();
     current_text_buffer->addBuffer( 0x0a );
-    if ( internal_saveon_flag ){
-        internal_saveon_flag = false;
-        saveSaveFile(-1);
-    }
 
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::bltCommand()
 {
-    SDL_Rect src_rect, dst_rect, clip, clipped;
+    SDL_Rect src_rect, dst_rect;
 
     dst_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     dst_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -2519,9 +2554,7 @@ int ONScripterLabel::bltCommand()
 #else        
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 
-        clip.x = clip.y = 0;
-        clip.w = screen_width;
-        clip.h = screen_height;
+        SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
         doClipping( &dst_rect, &clip, &clipped );
         shiftRect( src_rect, clipped );
 
@@ -2540,7 +2573,22 @@ int ONScripterLabel::bltCommand()
 
 int ONScripterLabel::bgCommand()
 {
-    script_h.readToken();
+    int ret = leaveTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+
+    const char *buf;
+    if (script_h.compareString("white")){
+        buf = "white";
+        script_h.readLabel();
+    }
+    else if (script_h.compareString("black")){
+        buf = "black";
+        script_h.readLabel();
+    }
+    else{
+        buf = script_h.readStr();
+        setStr( &bg_info.file_name, buf );
+    }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
         int num = readEffect( &tmp_effect );
@@ -2552,16 +2600,7 @@ int ONScripterLabel::bgCommand()
             tachi_info[i].remove();
 
         bg_info.remove();
-        if ( !strcmp( script_h.getStringBuffer(), "white" ) ){
-            setStr( &bg_info.file_name, "white" );
-        }
-        else if ( !strcmp( script_h.getStringBuffer(), "black" ) ){
-            setStr( &bg_info.file_name, "black" );
-        }
-        else{
-            const char *buf = script_h.readStr( true );
-            setStr( &bg_info.file_name, buf );
-        }
+        setStr( &bg_info.file_name, buf );
 
         createBackground();
         dirty_rect.fill( screen_width, screen_height );

@@ -23,14 +23,19 @@
 
 #include "NsaReader.h"
 #include <string.h>
-#define NSA_ARCHIVE_NAME "arc.nsa"
-#define NSA_ARCHIVE_NAME2 "arc%d.nsa"
+#define NSA_ARCHIVE_NAME "arc"
+#define NSA_ARCHIVE_NAME2 "arc%d"
 
-NsaReader::NsaReader( char *path )
-        :SarReader( path )
+NsaReader::NsaReader( char *path, const unsigned char *key_table )
+        :SarReader( path, key_table )
 {
     sar_flag = true;
     num_of_nsa_archives = 0;
+
+    if (key_table)
+        nsa_archive_ext = "___";
+    else
+        nsa_archive_ext = "nsa";
 }
 
 NsaReader::~NsaReader()
@@ -47,7 +52,7 @@ int NsaReader::open( char *nsa_path, int archive_type )
     sar_flag = false;
     if ( !nsa_path ) nsa_path = "";
 
-    sprintf( archive_name, "%s%s", nsa_path, NSA_ARCHIVE_NAME );
+    sprintf( archive_name, "%s%s.%s", nsa_path, NSA_ARCHIVE_NAME, nsa_archive_ext );
     if ( ( archive_info.file_handle = fopen( archive_name, "rb" ) ) == NULL ){
         fprintf( stderr, "can't open file %s\n", archive_name );
         return -1;
@@ -57,7 +62,7 @@ int NsaReader::open( char *nsa_path, int archive_type )
     
     for ( i=0 ; i<MAX_EXTRA_ARCHIVE ; i++ ){
         sprintf( archive_name2, NSA_ARCHIVE_NAME2, i+1 );
-        sprintf( archive_name, "%s%s", nsa_path, archive_name2 );
+        sprintf( archive_name, "%s%s.%s", nsa_path, archive_name2, nsa_archive_ext );
         if ( ( archive_info2[i].file_handle = fopen( archive_name, "rb" ) ) == NULL ){
             return 0;
         }
@@ -141,7 +146,6 @@ size_t NsaReader::getFileLength( const char *file_name )
 
 size_t NsaReader::getFile( const char *file_name, unsigned char *buffer, int *location )
 {
-    int i;
     size_t ret;
 
     if ( sar_flag ) return SarReader::getFile( file_name, buffer, location );
@@ -153,7 +157,7 @@ size_t NsaReader::getFile( const char *file_name, unsigned char *buffer, int *lo
         return ret;
     }
 
-    for ( i=0 ; i<num_of_nsa_archives ; i++ ){
+    for ( int i=0 ; i<num_of_nsa_archives ; i++ ){
         if ( (ret = getFileSub( &archive_info2[i], file_name, buffer )) ){
             if ( location ) *location = ARCHIVE_TYPE_NSA;
             return ret;

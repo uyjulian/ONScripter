@@ -59,7 +59,8 @@ static struct FuncLUT{
     {"systemcall",   &ONScripterLabel::systemcallCommand},
     {"stop",   &ONScripterLabel::stopCommand},
     {"spstr",   &ONScripterLabel::spstrCommand},
-    {"splitstring",   &ONScripterLabel::splitstringCommand},
+    {"splitstring",   &ONScripterLabel::splitCommand},
+    {"split",   &ONScripterLabel::splitCommand},
     {"spclclk",   &ONScripterLabel::spclclkCommand},
     {"spbtn",   &ONScripterLabel::spbtnCommand},
     {"skipoff",   &ONScripterLabel::skipoffCommand},
@@ -173,6 +174,7 @@ static struct FuncLUT{
     {"csel", &ONScripterLabel::selectCommand},
     {"click", &ONScripterLabel::clickCommand},
     {"cl", &ONScripterLabel::clCommand},
+    {"chvol", &ONScripterLabel::chvolCommand},
     {"cell", &ONScripterLabel::cellCommand},
     {"caption", &ONScripterLabel::captionCommand},
     {"btnwait2", &ONScripterLabel::btnwaitCommand},
@@ -307,8 +309,8 @@ void ONScripterLabel::openAudio()
     }
 }
 
-ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag )
-        :ScriptParser( default_archive_path )
+ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *default_registry, char *default_dll, char *default_archive_path, bool force_button_shortcut_flag, bool disable_rescale_flag, bool edit_flag, char *default_key_exe )
+        :ScriptParser( default_archive_path, default_key_exe )
 {
     int i;
 
@@ -346,8 +348,8 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     disableGetButtonFlag();
     
     tmp_save_fp = NULL;
-    saveon_flag = true; // false while saveoff
-    internal_saveon_flag = true; // false within a sentence
+    saveon_flag = true;
+    internal_saveon_flag = true;
 
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     monocro_flag = monocro_flag_new = false;
@@ -444,7 +446,9 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     new_line_skip_flag = false;
     erase_text_window_mode = 1;
     text_on_flag = true;
-
+    draw_cursor_flag = false;
+    textgosub_clickstr_state = CLICK_NONE;
+    
     resetSentenceFont();
     if ( sentence_font.openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
         fprintf( stderr, "can't open font file: %s\n", font_file );
@@ -621,6 +625,9 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         }
         flush( refreshMode() );
         dirty_rect = dirty;
+        
+        //event_mode |= WAIT_TIMER_MODE;
+        //advancePhase();
     }
     current_over_button = button;
 }
@@ -629,28 +636,25 @@ void ONScripterLabel::executeLabel()
 {
   executeLabelTop:    
 
-    if ( debug_level > 0 )
-        printf("*****  executeLabel %s:%d:%d *****\n",
-               current_link_label_info->label_info.name,
-               current_link_label_info->current_line,
-               string_buffer_offset );
-    int ret;
-
     while ( current_link_label_info->current_line<current_link_label_info->label_info.num_of_lines ){
+        if ( debug_level > 0 )
+            printf("*****  executeLabel %s:%d/%d:%d:%d *****\n",
+                   current_link_label_info->label_info.name,
+                   current_link_label_info->current_line,
+                   current_link_label_info->label_info.num_of_lines,
+                   string_buffer_offset, display_mode );
+        
         const char *s_buf = script_h.getStringBuffer();
         if ( s_buf[string_buffer_offset] == '~' )
         {
             last_tilde.label_info = current_link_label_info->label_info;
             last_tilde.current_line = current_link_label_info->current_line;
-            last_tilde.current_script = script_h.getCurrent();
-
-            if ( jumpf_flag ) jumpf_flag = false;
-            script_h.setKidokuskip( kidokuskip_flag );
+            last_tilde.next_script = script_h.getNext();
 
             script_h.readToken(); string_buffer_offset = 0;
             continue;
         }
-        if ( jumpf_flag || break_flag && strncmp( &s_buf[string_buffer_offset], "next", 4 ) )
+        if ( break_flag && strncmp( &s_buf[string_buffer_offset], "next", 4 ) )
         {
             if ( s_buf[string_buffer_offset] == 0x0a ){
                 current_link_label_info->current_line++;
@@ -659,63 +663,37 @@ void ONScripterLabel::executeLabel()
             continue;
         }
 
-        if ( kidokuskip_flag ){
-            if ( skip_flag && kidokumode_flag && !script_h.isKidoku() ) skip_flag = false;
-            //script_h.markAsKidoku();
-        }
+        if ( kidokuskip_flag && skip_flag && kidokumode_flag && !script_h.isKidoku() ) skip_flag = false;
 
         char *current = script_h.getCurrent();
-        ret = ScriptParser::parseLine();
+        int ret = ScriptParser::parseLine();
         if ( ret == RET_NOMATCH ) ret = this->parseLine();
-
-        s_buf = script_h.getStringBuffer();
-        if ( ret == RET_COMMENT ){
-            script_h.readToken(); string_buffer_offset = 0;
-            continue;
-        }
-        else if ( ret == RET_JUMP ){
-            goto executeLabelTop;
-        }
-        else if ( ret == RET_CONTINUE || ret == RET_CONTINUE_NOREAD ){
-            if ( ret == RET_CONTINUE || s_buf[ string_buffer_offset ] == 0x0a )
-            {
-                if ( s_buf[ string_buffer_offset ] == 0x0a )
-                    current_link_label_info->current_line++;
-                script_h.readToken(); // skip tailing \0 and mark kidoku
-                string_buffer_offset = 0;
-            }
-        }
-        else if ( ret == RET_SKIP_LINE ){
-            current_link_label_info->current_line++;
+        
+        if ( ret & RET_SKIP_LINE ){
             script_h.skipLine();
-            string_buffer_offset = 0;
+            if (++current_link_label_info->current_line >= current_link_label_info->label_info.num_of_lines) break;
         }
-        else if ( ret == RET_WAIT || ret == RET_WAIT_NOREAD ){
-            if ( ret == RET_WAIT )
-                script_h.setCurrent( current );
-            return;
-        }
-        else if ( ret == RET_WAIT_NEXT ){
-            if ( s_buf[ string_buffer_offset ] == 0x0a ){
-                current_link_label_info->current_line++;
+        
+        if ( ret & RET_REREAD ) script_h.setCurrent( current );
+        
+        
+        if (!(ret & RET_NOREAD)){
+            if ( script_h.getStringBuffer()[ string_buffer_offset ] == 0x0a ){
+                if (++current_link_label_info->current_line >= current_link_label_info->label_info.num_of_lines) break;
             }
             script_h.readToken();
             string_buffer_offset = 0;
-            return;
         }
+        
+        if ( ret & RET_WAIT ) return;
     }
 
     current_link_label_info->label_info = script_h.lookupLabelNext( current_link_label_info->label_info.name );
     current_link_label_info->current_line = 0;
 
     if ( current_link_label_info->label_info.start_address != NULL ){
-        if ( kidokuskip_flag ){
-            char *buf = current_link_label_info->label_info.label_header;
-            script_h.markAsKidoku( buf );
-            while( *buf != 0x0a ) buf++;
-            script_h.markAsKidoku( buf );
-        }
-        script_h.setCurrent( current_link_label_info->label_info.start_address );
+        script_h.setCurrent( current_link_label_info->label_info.label_header );
+        script_h.readToken();
         string_buffer_offset = 0;
         goto executeLabelTop;
     }
@@ -726,58 +704,42 @@ int ONScripterLabel::parseLine( )
 {
     int ret, lut_counter = 0;
     const char *s_buf = script_h.getStringBuffer();
+    const char *cmd = script_h.getStringBuffer();
+    if (cmd[0] == '_') cmd++;
 
     if ( !script_h.isText() ){
         while( func_lut[ lut_counter ].method ){
-            if ( !strcmp( func_lut[ lut_counter ].command, s_buf ) ){
+            if ( !strcmp( func_lut[ lut_counter ].command, cmd ) ){
                 return (this->*func_lut[ lut_counter ].method)();
             }
             lut_counter++;
         }
-        
-        if ( s_buf[0] == 'v' && s_buf[0] >= '0' && s_buf[1] <= '9' )
+
+        if ( s_buf[0] == 0x0a )
+            return RET_CONTINUE;
+        else if ( s_buf[0] == 'v' && s_buf[1] >= '0' && s_buf[1] <= '9' )
             return vCommand();
         else if ( s_buf[0] == 'd' && s_buf[1] == 'v' && s_buf[2] >= '0' && s_buf[2] <= '9' )
             return dvCommand();
 
-        if ( s_buf[0] != 0x0a && s_buf[0] != '@' && s_buf[0] != '\\' &&
-             s_buf[0] != '/'  && s_buf[0] != '!' && s_buf[0] != '#'  &&
-             s_buf[0] != '_'  && s_buf[0] != '%' && !(s_buf[0] & 0x80 ) ){
-            fprintf( stderr, " command [%s] is not supported yet!!\n", s_buf );
+        fprintf( stderr, " command [%s] is not supported yet!!\n", s_buf );
 
-            string_buffer_offset = 0;
-            script_h.skipToken();
+        script_h.skipToken();
 
-            return RET_CONTINUE;
-        }
+        return RET_CONTINUE;
     }
 
     /* Text */
-    if ( s_buf[string_buffer_offset] != 0x0a ){
-        if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
-        ret = textCommand();
-    }
-    else{
-        ret = RET_CONTINUE;
-    }
+    if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
+    ret = textCommand();
 
-    if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
-         // for puttext
-         ( script_h.getStringBuffer()[string_buffer_offset] == '\0' && 
-           script_h.getEndStatus() & ScriptHandler::END_QUAT ) ){
-        ret = RET_CONTINUE;
-        if ( !new_line_skip_flag && script_h.isText() ){
-            if (!sentence_font.isEndOfLine()) // otherwise already done in drawChar
-                current_text_buffer->addBuffer( 0x0a );
+    if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ){
+        ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
+        if (!sentence_font.isLineEmpty()){
+            current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
-            if ( internal_saveon_flag ){
-                internal_saveon_flag = false;
-                saveSaveFile(-1);
-            }
         }
-
-        event_mode = IDLE_EVENT_MODE;
-        new_line_skip_flag = false;
+        //event_mode = IDLE_EVENT_MODE;
     }
 
     return ret;
@@ -897,31 +859,6 @@ void ONScripterLabel::deleteSelectLink()
     root_select_link.next = NULL;
 }
 
-int ONScripterLabel::enterTextDisplayMode( int ret_wait )
-{
-    if ( !(display_mode & TEXT_DISPLAY_MODE) ){
-        if ( event_mode & EFFECT_EVENT_MODE ){
-            if ( doEffect( WINDOW_EFFECT, NULL, DIRECT_EFFECT_IMAGE ) == RET_CONTINUE ){
-                display_mode = TEXT_DISPLAY_MODE;
-                text_on_flag = true;
-                return RET_CONTINUE_NOREAD;
-            }
-            return ret_wait;
-        }
-        else{
-            next_display_mode = TEXT_DISPLAY_MODE;
-            refreshSurface( effect_dst_surface, NULL, REFRESH_SHADOW_TEXT_MODE );
-            dirty_rect.add( sentence_font_info.pos );
-
-            int ret = setEffect( window_effect.effect );
-            if ( ret == RET_WAIT_NEXT ) return ret_wait;
-            return ret;
-        }
-    }
-    
-    return RET_NOMATCH;
-}
-
 void ONScripterLabel::clearCurrentTextBuffer()
 {
     sentence_font.clear();
@@ -940,6 +877,7 @@ void ONScripterLabel::clearCurrentTextBuffer()
 
     current_text_buffer->buffer2_count = 0;
     num_chars_in_sentence = 0;
+    internal_saveon_flag = true;
 
     SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
     loadSubTexture( text_surface, text_id );
@@ -1007,7 +945,6 @@ void ONScripterLabel::newPage( bool next_flag )
         }
     }
 
-    internal_saveon_flag = true;
     clearCurrentTextBuffer();
     if ( need_refresh_flag ){
         refreshSurfaceParameters();
@@ -1036,9 +973,6 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
         anim->color_list[0][i] = info->off_color[i];
         anim->color_list[1][i] = info->on_color[i];
     }
-    anim->font_size_xy[0] = info->font_size_xy[0];
-    anim->font_size_xy[1] = info->font_size_xy[1];
-    anim->font_pitch = info->pitch_xy[0];
     setStr( &anim->file_name, buffer );
     anim->pos.x = info->x() * screen_ratio1 / screen_ratio2;
     anim->pos.y = info->y() * screen_ratio1 / screen_ratio2;
@@ -1153,7 +1087,7 @@ void ONScripterLabel::loadEnvData()
     FILE *fp;
     int i;
     
-    if ( (fp = fopen( "envdata", "r" )) != NULL ){
+    if ( (fp = fopen( "envdata", "rb" )) != NULL ){
         loadInt( fp, &i );
         if (i == 1) menu_fullCommand();
         loadInt( fp, &i );
@@ -1185,7 +1119,7 @@ void ONScripterLabel::saveEnvData()
 {
     FILE *fp;
 
-    if ( (fp = fopen( "envdata", "w" )) != NULL ){
+    if ( (fp = fopen( "envdata", "wb" )) != NULL ){
         saveInt( fp, fullscreen_mode?1:0 );
         saveInt( fp, volume_on_flag?1:0 );
         saveInt( fp, text_speed_no );

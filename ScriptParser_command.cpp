@@ -79,8 +79,7 @@ int ScriptParser::transmodeCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "transmode: not in the define section" );
 
-    script_h.readToken();
-    const char *buf = script_h.getStringBuffer();
+    const char *buf = script_h.readLabel();
     if      ( !strcmp( buf, "leftup" ) )   trans_mode = AnimationInfo::TRANS_TOPLEFT;
     else if ( !strcmp( buf, "copy" ) )     trans_mode = AnimationInfo::TRANS_COPY;
     else if ( !strcmp( buf, "alpha" ) )    trans_mode = AnimationInfo::TRANS_ALPHA;
@@ -94,13 +93,13 @@ int ScriptParser::timeCommand()
     time_t t = time(NULL);
     struct tm *tm = localtime( &t );
 
-    script_h.readToken();
+    script_h.readVariable();
     script_h.setInt( &script_h.current_variable, tm->tm_hour );
     
-    script_h.readToken();
+    script_h.readVariable();
     script_h.setInt( &script_h.current_variable, tm->tm_min );
     
-    script_h.readToken();
+    script_h.readVariable();
     script_h.setInt( &script_h.current_variable, tm->tm_sec );
 
     return RET_CONTINUE;
@@ -110,8 +109,8 @@ int ScriptParser::textgosubCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "textgosub: not in the define section" );
 
-    script_h.readToken();
-    setStr( &textgosub_label, script_h.getStringBuffer()+1 );
+    setStr( &textgosub_label, script_h.readLabel()+1 );
+    script_h.enableTextgosub(true);
     
     return RET_CONTINUE;
 }
@@ -131,7 +130,7 @@ int ScriptParser::straliasCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "stralias: not in the define section" );
     
-    script_h.readToken();
+    script_h.readLabel();
     const char *save_buf = script_h.saveStringBuffer();
     const char *buf = script_h.readStr();
     
@@ -144,8 +143,7 @@ int ScriptParser::soundpressplginCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "soundpressplgin: not in the define section" );
 
-    script_h.readStr();
-    const char *buf = script_h.getStringBuffer();
+    const char *buf = script_h.readStr();
     while( *buf != '|' ) buf++;
     buf++;
 
@@ -157,21 +155,15 @@ int ScriptParser::soundpressplginCommand()
 
 int ScriptParser::skipCommand()
 {
-    int skip_num    = script_h.readInt();
-    int skip_offset = current_link_label_info->current_line + skip_num;
+    int line = current_link_label_info->label_info.start_line + current_link_label_info->current_line + script_h.readInt();
 
-    while ( skip_offset >= current_link_label_info->label_info.num_of_lines ){ 
-        skip_offset -= current_link_label_info->label_info.num_of_lines + 1;
-        current_link_label_info->label_info = script_h.lookupLabelNext( current_link_label_info->label_info.name );
-    }
-    if ( skip_offset == -1 ) skip_offset = 0; // -1 indicates a label line
-    current_link_label_info->current_line = skip_offset;
+    char *buf = script_h.getAddressByLine( line );
+    current_link_label_info->label_info = script_h.getLabelByAddress( buf );
+    current_link_label_info->current_line = script_h.getLineByAddress( buf );
     
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
-    script_h.skipLine( current_link_label_info->current_line );
-    string_buffer_offset = 0;
+    script_h.setCurrent( buf );
 
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ScriptParser::shadedistanceCommand()
@@ -189,13 +181,7 @@ int ScriptParser::selectvoiceCommand()
 
     for ( int i=0 ; i<SELECTVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
-        if ( buf[0] != '\0' ){
-            setStr( &selectvoice_file_name[i], buf );
-        }
-        else if ( selectvoice_file_name[i] ){
-            delete selectvoice_file_name[i];
-            selectvoice_file_name[i] = NULL;
-        }
+        setStr( &selectvoice_file_name[i], buf );
     }
 
     return RET_CONTINUE;
@@ -237,18 +223,14 @@ int ScriptParser::rubyonCommand()
 {
     rubyon_flag = true;
 
-    char *tmp_buf = script_h.getCurrent();
-    script_h.readToken();
-    if ( script_h.getStringBuffer()[0] == 0x0a ||
-         script_h.getStringBuffer()[0] == ':' ||
-         script_h.getStringBuffer()[0] == ';' ){
-        script_h.setCurrent( tmp_buf );
+    char *buf = script_h.getNext();
+    if ( buf[0] == 0x0a || buf[0] == ':' || buf[0] == ';' ){
         ruby_struct.font_size_xy[0] = -1;
         ruby_struct.font_size_xy[1] = -1;
         setStr( &ruby_struct.font_name, NULL );
     }
     else{
-        ruby_struct.font_size_xy[0] = script_h.readInt(true);
+        ruby_struct.font_size_xy[0] = script_h.readInt();
         ruby_struct.font_size_xy[1] = script_h.readInt();
 
         if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
@@ -279,13 +261,11 @@ int ScriptParser::roffCommand()
 
 int ScriptParser::rmenuCommand()
 {
-    MenuLink *menu, *link;
-    
     /* ---------------------------------------- */
     /* Delete old MenuLink */
-    link = root_menu_link.next;
+    MenuLink *link = root_menu_link.next;
     while( link ){
-        menu = link->next;
+        MenuLink *menu = link->next;
         if ( link->label ) delete[] link->label;
         delete link;
         link = menu;
@@ -295,23 +275,21 @@ int ScriptParser::rmenuCommand()
     menu_link_num   = 0;
     menu_link_width = 0;
 
-    bool first_flag = true;
-    while ( script_h.getEndStatus() & ScriptHandler::END_COMMA || first_flag ){
-        MenuLink *menu = new MenuLink();
+    bool comma_flag = true;
+    while ( comma_flag ){
+        link->next = new MenuLink();
 
         const char *buf = script_h.readStr();
-        setStr( &menu->label, buf );
-        if ( menu_link_width < strlen( buf ) / 2 )
-            menu_link_width = strlen( buf ) / 2;
+        setStr( &link->next->label, buf );
+        if ( menu_link_width < strlen( buf )/2 + 1 )
+            menu_link_width = strlen( buf )/2 + 1;
 
-        script_h.readToken();
-        menu->system_call_no = getSystemCallNo( script_h.getStringBuffer() );
+        link->next->system_call_no = getSystemCallNo( script_h.readLabel() );
 
-        link->next = menu;
-        link = menu;
+        link = link->next;
         menu_link_num++;
 
-        first_flag = false;
+        comma_flag = script_h.getEndStatus() & ScriptHandler::END_COMMA;
     }
     
     return RET_CONTINUE;
@@ -322,27 +300,30 @@ int ScriptParser::returnCommand()
     if ( current_link_label_info->previous == NULL ) errorAndExit( "return: too many returns" );
     
     current_link_label_info = current_link_label_info->previous;
-
-    script_h.setCurrent( current_link_label_info->current_script );
-    string_buffer_offset = current_link_label_info->string_buffer_offset;
-
-    if ( current_link_label_info->next->textgosub_flag ){
-        if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
-            script_h.setText(true);
-    }
+    script_h.setCurrent( current_link_label_info->next_script );
 
     delete current_link_label_info->next;
     current_link_label_info->next = NULL;
     
-    return RET_JUMP;
+    return RET_CONTINUE;
+}
+
+int ScriptParser::pretextgosubCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "pretextgosub: not in the define section" );
+
+    setStr( &pretextgosub_label, script_h.readLabel()+1 );
+    
+    return RET_CONTINUE;
 }
 
 int ScriptParser::numaliasCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "numalias: numalias: not in the define section" );
 
-    script_h.readToken();
+    script_h.readLabel();
     const char *save_buf = script_h.saveStringBuffer();
+
     int no = script_h.readInt();
     script_h.addNumAlias( save_buf, no );
     
@@ -376,7 +357,7 @@ int ScriptParser::nsaCommand()
     }
     
     delete script_h.cBR;
-    script_h.cBR = new NsaReader( archive_path );
+    script_h.cBR = new NsaReader( archive_path, key_table );
     if ( script_h.cBR->open( nsa_path, archive_type ) ){
         fprintf( stderr, " *** failed to open Nsa archive, continuing ...  ***\n");
     }
@@ -404,17 +385,14 @@ int ScriptParser::nextCommand()
 
         delete current_for_link->next;
         current_for_link->next = NULL;
-
-        return RET_CONTINUE;
     }
     else{
         current_link_label_info->label_info   = current_for_link->label_info;
         current_link_label_info->current_line = current_for_link->current_line;
-        script_h.setCurrent( current_for_link->current_script );
-        string_buffer_offset = 0;
-        
-        return RET_JUMP;
+        script_h.setCurrent( current_for_link->next_script );
     }
+    
+    return RET_CONTINUE;
 }
 
 int ScriptParser::mulCommand()
@@ -430,7 +408,7 @@ int ScriptParser::mulCommand()
 
 int ScriptParser::movCommand()
 {
-    int count, no;
+    int count = 1;
     
     if ( script_h.isName( "mov10" ) ){
         count = 10;
@@ -441,19 +419,16 @@ int ScriptParser::movCommand()
     else if ( script_h.getStringBuffer()[3] >= '3' && script_h.getStringBuffer()[3] <= '9' ){
         count = script_h.getStringBuffer()[3] - '0';
     }
-    else{
-        count = 1;
-    }
 
-    script_h.readToken();
+    script_h.readVariable();
 
     if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
-         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+         script_h.current_variable.type == ScriptHandler::VAR_ARRAY ){
         script_h.pushVariable();
         bool loop_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
         int i=0;
         while ( (count==-1 || i<count) && loop_flag ){
-            no = script_h.readInt();
+            int no = script_h.readInt();
             loop_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
             script_h.setInt( &script_h.pushed_variable, no, i++ );
         }
@@ -504,8 +479,8 @@ int ScriptParser::midCommand()
     
     script_h.readStr();
     const char *save_buf = script_h.saveStringBuffer();
-    int start = script_h.readInt();
-    int len   = script_h.readInt();
+    unsigned int start = script_h.readInt();
+    unsigned int len   = script_h.readInt();
 
     if ( script_h.str_variables[no] ) delete[] script_h.str_variables[no];
     if ( start >= strlen(save_buf) ){
@@ -549,13 +524,7 @@ int ScriptParser::menuselectvoiceCommand()
 
     for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
-        if ( buf [0] != '\0' ){
-            setStr( &menuselectvoice_file_name[i], buf );
-        }
-        else if ( menuselectvoice_file_name[i] ){
-            delete menuselectvoice_file_name[i];
-            menuselectvoice_file_name[i] = NULL;
-        }
+        setStr( &menuselectvoice_file_name[i], buf );
     }
 
     return RET_CONTINUE;
@@ -578,7 +547,6 @@ int ScriptParser::menuselectcolorCommand()
 int ScriptParser::maxkaisoupageCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "maxkaisoupage: not in the define section" );
-
     max_text_buffer = script_h.readInt();
 
     return RET_CONTINUE;
@@ -642,7 +610,7 @@ int ScriptParser::kidokumodeCommand()
 
 int ScriptParser::itoaCommand()
 {
-    script_h.readStr();
+    script_h.readVariable();
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
         errorAndExit( "itoa: no string variable." );
     int no = script_h.current_variable.var_no;
@@ -677,91 +645,106 @@ int ScriptParser::incCommand()
 
 int ScriptParser::ifCommand()
 {
-    int left_value, right_value;
+    //printf("ifCommand\n");
     bool if_flag, condition_flag = true, f = false;
-    char *tmp_buffer;
+    char *op_buf;
+    const char *buf;
 
     if ( script_h.isName( "notif" ) )
         if_flag = false;
     else
         if_flag = true;
 
-    script_h.readToken();
-
     while(1){
-        if ( script_h.getStringBuffer()[0] == 'f' ){ // fchk
-            const char *buf = script_h.readStr();
+        if (script_h.compareString("fchk")){
+            script_h.readLabel();
+            buf = script_h.readStr();
             f = (script_h.findAndAddLog( ScriptHandler::FILE_LOG, buf, false ));
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
-        else if ( script_h.getStringBuffer()[0] == 'l' ){ // lchk
-            script_h.readToken();
-            const char *buf = script_h.getStringBuffer();
+        else if (script_h.compareString("lchk")){
+            script_h.readLabel();
+            buf = script_h.readStr();
             f = (script_h.findAndAddLog( ScriptHandler::LABEL_LOG, buf+1, false ));
             //printf("lchk %s(%d,%d) ", tmp_string_buffer, script_h.fineAndAddLabelLog( tmp_string_buffer+1, false ), condition_flag );
         }
-        else if ( script_h.current_variable.type == ScriptHandler::VAR_STR || 
-                  script_h.current_variable.type == ScriptHandler::VAR_STR_CONST ){
-            const char *buf = script_h.readStr( true ); // reread
-            tmp_buffer = new char[ strlen(buf) + 1 ];
-            strcpy( tmp_buffer, buf );
-            
-            script_h.readToken();
-            const char *save_buf = script_h.saveStringBuffer();
-
-            buf = script_h.readStr();
-
-            int val = strcmp( tmp_buffer, buf );
-            if      ( !strcmp( save_buf, ">=" ) ) f = (val >= 0);
-            else if ( !strcmp( save_buf, "<=" ) ) f = (val <= 0);
-            else if ( !strcmp( save_buf, "==" ) ) f = (val == 0);
-            else if ( !strcmp( save_buf, "!=" ) ) f = (val != 0);
-            else if ( !strcmp( save_buf, "<>" ) ) f = (val != 0);
-            else if ( !strcmp( save_buf, "<" ) )  f = (val <  0);
-            else if ( !strcmp( save_buf, ">" ) )  f = (val >  0);
-            else if ( !strcmp( save_buf, "=" ) )  f = (val == 0);
-
-            delete[] tmp_buffer;
-        }
         else{
-            left_value = script_h.readInt( true );
-            //printf("left (%d) ", left_value );
+            int no = script_h.readInt();
+            if (script_h.current_variable.type & ScriptHandler::VAR_INT ||
+                script_h.current_variable.type & ScriptHandler::VAR_ARRAY){
+                int left_value = no;
+                //printf("left (%d) ", left_value );
 
-            script_h.readToken();
-            const char *save_buf = script_h.saveStringBuffer();
-            //printf("op %s ", save_buf );
+                op_buf = script_h.getNext();
+                if ( (op_buf[0] == '>' && op_buf[1] == '=') ||
+                     (op_buf[0] == '<' && op_buf[1] == '=') ||
+                     (op_buf[0] == '=' && op_buf[1] == '=') ||
+                     (op_buf[0] == '!' && op_buf[1] == '=') ||
+                     (op_buf[0] == '<' && op_buf[1] == '>') )
+                    script_h.setCurrent(op_buf+2);
+                else if ( op_buf[0] == '<' ||
+                          op_buf[0] == '>' ||
+                          op_buf[0] == '=' )
+                    script_h.setCurrent(op_buf+1);
+                //printf("current %c%c ", op_buf[0], op_buf[1] );
 
-            right_value = script_h.readInt();
-            //printf("right (%d) ", right_value );
+                int right_value = script_h.readInt();
+                //printf("right (%d) ", right_value );
 
-            if      ( !strcmp( save_buf, ">=" ) ) f = (left_value >= right_value);
-            else if ( !strcmp( save_buf, "<=" ) ) f = (left_value <= right_value);
-            else if ( !strcmp( save_buf, "==" ) ) f = (left_value == right_value);
-            else if ( !strcmp( save_buf, "!=" ) ) f = (left_value != right_value);
-            else if ( !strcmp( save_buf, "<>" ) ) f = (left_value != right_value);
-            else if ( !strcmp( save_buf, "<" ) )  f = (left_value <  right_value);
-            else if ( !strcmp( save_buf, ">" ) )  f = (left_value >  right_value);
-            else if ( !strcmp( save_buf, "=" ) )  f = (left_value == right_value);
+                if      (op_buf[0] == '>' && op_buf[1] == '=') f = (left_value >= right_value);
+                else if (op_buf[0] == '<' && op_buf[1] == '=') f = (left_value <= right_value);
+                else if (op_buf[0] == '=' && op_buf[1] == '=') f = (left_value == right_value);
+                else if (op_buf[0] == '!' && op_buf[1] == '=') f = (left_value != right_value);
+                else if (op_buf[0] == '<' && op_buf[1] == '>') f = (left_value != right_value);
+                else if (op_buf[0] == '<')                     f = (left_value <  right_value);
+                else if (op_buf[0] == '>')                     f = (left_value >  right_value);
+                else if (op_buf[0] == '=')                     f = (left_value == right_value);
+            }
+            else{
+                script_h.setCurrent(script_h.getCurrent());
+                buf = script_h.readStr();
+                const char *save_buf = script_h.saveStringBuffer();
+
+                op_buf = script_h.getNext();
+
+                if ( (op_buf[0] == '>' && op_buf[1] == '=') ||
+                     (op_buf[0] == '<' && op_buf[1] == '=') ||
+                     (op_buf[0] == '=' && op_buf[1] == '=') ||
+                     (op_buf[0] == '!' && op_buf[1] == '=') ||
+                     (op_buf[0] == '<' && op_buf[1] == '>') )
+                    script_h.setCurrent(op_buf+2);
+                else if ( op_buf[0] == '<' ||
+                          op_buf[0] == '>' ||
+                          op_buf[0] == '=' )
+                    script_h.setCurrent(op_buf+1);
+            
+                buf = script_h.readStr();
+
+                int val = strcmp( save_buf, buf );
+                if      (op_buf[0] == '>' && op_buf[1] == '=') f = (val >= 0);
+                else if (op_buf[0] == '<' && op_buf[1] == '=') f = (val <= 0);
+                else if (op_buf[0] == '=' && op_buf[1] == '=') f = (val == 0);
+                else if (op_buf[0] == '!' && op_buf[1] == '=') f = (val != 0);
+                else if (op_buf[0] == '<' && op_buf[1] == '>') f = (val != 0);
+                else if (op_buf[0] == '<')                     f = (val <  0);
+                else if (op_buf[0] == '>')                     f = (val >  0);
+                else if (op_buf[0] == '=')                     f = (val == 0);
+            }
         }
         condition_flag &= (if_flag)?(f):(!f);
 
-        script_h.setKidokuskip( false );
-        script_h.readToken();
-        script_h.setKidokuskip( kidokuskip_flag );
-        if ( script_h.getStringBuffer()[0] == '&' ){
-            script_h.readToken();
+        op_buf = script_h.getNext();
+        if ( op_buf[0] == '&' ){
+            while(*op_buf == '&') op_buf++;
+            script_h.setCurrent(op_buf);
             continue;
         }
         break;
     };
 
     /* Execute command */
-    if ( condition_flag ){
-        script_h.markAsKidoku();
-        return RET_CONTINUE_NOREAD;
-    }
-    else
-        return RET_SKIP_LINE;
+    if ( condition_flag ) return RET_CONTINUE;
+    else                  return RET_SKIP_LINE;
 }
 
 int ScriptParser::humanzCommand()
@@ -773,49 +756,71 @@ int ScriptParser::humanzCommand()
 
 int ScriptParser::gotoCommand()
 {
-    script_h.readToken();
-
-    current_link_label_info->label_info = script_h.lookupLabel( script_h.getStringBuffer()+1 );
-    current_link_label_info->current_line = 0;
-    script_h.setCurrent( current_link_label_info->label_info.start_address );
-    string_buffer_offset = 0;
+    setCurrentLinkLabel( script_h.readLabel()+1 );
     
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
-void ScriptParser::gosubReal( const char *label, bool textgosub_flag, char *current )
+void ScriptParser::gosubReal( const char *label, char *next_script )
 {
-    current_link_label_info->current_script = current;
-    current_link_label_info->string_buffer_offset = string_buffer_offset;
+    current_link_label_info->next_script = next_script;
 
     LinkLabelInfo *info = new LinkLabelInfo();
     info->previous = current_link_label_info;
-    info->next = NULL;
-    info->label_info = script_h.lookupLabel( label );
-    info->current_line = 0;
-    info->textgosub_flag = textgosub_flag;
-
-    script_h.setCurrent( info->label_info.start_address );
-    string_buffer_offset = 0;
-    
-    current_link_label_info->next = info;
+    current_link_label_info->next = new LinkLabelInfo();
+    current_link_label_info->next->previous = current_link_label_info;
     current_link_label_info = current_link_label_info->next;
+
+    setCurrentLinkLabel( label );
 }
 
 int ScriptParser::gosubCommand()
 {
-    script_h.readToken();
-    string_buffer_offset = 0;
-    gosubReal( script_h.getStringBuffer()+1, false, script_h.getNext() );
+    const char *buf = script_h.readLabel();
+    gosubReal( buf+1, script_h.getNext() );
 
-    return RET_JUMP;
+    return RET_CONTINUE;
 }
 
 int ScriptParser::globalonCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "globalon: not in the define section" );
-
     globalon_flag = true;
+    
+    return RET_CONTINUE;
+}
+
+int ScriptParser::getparamCommand()
+{
+    int end_status;
+    do{
+        script_h.readVariable();
+        script_h.pushVariable();
+        
+        if ( current_link_label_info->previous == NULL ) errorAndExit( "getpapam: not in a subroutine" );
+        script_h.pushCurrent(current_link_label_info->previous->next_script);
+
+        script_h.readVariable();
+        end_status = script_h.getEndStatus();
+        
+        if ( script_h.pushed_variable.type & ScriptHandler::VAR_PTR ){
+            script_h.readVariable();
+            script_h.setInt( &script_h.pushed_variable, script_h.current_variable.var_no );
+        }
+        else if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
+                  script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
+            script_h.setInt( &script_h.pushed_variable, script_h.readInt() );
+        }
+        else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
+            const char *buf = script_h.readStr();
+            setStr( &script_h.str_variables[ script_h.pushed_variable.var_no ], buf );
+        }
+        
+        current_link_label_info->previous->next_script = script_h.getNext();
+        script_h.popCurrent();
+    }
+    while(end_status & ScriptHandler::END_COMMA);
+
     return RET_CONTINUE;
 }
 
@@ -824,25 +829,25 @@ int ScriptParser::forCommand()
     for_stack_depth++;
     ForInfo *info = new ForInfo();
 
-    script_h.readInt();
+    script_h.readVariable();
     info->var = script_h.current_variable;
-    
-    script_h.readToken();
-    if ( script_h.getStringBuffer()[0] != '=' ) 
-        errorAndExit( script_h.getStringBuffer(), "for: no =" );
 
+    if ( !script_h.compareString("=") ) 
+        errorAndExit( "for: no =" );
+
+    script_h.setCurrent(script_h.getNext() + 1);
     script_h.setInt( &info->var, script_h.readInt() );
     
-    script_h.readToken();
-    if ( strcmp( script_h.getStringBuffer(), "to" ) ) 
-        errorAndExit( script_h.getStringBuffer(), "for: no to" );
+    if ( !script_h.compareString("to") )
+        errorAndExit( "for: no to" );
+
+    script_h.readLabel();
     
     info->to = script_h.readInt();
 
-    script_h.readToken();
-    if ( !strncmp( script_h.getStringBuffer(), "step", 4 ) ){
+    if ( script_h.compareString("step") ){
+        script_h.readLabel();
         info->step = script_h.readInt();
-        script_h.readToken();
     }
     else{
         info->step = 1;
@@ -852,16 +857,16 @@ int ScriptParser::forCommand()
     /* Step forward callee's label info */
     info->label_info = current_link_label_info->label_info;
     info->current_line = current_link_label_info->current_line;
-    info->current_script = script_h.getCurrent();
+    info->next_script = script_h.getNext();
 
     info->previous = current_for_link;
     current_for_link->next = info;
     current_for_link = current_for_link->next;
 
     //printf("stack %d forCommand %d = %d to %d step %d\n", for_stack_depth,
-    //info->var_no, *info->p_var, info->to, info->step );
+    //info->var.var_no, script_h.getIntVariable(&info->var), info->to, info->step );
 
-    return RET_CONTINUE_NOREAD;
+    return RET_CONTINUE;
 }
 
 int ScriptParser::filelogCommand()
@@ -877,7 +882,7 @@ int ScriptParser::filelogCommand()
 int ScriptParser::effectcutCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "effectcut: not in the define section." );
-    
+
     effect_cut_flag = true;
 
     return RET_CONTINUE;
@@ -896,8 +901,7 @@ int ScriptParser::effectCommand()
 {
     EffectLink *elink;
 
-    if ( script_h.isName( "windoweffect") )
-    {
+    if ( script_h.isName( "windoweffect") ){
         elink = &window_effect;
     }
     else{
@@ -939,6 +943,15 @@ int ScriptParser::defvoicevolCommand()
 {
     voice_volume = script_h.readInt();
 
+    return RET_CONTINUE;
+}
+
+int ScriptParser::defsubCommand()
+{
+    last_user_func->next = new UserFuncLUT();
+    setStr( &last_user_func->next->command, script_h.readLabel() );
+    last_user_func = last_user_func->next;
+    
     return RET_CONTINUE;
 }
 
@@ -1023,13 +1036,7 @@ int ScriptParser::clickvoiceCommand()
 
     for ( int i=0 ; i<CLICKVOICE_NUM ; i++ ){
         const char *buf = script_h.readStr();
-        if ( buf[0] != '\0' ){
-            setStr( &clickvoice_file_name[i], buf );
-        }
-        else if ( clickvoice_file_name[i] ){
-            delete clickvoice_file_name[i];
-            clickvoice_file_name[i] = NULL;
-        }
+        setStr( &clickvoice_file_name[i], buf );
     }
 
     return RET_CONTINUE;
@@ -1044,29 +1051,23 @@ int ScriptParser::clickstrCommand()
     for ( int i=0 ; i<clickstr_num*2 ; i++ ) clickstr_list[i] = buf[i];
 
     clickstr_line = script_h.readInt();
+
+    script_h.setClickstr( clickstr_num, clickstr_list );
            
     return RET_CONTINUE;
 }
 
 int ScriptParser::breakCommand()
 {
-    char *tmp_buf = script_h.getCurrent();
-    script_h.readToken();
-    const char *buf = script_h.getStringBuffer();
-
+    char *buf = script_h.getNext();
     if ( buf[0] == '*' ){
-        current_link_label_info->label_info = script_h.lookupLabel( buf+1 );
-        current_link_label_info->current_line = 0;
-        script_h.setCurrent( current_link_label_info->label_info.start_address );
-        string_buffer_offset = 0;
-        
-        return RET_JUMP;
+        setCurrentLinkLabel( script_h.readLabel()+1 );
     }
     else{
-        script_h.setCurrent( tmp_buf );
         break_flag = true;
-        return RET_CONTINUE;
     }
+    
+    return RET_CONTINUE;
 }
 
 int ScriptParser::atoiCommand()
@@ -1093,7 +1094,7 @@ int ScriptParser::arcCommand()
 
     if ( strcmp( script_h.cBR->getArchiveName(), "direct" ) == 0 ){
         delete script_h.cBR;
-        script_h.cBR = new SarReader( archive_path );
+        script_h.cBR = new SarReader( archive_path, key_table );
         if ( script_h.cBR->open( buf2 ) ){
             fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
         }
@@ -1112,10 +1113,10 @@ int ScriptParser::arcCommand()
 
 int ScriptParser::addCommand()
 {
-    script_h.readToken();
+    script_h.readVariable();
     
     if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
-         script_h.current_variable.type == ScriptHandler::VAR_PTR ){
+         script_h.current_variable.type == ScriptHandler::VAR_ARRAY ){
         int val = script_h.getIntVariable( &script_h.current_variable );
         script_h.pushVariable();
 

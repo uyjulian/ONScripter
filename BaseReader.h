@@ -92,7 +92,7 @@ struct BaseReader
     virtual int close() = 0;
     
     virtual char *getArchiveName() const = 0;
-    virtual int getNumFiles() = 0;
+    virtual int  getNumFiles() = 0;
     virtual void registerCompressionType( const char *ext, int type ) = 0;
 
     virtual struct FileInfo getFileByIndex( int index ) = 0;

@@ -40,7 +40,7 @@
 #define N (1 << EI)  /* buffer size */
 #define F ((1 << EJ) + P)  /* lookahead buffer size */
 
-DirectReader::DirectReader( char *path )
+DirectReader::DirectReader( char *path, const unsigned char *key_table )
 {
     if ( path ){
         archive_path = new char[ strlen(path) + 1 ];
@@ -48,6 +48,16 @@ DirectReader::DirectReader( char *path )
     }
     else{
         archive_path = "";
+    }
+
+    int i;
+    if (key_table){
+        key_table_flag = true;
+        for (i=0 ; i<256 ; i++) this->key_table[i] = key_table[i];
+    }
+    else{
+        key_table_flag = false;
+        for (i=0 ; i<256 ; i++) this->key_table[i] = i;
     }
 
     last_registered_compression_type = &root_registered_compression_type;
@@ -125,7 +135,7 @@ unsigned char DirectReader::readChar( FILE *fp )
     unsigned char ret;
     
     fread( &ret, 1, 1, fp );
-    return ret;
+    return key_table[ret];
 }
 
 unsigned short DirectReader::readShort( FILE *fp )
@@ -134,7 +144,7 @@ unsigned short DirectReader::readShort( FILE *fp )
     unsigned char buf[2];
     
     fread( &buf, 1, 2, fp );
-    ret = buf[0] << 8 | buf[1];
+    ret = key_table[buf[0]] << 8 | key_table[buf[1]];
     return ret;
 }
 
@@ -144,10 +154,10 @@ unsigned long DirectReader::readLong( FILE *fp )
     unsigned char buf[4];
     
     fread( &buf, 1, 4, fp );
-    ret = buf[0];
-    ret = ret << 8 | buf[1];
-    ret = ret << 8 | buf[2];
-    ret = ret << 8 | buf[3];
+    ret = key_table[buf[0]];
+    ret = ret << 8 | key_table[buf[1]];
+    ret = ret << 8 | key_table[buf[2]];
+    ret = ret << 8 | key_table[buf[3]];
     return ret;
 }
 
@@ -185,7 +195,7 @@ int DirectReader::close()
 {
     return 0;
 }
-    
+
 char *DirectReader::getArchiveName() const
 {
     return "direct";
@@ -300,6 +310,9 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int 
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 {
+    if (key_table_flag)
+        fprintf(stderr, "may not decode NBZ with key_table enabled.\n");
+    
     unsigned int original_length, count;
 	BZFILE *bfp;
 	unsigned char *unused;
@@ -359,6 +372,7 @@ int DirectReader::getbit( FILE *fp, int n )
     for ( i=0 ; i<n ; i++ ){
         if ( getbit_mask == 0 ){
             if ( (getbit_buf = fgetc( fp )) == EOF ) return EOF;
+            getbit_buf = key_table[getbit_buf];
             getbit_mask = 128;
         }
         x <<= 1;
@@ -372,7 +386,8 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
 {
     unsigned int count;
     unsigned char *pbuf, *psbuf;
-    int i, j, k, c, n, m;
+    size_t i, j, k;
+    int c, n, m;
 
     getbit_mask = 0;
     

@@ -313,7 +313,7 @@ int ONScripterLabel::loadSaveFile( int no )
         current_link_label_info->label_info = script_h.lookupLabel( str );
         
         loadInt( fp, &current_link_label_info->current_line );
-        current_link_label_info->current_line++;
+        current_link_label_info->current_line += 2;
         char *buf = current_link_label_info->label_info.label_header;
         while( buf < current_link_label_info->label_info.start_address ){
             if ( *buf == 0x0a )
@@ -324,9 +324,8 @@ int ONScripterLabel::loadSaveFile( int no )
         int offset;
         loadInt( fp, &offset );
             
-        script_h.setCurrent( current_link_label_info->label_info.start_address, false );
+        script_h.setCurrent( current_link_label_info->label_info.label_header );
         script_h.skipLine( current_link_label_info->current_line );
-        current_link_label_info->current_script = script_h.getCurrent() + offset;
 
         if ( file_version <= 104 )
         {
@@ -334,24 +333,21 @@ int ONScripterLabel::loadSaveFile( int no )
                 loadInt( fp, &j );
 
             loadInt( fp, &address );
-            current_link_label_info->string_buffer_offset = 0;
         }
         else{
-            loadInt( fp, &current_link_label_info->string_buffer_offset );
+            loadInt( fp, &i );
+            offset += i;
         }
+        current_link_label_info->next_script = script_h.getCurrent() + offset;
         
         if ( fgetc( fp ) == 0 ) break;
 
-        if ( file_version<= 105 )
-            current_link_label_info->string_buffer_offset = 0;
-        
         current_link_label_info->next = new LinkLabelInfo();
         current_link_label_info->next->previous = current_link_label_info;
         current_link_label_info = current_link_label_info->next;
         current_link_label_info->next = NULL;
     }
-    script_h.setCurrent( current_link_label_info->current_script );
-    string_buffer_offset = current_link_label_info->string_buffer_offset;
+    script_h.setCurrent( current_link_label_info->next_script );
     
     int tmp_event_mode = fgetc( fp );
 
@@ -522,6 +518,7 @@ int ONScripterLabel::loadSaveFile( int no )
         event_mode &= ~WAIT_SLEEP_MODE;
     else
         event_mode |= WAIT_TIMER_MODE;
+    draw_cursor_flag = (clickstr_state == CLICK_NONE)?false:true;
     
     return 0;
 }
@@ -569,31 +566,23 @@ int ONScripterLabel::saveSaveFile( int no )
             return -1;
         }
 
-        if ( !saveon_flag || !internal_saveon_flag ){
-            saveMagicNumber( fp );
-            saveSaveFileFromTmpFile( fp );
-            fclose( fp );
-        }
-        else{
-            saveMagicNumber( fp );
+        saveMagicNumber( fp );
+        if (saveon_flag && internal_saveon_flag)
             saveSaveFile2( fp );
-            fclose(fp);
-        }
+        else
+            saveSaveFileFromTmpFile( fp );
+        fclose(fp);
 
         sprintf( file_name, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
         if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
             fprintf( stderr, "can't open save file %s for writing (not error)\n", file_name );
             return 0;
         }
-
-        if ( !saveon_flag || !internal_saveon_flag ){
-            saveSaveFileFromTmpFile( fp );
-            fclose( fp );
-        }
-        else{
+        if (saveon_flag && internal_saveon_flag)
             saveSaveFile2( fp );
-            fclose(fp);
-        }
+        else
+            saveSaveFileFromTmpFile( fp );
+        fclose(fp);
     }
     else{
         if ( tmp_save_fp ) fclose( tmp_save_fp );
