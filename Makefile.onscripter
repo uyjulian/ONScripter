@@ -32,6 +32,9 @@ nsadec$(EXESUFFIX): $(NSADEC_OBJS)
 nsaconv$(EXESUFFIX): $(NSACONV_OBJS)
 	$(LD)$@ $(NSACONV_OBJS) $(LIBS)
 
+simple_aviplay$(EXESUFFIX): simple_aviplay$(OBJSUFFIX) AVIWrapper$(OBJSUFFIX)
+	$(LD)$@ simple_aviplay$(OBJSUFFIX) AVIWrapper$(OBJSUFFIX) $(LIBS)
+
 onscripter$(EXESUFFIX): $(ONSCRIPTER_OBJS)
 	$(LD)$@ $(ONSCRIPTER_OBJS) $(LIBS)
 
@@ -53,6 +56,7 @@ sardec$(OBJSUFFIX): BaseReader.h SarReader.h
 sarconv$(OBJSUFFIX): BaseReader.h SarReader.h 
 nsadec$(OBJSUFFIX): BaseReader.h SarReader.h NsaReader.h 
 nsaconv$(OBJSUFFIX): BaseReader.h SarReader.h NsaReader.h 
+simple_aviplay$(OBJSUFFIX): AVIWrapper.h
 conv_shared$(OBJSUFFIX): resize_image.h
 
 onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
@@ -70,4 +74,4 @@ AnimationInfo$(OBJSUFFIX): AnimationInfo.h
 FontInfo$(OBJSUFFIX): FontInfo.h
 DirtyRect$(OBJSUFFIX) : DirtyRect.h
 MadWrapper$(OBJSUFFIX): MadWrapper.h
-
+AVIWrapper$(OBJSUFFIX): AVIWrapper.h

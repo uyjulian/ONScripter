@@ -3,9 +3,12 @@
 # Makefile.Linux - Makefile rules for linux
 #
 
-INCS = `sdl-config --cflags` `smpeg-config --cflags`
-LIBS = `sdl-config --libs` `smpeg-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
-DEFS = -DLINUX
+#INCS = `sdl-config --cflags` `smpeg-config --cflags`
+#LIBS = `sdl-config --libs` `smpeg-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
+#DEFS = -DLINUX
+INCS = `sdl-config --cflags` `smpeg-config --cflags` `avifile-config --cflags`
+LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm
+DEFS = -DLINUX -DUSE_AVIFILE
 
 EXESUFFIX =
 OBJSUFFIX = .o
@@ -28,6 +31,8 @@ CFLAGS = -g -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
 
 RM = rm -f
 
-TARGET = onscripter$(EXESUFFIX) sardec$(EXESUFFIX) nsadec$(EXESUFFIX) sarconv$(EXESUFFIX) nsaconv$(EXESUFFIX)
+#TARGET = onscripter$(EXESUFFIX) sardec$(EXESUFFIX) nsadec$(EXESUFFIX) sarconv$(EXESUFFIX) nsaconv$(EXESUFFIX)
+TARGET = onscripter$(EXESUFFIX) sardec$(EXESUFFIX) nsadec$(EXESUFFIX) sarconv$(EXESUFFIX) nsaconv$(EXESUFFIX) simple_aviplay$(EXESUFFIX)
+EXT_OBJS = AVIWrapper$(OBJSUFFIX)
 
 include Makefile.onscripter

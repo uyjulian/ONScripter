@@ -183,6 +183,7 @@ public:
     int bgCommand();
     int barclearCommand();
     int barCommand();
+    int aviCommand();
     int autoclickCommand();
     int allspresumeCommand();
     int allsphideCommand();
@@ -217,6 +218,7 @@ protected:
     void advancePhase( int count=0 );
     void trapHandler();
     void initSDL( bool cdaudio_flag );
+    void openAudio();
     
 private:
     enum { NORMAL_DISPLAY_MODE = 0, TEXT_DISPLAY_MODE = 1 };
@@ -331,8 +333,14 @@ private:
             no_selected_surface = NULL;
         };
         ~ButtonLink(){
-            if ( button_type != SPRITE_BUTTON && selected_surface )    SDL_FreeSurface( selected_surface );
-            if ( button_type != SPRITE_BUTTON && no_selected_surface ) SDL_FreeSurface( no_selected_surface );
+            if ( button_type != SPRITE_BUTTON &&
+                 button_type != EX_SPRITE_BUTTON &&
+                 selected_surface )
+                SDL_FreeSurface( selected_surface );
+            if ( button_type != SPRITE_BUTTON &&
+                 button_type != EX_SPRITE_BUTTON &&
+                 no_selected_surface )
+                SDL_FreeSurface( no_selected_surface );
             if ( exbtn_ctl ) delete[] exbtn_ctl;
         };
     } root_button_link, *last_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
@@ -368,6 +376,8 @@ private:
     /* Sprite related variables */
     AnimationInfo sprite_info[MAX_SPRITE_NUM];
     bool all_sprite_hide_flag;
+    
+    void allocateSelectedSurface( int sprite_no );
     
     /* ---------------------------------------- */
     /* Parameter related variables */
@@ -493,6 +503,7 @@ private:
     int playMIDI();
     int playMP3( int cd_no );
     void playMPEG( const char *filename, bool click_flag );
+    void playAVI( const char *filename, bool click_flag );
     int playCDAudio( int cd_no );
     enum { WAVE_PLAY        = 0,
            WAVE_PRELOAD     = 1,

@@ -304,8 +304,7 @@ int ONScripterLabel::spbtnCommand()
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    AnimationInfo *sp = &sprite_info[ sprite_no ];
-    if ( sp->num_of_cells == 0 ) return RET_CONTINUE;
+    if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
 
     last_button_link->next = new ButtonLink();
     last_button_link = last_button_link->next;
@@ -314,35 +313,12 @@ int ONScripterLabel::spbtnCommand()
     last_button_link->sprite_no   = sprite_no;
     last_button_link->no          = no;
 
-    if ( sp->image_surface || sp->trans_mode == AnimationInfo::TRANS_STRING ){
-        last_button_link->image_rect = last_button_link->select_rect = sp->pos;
-
-        bool create_flag = false;
-        if ( sp->selected_surface ){
-            if ( sp->selected_surface->w != sp->pos.w ||
-                 sp->selected_surface->h != sp->pos.h ){
-                SDL_FreeSurface( sp->selected_surface );
-                SDL_FreeSurface( sp->no_selected_surface );
-                create_flag = true;
-            }
-        }
-        else{
-            create_flag = true;
-        }
-
-        if ( create_flag ){
-            sp->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                         sp->pos.w, sp->pos.h,
-                                                         32, rmask, gmask, bmask, amask );
-            sp->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                            sp->pos.w, sp->pos.h,
-                                                            32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-            SDL_SetAlpha( sp->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        }
-        last_button_link->selected_surface = sp->selected_surface;
-        last_button_link->no_selected_surface = sp->no_selected_surface;
-        sp->visible = true;
+    if ( sprite_info[ sprite_no ].image_surface ||
+         sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING )
+    {
+        last_button_link->image_rect = last_button_link->select_rect = sprite_info[ sprite_no ].pos;
+        allocateSelectedSurface( sprite_no );
+        sprite_info[ sprite_no ].visible = true;
     }
 
     return RET_CONTINUE;
@@ -1518,18 +1494,26 @@ int ONScripterLabel::gameCommand()
     //sentence_font.wait_time = -1;
 
     /* ---------------------------------------- */
-    setStr( &lookback_info[0].image_name, DEFAULT_LOOKBACK_NAME0 );
-    parseTaggedString( &lookback_info[0] );
-    setupAnimationInfo( &lookback_info[0] );
-    setStr( &lookback_info[1].image_name, DEFAULT_LOOKBACK_NAME1 );
-    parseTaggedString( &lookback_info[1] );
-    setupAnimationInfo( &lookback_info[1] );
-    setStr( &lookback_info[2].image_name, DEFAULT_LOOKBACK_NAME2 );
-    parseTaggedString( &lookback_info[2] );
-    setupAnimationInfo( &lookback_info[2] );
-    setStr( &lookback_info[3].image_name, DEFAULT_LOOKBACK_NAME3 );
-    parseTaggedString( &lookback_info[3] );
-    setupAnimationInfo( &lookback_info[3] );
+    if ( !lookback_info[0].image_surface ){
+        setStr( &lookback_info[0].image_name, DEFAULT_LOOKBACK_NAME0 );
+        parseTaggedString( &lookback_info[0] );
+        setupAnimationInfo( &lookback_info[0] );
+    }
+    if ( !lookback_info[1].image_surface ){
+        setStr( &lookback_info[1].image_name, DEFAULT_LOOKBACK_NAME1 );
+        parseTaggedString( &lookback_info[1] );
+        setupAnimationInfo( &lookback_info[1] );
+    }
+    if ( !lookback_info[2].image_surface ){
+        setStr( &lookback_info[2].image_name, DEFAULT_LOOKBACK_NAME2 );
+        parseTaggedString( &lookback_info[2] );
+        setupAnimationInfo( &lookback_info[2] );
+    }
+    if ( !lookback_info[3].image_surface ){
+        setStr( &lookback_info[3].image_name, DEFAULT_LOOKBACK_NAME3 );
+        parseTaggedString( &lookback_info[3] );
+        setupAnimationInfo( &lookback_info[3] );
+    }
     
     /* ---------------------------------------- */
     /* Load default cursor */
@@ -1662,7 +1646,7 @@ int ONScripterLabel::exbtnCommand()
     }
 
     const char *buf = script_h.readStr();
-
+    
     button->button_type = ButtonLink::EX_SPRITE_BUTTON;
     button->sprite_no   = sprite_no;
     button->no          = no;
@@ -1670,19 +1654,12 @@ int ONScripterLabel::exbtnCommand()
     strcpy( button->exbtn_ctl, buf );
     
     if ( sprite_no >= 0 &&
-         ( sprite_info[ sprite_no ].image_surface || sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) ){
-        button->image_rect = button->select_rect = sprite_info[ button->sprite_no ].pos;
-        button->selected_surface    = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                            sprite_info[ button->sprite_no ].pos.w,
-                                                            sprite_info[ button->sprite_no ].pos.h,
-                                                            32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        button->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                            sprite_info[ button->sprite_no ].pos.w,
-                                                            sprite_info[ button->sprite_no ].pos.h,
-                                                            32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        //sprite_info[ sprite_no ].visible = true;
+         ( sprite_info[ sprite_no ].image_surface ||
+           sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) )
+    {
+        last_button_link->image_rect = last_button_link->select_rect = sprite_info[ sprite_no ].pos;
+        allocateSelectedSurface( sprite_no );
+        sprite_info[ sprite_no ].visible = true;
     }
 
     return RET_CONTINUE;
@@ -2033,9 +2010,11 @@ int ONScripterLabel::btnwaitCommand()
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                 bool visible = sprite_info[p_button_link->sprite_no].visible;
                 sprite_info[p_button_link->sprite_no].visible = true;
-                sprite_info[p_button_link->sprite_no].current_cell = 1;
-                refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-                SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
+                if ( p_button_link->selected_surface ){
+                    sprite_info[p_button_link->sprite_no].current_cell = 1;
+                    refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                    SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
+                }
                 sprite_info[p_button_link->sprite_no].current_cell = 0;
                 if ( p_button_link->no_selected_surface ){
                     refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
@@ -2347,6 +2326,19 @@ int ONScripterLabel::barCommand()
         delete bar_info[no];
         bar_info[no] = NULL;
     }
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::aviCommand()
+{
+    script_h.readStr();
+    const char *save_buf = script_h.saveStringBuffer();
+    
+    bool click_flag = (script_h.readInt()==1)?true:false;
+
+    stopBGM( false );
+    playAVI( save_buf, click_flag );
 
     return RET_CONTINUE;
 }

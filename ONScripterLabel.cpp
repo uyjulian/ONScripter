@@ -169,6 +169,7 @@ static struct FuncLUT{
     {"bg",      &ONScripterLabel::bgCommand},
     {"barclear",      &ONScripterLabel::barclearCommand},
     {"bar",      &ONScripterLabel::barCommand},
+    {"avi",      &ONScripterLabel::aviCommand},
     {"autoclick",      &ONScripterLabel::autoclickCommand},
     {"amsp",      &ONScripterLabel::amspCommand},
     {"allspresume",      &ONScripterLabel::allspresumeCommand},
@@ -256,6 +257,11 @@ void ONScripterLabel::initSDL( bool cdaudio_flag )
     memcpy( wm_icon_string, DEFAULT_WM_TITLE, strlen(DEFAULT_WM_ICON) + 1 );
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
 
+    openAudio();
+}
+
+void ONScripterLabel::openAudio()
+{
 #if defined(PDA)    
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
@@ -633,7 +639,8 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                         decodeExbtnControl( text_surface, p_button_link->exbtn_ctl );
                     }
                     sprite_info[ p_button_link->sprite_no ].visible = true;
-                    sprite_info[ p_button_link->sprite_no ].current_cell = 1;
+                    if ( sprite_info[ p_button_link->sprite_no ].num_of_cells >= 1 )
+                        sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                 }
                 if ( nega_mode == 1 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( text_surface, &p_button_link->image_rect );
                 if ( monocro_flag && !(event_mode & WAIT_INPUT_MODE) ) makeMonochromeSurface( text_surface, &p_button_link->image_rect );
@@ -1738,4 +1745,37 @@ void ONScripterLabel::quit()
         Mix_FreeMusic( music_info );
     }
 #endif
+}
+
+void ONScripterLabel::allocateSelectedSurface( int sprite_no )
+{
+    AnimationInfo *sp = &sprite_info[ sprite_no ];
+    
+    if ( sp->no_selected_surface &&
+         ( sp->no_selected_surface->w != sp->pos.w ||
+           sp->no_selected_surface->h != sp->pos.h ) ){
+        SDL_FreeSurface( sp->no_selected_surface );
+        sp->no_selected_surface = NULL;
+    }
+    if ( !sp->no_selected_surface ){
+        sp->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                        sp->pos.w, sp->pos.h,
+                                                        32, rmask, gmask, bmask, amask );
+        SDL_SetAlpha( sp->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    }
+    last_button_link->no_selected_surface = sp->no_selected_surface;
+
+    if ( sp->selected_surface &&
+         ( sp->selected_surface->w != sp->pos.w ||
+           sp->selected_surface->h != sp->pos.h ) ){
+        SDL_FreeSurface( sp->selected_surface );
+        sp->selected_surface = NULL;
+    }
+    if ( !sp->selected_surface && sp->num_of_cells >= 2 ){
+        sp->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                     sp->pos.w, sp->pos.h,
+                                                     32, rmask, gmask, bmask, amask );
+        SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    }
+    last_button_link->selected_surface = sp->selected_surface;
 }

@@ -26,6 +26,10 @@
 #include <signal.h>
 #endif
 
+#if defined(USE_AVIFILE)
+#include "AVIWrapper.h"
+#endif
+
 #if defined(EXTERNAL_MUSIC_PLAYER)
 extern bool ext_music_play_once_flag;
 #endif
@@ -267,6 +271,38 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
         SMPEG_delete( mpeg_sample );
     }
     delete[] mpeg_buffer;
+#else
+    fprintf( stderr, "mpegplay command is disabled.\n" );
+#endif
+}
+
+void ONScripterLabel::playAVI( const char *filename, bool click_flag )
+{
+#if defined(USE_AVIFILE)
+    int i;
+
+    char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
+    sprintf( absolute_filename, "%s%s", archive_path, filename );
+    for ( i=0 ; i<strlen( absolute_filename ) ; i++ )
+        if ( absolute_filename[i] == '/' ||
+             absolute_filename[i] == '\\' )
+            absolute_filename[i] = DELIMITER;
+
+    if ( audio_open_flag ) Mix_CloseAudio();
+
+    AVIWrapper *avi = new AVIWrapper();
+    if ( !avi->init( absolute_filename, screen_surface, audio_open_flag ) ){
+        avi->play( click_flag );
+        delete avi;
+        delete[] absolute_filename;
+    }
+
+    if ( audio_open_flag ){
+        Mix_CloseAudio();
+        openAudio();
+    }
+#else
+    fprintf( stderr, "avi command is disabled.\n" );
 #endif
 }
 
@@ -358,7 +394,8 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_FreeMusic( midi_info );
         midi_info = NULL;
     }
-    setStr( &music_file_name, NULL );
+    if ( !continue_flag )
+        setStr( &midi_file_name, NULL );
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
     if ( music_info ){
@@ -367,7 +404,6 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_FreeMusic( music_info );
         music_info = NULL;
     }
-    setStr( &music_file_name, NULL );
 #endif
     if ( !continue_flag ) current_cd_track = -1;
 }

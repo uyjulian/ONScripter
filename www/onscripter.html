@@ -12,7 +12,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Aug. 11, 2003<br>
+Last updated: Aug. 15, 2003<br>
 ベータ版を更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20030811.tar.gz">onscripter-beta-20030811.tar.gz</A>
+<A HREF="onscripter-beta-20030815.tar.gz">onscripter-beta-20030815.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20030704.tar.gz">onscripter-beta-20030704.tar.gz</A>
+<A HREF="onscripter-beta-20030811.tar.gz">onscripter-beta-20030811.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -168,6 +168,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <DD> mad-0.14.2b
   <DD> これは必要ではありませんが、Zaurus で MP3 を聞きたい方はほぼ必須。
   <DD> コンパイル時に MP3_MAD を定義することで、SMPEG に差し換えて使用されます。
+  <DT> ・<A HREF="http://avifile.sourceforge.net/">avifile</A>
+  <DD> avifile-0.7-0.7.38
+  <DD> これは必須ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
+  <DD> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
   <DT> ・Unicode で指定された日本語 TTF フォント
   <DT> ・C++ 処理系
   <DD> Linux g++ 2.95.4
