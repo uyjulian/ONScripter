@@ -145,9 +145,9 @@ protected:
         };
     } root_user_func, *last_user_func;
 
-    enum { NEST_LABEL = 0,
-           NEST_FOR   = 1 };
     struct NestInfo{
+        enum { LABEL = 0,
+               FOR   = 1 };
         struct NestInfo *previous, *next;
         int  nest_mode;
         char *next_script; // used in gosub and for
@@ -155,7 +155,7 @@ protected:
 
         NestInfo(){
             previous = next = NULL;
-            nest_mode = NEST_LABEL;
+            nest_mode = LABEL;
         };
     } last_tilde;
 

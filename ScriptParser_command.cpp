@@ -297,7 +297,7 @@ int ScriptParser::rmenuCommand()
 
 int ScriptParser::returnCommand()
 {
-    if ( !last_nest_info->previous || last_nest_info->nest_mode != NEST_LABEL )
+    if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "return: not in gosub" );
     
     current_label_info = script_h.getLabelByAddress( last_nest_info->next_script );
@@ -370,7 +370,7 @@ int ScriptParser::nsaCommand()
 
 int ScriptParser::nextCommand()
 {
-    if (!last_nest_info->previous || last_nest_info->nest_mode != NEST_FOR)
+    if (!last_nest_info->previous || last_nest_info->nest_mode != NestInfo::FOR)
         errorAndExit("next: not in for loop\n");
     
     int val;
@@ -799,7 +799,7 @@ int ScriptParser::getparamCommand()
         script_h.readVariable();
         script_h.pushVariable();
         
-        if ( !last_nest_info->previous || last_nest_info->nest_mode != NEST_LABEL )
+        if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
             errorAndExit( "getpapam: not in a subroutine" );
         
         script_h.pushCurrent(last_nest_info->next_script);
@@ -834,7 +834,7 @@ int ScriptParser::forCommand()
     last_nest_info->next->previous = last_nest_info;
 
     last_nest_info = last_nest_info->next;
-    last_nest_info->nest_mode = NEST_FOR;
+    last_nest_info->nest_mode = NestInfo::FOR;
 
     script_h.readVariable();
     if ( script_h.current_variable.type != ScriptHandler::VAR_INT )
@@ -1058,7 +1058,7 @@ int ScriptParser::clickstrCommand()
 
 int ScriptParser::breakCommand()
 {
-    if (!last_nest_info->previous || last_nest_info->nest_mode != NEST_FOR)
+    if (!last_nest_info->previous || last_nest_info->nest_mode != NestInfo::FOR)
         errorAndExit("break: not in for loop\n");
 
     char *buf = script_h.getNext();

@@ -170,13 +170,13 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
         
             loadInt( fp, &i );
             if (i > 0){
-                info->nest_mode = NEST_LABEL;
+                info->nest_mode = NestInfo::LABEL;
                 info->next_script = script_h.getAddress( i );
                 fseek( fp, -8, SEEK_CUR );
                 num_nest--;
             }
             else{
-                info->nest_mode = NEST_FOR;
+                info->nest_mode = NestInfo::FOR;
                 info->next_script = script_h.getAddress( -i );
                 fseek( fp, -16, SEEK_CUR );
                 loadInt( fp, &info->var_no );
@@ -463,17 +463,17 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     int num_nest = 0;
     NestInfo *info = root_nest_info.next;
     while( info ){
-        if      (info->nest_mode == NEST_LABEL) num_nest++;
-        else if (info->nest_mode == NEST_FOR)   num_nest+=4;
+        if      (info->nest_mode == NestInfo::LABEL) num_nest++;
+        else if (info->nest_mode == NestInfo::FOR)   num_nest+=4;
         info = info->next;
     }
     saveInt( fp, num_nest );
     info = root_nest_info.next;
     while( info ){
-        if  (info->nest_mode == NEST_LABEL){
+        if  (info->nest_mode == NestInfo::LABEL){
             saveInt( fp, script_h.getOffset( info->next_script ) );
         }
-        else if (info->nest_mode == NEST_FOR){
+        else if (info->nest_mode == NestInfo::FOR){
             saveInt( fp, info->var_no );
             saveInt( fp, info->to );
             saveInt( fp, info->step );
