@@ -55,6 +55,7 @@ static struct FuncLUT{
     {"spi", &ScriptParser::soundpressplginCommand},
     {"soundpressplgin", &ScriptParser::soundpressplginCommand},
     {"skip",     &ScriptParser::skipCommand},
+    {"shadedistance",     &ScriptParser::shadedistanceCommand},
     {"selectvoice",     &ScriptParser::selectvoiceCommand},
     {"selectcolor",     &ScriptParser::selectcolorCommand},
     {"savenumber",     &ScriptParser::savenumberCommand},
@@ -237,6 +238,11 @@ ScriptParser::ScriptParser( char *path )
     for ( i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
         menuselectvoice_file_name[i] = NULL;
 
+    /* ---------------------------------------- */
+    /* Font related variables */
+    shade_distance[0] = 1;
+    shade_distance[1] = 1;
+    
     /* ---------------------------------------- */
     /* Menu related variables */
     menu_font.font_size_xy[0] = system_font.font_size_xy[0] = 18;

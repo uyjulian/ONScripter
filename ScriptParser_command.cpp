@@ -174,6 +174,15 @@ int ScriptParser::skipCommand()
     return RET_JUMP;
 }
 
+int ScriptParser::shadedistanceCommand()
+{
+    if (current_mode != DEFINE_MODE) errorAndExit( "shadedistance: not in the define section" );
+    shade_distance[0] = script_h.readInt();
+    shade_distance[1] = script_h.readInt();
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::selectvoiceCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "selectvoice: not in the define section" );
@@ -228,9 +237,20 @@ int ScriptParser::rubyonCommand()
 {
     rubyon_flag = true;
 
-    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-        ruby_struct.font_size_xy[0] = script_h.readInt();
+    char *tmp_buf = script_h.getCurrent();
+    script_h.readToken();
+    if ( script_h.getStringBuffer()[0] == 0x0a ||
+         script_h.getStringBuffer()[0] == ':' ||
+         script_h.getStringBuffer()[0] == ';' ){
+        script_h.setCurrent( tmp_buf );
+        ruby_struct.font_size_xy[0] = -1;
+        ruby_struct.font_size_xy[1] = -1;
+        setStr( &ruby_struct.font_name, NULL );
+    }
+    else{
+        ruby_struct.font_size_xy[0] = script_h.readInt(true);
         ruby_struct.font_size_xy[1] = script_h.readInt();
+
         if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
             setStr( &ruby_struct.font_name, script_h.readStr() );
         }
@@ -238,12 +258,6 @@ int ScriptParser::rubyonCommand()
             setStr( &ruby_struct.font_name, NULL );
         }
     }
-    else{
-        ruby_struct.font_size_xy[0] = -1;
-        ruby_struct.font_size_xy[1] = -1;
-        setStr( &ruby_struct.font_name, NULL );
-    }
-    sentence_font.y_offset = sentence_font.pitch_xy[1] - sentence_font.font_size_xy[1];
 
     return RET_CONTINUE;
 }
@@ -251,7 +265,6 @@ int ScriptParser::rubyonCommand()
 int ScriptParser::rubyoffCommand()
 {
     rubyon_flag = false;
-    sentence_font.y_offset = 0;
 
     return RET_CONTINUE;
 }

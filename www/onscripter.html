@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Apr. 2, 2004<br>
+Last updated: Apr. 17, 2004<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040402.tar.gz">onscripter-beta-20040402.tar.gz</A>
+<A HREF="onscripter-beta-20040417.tar.gz">onscripter-beta-20040417.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040225.tar.gz">onscripter-beta-20040225.tar.gz</A>
+<A HREF="onscripter-beta-20040402.tar.gz">onscripter-beta-20040402.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -225,8 +225,11 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
 
 <OL>
-  <LI> (<FONT color="#ff0000">高</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
-  <LI> (<FONT color="#ff0000">中</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
+  <LI> (<FONT color="#ff0000">高</FONT>)defsub を実装する。
+  <LI> (<FONT color="#ff0000">高</FONT>)デモ用演出命令を実装する。
+  <LI> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
+  <LI> (<FONT color="#ff8800">中</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
+  <LI> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
   <LI> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
   <LI> (<FONT color="#00ff00">低</FONT>)skip でマイナス方向にラベルをまたぐと破綻するバグ？を取る。lchk とのからみも考えて調べる。
   <LI> (<FONT color="#00ff00">低</FONT>)コードの clean up。

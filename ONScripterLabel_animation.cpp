@@ -127,11 +127,10 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
 
         FontInfo f_info = sentence_font;
-        f_info.xy[0] = f_info.xy[1] = 0;
         f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
         f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
-        f_info.num_xy[0] = strlen( anim->file_name );
-        f_info.num_xy[1] = 1;
+        f_info.setLineArea( strlen(anim->file_name)/2+1 );
+        f_info.clear();
 
         if ( anim->font_size_xy[0] >= 0 ){
             f_info.font_size_xy[0] = f_info.pitch_xy[0] = anim->font_size_xy[0];
@@ -145,7 +144,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
         anim->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h, 32, rmask, gmask, bmask, amask );
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
-            f_info.xy[0] = f_info.xy[1] = 0;
+            f_info.clear();
             drawString( anim->file_name, anim->color_list[ i ], &f_info, false, anim->image_surface );
             f_info.top_xy[0] += anim->pos.w * screen_ratio2 / screen_ratio1;
         }

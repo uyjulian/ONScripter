@@ -67,6 +67,7 @@ public:
     int straliasCommand();
     int soundpressplginCommand();
     int skipCommand();
+    int shadedistanceCommand();
     int selectvoiceCommand();
     int selectcolorCommand();
     int savenumberCommand();
@@ -350,7 +351,7 @@ protected:
         int ruby_start;
         int ruby_end;
         int ruby_count;
-        int x_margin;
+        int margin;
 
         int font_size_xy[2];
         char *font_name;
@@ -365,6 +366,7 @@ protected:
             if ( font_name ) delete[] font_name;
         };
     } ruby_struct;
+    int shade_distance[2];
 
     /* ---------------------------------------- */
     /* Menu related variables */

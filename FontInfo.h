@@ -24,6 +24,8 @@
 #ifndef __FONT_INFO_H__
 #define __FONT_INFO_H__
 
+#include <SDL.h>
+
 typedef unsigned char uchar3[3];
 
 class FontInfo{
@@ -45,7 +47,7 @@ public:
     bool is_transparent;
     uchar3  window_color;
 
-    int x_offset, y_offset; // used with ruby
+    int offset_xy[2]; // used with ruby
     int tateyoko_mode;
 
     FontInfo();
@@ -54,11 +56,20 @@ public:
     void *openFont( char *font_file, int ratio1, int ratio2 );
     void setTateyokoMode( int tateyoko_mode );
     int getTateyokoMode();
-    int x(); // return current x position
-    int y(); // return current y position
+    int x(bool do_hankaku_shift=false); // return current x position
+    int y(bool do_hankaku_shift=false); // return current y position
     void setXY( int x=-1, int y=-1 );
     void clear();
     void newLine();
+    void setLineArea(int num);
+
+    bool isEndOfLine(int margin=0);
+    void advanceChar(int offset=1);
+    void addMargin(int margin);
+
+    SDL_Rect calcUpdatedArea(int start_xy[2], int ratio1, int ratio2 );
+    void addShadeArea(SDL_Rect &rect, int shade_distance[2] );
+    int initRuby(FontInfo &body_info, int body_count, int ruby_count);
 };
 
 #endif // __FONT_INFO_H__

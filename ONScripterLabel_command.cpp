@@ -313,7 +313,6 @@ int ONScripterLabel::spbtnCommand()
          sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING )
     {
         button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
-        allocateSelectedSurface( sprite_no, button );
         sprite_info[ sprite_no ].visible = true;
     }
 
@@ -369,12 +368,6 @@ int ONScripterLabel::setwindowCommand()
     sentence_font.wait_time = script_h.readInt();
     sentence_font.is_bold = script_h.readInt()?true:false;
     sentence_font.is_shadow = script_h.readInt()?true:false;
-    if ( rubyon_flag ){
-        sentence_font.y_offset = sentence_font.pitch_xy[1] - sentence_font.font_size_xy[1];
-    }
-    else{
-        sentence_font.y_offset = 0;
-    }
 
     const char *buf = script_h.readStr();
     dirty_rect.add( sentence_font_info.pos );
@@ -1785,7 +1778,6 @@ int ONScripterLabel::exbtnCommand()
            sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) )
     {
         button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
-        allocateSelectedSurface( sprite_no, button );
         sprite_info[ sprite_no ].visible = true;
     }
 
@@ -1934,8 +1926,6 @@ int ONScripterLabel::cselbtnCommand()
     FontInfo csel_info = sentence_font;
     csel_info.top_xy[0] = script_h.readInt();
     csel_info.top_xy[1] = script_h.readInt();
-    csel_info.clear();
-    csel_info.num_xy[1] = 1;
 
     int counter = 0;
     SelectLink *link = root_select_link.next;
@@ -1946,6 +1936,8 @@ int ONScripterLabel::cselbtnCommand()
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
         errorAndExit( "cselbtn: no select text" );
 
+    csel_info.setLineArea( strlen(link->text)/2+1 );
+    csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
     root_button_link.insert( button );
     button->button_type = ButtonLink::CUSTOM_SELECT_BUTTON;
@@ -2109,8 +2101,6 @@ int ONScripterLabel::btnwaitCommand()
         while ( p_button_link ){
             if ( p_button_link->button_type == ButtonLink::CUSTOM_SELECT_BUTTON ){
                 
-                f_info.clear();
-                f_info.num_xy[1] = 1;
                 f_info.top_xy[0] = p_button_link->image_rect.x * screen_ratio2 / screen_ratio1;
                 f_info.top_xy[1] = p_button_link->image_rect.y * screen_ratio2 / screen_ratio1;
 
@@ -2121,15 +2111,17 @@ int ONScripterLabel::btnwaitCommand()
                     s_link = s_link->next;
                 }
 
+                f_info.setLineArea( strlen(s_link->text)/2+1 );
+                f_info.clear();
                 drawString( s_link->text, f_info.off_color, &f_info, false, accumulation_surface );
-                dirty_rect.add( p_button_link->image_rect );
-                if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                 bool visible = sprite_info[p_button_link->sprite_no].visible;
                 sprite_info[p_button_link->sprite_no].visible = true;
+
+                allocateSelectedSurface(p_button_link->sprite_no, p_button_link);
+                
                 if ( p_button_link->selected_surface ){
                     sprite_info[p_button_link->sprite_no].current_cell = 1;
                     refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
@@ -2139,13 +2131,15 @@ int ONScripterLabel::btnwaitCommand()
                 if ( p_button_link->no_selected_surface ){
                     refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
                     SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+                    SDL_BlitSurface( p_button_link->no_selected_surface, NULL, accumulation_surface, &p_button_link->image_rect );
                 }
                 sprite_info[p_button_link->sprite_no].visible = visible;
             }
             else{
                 if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( picture_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
+            dirty_rect.add( p_button_link->image_rect );
 
             p_button_link = p_button_link->next;
         }
@@ -2217,10 +2211,11 @@ int ONScripterLabel::btndefCommand()
 {
     script_h.readToken();
     
-    if ( strcmp( script_h.getStringBuffer(), "clear" ) ){
+    if (strcmp( script_h.getStringBuffer(), "clear" )){
         const char *buf = script_h.readStr( true );
-        
+
         btndef_info.remove();
+
         if ( buf[0] != '\0' ){
             btndef_info.setImageName( buf );
             parseTaggedString( &btndef_info );
@@ -2251,6 +2246,14 @@ int ONScripterLabel::btnCommand()
 
     src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    if (btndef_info.image_surface &&
+        src_rect.x + button->image_rect.w > btndef_info.image_surface->w * screen_ratio1 / screen_ratio2){
+        button->image_rect.w = btndef_info.image_surface->w * screen_ratio1 / screen_ratio2 - src_rect.x;
+    }
+    if (btndef_info.image_surface &&
+        src_rect.y + button->image_rect.h > btndef_info.image_surface->h * screen_ratio1 / screen_ratio2){
+        button->image_rect.h = btndef_info.image_surface->h * screen_ratio1 / screen_ratio2 - src_rect.y;
+    }
     src_rect.w = button->image_rect.w;
     src_rect.h = button->image_rect.h;
 

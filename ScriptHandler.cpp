@@ -25,6 +25,18 @@
 
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
+static struct {
+    char *first_file;
+    int  encrypt_mode;
+    char *format;
+} script_file_mode[] = {
+    {"0.txt", 0, "%d.txt"},
+    {"00.txt", 0, "%2.2d.txt"},
+    {"nscr_sec.dat", 2, ""},
+    {"nscript.dat", 1, ""},
+    {NULL}
+};
+
 ScriptHandler::ScriptHandler()
 {
     int i;
@@ -984,34 +996,28 @@ int ScriptHandler::readScript( char *path )
 
     FILE *fp;
     char file_name[10];
-    int  i, file_counter = 0;
-    char *p_script_buffer;
+    int  file_counter = 0;
     int estimated_buffer_length = 0;
-    int encrypt_mode = 0;
-    
-    if ( (fp = fopen( "0.txt", "rb" )) != NULL ){
-        do{
-            fseek( fp, 0, SEEK_END );
-            estimated_buffer_length += ftell( fp ) + 1;
-            sprintf( file_name, "%d.txt", ++file_counter );
-            fclose( fp );
+
+    int no=0;
+    while( script_file_mode[no].first_file ){
+        if ( (fp = fopen( script_file_mode[no].first_file, "rb" )) != NULL ){
+            while(1){
+                fseek( fp, 0, SEEK_END );
+                estimated_buffer_length += ftell( fp ) + 1;
+                if (script_file_mode[no].encrypt_mode == 0){
+                    fclose( fp );
+                    sprintf( file_name, script_file_mode[no].format, ++file_counter );
+                    if ((fp = fopen( file_name, "rb" )) != NULL) continue;
+                }
+                break;
+            }
+            break;
         }
-        while( (fp = fopen( file_name, "rb" )) != NULL );
+        no++;
     }
-    else if ( (fp = fopen( "nscr_sec.dat", "rb" )) != NULL ){
-        encrypt_mode = 2;
-        fseek( fp, 0, SEEK_END );
-        estimated_buffer_length = ftell( fp ) + 1;
-        fseek( fp, 0, SEEK_SET );
-    }
-    else if ( (fp = fopen( "nscript.dat", "rb" )) != NULL ){
-        encrypt_mode = 1;
-        fseek( fp, 0, SEEK_END );
-        estimated_buffer_length = ftell( fp ) + 1;
-        fseek( fp, 0, SEEK_SET );
-    }
-    else{
-        fprintf( stderr, "can't open file 0.txt or nscript.dat\n" );
+    if (script_file_mode[no].first_file == NULL){
+        fprintf( stderr, "can't open file 0.txt or 00.txt or nscript.dat\n" );
         return -1;
     }
     
@@ -1020,17 +1026,20 @@ int ScriptHandler::readScript( char *path )
         fprintf( stderr, " *** can't allocate memory for the script ***\n");
         exit( -1 );
     }
+
+    char *p_script_buffer;
     current_script = p_script_buffer = script_buffer;
     
-    if ( encrypt_mode ){
-        readScriptSub( fp, &p_script_buffer, encrypt_mode );
+    if (script_file_mode[no].encrypt_mode > 0){
+        fseek( fp, 0, SEEK_SET );
+        readScriptSub( fp, &p_script_buffer, script_file_mode[no].encrypt_mode );
         fclose( fp );
     }
     else{
-        for ( i=0 ; i<file_counter ; i++ ){
-            sprintf( file_name, "%d.txt", i );
+        for ( int i=0 ; i<file_counter ; i++ ){
+            sprintf( file_name, script_file_mode[no].format, i );
             fp = fopen( file_name, "rb" );
-            readScriptSub( fp, &p_script_buffer, encrypt_mode );
+            readScriptSub( fp, &p_script_buffer, script_file_mode[no].encrypt_mode );
             fclose( fp );
         }
     }

@@ -814,7 +814,7 @@ int ONScripterLabel::parseLine( )
            script_h.getEndStatus() & ScriptHandler::END_QUAT ) ){
         ret = RET_CONTINUE;
         if ( !new_line_skip_flag && script_h.isText() ){
-            if ( sentence_font.xy[0] < sentence_font.num_xy[0] ) // otherwise already done in drawChar
+            if (!sentence_font.isEndOfLine()) // otherwise already done in drawChar
                 current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
             if ( internal_saveon_flag ){
@@ -1388,7 +1388,10 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     SDL_BlitSurface( accumulation_surface, &button_link->image_rect, button_link->no_selected_surface, NULL );
 
     info->newLine();
-    info->setXY( current_text_xy[0] );
+    if (info->getTateyokoMode() == FontInfo::YOKO_MODE)
+        info->setXY( current_text_xy[0] );
+    else
+        info->setXY( -1, current_text_xy[1] );
 
     dirty_rect.add( button_link->image_rect );
     
@@ -1794,34 +1797,35 @@ void ONScripterLabel::quit()
 void ONScripterLabel::allocateSelectedSurface( int sprite_no, ButtonLink *button )
 {
     AnimationInfo *sp = &sprite_info[ sprite_no ];
-    
-    if ( sp->no_selected_surface &&
-         ( sp->no_selected_surface->w != sp->pos.w ||
-           sp->no_selected_surface->h != sp->pos.h ) ){
-        SDL_FreeSurface( sp->no_selected_surface );
-        sp->no_selected_surface = NULL;
-    }
-    if ( !sp->no_selected_surface ){
-        sp->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                        sp->pos.w, sp->pos.h,
-                                                        32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( sp->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    }
-    button->no_selected_surface = sp->no_selected_surface;
 
-    if ( sp->selected_surface &&
-         ( sp->selected_surface->w != sp->pos.w ||
-           sp->selected_surface->h != sp->pos.h ) ){
-        SDL_FreeSurface( sp->selected_surface );
-        sp->selected_surface = NULL;
+    if ( button->no_selected_surface &&
+         ( button->no_selected_surface->w != sp->pos.w ||
+           button->no_selected_surface->h != sp->pos.h ) ){
+        SDL_FreeSurface( button->no_selected_surface );
+        button->no_selected_surface = NULL;
     }
-    if ( !sp->selected_surface && sp->num_of_cells >= 2 ){
-        sp->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                     sp->pos.w, sp->pos.h,
-                                                     32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    if ( !button->no_selected_surface ){
+        button->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                            sp->pos.w, sp->pos.h,
+                                                            32, rmask, gmask, bmask, amask );
+        SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     }
-    button->selected_surface = sp->selected_surface;
+
+    if ( button->selected_surface &&
+         ( button->selected_surface->w != sp->pos.w ||
+           button->selected_surface->h != sp->pos.h ) ){
+        SDL_FreeSurface( button->selected_surface );
+        button->selected_surface = NULL;
+    }
+    if ( !button->selected_surface ){
+        button->selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                         sp->pos.w, sp->pos.h,
+                                                         32, rmask, gmask, bmask, amask );
+        SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    }
+    
+    button->image_rect.w = sp->pos.w;
+    button->image_rect.h = sp->pos.h;
 }
 
 void ONScripterLabel::disableGetButtonFlag()

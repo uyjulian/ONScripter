@@ -26,22 +26,90 @@
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
 #define IS_KINSOKU(x)	\
-        ( ( *(x) & 0x80 ) && \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x41 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x42 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x48 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x49 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x76 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x78 ) || \
-          ( *(x) == (char)0x81 && *((x)+1) == (char)0x5b ) )
+        ( *(x) == (char)0x81 && *((x)+1) == (char)0x41 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x42 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x48 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x49 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x76 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x78 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x5b )
 
-void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect )
+#define IS_ROTATION_REQUIRED(x)	\
+        ( !(*(x) & 0x80) || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x50 || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x51 || \
+          *(x) == (char)0x81 && *((x)+1) >= 0x5b && *((x)+1) <= 0x5d || \
+          *(x) == (char)0x81 && *((x)+1) >= 0x60 && *((x)+1) <= 0x64 || \
+          *(x) == (char)0x81 && *((x)+1) >= 0x69 && *((x)+1) <= 0x7a || \
+          *(x) == (char)0x81 && *((x)+1) == (char)0x80 )
+
+#define IS_TRANSLATION_REQUIRED(x)	\
+        ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
+
+SDL_Surface *ONScripterLabel::rotateSurface90CW(SDL_Surface *surface)
 {
-    dst_rect.x = xy[0] + minx;
-    if ( !(text[0] & 0x80) && text[1] ) dst_rect.x += info->pitch_xy[0] / 2 * screen_ratio1 / screen_ratio2;
-    dst_rect.y = xy[1] + TTF_FontAscent( (TTF_Font*)info->ttf_font ) - maxy;
+    if ( surface == NULL ) return NULL;
+    
+    SDL_Surface *tmp = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, surface->h, surface->w, 32, rmask, gmask, bmask, amask );
+        
+    SDL_LockSurface( surface );
+    SDL_LockSurface( tmp );
+
+    Uint32 *src = (Uint32 *)surface->pixels;
+    for (int i=0 ; i<surface->h ; i++){
+        Uint32 *dst = (Uint32 *)tmp->pixels + surface->h - i - 1;
+        for (int j=0 ; j<surface->w ; j++){
+            *dst = *src++;
+            dst += surface->h;
+        }
+    }
+        
+    SDL_UnlockSurface( tmp );
+    SDL_UnlockSurface( surface );
+        
+    SDL_FreeSurface( surface );
+    return tmp;
+}
+
+void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect )
+{
+    unsigned short unicode;
+    if ( text[0] & 0x80 ){
+        unsigned index = ((unsigned char*)text)[0];
+        index = index << 8 | ((unsigned char*)text)[1];
+        unicode = convSJIS2UTF16( index );
+    }
+    else if ( text[1] ){
+        unicode = text[1];
+    }
+    else{
+        unicode = text[0];
+    }
+
+    int minx, maxx, miny, maxy, advanced;
+    TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, unicode,
+                      &minx, &maxx, &miny, &maxy, &advanced );
     
     SDL_Surface *tmp_surface = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
+    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ){
+        tmp_surface = rotateSurface90CW(tmp_surface);
+        int t;
+        t = miny; miny = minx; minx = t;
+        t = maxy; maxy = maxx; maxx = t;
+    }
+
+    //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
+    dst_rect.x = xy[0] + minx;
+    dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_TRANSLATION_REQUIRED(text) ){
+        dst_rect.x += info->font_size_xy[0]/2;
+        dst_rect.y -= info->font_size_xy[0]/2;
+    }
+
+    if ( shadow_flag ){
+        dst_rect.x += shade_distance[0];
+        dst_rect.y += shade_distance[1];
+    }
 
     if ( tmp_surface ){
         dst_rect.w = tmp_surface->w;
@@ -70,11 +138,6 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo 
 
 void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool text_cache_flag, SDL_Rect *clip )
 {
-    int xy[2];
-    SDL_Color color;
-    unsigned short index, unicode;
-    int minx, maxx, miny, maxy, advanced;
-
     //printf("draw %x-%x[%s] %d, %d\n", text[0], text[1], text, info->xy[0], info->xy[1] );
     
     if ( info->ttf_font == NULL ){
@@ -85,40 +148,22 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
         }
     }
 
-    if ( text[0] & 0x80 ){
-        index = ((unsigned char*)text)[0];
-        index = index << 8 | ((unsigned char*)text)[1];
-        unicode = convSJIS2UTF16( index );
-        TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, unicode,
-                          &minx, &maxx, &miny, &maxy, &advanced );
-    }
-    else if ( text[1] ){
-        unicode = text[1];
-        TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, text[1],
-                          &minx, &maxx, &miny, &maxy, &advanced );
-    }
-    else{
-        unicode = text[0];
-        TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, text[0],
-                          &minx, &maxx, &miny, &maxy, &advanced );
-    }
+    if ( info->isEndOfLine() ) info->newLine();
 
-    //printf("minx %d maxx %d miny %d maxy %d ace %d\n",minx, maxx, miny, maxy, advanced );
-
-    if ( info->xy[0] >= info->num_xy[0] ) info->newLine();
-
-    xy[0] = info->x() * screen_ratio1 / screen_ratio2;
-    xy[1] = info->y() * screen_ratio1 / screen_ratio2;
-
+    int xy[2];
+    xy[0] = info->x(!(text[0] & 0x80) && text[1]) * screen_ratio1 / screen_ratio2;
+    xy[1] = info->y(!(text[0] & 0x80) && text[1]) * screen_ratio1 / screen_ratio2;
+    
+    SDL_Color color;
     SDL_Rect dst_rect;
     if ( info->is_shadow ){
         color.r = color.g = color.b = 0;
-        drawGlyph( surface, text, info, color, unicode, xy, minx+1, maxy-1, text_cache_flag, clip, dst_rect );
+        drawGlyph(surface, info, color, text, xy, true, text_cache_flag, clip, dst_rect);
     }
     color.r = info->color[0];
     color.g = info->color[1];
     color.b = info->color[2];
-    drawGlyph( surface, text, info, color, unicode, xy, minx, maxy, text_cache_flag, clip, dst_rect );
+    drawGlyph( surface, info, color, text, xy, false, text_cache_flag, clip, dst_rect );
 
     if ( surface == accumulation_surface &&
          !flush_flag &&
@@ -126,20 +171,20 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
         dirty_rect.add( dst_rect );
     }
     else if ( flush_flag ){
-        dst_rect.w++;
-        dst_rect.h++;
+        info->addShadeArea(dst_rect, shade_distance);
         flush( &dst_rect, false, true );
     }
 
     /* ---------------------------------------- */
     /* Update text buffer */
-    info->xy[0] ++;
+    info->advanceChar();
     if ( lookback_flag ){
         current_text_buffer->addBuffer( text[0] );
         if ( text[0] & 0x80 || text[1] )
             current_text_buffer->addBuffer( text[1] );
-        if ( info->xy[0] >= info->num_xy[0] )
-            current_text_buffer->addBuffer( 0x0a );
+        
+        if ( info->isEndOfLine() ) current_text_buffer->addBuffer( 0x0a );
+        
         if ( internal_saveon_flag ){
             internal_saveon_flag = false;
             saveSaveFile(-1);
@@ -150,19 +195,18 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
 void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect )
 {
     int i;
-    uchar3 org_color;
-    char text[3] = { '\0', '\0', '\0' };
-    SDL_Rect clipped_rect;
 
-    int tmp_xy[2];
-    tmp_xy[0] = info->xy[0];
-    tmp_xy[1] = info->xy[1];
+    int start_xy[2];
+    start_xy[0] = info->xy[0];
+    start_xy[1] = info->xy[1];
 
     /* ---------------------------------------- */
     /* Draw selected characters */
+    uchar3 org_color;
     for ( i=0 ; i<3 ; i++ ) org_color[i] = info->color[i];
     for ( i=0 ; i<3 ; i++ ) info->color[i] = color[i];
 
+    char text[3] = { '\0', '\0', '\0' };
     while( *str ){
         if ( *str == ' ' ){
             str++;
@@ -170,20 +214,19 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
         }
         if ( *str & 0x80 ){
             /* Kinsoku process */
-            if ( info->xy[0] + 1 == info->num_xy[0] &&
-                 IS_KINSOKU( str+2 ) ) {
-                info->newLine();
-            }
+            if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )) info->newLine();
             text[0] = *str++;
             text[1] = *str++;
             drawChar( text, info, false, false, surface, false );
         }
         else{
             text[0] = *str++;
-            text[1] = '\0';
-            drawChar( text, info, false, false, surface, false );
-            info->xy[0]--;
-            if ( *str ){
+            if ( !(text[0] & 0x80) ){
+                text[1] = '\0';
+                drawChar( text, info, false, false, surface, false );
+                info->advanceChar(-1);
+            }
+            if ((text[0] & 0x80) || *str){
                 text[1] = *str++;
                 drawChar( text, info, false, false, surface, false );
             }
@@ -193,34 +236,8 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 
     /* ---------------------------------------- */
     /* Calculate the area of selection */
-    if ( info->getTateyokoMode() == FontInfo::TATE_MODE ){
-        clipped_rect.x = (info->top_xy[0] + (info->num_xy[1] - tmp_xy[1] - 1) * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-        clipped_rect.w = (info->pitch_xy[0] * (info->xy[1] - tmp_xy[1] + 1)) * screen_ratio1 / screen_ratio2;
-        if ( tmp_xy[1] == info->xy[1] ){
-            clipped_rect.y = (info->top_xy[1] + tmp_xy[0] * info->pitch_xy[1]) * screen_ratio1 / screen_ratio2;
-            clipped_rect.h = (info->pitch_xy[1] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-        }
-        else{
-            clipped_rect.y = info->top_xy[1] * screen_ratio1 / screen_ratio2;
-            clipped_rect.h = info->pitch_xy[1] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-        }
-    }
-    else{
-        if ( tmp_xy[1] == info->xy[1] ){
-            clipped_rect.x = (info->top_xy[0] + tmp_xy[0] * info->pitch_xy[0]) * screen_ratio1 / screen_ratio2;
-            clipped_rect.w = (info->pitch_xy[0] * (info->xy[0] - tmp_xy[0] + 1)) * screen_ratio1 / screen_ratio2;
-        }
-        else{
-            clipped_rect.x = info->top_xy[0] * screen_ratio1 / screen_ratio2;
-            clipped_rect.w = info->pitch_xy[0] * info->num_xy[0] * screen_ratio1 / screen_ratio2;
-        }
-        clipped_rect.y = (tmp_xy[1] * info->pitch_xy[1] + info->top_xy[1]) * screen_ratio1 / screen_ratio2;
-        clipped_rect.h = (info->xy[1] - tmp_xy[1] + 1) * info->pitch_xy[1] * screen_ratio1 / screen_ratio2;
-    }
-    if ( info->is_shadow ){
-        clipped_rect.w++;
-        clipped_rect.h++;
-    }
+    SDL_Rect clipped_rect = info->calcUpdatedArea(start_xy, screen_ratio1, screen_ratio2);
+    info->addShadeArea(clipped_rect, shade_distance);
     
     if ( flush_flag ) flush( &clipped_rect );
     
@@ -258,7 +275,7 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, b
                 if ( !(out_text[0] & 0x80) ){
                     out_text[1] = '\0';
                     drawChar( out_text, &f_info, false, false, surface, text_cache_flag, clip );
-                    f_info.xy[0]--;
+                    f_info.advanceChar(-1);
                 }
                 out_text[1] = current_text_buffer->buffer2[i+1];
                 i++;
@@ -438,8 +455,8 @@ int ONScripterLabel::textCommand()
     if ( ch & 0x80 ){ // Shift jis
         /* ---------------------------------------- */
         /* Kinsoku process */
-        if ( sentence_font.xy[0] + 1 == sentence_font.num_xy[0] &&
-             IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2 ) ){
+        if (sentence_font.isEndOfLine(1) &&
+            IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2 )){
             sentence_font.newLine();
             current_text_buffer->addBuffer( 0x0a );
         }
@@ -543,25 +560,8 @@ int ONScripterLabel::textCommand()
             i++;
         }
         ruby_struct.stage = RubyStruct::BODY;
+        ruby_struct.margin = ruby_font.initRuby(sentence_font, ruby_struct.body_count/2, ruby_struct.ruby_count/2);
         
-        ruby_font.top_xy[0] = sentence_font.x();
-        ruby_font.top_xy[1] = sentence_font.y() - ruby_font.font_size_xy[1];
-        ruby_font.y_offset = 0;
-        ruby_font.num_xy[0] = ruby_struct.ruby_count/2;
-        ruby_font.num_xy[1] = 1;
-        ruby_font.clear();
-        if ( ruby_struct.ruby_count/2*ruby_font.font_size_xy[0] >= ruby_struct.body_count/2*sentence_font.pitch_xy[0] ){
-            ruby_struct.x_margin = (ruby_struct.ruby_count/2*ruby_font.font_size_xy[0] - ruby_struct.body_count/2*sentence_font.pitch_xy[0] + 1)/2;
-            ruby_font.x_offset = 0;
-            ruby_font.pitch_xy[0] = ruby_font.font_size_xy[0];
-        }
-        else{
-            ruby_struct.x_margin = 0;
-            ruby_font.x_offset = (ruby_struct.body_count/2*sentence_font.pitch_xy[0] - ruby_struct.ruby_count/2*ruby_font.font_size_xy[0] + ruby_struct.ruby_count/2)
-                / ruby_struct.ruby_count;
-            ruby_font.pitch_xy[0] = ruby_font.x_offset*2+ruby_font.font_size_xy[0];
-        }
-        sentence_font.x_offset += ruby_struct.x_margin;
         string_buffer_offset++;
         return RET_CONTINUE_NOREAD;
     }
@@ -573,7 +573,7 @@ int ONScripterLabel::textCommand()
                  ctrl_pressed_status )
                 flush_flag = false;
         
-            ruby_font.xy[0] = ruby_font.xy[1] = 0;
+            ruby_font.clear();
             for ( i=ruby_struct.ruby_start ; i<string_buffer_offset ; i++ ){
                 out_text[0] = script_h.getStringBuffer()[i];
                 if ( script_h.getStringBuffer()[i] & 0x80 ){
@@ -601,7 +601,7 @@ int ONScripterLabel::textCommand()
     }
     else if ( ch == '/' ){
         if ( ruby_struct.stage == RubyStruct::BODY ){
-            sentence_font.x_offset += ruby_struct.x_margin;
+            sentence_font.addMargin(ruby_struct.margin);
             if ( ruby_struct.ruby_end != 0 ){
                 ruby_struct.stage = RubyStruct::RUBY;
                 string_buffer_offset = ruby_struct.ruby_end;
@@ -687,7 +687,7 @@ int ONScripterLabel::textCommand()
             flush_flag = false;
         out_text[0] = ch;
         drawChar( out_text, &sentence_font, flush_flag, true, accumulation_surface, true );
-        sentence_font.xy[0]--;
+        sentence_font.advanceChar(-1);
         if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] ){
             out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
             drawChar( out_text, &sentence_font, flush_flag, true, accumulation_surface, true );

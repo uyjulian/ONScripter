@@ -367,7 +367,9 @@ private:
         void removeSprite( int no ){
             ButtonLink *p = this;
             while(p->next){
-                if ( p->next->sprite_no == no ){
+                if ( p->next->sprite_no == no &&
+                     ( p->next->sprite_no == SPRITE_BUTTON ||
+                       p->next->sprite_no == EX_SPRITE_BUTTON ) ){
                     ButtonLink *p2 = p->next;
                     p->next = p->next->next;
                     delete p2;
@@ -460,7 +462,8 @@ private:
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
 
-    void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect );
+    SDL_Surface *rotateSurface90CW(SDL_Surface *surface);
+    void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool text_cache_flag, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL );
     void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, bool text_cache_flag );

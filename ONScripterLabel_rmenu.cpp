@@ -620,7 +620,7 @@ void ONScripterLabel::executeSystemLookback()
             return;
         }
 
-        SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
+        //SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
         
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_LOOKBACK;
