@@ -39,6 +39,9 @@
 
 #ifdef USE_OPENGL
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_OPENGL|SDL_DOUBLEBUF)
+#ifndef PFNGLBLENDCOLORPROC
+typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+#endif
 #else
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 #endif
@@ -660,12 +663,12 @@ private:
 
     void initOpenGL();
     void refreshOpenGL( int refresh_mode );
-    void loadTexture( SDL_Surface *surface, unsigned int tex_id, int trans=256 );
-    void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL, int trans=256 );
-    void drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, AnimationInfo *anim=NULL );
+    void loadTexture( SDL_Surface *surface, unsigned int tex_id );
+    void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL );
+    void drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );
     void refreshTexture();
 #ifdef USE_OPENGL
-    PFNGLBLENDCOLOREXTPROC glBlendColor_ptr;
+    PFNGLBLENDCOLORPROC glBlendColor_ptr;
 #endif
 };
 

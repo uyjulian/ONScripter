@@ -163,7 +163,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
     
     anim->setupImage(surface, surface_m);
     if (anim->image_surface)
-        loadTexture(anim->image_surface, anim->tex_id, anim->trans);
+        loadTexture(anim->image_surface, anim->tex_id);
     
     SDL_FreeSurface(surface);
     if ( surface_m ) SDL_FreeSurface(surface_m);
@@ -308,7 +308,7 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
         SDL_Rect tex_rect = anim->pos;
         tex_rect.x = anim->pos.w*anim->current_cell;
         tex_rect.y = 0;
-        drawTexture( anim->tex_id, poly_rect, tex_rect, anim );
+        drawTexture( anim->tex_id, poly_rect, tex_rect, anim->trans, anim );
     }
     else{
         anim->blendOnSurface( dst_surface, poly_rect.x, poly_rect.y,

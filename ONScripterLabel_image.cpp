@@ -512,7 +512,8 @@ void ONScripterLabel::initOpenGL()
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
 
     screen_texture_width = 1;
     while (screen_texture_width  < screen_width)  screen_texture_width <<= 1;
@@ -522,7 +523,7 @@ void ONScripterLabel::initOpenGL()
 #ifdef glBlendColor
     glBlendColor_ptr = glBlendColor;
 #else    
-    glBlendColor_ptr = (PFNGLBLENDCOLOREXTPROC) SDL_GL_GetProcAddress("glBlendColor");
+    glBlendColor_ptr = (PFNGLBLENDCOLORPROC) SDL_GL_GetProcAddress("glBlendColor");
     if (glBlendColor_ptr == NULL){
         fprintf(stderr, "glBlendColor is not supported. Exiting ...\n");
         exit(-1);
@@ -557,10 +558,9 @@ void ONScripterLabel::refreshOpenGL(int refresh_mode)
 #endif    
 }
 
-void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, int trans )
+void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id )
 {
 #ifdef USE_OPENGL
-    int i, j;
     SDL_Rect rect = {0, 0, surface->w, surface->h};
 
     int texture_width = 1;
@@ -575,7 +575,7 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, in
     }
     
     SDL_LockSurface(surface);
-    for (i=0 ; i<rect.h ; i++){
+    for (int i=0 ; i<rect.h ; i++){
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
         memcpy(texture_buffer+(rect.h-i-1)*texture_width*4,
                (Uint32*)surface->pixels + surface->w * i,
@@ -583,7 +583,7 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, in
 #else
         unsigned char *dst_buf = texture_buffer+(rect.h-i-1)*texture_width*4;
         unsigned char *src_buf = (unsigned char *)surface->pixels + surface->w * i * 4;
-        for (j=0 ; j<surface->w ; j++, src_buf+=4){
+        for (int j=0 ; j<surface->w ; j++, src_buf+=4){
             *dst_buf++ = src_buf[3];
             *dst_buf++ = src_buf[2];
             *dst_buf++ = src_buf[1];
@@ -593,16 +593,6 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, in
     }
     SDL_UnlockSurface(surface);
 
-    if (trans < 256){
-        for (i=0 ; i<rect.h ; i++){
-            unsigned char *buf = texture_buffer+(rect.h-i-1)*texture_width*4+3;
-            for (j=0 ; j<surface->w ; j++, buf+=4){
-                unsigned long a = *buf;
-                *buf = a * trans >> 8;
-            }
-        }
-    }
-    
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  texture_width, texture_height,
@@ -610,11 +600,10 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id, in
 #endif    
 }
 
-void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect, int trans )
+void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect )
 {
 #ifdef USE_OPENGL
-    int i, j;
-    SDL_Rect rect2 = {0, 0, screen_width, screen_height};
+    SDL_Rect rect2 = {0, 0, surface->w, surface->h};
     if (rect) rect2 = *rect;
     
     if (texture_buffer_size < rect2.w*rect2.h*4){
@@ -624,7 +613,7 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
     }
     
     SDL_LockSurface(surface);
-    for (i=0 ; i<rect2.h ; i++){
+    for (int i=0 ; i<rect2.h ; i++){
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
         memcpy(texture_buffer+(rect2.h-i-1)*rect2.w*4,
                (Uint32*)surface->pixels + surface->w * (rect2.y+i) + rect2.x,
@@ -632,7 +621,7 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
 #else
         unsigned char *dst_buf = texture_buffer+(rect2.h-i-1)*rect2.w*4;
         unsigned char *src_buf = (unsigned char *)surface->pixels + (surface->w * (rect2.y+i) + rect2.x)*4;
-        for (j=0 ; j<rect2.w ; j++, src_buf+=4){
+        for (int j=0 ; j<rect2.w ; j++, src_buf+=4){
             *dst_buf++ = src_buf[3];
             *dst_buf++ = src_buf[2];
             *dst_buf++ = src_buf[1];
@@ -642,14 +631,6 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
     }
     SDL_UnlockSurface(surface);
 
-    if (trans < 256){
-        for (i=0 ; i<rect2.h ; i++){
-            unsigned char *buf = texture_buffer+(rect2.h-i-1)*rect2.w*4+3;
-            for (j=0 ; j<surface->w ; j++, buf+=4)
-                *buf = (unsigned long)(*buf) * trans >> 8;
-        }
-    }
-    
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexSubImage2D(GL_TEXTURE_2D, 0, rect2.x, surface->h-rect2.y-rect2.h,
                     rect2.w, rect2.h,
@@ -657,7 +638,7 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
 #endif    
 }
 
-void ONScripterLabel::drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, AnimationInfo *anim )
+void ONScripterLabel::drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, int alpha, AnimationInfo *anim )
 {
     int image_height = screen_height;
     int texture_width = screen_texture_width;
@@ -675,6 +656,9 @@ void ONScripterLabel::drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL
            tex_rect.x, tex_rect.y, tex_rect.w, tex_rect.h);
 #endif    
 #ifdef USE_OPENGL
+    if (alpha >= 0)
+        glColor4f(1.0, 1.0, 1.0, alpha/256.0);
+
     glBindTexture(GL_TEXTURE_2D, tex_id);
     
     float u[2], v[2];
@@ -706,22 +690,22 @@ void ONScripterLabel::refreshTexture()
 #ifdef USE_OPENGL    
     int i;
     
-    if (effect_src_id > 0) glDeleteTextures(1, &effect_src_id);
-    glGenTextures(1, &effect_src_id);
+    if (effect_src_id > 0) glDeleteTextures(1, (const GLuint*)&effect_src_id);
+    glGenTextures(1, (GLuint*)&effect_src_id);
     glBindTexture(GL_TEXTURE_2D, effect_src_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     loadTexture(text_surface, effect_src_id);
 
-    if (effect_dst_id > 0) glDeleteTextures(1, &effect_dst_id);
-    glGenTextures(1, &effect_dst_id);
+    if (effect_dst_id > 0) glDeleteTextures(1, (const GLuint*)&effect_dst_id);
+    glGenTextures(1, (GLuint*)&effect_dst_id);
     glBindTexture(GL_TEXTURE_2D, effect_dst_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     loadTexture(text_surface, effect_dst_id);
 
-    if (text_id > 0) glDeleteTextures(1, &text_id);
-    glGenTextures(1, &text_id);
+    if (text_id > 0) glDeleteTextures(1, (const GLuint*)&text_id);
+    glGenTextures(1, (GLuint*)&text_id);
     glBindTexture(GL_TEXTURE_2D, text_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -729,50 +713,50 @@ void ONScripterLabel::refreshTexture()
 
     if (bg_info.tex_id > 0){
         bg_info.bindTexture();
-        loadTexture(bg_info.image_surface, bg_info.tex_id, bg_info.trans);
+        loadTexture(bg_info.image_surface, bg_info.tex_id);
     }
     if (btndef_info.tex_id > 0){
         btndef_info.bindTexture();
-        loadTexture(btndef_info.image_surface, btndef_info.tex_id, btndef_info.trans);
+        loadTexture(btndef_info.image_surface, btndef_info.tex_id);
     }
     if (sentence_font_info.tex_id > 0){
         sentence_font_info.bindTexture();
-        loadTexture(sentence_font_info.image_surface, sentence_font_info.tex_id, sentence_font_info.trans);
+        loadTexture(sentence_font_info.image_surface, sentence_font_info.tex_id);
     }
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
         if (sprite_info[i].tex_id > 0){
             sprite_info[i].bindTexture();
-            loadTexture(sprite_info[i].image_surface, sprite_info[i].tex_id, sprite_info[i].trans);
+            loadTexture(sprite_info[i].image_surface, sprite_info[i].tex_id);
         }
     }
     for ( i=0 ; i<3 ; i++ ){
         if (tachi_info[i].tex_id > 0){
             tachi_info[i].bindTexture();
-            loadTexture(tachi_info[i].image_surface, tachi_info[i].tex_id, tachi_info[i].trans);
+            loadTexture(tachi_info[i].image_surface, tachi_info[i].tex_id);
         }
     }
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         if ( bar_info[i] && bar_info[i]->tex_id > 0){
             bar_info[i]->bindTexture();
-            loadTexture(bar_info[i]->image_surface, bar_info[i]->tex_id, bar_info[i]->trans);
+            loadTexture(bar_info[i]->image_surface, bar_info[i]->tex_id);
         }
     }
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         if ( prnum_info[i] && prnum_info[i]->tex_id > 0){
             prnum_info[i]->bindTexture();
-            loadTexture(prnum_info[i]->image_surface, prnum_info[i]->tex_id, prnum_info[i]->trans);
+            loadTexture(prnum_info[i]->image_surface, prnum_info[i]->tex_id);
         }
     }
     for ( i=0 ; i<2 ; i++ ){
         if (cursor_info[i].tex_id > 0){
             cursor_info[i].bindTexture();
-            loadTexture(cursor_info[i].image_surface, cursor_info[i].tex_id, cursor_info[i].trans);
+            loadTexture(cursor_info[i].image_surface, cursor_info[i].tex_id);
         }
     }
     for ( i=0 ; i<4 ; i++ ){
         if (lookback_info[i].tex_id > 0){
             lookback_info[i].bindTexture();
-            loadTexture(lookback_info[i].image_surface, lookback_info[i].tex_id, lookback_info[i].trans);
+            loadTexture(lookback_info[i].image_surface, lookback_info[i].tex_id);
         }
     }
 #endif    

@@ -207,8 +207,7 @@ int ONScripterLabel::talCommand()
         tachi_info[ no ].trans = trans;
         dirty_rect.add( tachi_info[ no ].pos );
 
-        SDL_Rect rect = {0, 0, tachi_info[no].image_surface->w, tachi_info[no].image_surface->h };
-        loadSubTexture( tachi_info[no].image_surface, tachi_info[no].tex_id, &rect, tachi_info[no].trans );
+        loadSubTexture( tachi_info[no].image_surface, tachi_info[no].tex_id );
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -1005,8 +1004,7 @@ int ONScripterLabel::mspCommand()
     if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
 
-    SDL_Rect rect = {0, 0, sprite_info[no].image_surface->w, sprite_info[no].image_surface->h };
-    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id, &rect, sprite_info[no].trans );
+    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id );
 
     return RET_CONTINUE;
 }
@@ -1920,7 +1918,11 @@ int ONScripterLabel::dvCommand()
 
 int ONScripterLabel::drawtextCommand()
 {
+#ifdef USE_OPENGL
+    refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE | REFRESH_OPENGL_MODE);
+#else    
     refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE );
+#endif    
     
     return RET_CONTINUE;
 }
@@ -1939,8 +1941,28 @@ int ONScripterLabel::drawsp2Command()
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
+#ifdef USE_OPENGL
+    glMatrixMode(GL_MODELVIEW) ;
+    glPushMatrix();
+    glLoadIdentity() ;
+
+    glTranslatef( x, screen_height-y, 0.0 );
+    glRotatef( (float)rot, 0.0, 0.0, 1.0 );
+    glScalef( scale_x * 0.01, scale_y * 0.01, 1.0 );
+
+    SDL_Rect poly_rect = si.pos;
+    poly_rect.x = -si.pos.w/2;
+    poly_rect.y = screen_height-si.pos.h/2;
+    SDL_Rect tex_rect = si.pos;
+    tex_rect.x = si.pos.w*si.current_cell;
+    tex_rect.y = 0;
+    drawTexture( si.tex_id, poly_rect, tex_rect, alpha, &si );
+
+    glPopMatrix();
+#else    
     si.blendOnSurface( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
                        NULL, alpha, scale_x, scale_y, rot );
+#endif    
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -1954,11 +1976,28 @@ int ONScripterLabel::drawspCommand()
     int x = script_h.readInt();
     int y = script_h.readInt();
 
-    int old_cell_no = sprite_info[sprite_no].current_cell;
-    sprite_info[sprite_no].setCell(cell_no);
-    sprite_info[sprite_no].blendOnSurface( accumulation_surface, x, y,
+    AnimationInfo &si = sprite_info[sprite_no];
+    int old_cell_no = si.current_cell;
+    si.setCell(cell_no);
+#ifdef USE_OPENGL
+    glMatrixMode(GL_MODELVIEW) ;
+    glPushMatrix();
+    glLoadIdentity() ;
+
+    SDL_Rect poly_rect = si.pos;
+    poly_rect.x = x;
+    poly_rect.y = y;
+    SDL_Rect tex_rect = si.pos;
+    tex_rect.x = si.pos.w*si.current_cell;
+    tex_rect.y = 0;
+    drawTexture( si.tex_id, poly_rect, tex_rect, alpha, &si );
+
+    glPopMatrix();
+#else    
+    si.blendOnSurface( accumulation_surface, x, y,
                                            NULL, alpha );
-    sprite_info[sprite_no].setCell(old_cell_no);
+#endif    
+    si.setCell(old_cell_no);
 
     return RET_CONTINUE;
 }
@@ -1968,23 +2007,44 @@ int ONScripterLabel::drawfillCommand()
     int r = script_h.readInt();
     int g = script_h.readInt();
     int b = script_h.readInt();
-    
+
+#ifdef USE_OPENGL
+    glColor4f(r/256.0, g/256.0, b/256.0, 1.0);
+    glDisable(GL_TEXTURE_2D);
+    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    drawTexture( effect_src_id, rect, rect, -1 );
+    glEnable(GL_TEXTURE_2D);
+#else    
     SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, r, g, b, 0xff) );
+#endif    
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawclearCommand()
 {
+#ifdef USE_OPENGL
+    glClear(GL_COLOR_BUFFER_BIT);
+#else    
     SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff) );
+#endif    
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawbgCommand()
 {
-    drawTaggedSurface( accumulation_surface, &bg_info, NULL, 0 );
-    //setBackground( accumulation_surface );
+#ifdef USE_OPENGL
+    glMatrixMode(GL_MODELVIEW) ;
+    glPushMatrix();
+    glLoadIdentity() ;
+
+    drawTexture( bg_info.tex_id, bg_info.pos, bg_info.pos, 256, &bg_info );
+
+    glPopMatrix();
+#else    
+    bg_info.blendOnSurface( accumulation_surface, bg_info.pos.x, bg_info.pos.y );
+#endif    
     
     return RET_CONTINUE;
 }
@@ -1997,17 +2057,41 @@ int ONScripterLabel::drawbg2Command()
     int scale_y = script_h.readInt();
     int rot = script_h.readInt();
 
+#ifdef USE_OPENGL
+    glMatrixMode(GL_MODELVIEW) ;
+    glPushMatrix();
+    glLoadIdentity() ;
+
+    glTranslatef( x, screen_height-y, 0.0 );
+    glRotatef( (float)rot, 0.0, 0.0, 1.0 );
+    glScalef( scale_x * 0.01, scale_y * 0.01, 1.0 );
+    
+    SDL_Rect poly_rect = bg_info.pos;
+    poly_rect.x = -bg_info.pos.w/2;
+    poly_rect.y = screen_height-bg_info.pos.h/2;
+    SDL_Rect tex_rect = bg_info.pos;
+    tex_rect.x = 0;
+    tex_rect.y = 0;
+    drawTexture( bg_info.tex_id, poly_rect, tex_rect, 256, &bg_info );
+
+    glPopMatrix();
+#else    
     bg_info.blendOnSurface( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
                             NULL, 256, scale_x, scale_y, rot );
+#endif    
 
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawCommand()
 {
+#ifdef USE_OPENGL
+    SDL_GL_SwapBuffers();
+#else    
     SDL_Rect rect = {0, 0, screen_width, screen_height};
     flushDirect( rect, REFRESH_NONE_MODE );
     dirty_rect.clear();
+#endif
     
     return RET_CONTINUE;
 }
@@ -2423,6 +2507,16 @@ int ONScripterLabel::bltCommand()
     src_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
+#ifdef USE_OPENGL
+    glMatrixMode(GL_MODELVIEW) ;
+    glPushMatrix();
+    glLoadIdentity() ;
+
+    drawTexture( btndef_info.tex_id, dst_rect, src_rect, 256, &btndef_info );
+        
+    glPopMatrix();
+    SDL_GL_SwapBuffers();
+#else        
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 
         clip.x = clip.y = 0;
@@ -2431,19 +2525,8 @@ int ONScripterLabel::bltCommand()
         doClipping( &dst_rect, &clip, &clipped );
         shiftRect( src_rect, clipped );
 
-#ifdef USE_OPENGL
-        glMatrixMode(GL_MODELVIEW) ;
-        glPushMatrix();
-        glLoadIdentity() ;
-
-        drawTexture( btndef_info.tex_id, dst_rect, src_rect, &btndef_info );
-        
-        glPopMatrix();
-        SDL_GL_SwapBuffers();
-#else        
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
-#endif
         dirty_rect.clear();
     }
     else{
@@ -2451,7 +2534,7 @@ int ONScripterLabel::bltCommand()
         //dirty_rect.add( dst_rect );
         flushDirect( dst_rect, REFRESH_NONE_MODE );
     }
-    
+#endif    
     return RET_CONTINUE;
 }
 
@@ -2581,9 +2664,6 @@ int ONScripterLabel::amspCommand()
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
     dirty_rect.add( sprite_info[ no ].pos );
 
-    SDL_Rect rect = {0, 0, sprite_info[no].image_surface->w, sprite_info[no].image_surface->h };
-    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id, &rect, sprite_info[no].trans );
-    
     return RET_CONTINUE;
 }
 

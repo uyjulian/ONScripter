@@ -79,7 +79,7 @@ void AnimationInfo::deleteSurface(){
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;
 #ifdef USE_OPENGL
-    glDeleteTextures(1, &tex_id);
+    glDeleteTextures(1, (const GLuint*)&tex_id);
     tex_id = 0;
 #endif    
 }
@@ -403,9 +403,8 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
 void AnimationInfo::bindTexture()
 {
 #ifdef USE_OPENGL
-    if (tex_id == 0) glGenTextures(1, &tex_id);
+    if (tex_id == 0) glGenTextures(1, (GLuint*)&tex_id);
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 #endif    

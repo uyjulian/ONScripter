@@ -734,7 +734,6 @@ int ScriptHandler::parseInt( char **buf )
         int alias_buf_len = 0, alias_no = 0;
         bool direct_num_flag = false;
         bool num_alias_flag = false;
-        bool minus_flag = false;
 
         char *buf_start = *buf;
         while( 1 ){
@@ -755,15 +754,9 @@ int ScriptHandler::parseInt( char **buf )
                 else
                     alias_buf[ alias_buf_len++ ] = ch;
             }
-            else if ( ch == '-' ){
-                if ( direct_num_flag || num_alias_flag ) break;
-                minus_flag = true;
-                direct_num_flag = true;
-            }
             else break;
             (*buf)++;
         }
-        if ( minus_flag ) alias_no = -alias_no;
 
         if ( *buf - buf_start  == 0 ){
             current_variable.type = VAR_NONE;
@@ -810,6 +803,7 @@ int ScriptHandler::parseInt( char **buf )
  */
 void ScriptHandler::readNextOp( char **buf, int *op, int *num )
 {
+    bool minus_flag = false;
     SKIP_SPACE(*buf);
     char *buf_start = *buf;
     
@@ -836,16 +830,25 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
         else                 (*buf)++;
         SKIP_SPACE(*buf);
     }
+    else{
+        if ( (*buf)[0] == '-' ){
+            minus_flag = true;
+            (*buf)++;
+            SKIP_SPACE(*buf);
+        }
+    }
 
     if ( (*buf)[0] == '(' ){
         (*buf)++;
         *num = parseIntExpression( buf );
+        if (minus_flag) *num = -*num;
         SKIP_SPACE(*buf);
         if ( (*buf)[0] != ')' ) errorAndExit(") is not found.\n");
         (*buf)++;
     }
     else{
         *num = parseInt( buf );
+        if (minus_flag) *num = -*num;
         if ( current_variable.type == VAR_NONE ){
             if (op) *op = OP_INVALID;
             *buf = buf_start;
@@ -870,7 +873,6 @@ int ScriptHandler::calcArithmetic( int num1, int op, int num2 )
 
 int ScriptHandler::parseIntExpression( char **buf )
 {
-    int ret;
     int num[3], op[2]; // internal buffer
 
     SKIP_SPACE( *buf );
@@ -894,9 +896,7 @@ int ScriptHandler::parseIntExpression( char **buf )
             num[1] = num[2];
         }
     }
-    ret = calcArithmetic( num[0], op[0], num[1] );
-
-    return ret;
+    return calcArithmetic( num[0], op[0], num[1] );
 }
 
 void ScriptHandler::setInt( VariableInfo *var_info, int val, int offset )
