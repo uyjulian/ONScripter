@@ -445,7 +445,6 @@ private:
     char *font_file;
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
-    int  tateyoko_mode;
 
     void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool buffering_flag = true, SDL_Rect *clip=NULL );
@@ -489,7 +488,7 @@ private:
     int shortcut_mouse_line;
 
     void deleteSelectLink();
-    struct ONScripterLabel::ButtonLink *getSelectableSentence( char *buffer, FontInfo *info, bool flush_flag = true, bool nofile_flag = false );
+    struct ButtonLink *getSelectableSentence( char *buffer, FontInfo *info, bool flush_flag = true, bool nofile_flag = false );
     
     /* ---------------------------------------- */
     /* Sound related variables */
@@ -591,7 +590,7 @@ private:
     void saveMagicNumber( FILE *fp );
     void saveSaveFileFromTmpFile( FILE *fp );
     int saveSaveFile( int no );
-    int loadSaveFile2( FILE *fp );
+    int loadSaveFile2( FILE *fp, int file_version );
     void saveSaveFile2( FILE *fp );
     void setupLookbackButton();
 

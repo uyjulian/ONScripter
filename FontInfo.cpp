@@ -47,7 +47,8 @@ FontInfo::FontInfo()
 
 void FontInfo::reset()
 {
-    xy[0] = xy[1] = 0;
+    clear();
+    y_offset = 0;
 
     color[0] = color[1] = color[2] = 0xff;
     is_bold = true;
@@ -89,18 +90,49 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
     return fc->next->font;
 }
 
-int FontInfo::x( int tateyoko_mode )
+void FontInfo::setTateyokoMode( int tateyoko_mode )
 {
-    if ( tateyoko_mode == 1 )
-        return (num_xy[1] - xy[1] - 1) * pitch_xy[0] + top_xy[0];
-    
-    return xy[0] * pitch_xy[0] + top_xy[0];
+    //if ( xy[0] == 0 && xy[1] == 0 )
+    this->tateyoko_mode = tateyoko_mode;
 }
 
-int FontInfo::y( int tateyoko_mode )
+int FontInfo::getTateyokoMode()
 {
-    if ( tateyoko_mode == 1 )
-        return xy[0] * pitch_xy[1] + top_xy[1];
+    return tateyoko_mode;
+}
+
+int FontInfo::x()
+{
+    if ( tateyoko_mode == TATE_MODE )
+        return (num_xy[1] - xy[1] - 1) * pitch_xy[0] + top_xy[0] - y_offset;
     
-    return xy[1] * pitch_xy[1] + top_xy[1];
+    return xy[0] * pitch_xy[0] + top_xy[0] + x_offset;
+}
+
+int FontInfo::y()
+{
+    if ( tateyoko_mode == TATE_MODE )
+        return xy[0] * pitch_xy[1] + top_xy[1] + x_offset;
+    
+    return xy[1] * pitch_xy[1] + top_xy[1] + y_offset;
+}
+
+void FontInfo::setXY( int x, int y )
+{
+    if ( x != -1 ) xy[0] = x;
+    if ( y != -1 ) xy[1] = y;
+    x_offset = 0;
+}
+
+void FontInfo::clear()
+{
+    setXY( 0, 0 );
+    tateyoko_mode = YOKO_MODE;
+}
+
+void FontInfo::newLine()
+{
+    xy[0] = 0;
+    xy[1]++;
+    x_offset = 0;
 }

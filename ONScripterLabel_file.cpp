@@ -39,7 +39,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 0
+#define SAVEFILE_VERSION_MINOR 1
 
 #define READ_LENGTH 4096
 
@@ -167,7 +167,7 @@ int ONScripterLabel::loadSaveFile( int no )
         fseek( fp, 0, SEEK_SET );
         if ( !ons_ver0_flag ){
             printf("Save file version is unknown\n" );
-            return loadSaveFile2( fp );
+            return loadSaveFile2( fp, SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR );
         }
         file_version = 0;
     }
@@ -181,16 +181,17 @@ int ONScripterLabel::loadSaveFile( int no )
     }
 
     if ( file_version >= 200 )
-        return loadSaveFile2( fp );
+        return loadSaveFile2( fp, file_version );
     
     deleteLabelLink();
 
     /* ---------------------------------------- */
     /* Load text history */
     if ( file_version >= 107 )
-        loadInt( fp, &tateyoko_mode );
+        loadInt( fp, &i );
     else
-        tateyoko_mode = 0;
+        i = 0;
+    sentence_font.setTateyokoMode( i );
     int text_history_num;
     loadInt( fp, &text_history_num );
     struct TextBuffer *tb = current_text_buffer;
@@ -551,7 +552,7 @@ int ONScripterLabel::saveSaveFile( int no )
             fclose(fp);
         }
 
-        sprintf( file_name, "sav/save%d.dat", no );
+        sprintf( file_name, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
         if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
             fprintf( stderr, "can't open save file %s for writing (not error)\n", file_name );
             return 0;

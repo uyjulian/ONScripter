@@ -224,6 +224,38 @@ int ScriptParser::savenameCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::rubyonCommand()
+{
+    rubyon_flag = true;
+
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+        ruby_struct.font_size_xy[0] = script_h.readInt();
+        ruby_struct.font_size_xy[1] = script_h.readInt();
+        if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+            setStr( &ruby_struct.font_name, script_h.readStr() );
+        }
+        else{
+            setStr( &ruby_struct.font_name, NULL );
+        }
+    }
+    else{
+        ruby_struct.font_size_xy[0] = -1;
+        ruby_struct.font_size_xy[1] = -1;
+        setStr( &ruby_struct.font_name, NULL );
+    }
+    sentence_font.y_offset = sentence_font.pitch_xy[1] - sentence_font.font_size_xy[1];
+
+    return RET_CONTINUE;
+}
+
+int ScriptParser::rubyoffCommand()
+{
+    rubyon_flag = false;
+    sentence_font.y_offset = 0;
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::roffCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "roff: not in the define section" );
@@ -314,7 +346,7 @@ int ScriptParser::nsadirCommand()
         delete[] nsa_path;
     }
     nsa_path = new char[ strlen(buf) + 2 ];
-    sprintf( nsa_path, "%s%c", buf, DELIMITER );
+    sprintf( nsa_path, RELATIVEPATH "%s%c", buf, DELIMITER );
 
     return RET_CONTINUE;
 }

@@ -102,7 +102,7 @@ int ONScripterLabel::vCommand()
 {
     char buf[256];
     
-    sprintf( buf, "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1 );
+    sprintf( buf, RELATIVEPATH "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1 );
     playWave( buf, false, DEFAULT_WAVE_CHANNEL );
     
     return RET_CONTINUE;
@@ -182,10 +182,7 @@ int ONScripterLabel::texecCommand()
 
 int ONScripterLabel::tateyokoCommand()
 {
-    int mode = script_h.readInt();
-
-    if ( tateyoko_mode == 0 )
-        tateyoko_mode = mode;
+    sentence_font.setTateyokoMode( script_h.readInt() );
     
     return RET_CONTINUE;
 }
@@ -360,7 +357,6 @@ int ONScripterLabel::setwindow2Command()
 
 int ONScripterLabel::setwindowCommand()
 {
-    tateyoko_mode = 0;
     sentence_font.ttf_font  = NULL;
     sentence_font.top_xy[0] = script_h.readInt();
     sentence_font.top_xy[1] = script_h.readInt();
@@ -373,6 +369,12 @@ int ONScripterLabel::setwindowCommand()
     sentence_font.wait_time = script_h.readInt();
     sentence_font.is_bold = script_h.readInt()?true:false;
     sentence_font.is_shadow = script_h.readInt()?true:false;
+    if ( rubyon_flag ){
+        sentence_font.y_offset = sentence_font.pitch_xy[1] - sentence_font.font_size_xy[1];
+    }
+    else{
+        sentence_font.y_offset = 0;
+    }
 
     const char *buf = script_h.readStr();
     dirty_rect.add( sentence_font_info.pos );
@@ -435,7 +437,6 @@ int ONScripterLabel::selectCommand()
     int ret = enterTextDisplayMode( RET_WAIT_NOREAD );
     if ( ret != RET_NOMATCH ) return ret;
 
-    int xy[2];
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
     char *p_buf;
@@ -512,6 +513,7 @@ int ONScripterLabel::selectCommand()
         //flush();
         skip_flag = false;
         automode_flag = false;
+        int xy[2];
         xy[0] = sentence_font.xy[0];
         xy[1] = sentence_font.xy[1];
 
@@ -589,8 +591,7 @@ int ONScripterLabel::selectCommand()
                 return RET_JUMP;
             }
         }
-        sentence_font.xy[0] = xy[0];
-        sentence_font.xy[1] = xy[1];
+        sentence_font.setXY( xy[0], xy[1] );
 
         flushEvent();
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
@@ -750,16 +751,14 @@ int ONScripterLabel::resetCommand()
 
     erase_text_window_mode = 1;
     clearCurrentTextBuffer();
-    tateyoko_mode = 0;
-    sentence_font.xy[0] = 0;
-    sentence_font.xy[1] = 0;
     resetSentenceFont();
-    
+
     skip_flag      = false;
     monocro_flag   = false;
     nega_mode      = 0;
     saveon_flag    = true;
     clickstr_state = CLICK_NONE;
+    rubyon_flag    = false;
     
     deleteLabelLink();
     current_link_label_info->label_info = script_h.lookupLabel( "start" );
@@ -1186,8 +1185,7 @@ int ONScripterLabel::lookbackbuttonCommand()
 
 int ONScripterLabel::locateCommand()
 {
-    sentence_font.xy[0] = script_h.readInt();
-    sentence_font.xy[1] = script_h.readInt();
+    sentence_font.setXY( script_h.readInt(), script_h.readInt() );
 
     return RET_CONTINUE;
 }
@@ -1201,6 +1199,8 @@ int ONScripterLabel::loadgameCommand()
 
     if ( loadSaveFile( no ) ) return RET_CONTINUE;
     else {
+        saveon_flag = true;
+        internal_saveon_flag = true;
         skip_flag = false;
         automode_flag = false;
         deleteButtonLink();
@@ -1578,10 +1578,10 @@ int ONScripterLabel::getenterCommand()
 int ONScripterLabel::getcursorposCommand()
 {
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, sentence_font.x( tateyoko_mode ) );
+    script_h.setInt( &script_h.current_variable, sentence_font.x() );
     
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, sentence_font.y( tateyoko_mode ) );
+    script_h.setInt( &script_h.current_variable, sentence_font.y() );
     
     return RET_CONTINUE;
 }
@@ -1855,7 +1855,7 @@ int ONScripterLabel::dvCommand()
 {
     char buf[256];
     
-    sprintf( buf, "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2 );
+    sprintf( buf, RELATIVEPATH "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2 );
     playWave( buf, false, 0 );
     
     return RET_CONTINUE;
@@ -1933,7 +1933,7 @@ int ONScripterLabel::cselbtnCommand()
     FontInfo csel_info = sentence_font;
     csel_info.top_xy[0] = script_h.readInt();
     csel_info.top_xy[1] = script_h.readInt();
-    csel_info.xy[0] = csel_info.xy[1] = 0;
+    csel_info.clear();
     csel_info.num_xy[1] = 1;
 
     int counter = 0;
@@ -2108,7 +2108,7 @@ int ONScripterLabel::btnwaitCommand()
         while ( p_button_link ){
             if ( p_button_link->button_type == ButtonLink::CUSTOM_SELECT_BUTTON ){
                 
-                f_info.xy[0] = f_info.xy[1] = 0;
+                f_info.clear();
                 f_info.num_xy[1] = 1;
                 f_info.top_xy[0] = p_button_link->image_rect.x * screen_ratio2 / screen_ratio1;
                 f_info.top_xy[1] = p_button_link->image_rect.y * screen_ratio2 / screen_ratio1;
@@ -2276,8 +2276,7 @@ int ONScripterLabel::brCommand()
     int ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
 
-    sentence_font.xy[0] = 0;
-    sentence_font.xy[1]++;
+    sentence_font.newLine();
     current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
     if ( internal_saveon_flag ){
         internal_saveon_flag = false;

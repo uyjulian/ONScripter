@@ -36,8 +36,14 @@
 #define DELIMITER '\\'
 #elif defined(MACOS9)
 #define DELIMITER ':'
+#define RELATIVEPATH ":"
+#define RELATIVEPATHLENGTH 1
 #else
 #define DELIMITER '/'
+#endif
+#ifndef RELATIVEPATH
+#define RELATIVEPATH ""
+#define RELATIVEPATHLENGTH 0
 #endif
 
 struct BaseReader

@@ -25,7 +25,7 @@
 #include "resize_image.h"
 
 extern void initSJIS2UTF16();
-extern void waveCallback( int channel );
+extern "C" void waveCallback( int channel );
 
 #define DEFAULT_AUDIOBUF  4096
 
@@ -348,7 +348,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     monocro_flag = monocro_flag_new = false;
     nega_mode = 0;
-    tateyoko_mode = 0;
     trap_flag = false;
     trap_dist = NULL;
     
@@ -816,8 +815,7 @@ int ONScripterLabel::parseLine( )
         if ( !new_line_skip_flag && script_h.isText() ){
             if ( sentence_font.xy[0] < sentence_font.num_xy[0] ) // otherwise already done in drawChar
                 current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
-            sentence_font.xy[0] = 0;
-            sentence_font.xy[1]++;
+            sentence_font.newLine();
             if ( internal_saveon_flag ){
                 internal_saveon_flag = false;
                 saveSaveFile(-1);
@@ -1253,8 +1251,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
 
 void ONScripterLabel::clearCurrentTextBuffer()
 {
-    sentence_font.xy[0] = 0;
-    sentence_font.xy[1] = 0;
+    sentence_font.clear();
 
     if ( current_text_buffer->buffer2 &&
          (current_text_buffer->num_xy[0] != sentence_font.num_xy[0] ||
@@ -1348,8 +1345,7 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
 
     /* ---------------------------------------- */
     /* Draw shadowed characters */
-    info->xy[0] = current_text_xy[0];
-    info->xy[1] = current_text_xy[1];
+    info->setXY( current_text_xy[0], current_text_xy[1] );
     if ( nofile_flag )
         drawString( buffer, info->nofile_color, info, flush_flag, text_surface, NULL );
     else
@@ -1359,8 +1355,8 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     SDL_SetAlpha( button_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     SDL_BlitSurface( text_surface, &button_link->image_rect, button_link->no_selected_surface, NULL );
 
-    info->xy[0] = current_text_xy[0];
-    info->xy[1]++;
+    info->newLine();
+    info->setXY( current_text_xy[0] );
 
     dirty_rect.add( button_link->image_rect );
     
@@ -1732,6 +1728,7 @@ void ONScripterLabel::saveEnvData()
         saveInt( fp, DEFAULT_VOLUME - se_volume );
         saveInt( fp, DEFAULT_VOLUME - mp3_volume );
         saveInt( fp, kidokumode_flag?1:0 );
+        saveInt( fp, 0 ); // ?
         fclose( fp );
     }
 }

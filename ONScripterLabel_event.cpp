@@ -48,7 +48,7 @@ bool ext_music_play_once_flag = false;
 /* **************************************** *
  * Callback functions
  * **************************************** */
-void mp3callback( void *userdata, Uint8 *stream, int len )
+extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 {
     if ( SMPEG_playAudio( (SMPEG*)userdata, stream, len ) == 0 ){
         SDL_Event event;
@@ -57,7 +57,7 @@ void mp3callback( void *userdata, Uint8 *stream, int len )
     }
 }
 
-Uint32 timerCallback( Uint32 interval, void *param )
+extern "C" Uint32 timerCallback( Uint32 interval, void *param )
 {
     SDL_RemoveTimer( timer_id );
     timer_id = NULL;
@@ -69,7 +69,7 @@ Uint32 timerCallback( Uint32 interval, void *param )
     return interval;
 }
 
-Uint32 cdaudioCallback( Uint32 interval, void *param )
+extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 {
     SDL_RemoveTimer( timer_cdaudio_id );
     timer_cdaudio_id = NULL;
@@ -173,7 +173,7 @@ void midiCallback( int sig )
     SDL_PushEvent(&event);
 }
 
-void waveCallback( int channel )
+extern "C" void waveCallback( int channel )
 {
     if ( channel == 0 ){
         SDL_Event event;
@@ -476,14 +476,12 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
 void ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
 {
     switch ( event->keysym.sym ) {
-#if !defined(MACOSX) && !defined(MACOS9)
       case SDLK_RCTRL:
         ctrl_pressed_status  |= 0x01;
         goto ctrl_pressed;
       case SDLK_LCTRL:
         ctrl_pressed_status  |= 0x02;
         goto ctrl_pressed;
-#endif        
       case SDLK_RSHIFT:
         shift_pressed_status |= 0x01;
         break;

@@ -60,6 +60,8 @@ static struct FuncLUT{
     {"savenumber",     &ScriptParser::savenumberCommand},
     {"savename",     &ScriptParser::savenameCommand},
     {"sar",    &ScriptParser::nsaCommand},
+    {"rubyon",    &ScriptParser::rubyonCommand},
+    {"rubyoff",    &ScriptParser::rubyoffCommand},
     {"roff",    &ScriptParser::roffCommand},
     {"rmenu",    &ScriptParser::rmenuCommand},
     {"return",   &ScriptParser::returnCommand},
@@ -144,12 +146,14 @@ ScriptParser::ScriptParser( char *path )
     labellog_flag = false;
     filelog_flag = false;
     kidokuskip_flag = false;
+
     rmode_flag = true;
     windowback_flag = false;
     usewheel_flag = false;
     useescspc_flag = false;
     mode_saya_flag = false;
     mode_ext_flag = false;
+    rubyon_flag = false;
     
     string_buffer_offset = 0;
 
@@ -291,8 +295,8 @@ ScriptParser::~ScriptParser()
 int ScriptParser::open( char *path )
 {
     if ( path ){
-        archive_path = new char[ strlen(path) + 2 ];
-        sprintf( archive_path, "%s%c", path, DELIMITER );
+        archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
+        sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
     }
     script_h.cBR = new DirectReader( archive_path );
     script_h.cBR->open();

@@ -154,8 +154,8 @@ void ONScripterLabel::executeSystemMenu()
         menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
 
-        menu_font.xy[0] = (menu_font.num_xy[0] - menu_link_width) / 2;
-        menu_font.xy[1] = (menu_font.num_xy[1] - menu_link_num) / 2;
+        menu_font.setXY( (menu_font.num_xy[0] - menu_link_width) / 2,
+                         (menu_font.num_xy[1] - menu_link_num) / 2 );
 
         link = root_menu_link.next;
         while( link ){
@@ -244,8 +244,7 @@ void ONScripterLabel::executeSystemLoad()
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
         flush();
         
-        system_font.xy[0] = (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2;
-        system_font.xy[1] = 0;
+        system_font.setXY( (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
         drawString( load_menu_name, system_font.color, &system_font, true, text_surface );
         system_font.xy[1] += 2;
         
@@ -254,7 +253,7 @@ void ONScripterLabel::executeSystemLoad()
 
         for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
             searchSaveFile( save_file_info, i );
-            system_font.xy[0] = (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2;
+            system_font.setXY( (system_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
             if ( save_file_info.valid ){
                 sprintf( buffer, "%s%s@%sŒŽ%s“ú%sŽž%s•ª",

@@ -64,8 +64,10 @@ struct WAVE_HEADER{
 extern bool ext_music_play_once_flag;
 #endif
 
-extern void mp3callback( void *userdata, Uint8 *stream, int len );
-extern Uint32 cdaudioCallback( Uint32 interval, void *param );
+extern "C"{
+    extern void mp3callback( void *userdata, Uint8 *stream, int len );
+    extern Uint32 cdaudioCallback( Uint32 interval, void *param );
+}
 extern void midiCallback( int sig );
 #if defined(EXTERNAL_MUSIC_PLAYER)
 extern void musicCallback( int sig );
@@ -216,7 +218,7 @@ int ONScripterLabel::playMP3( int cd_no )
     if ( music_file_name == NULL ){
         char file_name[128];
 
-        sprintf( file_name, "%scd%ctrack%2.2d.mp3", archive_path, DELIMITER, cd_no );
+        sprintf( file_name, RELATIVEPATH "%scd%ctrack%2.2d.mp3", archive_path, DELIMITER, cd_no );
         mp3_sample = SMPEG_new( file_name, NULL, 0 );
     }
     else{

@@ -28,6 +28,9 @@ typedef unsigned char uchar3[3];
 
 class FontInfo{
 public:
+    enum { YOKO_MODE = 0,
+           TATE_MODE = 1
+    };
     void *ttf_font;
     uchar3 color;
     uchar3 on_color, off_color, nofile_color;
@@ -42,12 +45,20 @@ public:
     bool is_transparent;
     uchar3  window_color;
 
+    int x_offset, y_offset; // used with ruby
+    int tateyoko_mode;
+
     FontInfo();
     void reset();
     void resetSelectColor();
     void *openFont( char *font_file, int ratio1, int ratio2 );
-    int x( int tatoyoko_mode ); // return current x position
-    int y( int tatoyoko_mode ); // return current y position
+    void setTateyokoMode( int tateyoko_mode );
+    int getTateyokoMode();
+    int x(); // return current x position
+    int y(); // return current y position
+    void setXY( int x=-1, int y=-1 );
+    void clear();
+    void newLine();
 };
 
 #endif // __FONT_INFO_H__

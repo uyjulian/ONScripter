@@ -71,6 +71,8 @@ public:
     int selectcolorCommand();
     int savenumberCommand();
     int savenameCommand();
+    int rubyonCommand();
+    int rubyoffCommand();
     int roffCommand();
     int rmenuCommand();
     int returnCommand();
@@ -187,6 +189,7 @@ protected:
     bool mode_saya_flag;
     bool mode_ext_flag;
     bool force_button_shortcut_flag;
+    bool rubyon_flag;
     
     int string_buffer_offset;
 
@@ -327,7 +330,31 @@ protected:
      
     /* ---------------------------------------- */
     /* Font related variables */
-    FontInfo sentence_font, system_font, menu_font;
+    FontInfo sentence_font, system_font, menu_font, ruby_font;
+    struct RubyStruct{
+        enum { NONE,
+               BODY,
+               RUBY };
+        int stage;
+        int body_count;
+        int ruby_start;
+        int ruby_end;
+        int ruby_count;
+        int x_margin;
+
+        int font_size_xy[2];
+        char *font_name;
+
+        RubyStruct(){
+            stage = NONE;
+            font_size_xy[0] = -1;
+            font_size_xy[1] = -1;
+            font_name = NULL;
+        };
+        ~RubyStruct(){
+            if ( font_name ) delete[] font_name;
+        };
+    } ruby_struct;
 
     /* ---------------------------------------- */
     /* Menu related variables */

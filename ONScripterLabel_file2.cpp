@@ -23,7 +23,7 @@
 
 #include "ONScripterLabel.h"
 
-int ONScripterLabel::loadSaveFile2( FILE *fp )
+int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
 {
     deleteLabelLink();
     
@@ -60,7 +60,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp )
     loadInt( fp, &window_effect.duration );
     loadStr( fp, &window_effect.anim.image_name ); // probably
 
-    sentence_font.xy[0] = sentence_font.xy[1] = 0;
+    sentence_font.clear();
     sentence_font.ttf_font  = NULL;
     loadInt( fp, &sentence_font.top_xy[0] );
     loadInt( fp, &sentence_font.top_xy[1] );
@@ -315,6 +315,15 @@ int ONScripterLabel::loadSaveFile2( FILE *fp )
     fgetc( fp ); // 0
     loadInt( fp, &j ); // 0
 
+    if ( file_version >= 201 ){
+        loadInt( fp, &j );
+        if ( j==1 ) rubyon_flag = true;
+        else        rubyon_flag = false;
+        loadInt( fp, &ruby_struct.font_size_xy[0] );
+        loadInt( fp, &ruby_struct.font_size_xy[1] );
+        loadStr( fp, &ruby_struct.font_name );
+    }
+    
     int text_num = 0;
     loadInt( fp, &text_num );
     start_text_buffer = current_text_buffer;
@@ -517,6 +526,11 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
     fputc( 0, fp );
     saveInt( fp, 0 );
 
+    saveInt( fp, (rubyon_flag)?1:0 );
+    saveInt( fp, ruby_struct.font_size_xy[0] );
+    saveInt( fp, ruby_struct.font_size_xy[1] );
+    saveStr( fp, ruby_struct.font_name );
+    
     TextBuffer *tb = current_text_buffer;
     int text_num = 0;
     while( tb != start_text_buffer ){
