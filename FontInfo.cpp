@@ -25,6 +25,18 @@
 #include <stdio.h>
 #include <SDL_ttf.h>
 
+static struct FontContainer{
+    FontContainer *next;
+    int size;
+    TTF_Font *font;
+
+    FontContainer(){
+        size = 0;
+        next = NULL;
+        font = NULL;
+    };
+} root_font_container;
+
 FontInfo::FontInfo()
 {
     ttf_font = NULL;
@@ -52,26 +64,26 @@ void FontInfo::resetSelectColor()
 
 void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
 {
-    if ( ttf_font ) TTF_CloseFont( (TTF_Font*)ttf_font );
-
     int font_size;
-    
     if ( font_size_xy[0] < font_size_xy[1] )
         font_size = font_size_xy[0];
     else
         font_size = font_size_xy[1];
 
-    ttf_font = (void*)TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
-
-    return ttf_font;
-}
-
-void FontInfo::closeFont()
-{
-    if ( ttf_font ){
-        TTF_CloseFont( (TTF_Font*)ttf_font );
-        ttf_font = NULL;
+    FontContainer *fc = &root_font_container;
+    while( fc->next ){
+        if ( fc->next->size == font_size ) break;
+        fc = fc->next;
     }
+    if ( !fc->next ){
+        fc->next = new FontContainer();
+        fc->next->size = font_size;
+        fc->next->font = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+    }
+
+    ttf_font = (void*)fc->next->font;
+    
+    return fc->next->font;
 }
 
 int FontInfo::x( int tateyoko_mode )

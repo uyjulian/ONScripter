@@ -795,7 +795,13 @@ int ONScripterLabel::eventLoop()
 #endif
 
           case SDL_ACTIVEEVENT:
-            if ( event.active.gain ) flush();
+            if ( event.active.gain ){
+                SDL_Rect rect;
+                rect.x = rect.y = 0;
+                rect.w = screen_width;
+                rect.h = screen_height;
+                flushSub( rect );
+            }
             break;
             
           case SDL_QUIT:

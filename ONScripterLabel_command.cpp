@@ -338,7 +338,7 @@ int ONScripterLabel::setwindow2Command()
 int ONScripterLabel::setwindowCommand()
 {
     tateyoko_mode = 0;
-    sentence_font.closeFont();
+    sentence_font.ttf_font  = NULL;
     sentence_font.top_xy[0] = script_h.readInt();
     sentence_font.top_xy[1] = script_h.readInt();
     sentence_font.num_xy[0] = script_h.readInt();
@@ -697,7 +697,6 @@ int ONScripterLabel::resetCommand()
     sentence_font.xy[0] = 0;
     sentence_font.xy[1] = 0;
     resetSentenceFont();
-    sentence_font.closeFont();
     
     skip_flag      = false;
     monocro_flag   = false;
@@ -1725,9 +1724,12 @@ int ONScripterLabel::cellCommand()
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
 
-    if ( sprite_info[ sprite_no ].num_of_cells > 0 &&
-         no < sprite_info[ sprite_no ].num_of_cells )
+    if ( sprite_info[ sprite_no ].num_of_cells > 0 ){
+        if ( no >= sprite_info[ sprite_no ].num_of_cells )
+            no = sprite_info[ sprite_no ].num_of_cells-1;
         sprite_info[ sprite_no ].current_cell = no;
+        dirty_rect.add( sprite_info[ sprite_no ].pos );
+    }
         
     return RET_CONTINUE;
 }

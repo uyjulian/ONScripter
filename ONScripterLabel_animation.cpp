@@ -136,17 +136,10 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
             f_info.num_xy[1] = 1;
             if ( anim->font_pitch >= 0 )
                 f_info.pitch_xy[0] = anim->font_pitch;
-            sentence_font.closeFont();
             f_info.ttf_font = NULL;
         }
 
         drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
-        if ( anim->font_size_xy[0] >= 0 ){
-            f_info.closeFont();
-        }
-        else{
-            sentence_font.ttf_font = f_info.ttf_font;
-        }
     }
     else{
         anim->image_surface = loadImage( anim->file_name );
@@ -322,17 +315,10 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
             f_info.num_xy[1] = 1;
             if ( anim->font_pitch >= 0 )
                 f_info.pitch_xy[0] = anim->font_pitch;
-            sentence_font.closeFont();
             f_info.ttf_font = NULL;
         }
 
         drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, dst_surface, NULL, false, clip );
-        if ( anim->font_size_xy[0] >= 0 ){
-            f_info.closeFont();
-        }
-        else{
-            sentence_font.ttf_font = f_info.ttf_font;
-        }
         return;
     }
     else if ( !anim->image_surface ) return;
@@ -376,8 +362,5 @@ void ONScripterLabel::stopAnimation( int click )
     
     refreshSurface( text_surface, &dst_rect, REFRESH_SHADOW_MODE );
 
-    DirtyRect dirty = dirty_rect;
-    dirty_rect.clear();
-    flush( &dst_rect );
-    dirty_rect = dirty;
+    flushSub( dst_rect );
 }

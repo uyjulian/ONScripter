@@ -203,7 +203,7 @@ int ONScripterLabel::loadSaveFile( int no )
         setupAnimationInfo( &sentence_font_info );
     }
 
-    sentence_font.closeFont();
+    sentence_font.ttf_font = NULL;
 
     loadInt( fp, &clickstr_state );
     loadInt( fp, &j );
