@@ -280,7 +280,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         alphaBlend( text_surface, dst_rect,
                     effect_src_surface, 0, 0,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, 0, AnimationInfo::TRANS_FADE_MASK, 255, 256 * effect_counter / effect->duration );
+                    effect->anim.image_surface, 0, AnimationInfo::TRANS_FADE_MASK, 256 * effect_counter / effect->duration );
         break;
 
       case 16: // Mosaic out
@@ -298,7 +298,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         alphaBlend( text_surface, dst_rect,
                     effect_src_surface, 0, 0,
                     effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, 0, AnimationInfo::TRANS_CROSSFADE_MASK, 255, 256 * effect_counter * 2 / effect->duration );
+                    effect->anim.image_surface, 0, AnimationInfo::TRANS_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration );
         break;
 
       case (CUSTOM_EFFECT_NO + 0 ): // quakey

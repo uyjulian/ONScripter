@@ -22,6 +22,7 @@
  */
 
 #include "ONScripterLabel.h"
+#include "resize_image.h"
 
 extern void initSJIS2UTF16();
 
@@ -277,17 +278,10 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
 
     initSDL( cdaudio_flag );
     
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
     amask = 0xff000000;
-#endif
+    rmask = 0x00ff0000;
+    gmask = 0x0000ff00;
+    bmask = 0x000000ff;
 
     background_surface   = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
     SDL_SetAlpha( background_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
@@ -737,8 +731,6 @@ int ONScripterLabel::parseLine( )
 int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect )
 {
     SDL_Rect src_rect2, dst_rect2;
-    Uint32 pixel[2][2], p;
-    int i, j;
 
     if ( src_rect ){
         src_rect2 = *src_rect;
@@ -760,62 +752,16 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Su
     
     SDL_LockSurface( dst );
     SDL_LockSurface( src );
-    Uint32 *src_buffer = (Uint32 *)src->pixels;
+    Uint32 *src_buffer = (Uint32 *)src->pixels + src->w * src_rect2.y + src_rect2.x;
     Uint32 *dst_buffer = (Uint32 *)dst->pixels + dst->w * dst_rect2.y + dst_rect2.x;
 
-    for ( i=0 ; i<dst_rect2.h ; i++ ){
-        for ( j=0 ; j<dst_rect2.w ; j++ ){
+    /* size of tmp_buffer must be larger than 16 bytes */
+    unsigned char *tmp_buffer = new unsigned char[ ((src_rect2.w * src_rect2.h * 4<16)?16:(src_rect2.w * src_rect2.h * 4)) ];
+    resizeImage( (unsigned char*)dst_buffer, dst_rect2.w, dst_rect2.h, dst->w * 4,
+                 (unsigned char*)src_buffer, src_rect2.w, src_rect2.h, src->w * 4,
+                 4, tmp_buffer );
+    delete[] tmp_buffer;
 
-            if ( dst_rect2.x + j < 0 ||
-                 dst_rect2.x + j >= dst->w ||
-                 dst_rect2.y + i < 0 ||
-                 dst_rect2.y + i >= dst->h ){
-                *dst_buffer++ = amask;
-                continue;
-            }
-
-            int x = (j << 3) * src_rect2.w / dst_rect2.w;
-            int y = (i << 3) * src_rect2.h / dst_rect2.h;
-            int dx = x & 0x7;
-            int dy = y & 0x7;
-            x = (x >> 3) + src_rect2.x;
-            y = (y >> 3) + src_rect2.y;
-
-            pixel[0][0] = *(src_buffer + src->w * y + x);
-            if ( x+1 == src->w )
-                pixel[0][1] = pixel[0][0];
-            else
-                pixel[0][1] = *(src_buffer + src->w * y + (x+1));
-            
-            if ( y+1 == src->h ){
-                pixel[1][0] = pixel[0][0];
-                pixel[1][1] = pixel[0][1];
-            }
-            else{
-                pixel[1][0] = *(src_buffer + src->w * (y+1) + x);
-                pixel[1][1] = *(src_buffer + src->w * (y+1) + (x+1));
-            }
-
-            p = ((pixel[0][0] & rmask) * (8-dy) * (8-dx)) >> 6  & rmask;
-            p += ((pixel[0][1] & rmask) * (8-dy) * dx) >> 6  & rmask;
-            p += ((pixel[1][0] & rmask) * dy * (8-dx)) >> 6  & rmask;
-            p += ((pixel[1][1] & rmask) * dy * dx) >> 6  & rmask;
-                                        
-            p |= ((pixel[0][0] & gmask) * (8-dy) * (8-dx)) >> 6  & gmask;
-            p += ((pixel[0][1] & gmask) * (8-dy) * dx) >> 6  & gmask;
-            p += ((pixel[1][0] & gmask) * dy * (8-dx)) >> 6  & gmask;
-            p += ((pixel[1][1] & gmask) * dy * dx) >> 6  & gmask;
-                                        
-            p |= ((pixel[0][0] & bmask) * (8-dy) * (8-dx)) >> 6  & bmask;
-            p += ((pixel[0][1] & bmask) * (8-dy) * dx) >> 6  & bmask;
-            p += ((pixel[1][0] & bmask) * dy * (8-dx)) >> 6  & bmask;
-            p += ((pixel[1][1] & bmask) * dy * dx) >> 6  & bmask;
-            
-            *dst_buffer++ = p | amask;
-        }
-        dst_buffer += dst->w - dst_rect2.w;
-    }
-    
     SDL_UnlockSurface( src );
     SDL_UnlockSurface( dst );
 
@@ -854,7 +800,7 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
     }
 
     ret = SDL_ConvertSurface( tmp, text_surface->format, DEFAULT_SURFACE_FLAG );
-    if ( ret && screen_ratio2 != 1 && !disable_rescale_flag ){
+    if ( ret && screen_ratio2 != screen_ratio1 && !disable_rescale_flag ){
         SDL_Surface *ret2 = ret;
 
         SDL_Rect src_rect, dst_rect;
@@ -997,12 +943,12 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                                   SDL_Surface *src1_surface, int x1, int y1,
                                   SDL_Surface *src2_surface, int x2, int y2,
                                   SDL_Surface *mask_surface, int x3,
-                                  int trans_mode, unsigned char mask_value, unsigned int effect_value, SDL_Rect *clip, uchar3 *direct_color )
+                                  int trans_mode, Uint32 mask_value, SDL_Rect *clip, uchar3 *direct_color )
 {
     int i, j;
     SDL_Rect src1_rect, src2_rect, clip_rect, clipped_rect;
-    Uint32 mask;
-    Uint32 *src2_buffer, *src2_buffer2;
+    Uint32 mask, mask1, mask2, maskrb;
+    Uint32 *src1_buffer, *src2_buffer, *dst_buffer;
 
     /* ---------------------------------------- */
     /* 1st clipping */
@@ -1016,7 +962,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
         y1 += clipped_rect.y;
         y2 += clipped_rect.y;
     }
-    
+
     /* ---------------------------------------- */
     /* 2nd clipping */
     clip_rect.x = 0;
@@ -1032,7 +978,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
 
     y1 += clipped_rect.y;
     y2 += clipped_rect.y;
-        
+
     /* ---------------------------------------- */
     src1_rect.x = x1;
     src1_rect.y = y1;
@@ -1041,132 +987,133 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     src1_rect.w = src2_rect.w = dst_rect.w;
     src1_rect.h = src2_rect.h = dst_rect.h;
 
-    if ( src1_surface != dst_surface )
-        SDL_BlitSurface( src1_surface, &src1_rect, dst_surface, &dst_rect );
-
+    SDL_LockSurface( src1_surface );
     SDL_LockSurface( src2_surface );
-    src2_buffer = src2_buffer2 = (Uint32 *)src2_surface->pixels;
+    if ( dst_surface != src1_surface ) SDL_LockSurface( dst_surface );
+    
+    src1_buffer = (Uint32 *)src1_surface->pixels + src1_surface->w * y1 + x1;
+    src2_buffer = (Uint32 *)src2_surface->pixels + src2_surface->w * y2 + x2;
+    dst_buffer  = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;;
+    
+    if ( mask_surface && src2_surface != mask_surface ){
+        SDL_LockSurface( mask_surface );
+    }
+    else{
+        mask_surface = src2_surface;
+    }
 
     if ( trans_mode == AnimationInfo::TRANS_ALPHA ||
          trans_mode == AnimationInfo::TRANS_MASK ){
 
-        if ( mask_surface && src2_surface != mask_surface ){
-            SDL_LockSurface( mask_surface );
-            src2_buffer2 = (Uint32 *)mask_surface->pixels;
-        }
-
-        src2_buffer  += src2_surface->w * y2 + x2;
-        src2_buffer2 += src2_surface->w * y2 + x3;
         for ( i=0; i<dst_rect.h ; i++ ) {
-            for ( j=0 ; j<dst_rect.w ; j++, src2_buffer++, src2_buffer2++ ){
-                mask = ~(*src2_buffer2 >> src2_surface->format->Rshift) & 0xff;
-                if ( mask_value != 255 ) mask = (mask * mask_value) >> 8;
-                mask <<= src2_surface->format->Ashift;
-                *src2_buffer &= ~amask;
-                *src2_buffer |= mask;
-            }
-            src2_buffer  += src2_surface->w - dst_rect.w;
-            src2_buffer2 += src2_surface->w - dst_rect.w;
-        }
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
+                mask = ~*((Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h) + (x3+j)%mask_surface->w) & 0xff;
+                mask2 = (mask * (mask_value+1)) >> 8;
+                mask1 = ~mask2 & 0xff;
 
-        if ( mask_surface && src2_surface != mask_surface ) SDL_UnlockSurface( mask_surface );
+                maskrb = (((*src1_buffer & 0xff00ff) * mask1 +
+                           (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                mask = (((*src1_buffer & 0x00ff00) * mask1 +
+                         (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                *dst_buffer = maskrb | mask;
+            }
+            src1_buffer += src1_surface->w - dst_rect.w;
+            src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
+        }
     }
     else if ( trans_mode == AnimationInfo::TRANS_TOPLEFT ||
               trans_mode == AnimationInfo::TRANS_TOPRIGHT ||
               trans_mode == AnimationInfo::TRANS_DIRECT ){
-        *src2_buffer &= ~amask;
-        Uint32 ref;
+
+        Uint32 ref=0;
         if ( trans_mode == AnimationInfo::TRANS_TOPLEFT ){
-            ref = *src2_buffer;
+            ref = *((Uint32*)src2_surface->pixels);
         }
         else if ( trans_mode == AnimationInfo::TRANS_TOPRIGHT ){
-            ref = *(src2_buffer + src2_surface->w - 1);
+            ref = *((Uint32*)src2_surface->pixels + src2_surface->w - 1);
         }
-        else{
-            if ( direct_color ) {
-                ref = (*direct_color)[0] << src2_surface->format->Rshift |
-                    (*direct_color)[1] << src2_surface->format->Gshift |
-                    (*direct_color)[2] << src2_surface->format->Bshift;
-            }
-            else{
-                ref = 0;
-            }
+        else if ( direct_color ) {
+            ref = (*direct_color)[0] << src2_surface->format->Rshift |
+                (*direct_color)[1] << src2_surface->format->Gshift |
+                (*direct_color)[2] << src2_surface->format->Bshift;
         }
+        ref &= 0xffffff;
         
-        mask = (Uint32)mask_value << src2_surface->format->Ashift;
-        src2_buffer += src2_surface->w * y2 + x2;
         for ( i=0; i<dst_rect.h ; i++ ) {
-            for ( j=0 ; j<dst_rect.w ; j++, src2_buffer++ ){
-                *src2_buffer &= ~amask;
-                if ( *src2_buffer != ref )
-                    *src2_buffer |= mask;
-            }
-            src2_buffer += src2_surface->w - dst_rect.w;
-        }
-    }
-    else if ( trans_mode == AnimationInfo::TRANS_FADE_MASK ){
-        SDL_LockSurface( mask_surface );
-        Uint32 *mask_buffer = (Uint32 *)mask_surface->pixels;
-        src2_buffer += src2_surface->w * y2 + x2;
-        for ( i=0; i<dst_rect.h ; i++ ){
-            int y4 = mask_surface->w * ((y2+i) % mask_surface->h );
-            for ( j=0 ; j<dst_rect.w ; j++ ){
-                mask = (*(mask_buffer + y4 + (x2 + j) % mask_surface->w ) >> mask_surface->format->Rshift) & 0xff;
-                if ( effect_value > mask )
-                    mask = (Uint32)mask_value << src2_surface->format->Ashift;
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
+                if ( (*src2_buffer & 0xffffff) == ref )
+                    mask2 = 0;
                 else
-                    mask = 0;
-                        
-                *src2_buffer &= ~amask;
-                *src2_buffer |= mask;
+                    mask2 = mask_value;
+                mask1 = ~mask2 & 0xff;
+
+                maskrb = (((*src1_buffer & 0xff00ff) * mask1 +
+                           (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                mask = (((*src1_buffer & 0x00ff00) * mask1 +
+                         (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                *dst_buffer = maskrb | mask;
             }
+            src1_buffer += src1_surface->w - dst_rect.w;
             src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
         }
-        SDL_UnlockSurface( mask_surface );
     }
-    else if ( trans_mode == AnimationInfo::TRANS_CROSSFADE_MASK ){
-        SDL_LockSurface( mask_surface );
-        Uint32 *mask_buffer = (Uint32 *)mask_surface->pixels;
+    else if ( trans_mode == AnimationInfo::TRANS_FADE_MASK ||
+              trans_mode == AnimationInfo::TRANS_CROSSFADE_MASK )
+    {
+        Uint32 overflow_mask;
+        if ( trans_mode == AnimationInfo::TRANS_FADE_MASK )
+            overflow_mask = 0xffffffff;
+        else
+            overflow_mask = 0xffffff00;
+        
         for ( i=0; i<dst_rect.h ; i++ ){
-            int y4 = mask_surface->w * ((y2+i) % mask_surface->h );
-            for ( j=0 ; j<dst_rect.w ; j++, src2_buffer++ ){
-                mask = (*(mask_buffer + y4 + (x2 + j) % mask_surface->w ) >> mask_surface->format->Rshift) & 0xff;
-                if ( effect_value > mask ){
-                    mask = effect_value - mask;
-                    if ( mask > 0xff ){
-                        mask = (Uint32)mask_value << src2_surface->format->Ashift;
-                    }
-                    else{
-                        if ( mask_value != 255 ) mask = (mask * mask_value) >> 8;
-                        mask <<= src2_surface->format->Ashift;
-                    }
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
+                mask = *((Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h) + (x3+j)%mask_surface->w) & 0xff;
+                if ( mask_value > mask ){
+                    mask2 = mask_value - mask;
+                    if ( mask2 & overflow_mask ) mask2 = 0xff;
                 }
-                else
-                    mask = 0;
-                        
-                *src2_buffer &= ~amask;
-                *src2_buffer |= mask;
+                else{
+                    mask2 = 0;
+                }
+                mask1 = ~mask2 & 0xff;
+
+                maskrb = (((*src1_buffer & 0xff00ff) * mask1 +
+                           (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                mask = (((*src1_buffer & 0x00ff00) * mask1 +
+                         (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                *dst_buffer = maskrb | mask;
             }
+            src1_buffer += src1_surface->w - dst_rect.w;
             src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
         }
-        SDL_UnlockSurface( mask_surface );
     }
     else if ( trans_mode == AnimationInfo::TRANS_COPY ){
-        mask = (Uint32)mask_value << src2_surface->format->Ashift;
-        src2_buffer += src2_surface->w * y2 + x2;
-        for ( i=0 ; i<dst_rect.h ; i++ ) {
-            for ( j=0 ; j<dst_rect.w ; j++, src2_buffer++ ){
-                *src2_buffer &= ~amask;
-                *src2_buffer |= mask;
+        mask2 = mask_value;
+        mask1 = ~mask2 & 0xff;
+
+        for ( i=0; i<dst_rect.h ; i++ ) {
+            for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ )
+            {
+                maskrb = (((*src1_buffer & 0xff00ff) * mask1 +
+                           (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                mask = (((*src1_buffer & 0x00ff00) * mask1 +
+                         (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                *dst_buffer = maskrb | mask;
             }
+            src1_buffer += src1_surface->w - dst_rect.w;
             src2_buffer += src2_surface->w - dst_rect.w;
+            dst_buffer  += dst_surface->w  - dst_rect.w;
         }
     }
     
+    if ( mask_surface && src2_surface != mask_surface ) SDL_UnlockSurface( mask_surface );
+    if ( dst_surface != src1_surface ) SDL_UnlockSurface( dst_surface );
     SDL_UnlockSurface( src2_surface );
-    SDL_SetAlpha( src2_surface, SDL_SRCALPHA | DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    SDL_BlitSurface( src2_surface, &src2_rect, dst_surface, &dst_rect );
-    SDL_SetAlpha( src2_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    SDL_UnlockSurface( src1_surface );
 }
 
 void ONScripterLabel::clearCurrentTextBuffer()
@@ -1197,7 +1144,7 @@ void ONScripterLabel::clearCurrentTextBuffer()
 
 void ONScripterLabel::shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *src_surface, SDL_Rect *clip, FontInfo *info )
 {
-    if ( !info )        info = &sentence_font;
+    if ( !info ) info = &sentence_font;
     
     if ( info->is_transparent ){
         SDL_BlitSurface( src_surface, clip, dst_surface, clip );
@@ -1221,7 +1168,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *
                     src_surface, sentence_font_info.pos.x, sentence_font_info.pos.y,
                     sentence_font_info.image_surface, 0, 0,
                     sentence_font_info.mask_surface, sentence_font_info.alpha_offset,
-                    sentence_font_info.trans_mode, 255, 0, clip, &sentence_font_info.direct_color );
+                    sentence_font_info.trans_mode, 255, clip, &sentence_font_info.direct_color );
     }
 }
 

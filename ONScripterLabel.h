@@ -474,7 +474,7 @@ private:
                      SDL_Surface *src1_surface, int x1, int y1,
                      SDL_Surface *src2_surface, int x2, int y2,
                      SDL_Surface *mask_surface, int x3,
-                     int trans_mode, unsigned char mask_value = 255, unsigned int effect_value=0, SDL_Rect *clip=NULL, uchar3 *direct_color=NULL );
+                     int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL, uchar3 *direct_color=NULL );
     int enterTextDisplayMode( int ret_wait = RET_WAIT );
     int resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     SDL_Surface *loadImage( char *file_name );

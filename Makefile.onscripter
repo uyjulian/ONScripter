@@ -6,11 +6,11 @@
 GUI_OBJS = ONScripterLabel$(OBJSUFFIX) ONScripterLabel_command$(OBJSUFFIX) ONScripterLabel_text$(OBJSUFFIX) \
 	ONScripterLabel_effect$(OBJSUFFIX) ONScripterLabel_event$(OBJSUFFIX) ONScripterLabel_rmenu$(OBJSUFFIX) \
 	ONScripterLabel_animation$(OBJSUFFIX) ONScripterLabel_sound$(OBJSUFFIX) \
-	AnimationInfo$(OBJSUFFIX) FontInfo$(OBJSUFFIX)
+	AnimationInfo$(OBJSUFFIX) FontInfo$(OBJSUFFIX) resize_image$(OBJSUFFIX)
 SARDEC_OBJS  = sardec$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX)
-SARCONV_OBJS = sarconv$(OBJSUFFIX) conv_shared$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX)
+SARCONV_OBJS = sarconv$(OBJSUFFIX) conv_shared$(OBJSUFFIX) resize_image$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX)
 NSADEC_OBJS  = nsadec$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX) NsaReader$(OBJSUFFIX)
-NSACONV_OBJS = nsaconv$(OBJSUFFIX) conv_shared$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX) NsaReader$(OBJSUFFIX)
+NSACONV_OBJS = nsaconv$(OBJSUFFIX) conv_shared$(OBJSUFFIX) resize_image$(OBJSUFFIX) DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX) NsaReader$(OBJSUFFIX)
 DECODER_OBJS = DirectReader$(OBJSUFFIX) SarReader$(OBJSUFFIX) NsaReader$(OBJSUFFIX)
 ONSCRIPTER_OBJS = onscripter$(OBJSUFFIX) $(DECODER_OBJS) ScriptHandler$(OBJSUFFIX) ScriptParser$(OBJSUFFIX) ScriptParser_command$(OBJSUFFIX) \
 	$(GUI_OBJS) sjis2utf16$(OBJSUFFIX) $(EXT_OBJS)
@@ -52,9 +52,10 @@ sardec$(OBJSUFFIX): BaseReader.h SarReader.h
 sarconv$(OBJSUFFIX): BaseReader.h SarReader.h 
 nsadec$(OBJSUFFIX): BaseReader.h SarReader.h NsaReader.h 
 nsaconv$(OBJSUFFIX): BaseReader.h SarReader.h NsaReader.h 
+conv_shared$(OBJSUFFIX): resize_image.h
 
 onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
 ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
@@ -65,3 +66,4 @@ ONScripterLabel_sound$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 AnimationInfo$(OBJSUFFIX): AnimationInfo.h
 FontInfo$(OBJSUFFIX): FontInfo.h
 MadWrapper$(OBJSUFFIX): MadWrapper.h
+

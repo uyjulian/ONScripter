@@ -28,10 +28,13 @@ extern "C"{
 #include <jpeglib.h>
 };
 #include <bzlib.h>
+#include "resize_image.h"
 
 int scale_ratio_upper;
 int scale_ratio_lower;
 
+unsigned char *rescaled_tmp2_buffer = NULL;
+size_t rescaled_tmp2_length = 0;
 unsigned char *rescaled_tmp_buffer = NULL;
 size_t rescaled_tmp_length = 0;
 
@@ -56,49 +59,35 @@ typedef struct {
 
 void rescaleImage( unsigned char *original_buffer, int width, int height, int byte_per_pixel, bool pad_flag )
 {
-    int i, j, s;
     size_t width_pad = 0;
     if ( pad_flag ) width_pad = (4 - width * byte_per_pixel % 4) % 4;
     
     size_t w = (int)(width  * scale_ratio_upper / scale_ratio_lower);
     size_t h = (int)(height * scale_ratio_upper / scale_ratio_lower);
-    size_t w_pad = 0;
-    if ( pad_flag ) w_pad = (4 - w * byte_per_pixel % 4) % 4;
-    
     if ( w==0 ) w=1;
     if ( h==0 ) h=1;
+    size_t w_pad = 0;
+    if ( pad_flag ) w_pad = (4 - w * byte_per_pixel % 4) % 4;
 
     if  ( (w * byte_per_pixel + w_pad) * h > rescaled_tmp_length ){
+        int len = (w * byte_per_pixel + w_pad) * h;
         if ( rescaled_tmp_buffer ) delete[] rescaled_tmp_buffer;
-        rescaled_tmp_buffer = new unsigned char[(w * byte_per_pixel + w_pad) * h];
-        rescaled_tmp_length = (w * byte_per_pixel + w_pad) * h;
+        rescaled_tmp_buffer = new unsigned char[ len ];
+        rescaled_tmp_length = len;
     }
 
-    unsigned char *buf_p = rescaled_tmp_buffer;
-    for ( i=0 ; i<h ; i++ ){
-        for ( j=0 ; j<w ; j++ ){
-            int x = (j<<3) * scale_ratio_lower / scale_ratio_upper;
-            int y = (i<<3) * scale_ratio_lower / scale_ratio_upper;
-            int dx = x & 0x7;
-            int dy = y & 0x7;
-            x >>= 3;
-            y >>= 3;
-
-            int wd = width * byte_per_pixel + width_pad;
-            int k = wd * y + x * byte_per_pixel;
-            
-            for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
-                unsigned int p;
-                p =  (8-dx)*(8-dy)*original_buffer[ k ];
-                p +=    dx *(8-dy)*original_buffer[ k+byte_per_pixel ];
-                p += (8-dx)*   dy *original_buffer[ k+wd ];
-                p +=    dx *   dy *original_buffer[ k+byte_per_pixel+wd ];
-                *buf_p++ = (unsigned char)(p>>6);
-            }
-        }
-        for ( j=0 ; j<w_pad ; j++ )
-            *buf_p ++ = 0;
+    if  ( (width * byte_per_pixel + width_pad) * height > rescaled_tmp2_length ){
+        int len = (width * byte_per_pixel + width_pad) * height;
+        if ( len<16 ) len = 16;
+        
+        if ( rescaled_tmp2_buffer ) delete[] rescaled_tmp2_buffer;
+        rescaled_tmp2_buffer = new unsigned char[ len ];
+        rescaled_tmp2_length = len;
     }
+
+    resizeImage( rescaled_tmp_buffer, w, h, w*byte_per_pixel+w_pad,
+                 original_buffer, width, height, width*byte_per_pixel+width_pad,
+                 byte_per_pixel, rescaled_tmp2_buffer );
 }
 
 

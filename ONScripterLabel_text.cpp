@@ -58,6 +58,8 @@ inline void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, Fo
                 else{
                     src_rect.x += clipped_rect.x;
                     src_rect.y += clipped_rect.y;
+                    src_rect.w = dst_rect.w;
+                    src_rect.h = dst_rect.h;
                 }
             }
             if ( !out_of_region )

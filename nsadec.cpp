@@ -62,10 +62,10 @@ int main( int argc, char **argv )
         sFI = cNR.getFileByIndex( i );
         length = cNR.getFileLength( sFI.name );
         buffer = new unsigned char[length];
-        int len;
+        unsigned int len;
         if ( (len = cNR.getFile( sFI.name, buffer )) != length ){
             //fprintf( stderr, "file %s can't be retrieved\n", sFI.name );
-            fprintf( stderr, "file %s is not fully retrieved %d %d\n", sFI.name, len, length  );
+            fprintf( stderr, "file %s is not fully retrieved %d %lu\n", sFI.name, len, length  );
             length = sFI.length;
             //continue;
         }

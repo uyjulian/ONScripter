@@ -346,7 +346,7 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
                 dst_surface, dst_rect.x, dst_rect.y,
                 anim->image_surface, offset, 0,
                 anim->mask_surface, offset + anim->alpha_offset,
-                anim->trans_mode, anim->trans, 0, clip, &anim->direct_color );
+                anim->trans_mode, anim->trans, clip, &anim->direct_color );
 }
 
 void ONScripterLabel::stopAnimation( int click )
