@@ -756,7 +756,7 @@ void ONScripterLabel::timerEvent( void )
 
     if ( event_mode & WAIT_TIMER_MODE ){
         int duration = proceedAnimation();
-
+        
         if ( duration == 0 ||
              ( remaining_time >= 0 &&
                remaining_time-duration <= 0 ) ){
@@ -810,7 +810,7 @@ void ONScripterLabel::timerEvent( void )
 
             if ( effect_counter == 0 ){
                 next_display_mode = NORMAL_DISPLAY_MODE;
-                SDL_BlitSurface( picture_surface, NULL, effect_dst_surface, NULL );
+                refreshSurface( effect_dst_surface, NULL, REFRESH_NORMAL_MODE );
                 dirty_rect_tmp = dirty_rect;
                 dirty_rect.clear();
                 dirty_rect.add( sentence_font_info.pos );
@@ -861,11 +861,19 @@ void ONScripterLabel::timerEvent( void )
  * **************************************** */
 int ONScripterLabel::eventLoop()
 {
-    SDL_Event event;
+    SDL_Event event, tmp_event;
 
     advancePhase();
 
     while ( SDL_WaitEvent(&event) ) {
+        // ignore continous SDL_MOUSEMOTION
+        while (event.type == SDL_MOUSEMOTION){
+            if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_ALLEVENTS ) == 0 ) break;
+            if (tmp_event.type != SDL_MOUSEMOTION) break;
+            SDL_PeepEvents( &tmp_event, 1, SDL_GETEVENT, SDL_ALLEVENTS );
+            event = tmp_event;
+        }
+
         switch (event.type) {
           case SDL_MOUSEMOTION:
             mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
@@ -920,14 +928,17 @@ int ONScripterLabel::eventLoop()
             break;
 
           case SDL_ACTIVEEVENT:
-            if ( event.active.gain ){
-                SDL_Rect rect;
-                rect.x = rect.y = 0;
-                rect.w = screen_width;
-                rect.h = screen_height;
-                flush( &rect, false, true );
-            }
-            break;
+            if ( !event.active.gain ) break;
+          case SDL_VIDEOEXPOSE:
+          {
+#ifdef USE_OPENGL
+              SDL_GL_SwapBuffers();
+#else              
+              SDL_Rect rect = {0, 0, screen_width, screen_height};
+              flushDirect( rect, refreshMode() );
+#endif              
+          }
+          break;
             
           default:
             break;

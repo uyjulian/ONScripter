@@ -61,7 +61,6 @@ int ONScripterLabel::proceedAnimation()
             minimum_duration = estimateNextDuration( anim, dst_rect, minimum_duration );
         }
     }
-    flush();
 
     if ( minimum_duration == -1 ) minimum_duration = 0;
 
@@ -74,8 +73,9 @@ int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, 
         if ( minimum == -1 ||
              minimum > anim->duration_list[ anim->current_cell ] )
             minimum = anim->duration_list[ anim->current_cell ];
+
         if ( anim->proceedAnimation() )
-            refreshSurface( accumulation_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
+            flushDirect( rect, REFRESH_SHADOW_TEXT_MODE | REFRESH_CURSOR_MODE );
     }
     else{
         if ( minimum == -1 ||
@@ -119,14 +119,17 @@ void ONScripterLabel::resetRemainingTime( int t )
     }
 }
 
-void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
+void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, SDL_Surface *surface )
 {
+    SDL_Surface *surface_m = NULL;
+    
     anim->deleteSurface();
     anim->abs_flag = true;
 
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
+        if (info == NULL) info = &sentence_font;
 
-        FontInfo f_info = sentence_font;
+        FontInfo f_info = *info;
         f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
         f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
         f_info.setLineArea( strlen(anim->file_name)/2+1 );
@@ -141,32 +144,29 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
         }
 
         drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
-        anim->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h, 32, rmask, gmask, bmask, amask );
+        surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h,
+                                        32, rmask, gmask, bmask, amask );
+        SDL_FillRect( surface, NULL, SDL_MapRGBA( surface->format, 0, 0, 0, 0 ) );
+        
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
             f_info.clear();
-            drawString( anim->file_name, anim->color_list[ i ], &f_info, false, anim->image_surface );
+            drawString( anim->file_name, anim->color_list[ i ], &f_info, false, NULL, NULL, surface );
             f_info.top_xy[0] += anim->pos.w * screen_ratio2 / screen_ratio1;
         }
     }
     else{
-        anim->image_surface = loadImage( anim->file_name );
-
-        if ( anim->image_surface ){
-            anim->pos.w = anim->image_surface->w / anim->num_of_cells;
-            anim->pos.h = anim->image_surface->h;
-            if ( anim->trans_mode == AnimationInfo::TRANS_ALPHA ){
-                anim->pos.w /= 2;
-                anim->alpha_offset = anim->pos.w;
-            }
-            else{
-                anim->alpha_offset = 0;
-            }
-
-            if ( anim->trans_mode == AnimationInfo::TRANS_MASK )
-                anim->mask_surface = loadImage( anim->mask_file_name );
-        }
+        if (surface == NULL) surface = loadImage( anim->file_name );
+        if (anim->trans_mode == AnimationInfo::TRANS_MASK)
+            surface_m = loadImage( anim->mask_file_name );
     }
+    
+    anim->setupImage(surface, surface_m);
+    if (anim->image_surface)
+        loadTexture(anim->image_surface, anim->tex_id, anim->trans);
+    
+    SDL_FreeSurface(surface);
+    if ( surface_m ) SDL_FreeSurface(surface_m);
 }
 
 void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
@@ -296,17 +296,24 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
     }
 }
 
-void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
+void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip, int refresh_mode )
 {
-    int x = anim->pos.x;
-    int y = anim->pos.y;
+    SDL_Rect poly_rect = anim->pos;
     if ( !anim->abs_flag ){
-        x += sentence_font.x() * screen_ratio1 / screen_ratio2;
-        y += sentence_font.y() * screen_ratio1 / screen_ratio2;
+        poly_rect.x += sentence_font.x() * screen_ratio1 / screen_ratio2;
+        poly_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
-    anim->blendOnSurface( dst_surface, x, y,
-                          dst_surface, x, y,
-                          clip, anim->trans );
+
+    if (refresh_mode & REFRESH_OPENGL_MODE){
+        SDL_Rect tex_rect = anim->pos;
+        tex_rect.x = anim->pos.w*anim->current_cell;
+        tex_rect.y = 0;
+        drawTexture( anim->tex_id, poly_rect, tex_rect, anim );
+    }
+    else{
+        anim->blendOnSurface( dst_surface, poly_rect.x, poly_rect.y,
+                              clip, anim->trans );
+    }
 }
 
 void ONScripterLabel::stopAnimation( int click )
@@ -330,8 +337,5 @@ void ONScripterLabel::stopAnimation( int click )
         dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
 
-    
-    refreshSurface( accumulation_surface, &dst_rect, REFRESH_SHADOW_MODE );
-
-    flush( &dst_rect, false, true );
+    flushDirect( dst_rect, REFRESH_SHADOW_TEXT_MODE );
 }

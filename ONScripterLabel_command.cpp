@@ -140,9 +140,8 @@ int ONScripterLabel::textonCommand()
 {
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
-        refreshSurface( picture_surface,      NULL, REFRESH_NORMAL_MODE );
-        refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
-        flush();
+        dirty_rect.fill( screen_width, screen_height );
+        flush(REFRESH_SHADOW_TEXT_MODE);
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
     }
 
@@ -153,10 +152,8 @@ int ONScripterLabel::textoffCommand()
 {
     text_on_flag = false;
     if ( display_mode & TEXT_DISPLAY_MODE ){
-        refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
-        SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
         dirty_rect.fill( screen_width, screen_height );
-        flush();
+        flush(REFRESH_NORMAL_MODE);
         display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
 
@@ -209,6 +206,9 @@ int ONScripterLabel::talCommand()
 
         tachi_info[ no ].trans = trans;
         dirty_rect.add( tachi_info[ no ].pos );
+
+        SDL_Rect rect = {0, 0, tachi_info[no].image_surface->w, tachi_info[no].image_surface->h };
+        loadSubTexture( tachi_info[no].image_surface, tachi_info[no].tex_id, &rect, tachi_info[no].trans );
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -483,7 +483,7 @@ int ONScripterLabel::selectCommand()
 
             ret = RET_JUMP;
         }
-        else{
+        else{ // selnum
             script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
             current_link_label_info->current_line = select_label_info.current_line;
             script_h.setCurrent( select_label_info.current_script );
@@ -503,7 +503,7 @@ int ONScripterLabel::selectCommand()
         }
         SelectLink *link = NULL;
         shortcut_mouse_line = -1;
-        //flush();
+
         skip_flag = false;
         automode_flag = false;
         int xy[2];
@@ -574,18 +574,18 @@ int ONScripterLabel::selectCommand()
             }
         }
 
-        if ( select_mode == SELECT_GOTO_MODE || select_mode == SELECT_CSEL_MODE ){ /* Resume */
-            if ( select_mode == SELECT_CSEL_MODE ){
-                current_link_label_info->label_info = script_h.lookupLabel( "customsel" );
-                current_link_label_info->current_line = 0;
-                script_h.setCurrent( current_link_label_info->label_info.start_address );
-                string_buffer_offset = 0;
+        if ( select_mode == SELECT_CSEL_MODE ){
+            current_link_label_info->label_info = script_h.lookupLabel( "customsel" );
+            current_link_label_info->current_line = 0;
+            script_h.setCurrent( current_link_label_info->label_info.start_address );
+            string_buffer_offset = 0;
 
-                return RET_JUMP;
-            }
+            return RET_JUMP;
         }
         sentence_font.setXY( xy[0], xy[1] );
 
+        flush( refreshMode() );
+        
         flushEvent();
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
         advancePhase();
@@ -777,8 +777,6 @@ int ONScripterLabel::resetCommand()
     wavestopCommand();
     stopBGM( false );
 
-    setBackground( picture_surface );
-    SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
     dirty_rect.fill( screen_width, screen_height );
 
     return RET_JUMP;
@@ -786,9 +784,8 @@ int ONScripterLabel::resetCommand()
 
 int ONScripterLabel::repaintCommand()
 {
-    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( accumulation_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-    flush();
+    dirty_rect.fill( screen_width, screen_height );
+    flush( refreshMode() );
     
     return RET_CONTINUE;
 }
@@ -814,7 +811,7 @@ int ONScripterLabel::quakeCommand()
     if ( event_mode & EFFECT_EVENT_MODE ){
         if ( effect_counter == 0 ){
             //SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
-            SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
+            blitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
         }
         tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
         return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
@@ -967,7 +964,23 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscpyCommand()
 {
+#ifdef USE_OPENGL
+    if (texture_buffer_size < screen_width*screen_height*4){
+        if (texture_buffer) delete[] texture_buffer;
+        texture_buffer_size = screen_width*screen_height*4;
+        texture_buffer = new unsigned char[texture_buffer_size];
+    }
+    glReadPixels(0, 0, screen_width, screen_height, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+    
+    SDL_LockSurface(accumulation_surface);
+    for (int i=0 ; i<screen_height ; i++)
+        memcpy( (Uint32*)accumulation_surface->pixels + i*screen_width,
+                texture_buffer + (screen_height - 1 - i)*screen_width*4,
+                screen_width * 4);
+    SDL_UnlockSurface(accumulation_surface);
+#else    
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+#endif    
 
     return RET_CONTINUE;
 }
@@ -991,6 +1004,9 @@ int ONScripterLabel::mspCommand()
         sprite_info[ no ].trans += script_h.readInt();
     if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
+
+    SDL_Rect rect = {0, 0, sprite_info[no].image_surface->w, sprite_info[no].image_surface->h };
+    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id, &rect, sprite_info[no].trans );
 
     return RET_CONTINUE;
 }
@@ -1471,7 +1487,23 @@ int ONScripterLabel::getscreenshotCommand()
     if ( screenshot_surface == NULL )
         screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
 
+#ifdef USE_OPENGL
+    if (texture_buffer_size < screen_width*screen_height*4){
+        if (texture_buffer) delete[] texture_buffer;
+        texture_buffer_size = screen_width*screen_height*4;
+        texture_buffer = new unsigned char[texture_buffer_size];
+    }
+    glReadPixels(0, 0, screen_width, screen_height, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+    
+    SDL_LockSurface(effect_dst_surface);
+    for (int i=0 ; i<screen_height ; i++)
+        memcpy( (Uint32*)effect_dst_surface->pixels + i*screen_width,
+                texture_buffer + (screen_height - 1 - i)*screen_width*4,
+                screen_width * 4);
+    SDL_UnlockSurface(effect_dst_surface);
+#else
     SDL_BlitSurface( screen_surface, NULL, effect_dst_surface, NULL ); // Bucause screen_surface may be in 16bit depth
+#endif    
     resizeSurface( effect_dst_surface, NULL, screenshot_surface, NULL );
 
     return RET_CONTINUE;
@@ -1888,7 +1920,7 @@ int ONScripterLabel::dvCommand()
 
 int ONScripterLabel::drawtextCommand()
 {
-    restoreTextBuffer( accumulation_surface, NULL, true );
+    refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE );
     
     return RET_CONTINUE;
 }
@@ -1908,7 +1940,6 @@ int ONScripterLabel::drawsp2Command()
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
     si.blendOnSurface( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
-                       accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
                        NULL, alpha, scale_x, scale_y, rot );
     si.setCell(old_cell_no);
 
@@ -1926,7 +1957,6 @@ int ONScripterLabel::drawspCommand()
     int old_cell_no = sprite_info[sprite_no].current_cell;
     sprite_info[sprite_no].setCell(cell_no);
     sprite_info[sprite_no].blendOnSurface( accumulation_surface, x, y,
-                                           accumulation_surface, x, y,
                                            NULL, alpha );
     sprite_info[sprite_no].setCell(old_cell_no);
 
@@ -1939,21 +1969,22 @@ int ONScripterLabel::drawfillCommand()
     int g = script_h.readInt();
     int b = script_h.readInt();
     
-    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGB( accumulation_surface->format, r, g, b) );
+    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, r, g, b, 0xff) );
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawclearCommand()
 {
-    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGB( accumulation_surface->format, 0, 0, 0) );
+    SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff) );
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawbgCommand()
 {
-    setBackground( accumulation_surface );
+    drawTaggedSurface( accumulation_surface, &bg_info, NULL, 0 );
+    //setBackground( accumulation_surface );
     
     return RET_CONTINUE;
 }
@@ -1967,7 +1998,6 @@ int ONScripterLabel::drawbg2Command()
     int rot = script_h.readInt();
 
     bg_info.blendOnSurface( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
-                            accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
                             NULL, 256, scale_x, scale_y, rot );
 
     return RET_CONTINUE;
@@ -1975,12 +2005,9 @@ int ONScripterLabel::drawbg2Command()
 
 int ONScripterLabel::drawCommand()
 {
-    SDL_Rect rect;
-    rect.x = rect.y = 0;
-    rect.w = screen_width;
-    rect.h = screen_height;
-
-    flush( &rect, true, true );
+    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    flushDirect( rect, REFRESH_NONE_MODE );
+    dirty_rect.clear();
     
     return RET_CONTINUE;
 }
@@ -2073,7 +2100,6 @@ int ONScripterLabel::cselbtnCommand()
     csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
     root_button_link.insert( button );
-    button->button_type = ButtonLink::CUSTOM_SELECT_BUTTON;
     button->no          = button_no;
     button->sprite_no   = csel_no;
 
@@ -2201,13 +2227,14 @@ int ONScripterLabel::btnwaitCommand()
     script_h.readInt();
 
     if ( event_mode & WAIT_BUTTON_MODE ||
-         (textbtn_flag && (skip_flag || draw_one_page_flag || ctrl_pressed_status)) )
+         (textbtn_flag && (skip_flag || (draw_one_page_flag && clickstr_state == CLICK_WAIT) || ctrl_pressed_status)) )
     {
         btnwait_time = SDL_GetTicks() - internal_button_timer;
         btntime_value = 0;
         num_chars_in_sentence = 0;
 
-        if ( textbtn_flag && skip_flag ) current_button_state.button = 0;
+        if ( textbtn_flag && (skip_flag || (draw_one_page_flag && clickstr_state == CLICK_WAIT) || ctrl_pressed_status))
+            current_button_state.button = 0;
         script_h.setInt( &script_h.current_variable, current_button_state.button );
 
         if ( current_button_state.button >= 1 && del_flag ){
@@ -2220,6 +2247,12 @@ int ONScripterLabel::btnwaitCommand()
 
         event_mode = IDLE_EVENT_MODE;
         disableGetButtonFlag();
+        
+        ButtonLink *p_button_link = root_button_link.next;
+        while( p_button_link ){
+            p_button_link->show_flag = 0;
+            p_button_link = p_button_link->next;
+        }
             
         return RET_CONTINUE;
     }
@@ -2229,58 +2262,7 @@ int ONScripterLabel::btnwaitCommand()
 
         /* ---------------------------------------- */
         /* Resotre csel button */
-        FontInfo f_info = sentence_font;
-        ButtonLink *p_button_link = root_button_link.next;
-        while ( p_button_link ){
-            if ( p_button_link->button_type == ButtonLink::CUSTOM_SELECT_BUTTON ){
-                
-                f_info.top_xy[0] = p_button_link->image_rect.x * screen_ratio2 / screen_ratio1;
-                f_info.top_xy[1] = p_button_link->image_rect.y * screen_ratio2 / screen_ratio1;
-
-                int counter = 0;
-                SelectLink *s_link = root_select_link.next;
-                while ( s_link ){
-                    if ( p_button_link->sprite_no == counter++ ) break;
-                    s_link = s_link->next;
-                }
-
-                f_info.setLineArea( strlen(s_link->text)/2+1 );
-                f_info.clear();
-                drawString( s_link->text, f_info.off_color, &f_info, false, accumulation_surface );
-                dirty_rect.add( p_button_link->image_rect );
-            }
-            else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
-                      p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                AnimationInfo &si = sprite_info[p_button_link->sprite_no];
-                
-                bool visible = si.visible;
-                si.visible = true;
-
-                allocateSelectedSurface(p_button_link->sprite_no, p_button_link);
-                
-                if ( p_button_link->selected_surface ){
-                    si.setCell(1);
-                    refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-                    SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
-                }
-                si.setCell(0);
-                if ( p_button_link->no_selected_surface ){
-                    refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-                    SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
-                    SDL_BlitSurface( p_button_link->no_selected_surface, NULL, accumulation_surface, &p_button_link->image_rect );
-                }
-                si.visible = visible;
-            }
-            else{
-                if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
-            }
-
-            p_button_link = p_button_link->next;
-        }
-        refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
-
-        if ( isTextVisible() ){
+        if ( refreshMode() & REFRESH_TEXT_MODE ){
             display_mode = next_display_mode = TEXT_DISPLAY_MODE;
         }
 
@@ -2288,7 +2270,7 @@ int ONScripterLabel::btnwaitCommand()
             SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
             decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect );
         }
-        flush();
+        flush( refreshMode() );
 
         flushEvent();
         event_mode = WAIT_BUTTON_MODE;
@@ -2355,6 +2337,7 @@ int ONScripterLabel::btndefCommand()
         if ( buf[0] != '\0' ){
             btndef_info.setImageName( buf );
             parseTaggedString( &btndef_info );
+            btndef_info.trans_mode = AnimationInfo::TRANS_COPY;
             setupAnimationInfo( &btndef_info );
             SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         }
@@ -2370,7 +2353,7 @@ int ONScripterLabel::btndefCommand()
 int ONScripterLabel::btnCommand()
 {
     SDL_Rect src_rect;
-
+    
     ButtonLink *button = new ButtonLink();
     
     button->no           = script_h.readInt();
@@ -2379,6 +2362,10 @@ int ONScripterLabel::btnCommand()
     button->image_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
     button->image_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
     button->select_rect = button->image_rect;
+
+    button->anim[0] = new AnimationInfo();
+    button->anim[0]->num_of_cells = 1;
+    button->anim[0]->trans_mode = AnimationInfo::TRANS_COPY;
 
     src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -2393,17 +2380,15 @@ int ONScripterLabel::btnCommand()
     src_rect.w = button->image_rect.w;
     src_rect.h = button->image_rect.h;
 
-    button->selected_surface    = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                        button->image_rect.w,
-                                                        button->image_rect.h,
-                                                        32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    button->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                        button->image_rect.w,
-                                                        button->image_rect.h,
-                                                        32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    SDL_BlitSurface( btndef_info.image_surface, &src_rect, button->selected_surface, NULL );
+    button->anim[0]->pos = button->image_rect;
+
+    SDL_Surface *surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                 button->image_rect.w,
+                                                 button->image_rect.h,
+                                                 32, rmask, gmask, bmask, amask );
+    blitSurface( btndef_info.image_surface, &src_rect, surface, NULL );
+    button->anim[0]->trans_mode = AnimationInfo::TRANS_COPY;
+    setupAnimationInfo( button->anim[0], NULL, surface );
 
     root_button_link.insert( button );
     
@@ -2446,47 +2431,25 @@ int ONScripterLabel::bltCommand()
         doClipping( &dst_rect, &clip, &clipped );
         shiftRect( src_rect, clipped );
 
-#if defined(USE_OVERLAY)
-        SDL_LockYUVOverlay( screen_overlay );
-        SDL_LockSurface( btndef_info.image_surface );
-        Uint32 *src = (Uint32*)btndef_info.image_surface->pixels + btndef_info.image_surface->w * src_rect.y + src_rect.x;
-        Uint8  *dst_y = screen_overlay->pixels[0] + screen_overlay->w * dst_rect.y + dst_rect.x;
-        Uint8  *dst_u = screen_overlay->pixels[1] + screen_overlay->w * dst_rect.y + dst_rect.x;
-        Uint8  *dst_v = screen_overlay->pixels[2] + screen_overlay->w * dst_rect.y + dst_rect.x;
-        for ( int i=dst_rect.y ; i<dst_rect.y+dst_rect.h ; i++ ){
-            for ( int j=dst_rect.x ; j<dst_rect.x+dst_rect.w ; j++, src++ ){
-                *dst_y++ = *src & 0xff;
-                *dst_u++ = 0x80;
-                *dst_v++ = 0x80;
-            }
-            src += btndef_info.image_surface->w - dst_rect.w;
-            dst_y += screen_overlay->w - dst_rect.w;
-            dst_u += (screen_overlay->w - dst_rect.w)/2;
-            dst_v += (screen_overlay->w - dst_rect.w)/2;
-        }
-        SDL_UnlockSurface( btndef_info.image_surface );
-        SDL_UnlockYUVOverlay( screen_overlay );
+#ifdef USE_OPENGL
+        glMatrixMode(GL_MODELVIEW) ;
+        glPushMatrix();
+        glLoadIdentity() ;
 
-        SDL_Rect screen_rect;
-        screen_rect.x = screen_rect.y = 0;
-        screen_rect.w = screen_width;
-        screen_rect.h = screen_height;
-        SDL_DisplayYUVOverlay( screen_overlay, &screen_rect );
-#else    
-#ifndef SCREEN_ROTATION    
+        drawTexture( btndef_info.tex_id, dst_rect, src_rect, &btndef_info );
+        
+        glPopMatrix();
+        SDL_GL_SwapBuffers();
+#else        
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
-#else    
-        blitRotation( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
-        SDL_UpdateRect( screen_surface, dst_rect.y, screen_width - dst_rect.x - dst_rect.w, dst_rect.h, dst_rect.w );
 #endif
-#endif        
         dirty_rect.clear();
     }
     else{
         resizeSurface( btndef_info.image_surface, &src_rect, accumulation_surface, &dst_rect );
-        dirty_rect.add( dst_rect );
-        flush( &dst_rect );
+        //dirty_rect.add( dst_rect );
+        flushDirect( dst_rect, REFRESH_NONE_MODE );
     }
     
     return RET_CONTINUE;
@@ -2551,7 +2514,6 @@ int ONScripterLabel::barCommand()
     bar_info[no]->abs_flag = true;
     bar_info[no]->num_of_cells = 1;
     bar_info[no]->setCell(0);
-    bar_info[no]->alpha_offset = 0;
 
     bar_info[no]->param = script_h.readInt();
     bar_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -2572,7 +2534,7 @@ int ONScripterLabel::barCommand()
     if ( bar_info[no]->pos.w > 0 ){
         bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( bar_info[no]->image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGB( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2] ) );
+        SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGBA( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff ) );
     }
 
     return RET_CONTINUE;
@@ -2618,6 +2580,9 @@ int ONScripterLabel::amspCommand()
     if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
     dirty_rect.add( sprite_info[ no ].pos );
+
+    SDL_Rect rect = {0, 0, sprite_info[no].image_surface->w, sprite_info[no].image_surface->h };
+    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id, &rect, sprite_info[no].trans );
     
     return RET_CONTINUE;
 }

@@ -354,12 +354,10 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     script_h.setCurrent( buf );
     string_buffer_offset = 0;
 
-
     fclose(fp);
 
-    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
-    refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
-    flush();
+    dirty_rect.fill( screen_width, screen_height );
+    flush( REFRESH_SHADOW_TEXT_MODE );
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 
     clickstr_state = CLICK_NONE;

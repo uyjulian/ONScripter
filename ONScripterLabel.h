@@ -37,6 +37,11 @@
 #include <smpeg.h>
 #endif
 
+#ifdef USE_OPENGL
+#define DEFAULT_VIDEO_SURFACE_FLAG (SDL_OPENGL|SDL_DOUBLEBUF)
+#else
+#define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
+#endif
 #define DEFAULT_SURFACE_FLAG (SDL_SWSURFACE)
 //#define DEFAULT_SURFACE_FLAG (SDL_HWSURFACE)
 
@@ -58,8 +63,6 @@
 #define DEFAULT_WM_ICON  "ONScripter"
 
 #define DEFAULT_FONT_SIZE 26
-
-//#define USE_OVERLAY
 
 class ONScripterLabel : public ScriptParser
 {
@@ -310,25 +313,27 @@ private:
 
     /* ---------------------------------------- */
     /* Script related variables */
-    enum { REFRESH_NORMAL_MODE = 0,
-           REFRESH_SAYA_MODE   = 1,
-           REFRESH_SHADOW_MODE = 2,
-           REFRESH_CURSOR_MODE = 4
+    enum { REFRESH_NONE_MODE        = 0,
+           REFRESH_NORMAL_MODE      = 1,
+           REFRESH_SAYA_MODE        = 2,
+           REFRESH_SHADOW_MODE      = 4,
+           REFRESH_TEXT_MODE        = 8,
+           REFRESH_SHADOW_TEXT_MODE = (1|4|8),
+           REFRESH_CURSOR_MODE      = 16,
+           REFRESH_OPENGL_MODE      = 32
     };
     
     int display_mode, next_display_mode;
     int event_mode;
-    SDL_Surface *picture_surface; // Picture
     SDL_Surface *text_surface; // Text (+alpha)
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
-    SDL_Surface *shelter_accumulation_surface; // Intermediate buffer to store accumulation_surface when entering system menu
     SDL_Surface *screenshot_surface; // Screenshot
-#if defined(USE_OVERLAY)    
-    SDL_Overlay *screen_overlay;
-#endif
+    unsigned int effect_src_id;
+    unsigned int effect_dst_id;
+    unsigned int text_id;
     
     /* ---------------------------------------- */
     /* Button related variables */
@@ -343,7 +348,8 @@ private:
         typedef enum { NORMAL_BUTTON        = 0,
                        SPRITE_BUTTON        = 1,
                        EX_SPRITE_BUTTON     = 2,
-                       CUSTOM_SELECT_BUTTON = 3
+                       LOOKBACK_BUTTON      = 3,
+                       TMP_SPRITE_BUTTON    = 4
         } BUTTON_TYPE;
 
         struct ButtonLink *next;
@@ -353,25 +359,19 @@ private:
         char *exbtn_ctl;
         SDL_Rect select_rect;
         SDL_Rect image_rect;
-        SDL_Surface *selected_surface;
-        SDL_Surface *no_selected_surface;
+        AnimationInfo *anim[2];
+        int show_flag; // 0...show nothing, 1... show anim[0], 2 ... show anim[1]
 
         ButtonLink(){
             button_type = NORMAL_BUTTON;
             next = NULL;
             exbtn_ctl = NULL;
-            selected_surface = NULL;
-            no_selected_surface = NULL;
+            anim[0] = anim[1] = NULL;
+            show_flag = 0;
         };
         ~ButtonLink(){
-            if ( button_type != SPRITE_BUTTON &&
-                 button_type != EX_SPRITE_BUTTON &&
-                 selected_surface )
-                SDL_FreeSurface( selected_surface );
-            if ( button_type != SPRITE_BUTTON &&
-                 button_type != EX_SPRITE_BUTTON &&
-                 no_selected_surface )
-                SDL_FreeSurface( no_selected_surface );
+            if ((button_type == NORMAL_BUTTON ||
+                 button_type == TMP_SPRITE_BUTTON) && anim[0]) delete anim[0];
             if ( exbtn_ctl ) delete[] exbtn_ctl;
         };
         void insert( ButtonLink *button ){
@@ -432,7 +432,7 @@ private:
     AnimationInfo sprite_info[MAX_SPRITE_NUM];
     bool all_sprite_hide_flag;
     
-    void allocateSelectedSurface( int sprite_no, ButtonLink *button );
+    //void allocateSelectedSurface( int sprite_no, ButtonLink *button );
     
     /* ---------------------------------------- */
     /* Parameter related variables */
@@ -471,12 +471,13 @@ private:
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
 
-    bool isTextVisible();
+    int  refreshMode();
     
-    void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, bool text_cache_flag, SDL_Rect *clip, SDL_Rect &dst_rect );
-    void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool text_cache_flag, SDL_Rect *clip=NULL );
-    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL );
-    void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip, bool text_cache_flag );
+    void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect );
+    void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip=NULL );
+    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, SDL_Surface *cache_surface=NULL );
+    void refreshText( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode=0 );
+    void restoreTextBuffer();
     int  clickWait( char *out_text );
     int  clickNewPage( char *out_text );
     int  textCommand();
@@ -491,7 +492,8 @@ private:
     
     int  setEffect( int effect_no );
     int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
-    void generateMosaic( SDL_Surface *dst_surface, SDL_Surface *src_surface, int level );
+    void drawEffect( SDL_Rect dst_rect, SDL_Rect src_rect, SDL_Surface *surface );
+    void generateMosaic( SDL_Surface *src_surface, int level );
     
     /* ---------------------------------------- */
     /* Select related variables */
@@ -574,13 +576,13 @@ private:
     bool new_line_skip_flag;
     int text_speed_no;
 
-    void shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *src_surface, SDL_Rect *clip=NULL, FontInfo *info=NULL );
+    void shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode );
     void clearCurrentTextBuffer();
     void newPage( bool next_flag );
     
     void deleteLabelLink();
-    void flush( SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
-    void flushSub( SDL_Rect &rect );
+    void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
+    void flushDirect( SDL_Rect &rect, int refresh_mode );
     void executeLabel();
     SDL_Surface *loadImage( char *file_name );
     int parseLine();
@@ -594,9 +596,9 @@ private:
     int  proceedAnimation();
     int  estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
     void resetRemainingTime( int t );
-    void setupAnimationInfo( AnimationInfo *anim );
+    void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL, SDL_Surface *surface=NULL );
     void parseTaggedString( AnimationInfo *anim );
-    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip );
+    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip, int refresh_mode );
     void stopAnimation( int click );
     
     /* ---------------------------------------- */
@@ -612,7 +614,7 @@ private:
     
     /* ---------------------------------------- */
     /* Image processing */
-    void blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect );
+    void blitSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     int  resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     int  doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
     void shiftCursorOnButton( int diff );
@@ -621,12 +623,11 @@ private:
                      SDL_Surface *src2_surface, int x2, int y2,
                      SDL_Surface *mask_surface,
                      int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL, uchar3 *direct_color=NULL );
-    void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
-    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL, FontInfo *info=NULL );
+    void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect, int refresh_mode );
+    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL, int refresh_mode=0 );
     void refreshSurfaceParameters();
     void refreshSurface( SDL_Surface *surface, SDL_Rect *clip=NULL, int refresh_mode = REFRESH_NORMAL_MODE );
     void createBackground();
-    void setBackground( SDL_Surface *surface, SDL_Rect *clip=NULL );
     SDL_Surface *rotateSurface90CW(SDL_Surface *surface);
 
     /* ---------------------------------------- */
@@ -651,6 +652,18 @@ private:
     void executeSystemYesNo();
     void setupLookbackButton();
     void executeSystemLookback();
+
+    /* ---------------------------------------- */
+    /* OpenGL */
+    unsigned char *texture_buffer;
+    int texture_buffer_size;
+
+    void initOpenGL();
+    void refreshOpenGL( int refresh_mode );
+    void loadTexture( SDL_Surface *surface, unsigned int tex_id, int trans=256 );
+    void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL, int trans=256 );
+    void drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, AnimationInfo *anim=NULL );
+    void refreshTexture();
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

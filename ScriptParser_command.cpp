@@ -563,8 +563,6 @@ int ScriptParser::menuselectvoiceCommand()
 
 int ScriptParser::menuselectcolorCommand()
 {
-    int i;
-
     const char *buf = script_h.readStr();
     readColor( &menu_font.on_color, buf );
 

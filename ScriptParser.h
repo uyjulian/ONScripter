@@ -201,6 +201,8 @@ protected:
     /* Global definitions */
     int screen_ratio1, screen_ratio2;
     int screen_width, screen_height;
+    int screen_texture_width, screen_texture_height;
+    int screen_bpp;
     char *version_str;
     int underline_value;
 
@@ -342,7 +344,7 @@ protected:
      
     /* ---------------------------------------- */
     /* Font related variables */
-    FontInfo sentence_font, menu_font, ruby_font;
+    FontInfo *current_font, sentence_font, menu_font, ruby_font;
     struct RubyStruct{
         enum { NONE,
                BODY,

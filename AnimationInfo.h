@@ -27,6 +27,10 @@
 #include <SDL.h>
 #include <string.h>
 
+#ifdef USE_OPENGL
+#include <SDL_opengl.h>
+#endif
+
 typedef unsigned char uchar3[3];
 
 class AnimationInfo{
@@ -66,11 +70,9 @@ public:
     /* Variables from AnimationInfo */
     bool visible;
     bool abs_flag;
-    int alpha_offset;
     int trans;
     char *image_name;
     SDL_Surface *image_surface;
-    SDL_Surface *mask_surface;
 
     int font_size_xy[2]; // used by prnum and lsp string
     int font_pitch; // used by lsp string
@@ -79,6 +81,12 @@ public:
     int param; // used by prnum and bar
     int max_param; // used by bar
     int max_width; // used by bar
+    
+    Uint32 rmask, gmask, bmask, amask, rgbmask;
+
+    int texture_width;
+    int texture_height;
+    unsigned int tex_id;
     
     AnimationInfo();
     ~AnimationInfo();
@@ -92,10 +100,11 @@ public:
 
     void setCell(int cell);
     void blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                         SDL_Surface *src_surface, int src_x, int src_y,
-                         SDL_Rect *clip=NULL,
-                         int alpha=256, int scale_x=100, int scale_y=100, int rot=0,
+                         SDL_Rect *clip=NULL, int alpha=256,
+                         int scale_x=100, int scale_y=100, int rot=0,
                          bool do_interpolation=false );
+    void setupImage( SDL_Surface *surface, SDL_Surface *surface_m );
+    void bindTexture();
 };
 
 #endif // __ANIMATION_INFO_H__

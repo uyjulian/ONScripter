@@ -276,7 +276,9 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
             SMPEG_actualSpec( mpeg_sample, &audio_format );
             SMPEG_enableaudio( mpeg_sample, 1 );
         }
-
+#ifdef USE_OPENGL
+        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, SDL_SWSURFACE);
+#endif        
         SMPEG_enablevideo( mpeg_sample, 1 );
         SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
         SMPEG_setvolume( mpeg_sample, mp3_volume );
@@ -309,6 +311,10 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
         Mix_HookMusic( NULL, NULL );
         SMPEG_stop( mpeg_sample );
         SMPEG_delete( mpeg_sample );
+#ifdef USE_OPENGL        
+        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG);
+        initOpenGL();
+#endif        
     }
     delete[] mpeg_buffer;
 #else
@@ -330,6 +336,9 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 
     if ( audio_open_flag ) Mix_CloseAudio();
 
+#ifdef USE_OPENGL
+    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, SDL_SWSURFACE);
+#endif        
     AVIWrapper *avi = new AVIWrapper();
     if ( avi->init( absolute_filename, false ) == 0 &&
          avi->initAV( screen_surface, audio_open_flag ) == 0 ){
@@ -337,6 +346,10 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
     }
     delete avi;
     delete[] absolute_filename;
+#ifdef USE_OPENGL        
+    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG);
+    initOpenGL();
+#endif        
 
     if ( audio_open_flag ){
         Mix_CloseAudio();

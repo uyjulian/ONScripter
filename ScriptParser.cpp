@@ -240,6 +240,7 @@ ScriptParser::ScriptParser( char *path )
 
     /* ---------------------------------------- */
     /* Font related variables */
+    current_font = &sentence_font;
     shade_distance[0] = 1;
     shade_distance[1] = 1;
     

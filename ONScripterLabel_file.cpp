@@ -262,6 +262,18 @@ int ONScripterLabel::loadSaveFile( int no )
     loadInt( fp, &j );
     sentence_font.is_transparent = (j==1)?true:false;
 
+    for (j=0, k=0, i=0 ; i<current_text_buffer->buffer2_count ; i++){
+        if (k == sentence_font.xy[0]*2 && j == sentence_font.xy[1]) break;
+
+        if (current_text_buffer->buffer2[i] == 0x0a){
+            j++;
+            k=0;
+        }
+        else
+            k++;
+    }
+    current_text_buffer->buffer2_count = i;
+
     /* Dummy, must be removed later !! */
     for ( i=0 ; i<8 ; i++ ){
         loadInt( fp, &j );
@@ -390,7 +402,7 @@ int ONScripterLabel::loadSaveFile( int no )
                                                       screen_width, screen_height,
                                                       32, rmask, gmask, bmask, amask );
         SDL_FillRect( bg_info.image_surface, NULL,
-                      SDL_MapRGB( bg_info.image_surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
+                      SDL_MapRGBA( bg_info.image_surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2], 0xff) );
         bg_info.pos.x = 0;
         bg_info.pos.y = 0;
         bg_info.pos.w = screen_width;
@@ -495,15 +507,12 @@ int ONScripterLabel::loadSaveFile( int no )
 
     fclose( fp );
 
-    refreshSurface( picture_surface, NULL, REFRESH_NORMAL_MODE );
-
-    SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-    cached_text_buffer = NULL; // to redraw text in a save file
+    restoreTextBuffer();
     num_chars_in_sentence = 0;
-    refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
     cached_text_buffer = current_text_buffer;
 
-    flush();
+    dirty_rect.fill( screen_width, screen_height );
+    flush( REFRESH_SHADOW_TEXT_MODE );
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 
     event_mode = tmp_event_mode;

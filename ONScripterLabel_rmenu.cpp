@@ -29,22 +29,26 @@ void ONScripterLabel::enterSystemCall()
     root_button_link.next = NULL;
     shelter_select_link = root_select_link.next;
     root_select_link.next = NULL;
-    SDL_BlitSurface( accumulation_surface, NULL, shelter_accumulation_surface, NULL );
     shelter_event_mode = event_mode;
     shelter_mouse_state.x = last_mouse_state.x;
     shelter_mouse_state.y = last_mouse_state.y;
     event_mode = IDLE_EVENT_MODE;
     system_menu_enter_flag = true;
     yesno_caller = SYSTEM_NULL;
+    next_display_mode = TEXT_DISPLAY_MODE;
 }
 
 void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
+    current_font = &sentence_font;
+    next_display_mode = display_mode;
     if ( restore_flag ){
-        SDL_BlitSurface( shelter_accumulation_surface, NULL, accumulation_surface, NULL );
-
+        
+        current_text_buffer = cached_text_buffer;
+        restoreTextBuffer();
         dirty_rect.fill( screen_width, screen_height );
-        flush();
+        flush( refreshMode() );
+        
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
         event_mode = shelter_event_mode;
@@ -55,7 +59,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
             else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA )
                 SDL_WarpMouse( screen_height - shelter_mouse_state.y - 1, shelter_mouse_state.x );
         }
-        current_text_buffer = cached_text_buffer;
     }
 
     system_menu_mode = SYSTEM_NULL;
@@ -116,6 +119,7 @@ void ONScripterLabel::executeSystemMenu()
     MenuLink *link;
     int counter = 1;
 
+    current_font = &menu_font;
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
 
         if ( current_button_state.button == 0 ) return;
@@ -147,9 +151,10 @@ void ONScripterLabel::executeSystemMenu()
     else{
         if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
-        refreshSurface( accumulation_surface, NULL );
-        shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
-        flush();
+
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        loadSubTexture( text_surface, text_id );
+        flush( REFRESH_SHADOW_TEXT_MODE );
 
         menu_font.num_xy[0] = menu_link_width;
         menu_font.num_xy[1] = menu_link_num;
@@ -165,7 +170,7 @@ void ONScripterLabel::executeSystemMenu()
             button->no = counter++;
 
             link = link->next;
-            flush( &button->image_rect );
+            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
         }
 
         flushEvent();
@@ -216,8 +221,7 @@ void ONScripterLabel::executeWindowErase()
         leaveSystemCall();
     }
     else{
-        refreshSurface( accumulation_surface, NULL, mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE );
-        flush();
+        flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
 
         event_mode = WAIT_INPUT_MODE;
         system_menu_mode = SYSTEM_WINDOWERASE;
@@ -228,6 +232,7 @@ void ONScripterLabel::executeSystemLoad()
 {
     SaveFileInfo save_file_info;
     
+    current_font = &menu_font;
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
 
         if ( current_button_state.button == 0 ) return;
@@ -252,9 +257,8 @@ void ONScripterLabel::executeSystemLoad()
         }
     }
     else{
-        refreshSurface( accumulation_surface, NULL );
-        shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
-        flush();
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        loadSubTexture( text_surface, text_id );
         
         menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -262,9 +266,11 @@ void ONScripterLabel::executeSystemLoad()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
         uchar3 color = {0xcc, 0xcc, 0xcc};
-        drawString( load_menu_name, color, &menu_font, true, accumulation_surface );
+        drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
         menu_font.newLine();
         menu_font.newLine();
+        
+        flush( REFRESH_SHADOW_TEXT_MODE );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -292,7 +298,7 @@ void ONScripterLabel::executeSystemLoad()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( &button->image_rect );
+            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
         }
         delete[] buffer;
 
@@ -304,6 +310,7 @@ void ONScripterLabel::executeSystemLoad()
 
 void ONScripterLabel::executeSystemSave()
 {
+    current_font = &menu_font;
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
 
         if ( current_button_state.button == 0 ) return;
@@ -321,9 +328,8 @@ void ONScripterLabel::executeSystemSave()
         leaveSystemCall();
     }
     else{
-        refreshSurface( accumulation_surface, NULL );
-        shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
-        flush();
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        loadSubTexture( text_surface, text_id );
 
         menu_font.num_xy[0] = strlen(save_item_name)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -331,9 +337,11 @@ void ONScripterLabel::executeSystemSave()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
         uchar3 color = {0xcc, 0xcc, 0xcc};
-        drawString( save_menu_name, color, &menu_font, true, accumulation_surface );
+        drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
         menu_font.newLine();
         menu_font.newLine();
+        
+        flush( REFRESH_SHADOW_TEXT_MODE );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -362,7 +370,7 @@ void ONScripterLabel::executeSystemSave()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( &button->image_rect );
+            flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
         }
         delete[] buffer;
 
@@ -376,6 +384,7 @@ void ONScripterLabel::executeSystemYesNo()
 {
     char name[64] = {'\0'};
 	
+    current_font = &menu_font;
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
 
         if ( current_button_state.button == 0 ) return;
@@ -392,6 +401,7 @@ void ONScripterLabel::executeSystemYesNo()
             }
             else if ( yesno_caller == SYSTEM_LOAD ){
 
+                current_font = &sentence_font;
                 if ( loadSaveFile( yesno_selected_file_no ) ){
                     system_menu_mode = yesno_caller;
                     advancePhase();
@@ -420,9 +430,8 @@ void ONScripterLabel::executeSystemYesNo()
         }
     }
     else{
-        refreshSurface( accumulation_surface, NULL );
-        shadowTextDisplay( accumulation_surface, accumulation_surface, NULL, &menu_font );
-        flush();
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        loadSubTexture( text_surface, text_id );
 
         if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD ){
             SaveFileInfo save_file_info;
@@ -448,8 +457,10 @@ void ONScripterLabel::executeSystemYesNo()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY(0, 0);
         uchar3 color = {0xcc, 0xcc, 0xcc};
-        drawString( name, color, &menu_font, true, accumulation_surface );
+        drawString( name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
 
+        flush( REFRESH_SHADOW_TEXT_MODE );
+        
         int offset1 = strlen(name)/5;
         int offset2 = strlen(name)/2 - offset1;
         strcpy( name, "‚Í‚¢" );
@@ -457,14 +468,14 @@ void ONScripterLabel::executeSystemYesNo()
         ButtonLink *button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 1;
-        flush( &button->image_rect );
+        flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
 
         strcpy( name, "‚¢‚¢‚¦" );
         menu_font.setXY(offset2, 2);
         button = getSelectableSentence( name, &menu_font, false );
         root_button_link.insert( button );
         button->no = 2;
-        flush( &button->image_rect );
+        flush( REFRESH_SHADOW_TEXT_MODE, &button->image_rect );
         
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();
@@ -473,8 +484,6 @@ void ONScripterLabel::executeSystemYesNo()
 
 void ONScripterLabel::setupLookbackButton()
 {
-    AnimationInfo *info[2];
-
     deleteButtonLink();
     
     /* ---------------------------------------- */
@@ -491,46 +500,26 @@ void ONScripterLabel::setupLookbackButton()
         button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[0] >= 0 ){
-            info[0] = &sprite_info[ lookback_sp[0] ];
-            info[0]->setCell(0);
-            info[1] = &sprite_info[ lookback_sp[0] ];
-            button->image_rect.x = sprite_info[ lookback_sp[0] ].pos.x;
-            button->image_rect.y = sprite_info[ lookback_sp[0] ].pos.y;
+            button->button_type = ButtonLink::SPRITE_BUTTON;
+            button->sprite_no = lookback_sp[0];
+            sprite_info[ button->sprite_no ].visible = true;
+            button->image_rect = sprite_info[ button->sprite_no ].pos;
         }
         else{
-            info[0] = &lookback_info[0];
-            info[1] = &lookback_info[1];
-            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
+            button->button_type = ButtonLink::LOOKBACK_BUTTON;
+            button->show_flag = 2;
+            button->anim[0] = &lookback_info[0];
+            button->anim[1] = &lookback_info[1];
+            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - button->anim[0]->pos.w;
             button->image_rect.y = sentence_font_info.pos.y;
+            button->image_rect.w = button->anim[0]->pos.w;
+            button->image_rect.h = button->anim[0]->pos.h;
+            button->anim[0]->pos.x = button->anim[1]->pos.x = button->image_rect.x;
+            button->anim[0]->pos.y = button->anim[1]->pos.y = button->image_rect.y;
         }
-            
-        if ( info[0]->image_surface ){
-            button->image_rect.w = info[0]->pos.w;
-            button->image_rect.h = info[0]->pos.h;
-            
-            button->selected_surface =
-                SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                      info[0]->pos.w, info[0]->pos.h,
-                                      32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-
-            info[0]->blendOnSurface( button->selected_surface, 0, 0,
-                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
-        }
-
-        if ( lookback_sp[0] >= 0 ) info[1]->setCell(1);
-
-        if ( info[1]->image_surface ){
-            button->no_selected_surface =
-                SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                      info[1]->pos.w, info[1]->pos.h,
-                                      32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-            
-            info[1]->blendOnSurface( button->no_selected_surface, 0, 0,
-                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
-            SDL_BlitSurface( button->no_selected_surface, NULL, accumulation_surface, &button->image_rect );
-        }
+    }
+    else if (lookback_sp[0] >= 0){
+        sprite_info[ lookback_sp[0] ].visible = false;
     }
 
     /* ---------------------------------------- */
@@ -546,46 +535,26 @@ void ONScripterLabel::setupLookbackButton()
         button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[1] >= 0 ){
-            info[0] = &sprite_info[ lookback_sp[1] ];
-            info[0]->setCell(0);
-            info[1] = &sprite_info[ lookback_sp[1] ];
-            button->image_rect.x = sprite_info[ lookback_sp[1] ].pos.x;
-            button->image_rect.y = sprite_info[ lookback_sp[1] ].pos.y;
+            button->button_type = ButtonLink::SPRITE_BUTTON;
+            button->sprite_no = lookback_sp[1];
+            sprite_info[ button->sprite_no ].visible = true;
+            button->image_rect = sprite_info[ button->sprite_no ].pos;
         }
         else{
-            info[0] = &lookback_info[2];
-            info[1] = &lookback_info[3];
-            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
-            button->image_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h - info[0]->pos.h;
+            button->button_type = ButtonLink::LOOKBACK_BUTTON;
+            button->show_flag = 2;
+            button->anim[0] = &lookback_info[2];
+            button->anim[1] = &lookback_info[3];
+            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - button->anim[0]->pos.w;
+            button->image_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h - button->anim[0]->pos.h;
+            button->image_rect.w = button->anim[0]->pos.w;
+            button->image_rect.h = button->anim[0]->pos.h;
+            button->anim[0]->pos.x = button->anim[1]->pos.x = button->image_rect.x;
+            button->anim[0]->pos.y = button->anim[1]->pos.y = button->image_rect.y;
         }
-            
-        if ( info[0]->image_surface ){
-            button->image_rect.w = info[0]->pos.w;
-            button->image_rect.h = info[0]->pos.h;
-            
-            button->selected_surface =
-                SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                      info[0]->pos.w, info[0]->pos.h,
-                                      32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-
-            info[0]->blendOnSurface( button->selected_surface, 0, 0,
-                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
-        }
-
-        if ( lookback_sp[1] >= 0 ) info[1]->setCell(1);
-
-        if ( info[1]->image_surface ){
-            button->no_selected_surface =
-                SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                      info[1]->pos.w, info[1]->pos.h,
-                                      32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        
-            info[1]->blendOnSurface( button->no_selected_surface, 0, 0,
-                                     accumulation_surface, button->image_rect.x, button->image_rect.y );
-            SDL_BlitSurface( button->no_selected_surface, NULL, accumulation_surface, &button->image_rect );
-        }
+    }
+    else if (lookback_sp[1] >= 0){
+        sprite_info[ lookback_sp[1] ].visible = false;
     }
 }
 
@@ -594,6 +563,7 @@ void ONScripterLabel::executeSystemLookback()
     int i;
     uchar3 color;
     
+    current_font = &sentence_font;
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
         if ( current_button_state.button == 0 ||
              ( current_text_buffer == start_text_buffer &&
@@ -606,6 +576,10 @@ void ONScripterLabel::executeSystemLookback()
         {
             event_mode = IDLE_EVENT_MODE;
             deleteButtonLink();
+            if ( lookback_sp[0] >= 0 )
+                sprite_info[ lookback_sp[0] ].visible = false;
+            if ( lookback_sp[1] >= 0 )
+                sprite_info[ lookback_sp[1] ].visible = false;
             leaveSystemCall();
             return;
         }
@@ -620,25 +594,28 @@ void ONScripterLabel::executeSystemLookback()
     else{
         current_text_buffer = current_text_buffer->previous;
         if ( current_text_buffer->buffer2_count == 0 ){
+            if ( lookback_sp[0] >= 0 )
+                sprite_info[ lookback_sp[0] ].visible = false;
+            if ( lookback_sp[1] >= 0 )
+                sprite_info[ lookback_sp[1] ].visible = false;
             leaveSystemCall();
             return;
         }
 
-        //SDL_BlitSurface( picture_surface, NULL, accumulation_surface, NULL );
-        
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_LOOKBACK;
     }
 
-    shadowTextDisplay( accumulation_surface, picture_surface, NULL, &sentence_font );
+    setupLookbackButton();
+    refreshMouseOverButton();
+
     for ( i=0 ; i<3 ; i++ ){
         color[i] = sentence_font.color[i];
         sentence_font.color[i] = lookback_color[i];
     }
-    restoreTextBuffer( accumulation_surface, NULL, false );
+    restoreTextBuffer();
     for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
-    setupLookbackButton();
-    refreshMouseOverButton();
+    
     dirty_rect.fill( screen_width, screen_height );
-    flush();
+    flush( REFRESH_SHADOW_TEXT_MODE );
 }
