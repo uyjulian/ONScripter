@@ -519,7 +519,18 @@ void ONScripterLabel::initOpenGL()
     screen_texture_height = 1;
     while (screen_texture_height < screen_height) screen_texture_height <<= 1;
 
+#ifdef glBlendColor
+    glBlendColor_ptr = glBlendColor;
+#else    
+    glBlendColor_ptr = (PFNGLBLENDCOLOREXTPROC) SDL_GL_GetProcAddress("glBlendColor");
+    if (glBlendColor_ptr == NULL){
+        fprintf(stderr, "glBlendColor is not supported. Exiting ...\n");
+        exit(-1);
+    }
+#endif
     refreshTexture();
+
+    printf("OpenGL is enabled.\n");
 #endif    
 }
 
@@ -651,16 +662,16 @@ void ONScripterLabel::drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL
     glBegin(GL_QUADS);
 
     glTexCoord2f(u[0], v[0]);
-    glVertex3f(draw_rect.x, screen_height-draw_rect.y, 0.0);
+    glVertex3i(draw_rect.x, screen_height-draw_rect.y, 0);
         
     glTexCoord2f(u[0], v[1]);
-    glVertex3f(draw_rect.x, screen_height-draw_rect.y-draw_rect.h, 0.0);
+    glVertex3i(draw_rect.x, screen_height-draw_rect.y-draw_rect.h, 0);
         
     glTexCoord2f(u[1], v[1]);
-    glVertex3f(draw_rect.x+draw_rect.w, screen_height-draw_rect.y-draw_rect.h, 0.0);
+    glVertex3i(draw_rect.x+draw_rect.w, screen_height-draw_rect.y-draw_rect.h, 0);
         
     glTexCoord2f(u[1], v[0]);
-    glVertex3f(draw_rect.x+draw_rect.w, screen_height-draw_rect.y, 0.0);
+    glVertex3i(draw_rect.x+draw_rect.w, screen_height-draw_rect.y, 0);
 
     glEnd();
 #endif    

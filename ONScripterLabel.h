@@ -664,6 +664,9 @@ private:
     void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL, int trans=256 );
     void drawTexture( unsigned int tex_id, SDL_Rect &draw_rect, SDL_Rect &tex_rect, AnimationInfo *anim=NULL );
     void refreshTexture();
+#ifdef USE_OPENGL
+    PFNGLBLENDCOLOREXTPROC glBlendColor_ptr;
+#endif
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

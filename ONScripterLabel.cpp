@@ -971,10 +971,10 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
 
         if (refresh_mode & REFRESH_OPENGL_MODE){
 #ifdef USE_OPENGL
-            glBlendColor((float)current_font->window_color[0]/256.0,
-                         (float)current_font->window_color[1]/256.0,
-                         (float)current_font->window_color[2]/256.0,
-                         0.0);
+            glBlendColor_ptr((float)current_font->window_color[0]/256.0,
+                             (float)current_font->window_color[1]/256.0,
+                             (float)current_font->window_color[2]/256.0,
+                             0.0);
             glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
             drawTexture(effect_src_id, rect, rect);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

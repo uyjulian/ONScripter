@@ -241,7 +241,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
 #ifdef USE_OPENGL
         drawTexture( effect_src_id, src_rect, src_rect );
         
-        glBlendColor(0.0, 0.0, 0.0, (float)effect_counter / effect->duration);
+        glBlendColor_ptr(0.0, 0.0, 0.0, (float)effect_counter / effect->duration);
         glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
         drawTexture( effect_dst_id, src_rect, src_rect );
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
