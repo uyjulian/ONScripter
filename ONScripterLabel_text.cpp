@@ -269,12 +269,14 @@ int ONScripterLabel::clickWait( char *out_text )
         clickstr_state = CLICK_NONE;
         if ( out_text ){
             drawChar( out_text, &sentence_font, false, true, text_surface );
+            num_chars_in_sentence++;
             string_buffer_offset += 2;
         }
         else{ // called on '@'
             flush();
             string_buffer_offset++;
         }
+        num_chars_in_sentence = 0;
         // ... below is ugly work-around ...
         if ( script_h.getStringBuffer()[string_buffer_offset] == '\0' )
             return RET_CONTINUE;
@@ -288,6 +290,7 @@ int ONScripterLabel::clickWait( char *out_text )
              ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ) flush();
         if ( out_text ){
             drawChar( out_text, &sentence_font, true, true, text_surface );
+            num_chars_in_sentence++;
         }
         if ( textgosub_label ){
             saveoffCommand();
@@ -303,26 +306,21 @@ int ONScripterLabel::clickWait( char *out_text )
             return RET_JUMP;
         }
         if ( automode_flag ){
-            if ( wave_sample[0] ){
-                event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
-                advancePhase();
-            }
-            else{
-                event_mode = WAIT_INPUT_MODE;
-                if ( automode_time < 0 )
-                    startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
-                else
-                    startTimer( automode_time );
-            }
+            event_mode = WAIT_INPUT_MODE | WAIT_VOICE_MODE;
+            if ( automode_time < 0 )
+                startTimer( -automode_time * num_chars_in_sentence );
+            else
+                startTimer( automode_time );
         }
         else if ( autoclick_time > 0 ){
             event_mode = WAIT_SLEEP_MODE;
             startTimer( autoclick_time );
         }
         else{
-            event_mode = WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
+            event_mode = WAIT_INPUT_MODE | WAIT_TIMER_MODE;
             advancePhase();
         }
+        num_chars_in_sentence = 0;
         return RET_WAIT_NOREAD;
     }
 }
@@ -332,6 +330,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
     clickstr_state = CLICK_NEWPAGE;
     if ( out_text ){
         drawChar( out_text, &sentence_font, false, true, text_surface );
+        num_chars_in_sentence++;
     }
     if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
          ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
@@ -340,6 +339,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
     if ( skip_flag || ctrl_pressed_status ){
         event_mode = WAIT_SLEEP_MODE;
         advancePhase();
+        num_chars_in_sentence = 0;
     }
     else{
         key_pressed_flag = false;
@@ -358,26 +358,21 @@ int ONScripterLabel::clickNewPage( char *out_text )
             return RET_JUMP;
         }
         if ( automode_flag ){
-            if ( wave_sample[0] ){
-                event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
-                advancePhase();
-            }
-            else{
-                event_mode = WAIT_INPUT_MODE;
-                if ( automode_time < 0 )
-                    startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
-                else
-                    startTimer( automode_time );
-            }
+            event_mode = WAIT_INPUT_MODE | WAIT_VOICE_MODE;
+            if ( automode_time < 0 )
+                startTimer( -automode_time * num_chars_in_sentence );
+            else
+                startTimer( automode_time );
         }
         else if ( autoclick_time > 0 ){
             event_mode = WAIT_SLEEP_MODE;
             startTimer( autoclick_time );
         }
         else /*if ( cursor_info[ CURSOR_NEWPAGE_NO ].num_of_cells > 0 )*/{
-            event_mode = WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
+            event_mode = WAIT_INPUT_MODE | WAIT_TIMER_MODE;
             advancePhase();
         }
+        num_chars_in_sentence = 0;
     }
     return RET_WAIT_NOREAD;
 }
@@ -489,17 +484,19 @@ int ONScripterLabel::textCommand()
                  ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
                  ctrl_pressed_status ){
                 drawChar( out_text, &sentence_font, false, true, text_surface );
+                num_chars_in_sentence++;
                 
                 string_buffer_offset += 2;
                 return RET_CONTINUE_NOREAD;
             }
             else{
                 drawChar( out_text, &sentence_font, true, true, text_surface );
+                num_chars_in_sentence++;
                 event_mode = WAIT_SLEEP_MODE;
                 if ( sentence_font.wait_time == -1 )
-                    startTimer( default_text_speed[text_speed_no] );
+                    advancePhase( default_text_speed[text_speed_no] );
                 else
-                    startTimer( sentence_font.wait_time );
+                    advancePhase( sentence_font.wait_time );
                 return RET_WAIT_NOREAD;
             }
         }
@@ -590,6 +587,7 @@ int ONScripterLabel::textCommand()
             out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
             drawChar( out_text, &sentence_font, flush_flag, true, text_surface );
         }
+        num_chars_in_sentence++;
         if ( skip_flag || draw_one_page_flag || sentence_font.wait_time == 0 ||
              ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
              ctrl_pressed_status ){
@@ -600,9 +598,9 @@ int ONScripterLabel::textCommand()
         else{
             event_mode = WAIT_SLEEP_MODE;
             if ( sentence_font.wait_time == -1 )
-                startTimer( default_text_speed[text_speed_no] );
+                advancePhase( default_text_speed[text_speed_no] );
             else
-                startTimer( sentence_font.wait_time );
+                advancePhase( sentence_font.wait_time );
             return RET_WAIT_NOREAD;
         }
     }

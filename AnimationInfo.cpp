@@ -111,10 +111,14 @@ void AnimationInfo::removeTag(){
 // 1 ... stop at the end
 // 2 ... reverse at the end
 // 3 ... no animation
-void AnimationInfo::proceedAnimation()
+bool AnimationInfo::proceedAnimation()
 {
-    if ( loop_mode != 3 && num_of_cells > 1 )
+    bool is_changed = false;
+    
+    if ( loop_mode != 3 && num_of_cells > 1 ){
         current_cell += direction;
+        is_changed = true;
+    }
 
     if ( current_cell < 0 ){ // loop_mode must be 2
         current_cell = 1;
@@ -126,6 +130,7 @@ void AnimationInfo::proceedAnimation()
         }
         else if ( loop_mode == 1 ){
             current_cell = num_of_cells - 1;
+            is_changed = false;
         }
         else{
             current_cell = num_of_cells - 2;
@@ -133,9 +138,8 @@ void AnimationInfo::proceedAnimation()
         }
     }
 
-    /*if ( duration_list[ current_cell ] == 0 )
-        remaining_time = -1;
-    else*/
-        remaining_time = duration_list[ current_cell ];
+    remaining_time = duration_list[ current_cell ];
+
+    return is_changed;
 }
 

@@ -142,7 +142,6 @@ int ONScripterLabel::textonCommand()
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
         refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
     }
@@ -594,7 +593,7 @@ int ONScripterLabel::selectCommand()
         sentence_font.xy[1] = xy[1];
 
         flushEvent();
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_ANIMATION_MODE;
+        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
         advancePhase();
         refreshMouseOverButton();
 
@@ -796,7 +795,6 @@ int ONScripterLabel::repaintCommand()
 {
     refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
     refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-    dirty_rect.fill( screen_width, screen_height );
     flush();
     
     return RET_CONTINUE;
@@ -1125,7 +1123,8 @@ int ONScripterLabel::lspCommand()
         v = true;
 
     int no = script_h.readInt();
-    if ( sprite_info[no].visible ) dirty_rect.add( sprite_info[no].pos );
+    if ( sprite_info[no].visible )
+        dirty_rect.add( sprite_info[no].pos );
     sprite_info[ no ].visible = v;
     
     const char *buf = script_h.readStr();
@@ -1140,7 +1139,8 @@ int ONScripterLabel::lspCommand()
 
     parseTaggedString( &sprite_info[ no ] );
     setupAnimationInfo( &sprite_info[ no ] );
-    if ( sprite_info[no].visible ) dirty_rect.add( sprite_info[no].pos );
+    if ( sprite_info[no].visible )
+        dirty_rect.add( sprite_info[no].pos );
 
     return RET_CONTINUE;
 }
@@ -2048,17 +2048,18 @@ int ONScripterLabel::btnwaitCommand()
     }
 
     script_h.readInt();
-    
-    if ( event_mode & WAIT_BUTTON_MODE )
+
+    if ( event_mode & WAIT_BUTTON_MODE || (textbtn_flag && skip_flag) )
     {
         btnwait_time = SDL_GetTicks() - internal_button_timer;
         btntime_value = 0;
+        num_chars_in_sentence = 0;
 
         if ( textbtn_flag && skip_flag ) current_button_state.button = 0;
         script_h.setInt( &script_h.current_variable, current_button_state.button );
 
         if ( del_flag ){
-            if ( current_button_state.button > 0 ) deleteButtonLink();
+            deleteButtonLink();
             if ( exbtn_d_button_link.exbtn_ctl ){
                 delete[] exbtn_d_button_link.exbtn_ctl;
                 exbtn_d_button_link.exbtn_ctl = NULL;
@@ -2136,26 +2137,29 @@ int ONScripterLabel::btnwaitCommand()
         flushEvent();
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
-        
+
         if ( btntime_value > 0 ){
+            if ( btntime2_flag )
+                event_mode |= WAIT_VOICE_MODE;
             startTimer( btntime_value );
-            if ( usewheel_flag ) current_button_state.button = -5;
-            else                 current_button_state.button = -2;
+            //if ( usewheel_flag ) current_button_state.button = -5;
+            //else                 current_button_state.button = -2;
         }
         internal_button_timer = SDL_GetTicks();
 
         if ( textbtn_flag ){
             event_mode |= WAIT_TEXTBTN_MODE;
             if ( btntime_value == 0 ){
-                if ( !wave_sample[0] && automode_flag ){
+                if ( automode_flag ){
+                    event_mode |= WAIT_VOICE_MODE;
                     if ( automode_time < 0 )
-                        startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
+                        startTimer( -automode_time * num_chars_in_sentence );
                     else
                         startTimer( automode_time );
-                    current_button_state.button = 0;
+                    //current_button_state.button = 0;
                 }
                 else{
-                    event_mode |= WAIT_ANIMATION_MODE;
+                    event_mode |= WAIT_TIMER_MODE;
                     advancePhase();
                 }
             }

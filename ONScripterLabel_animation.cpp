@@ -25,7 +25,7 @@
 
 int ONScripterLabel::proceedAnimation()
 {
-    int i, minimum_duration = 0;
+    int i, minimum_duration = -1;
     AnimationInfo *anim;
     
     for ( i=0 ; i<3 ; i++ ){
@@ -61,6 +61,9 @@ int ONScripterLabel::proceedAnimation()
             minimum_duration = estimateNextDuration( anim, dst_rect, minimum_duration );
         }
     }
+    flush();
+
+    if ( minimum_duration == -1 ) minimum_duration = 0;
 
     return minimum_duration;
 }
@@ -68,15 +71,14 @@ int ONScripterLabel::proceedAnimation()
 int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum )
 {
     if ( anim->remaining_time == 0 ){
-        if ( minimum == 0 ||
+        if ( minimum == -1 ||
              minimum > anim->duration_list[ anim->current_cell ] )
             minimum = anim->duration_list[ anim->current_cell ];
-        anim->proceedAnimation();
-        refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
-        flush();
+        if ( anim->proceedAnimation() )
+            refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
     }
     else{
-        if ( minimum == 0 ||
+        if ( minimum == -1 ||
              minimum > anim->remaining_time )
             minimum = anim->remaining_time;
     }
@@ -328,9 +330,10 @@ void ONScripterLabel::stopAnimation( int click )
 {
     int no;
 
-    if ( !(event_mode & WAIT_ANIMATION_MODE) ) return;
+    if ( !(event_mode & WAIT_TIMER_MODE) ) return;
     
-    event_mode &= ~WAIT_ANIMATION_MODE;
+    event_mode &= ~WAIT_TIMER_MODE;
+    remaining_time = -1;
     if ( textgosub_label ) return;
 
     if      ( click == CLICK_WAIT )    no = CURSOR_WAIT_NO;

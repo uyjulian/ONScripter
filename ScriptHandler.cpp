@@ -39,6 +39,7 @@ ScriptHandler::ScriptHandler()
     log_info[FILE_LOG].filename = "NScrflog.dat";
     kidokuskip_flag = false;
     kidoku_buffer = NULL;
+    skip_enabled = false;
 
     text_flag = true;
     line_head_flag = true;
@@ -240,9 +241,7 @@ void ScriptHandler::setLinepage( bool val )
 
 bool ScriptHandler::isKidoku()
 {
-    int offset = current_script - script_buffer;
-    
-    return (kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)))?true:false;
+    return skip_enabled;
 }
 
 void ScriptHandler::markAsKidoku( char *address )
@@ -250,7 +249,11 @@ void ScriptHandler::markAsKidoku( char *address )
     if ( !kidokuskip_flag ) return;
     int offset = current_script - script_buffer;
     if ( address ) offset = address - script_buffer;
-    //printf("mark (%c)%x:%x\n", *current_script, offset /8, offset%8);
+    //printf("mark (%c)%x:%x = %d\n", *current_script, offset /8, offset%8, kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)));
+    if ( kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)) )
+        skip_enabled = true;
+    else
+        skip_enabled = false;
     kidoku_buffer[ offset/8 ] |= ((char)1 << (offset % 8));
 }
 

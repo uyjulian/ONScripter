@@ -27,47 +27,24 @@ void calcWeightedSum( unsigned char **dst, unsigned char **src, int x, int y,
                              int interpolation_width, int interpolation_height,
                              int image_width, int image_height, int image_pixel_width, int byte_per_pixel )
 {
-    bool width_extra_flag = false;
     int x_start = x-interpolation_width/2;
     int x_end   = x-interpolation_width/2+interpolation_width;
-    if ( !(interpolation_width % 2) ){
-        width_extra_flag = true;
-        x_end++;
-    }
     
-    bool height_extra_flag = false;
     int y_start = y-interpolation_height/2;
     int y_end   = y-interpolation_height/2+interpolation_height;
-    if ( !(interpolation_height % 2) ){
-        height_extra_flag = true;
-        y_end++;
-    }
-    
+
     for ( int s=0 ; s<byte_per_pixel ; s++ ){
         unsigned long sum2=0, sum1=0;
         for ( int i=y_start ; i<y_end ; i++ ){
             if ( i<0 || i>=image_height ) continue;
-            bool height_extra_do_flag = false;
-            if ( (i==y_start || i==y_end-1) && height_extra_flag )
-                height_extra_do_flag = true;
             
-            for ( int j=x_start ; j<x_end ; j++ ){
+            unsigned char *p = *src+image_pixel_width*i+byte_per_pixel*x_start+s;
+            for ( int j=x_start ; j<x_end ; j++, p+=byte_per_pixel ){
                 if ( j<0 || j>=image_width ) continue;
-                unsigned char p = *(*src+image_pixel_width*i+byte_per_pixel*j+s);
-                unsigned long addtion = 4;
-                if ( (j==x_start || j==x_end-1) && width_extra_flag ){
-                    addtion >>= 1;
-                    p >>= 1;
-                }
-                if ( height_extra_do_flag ){
-                    addtion >>= 1;
-                    p >>= 1;
-                }
-                sum1 += addtion;
-                sum2 += p;
+                sum2 += *p;
+                sum1++;
             }
         }
-        sum1 /= 4;
         *(*dst)++ = (unsigned char)(sum2/sum1);
     }
 }

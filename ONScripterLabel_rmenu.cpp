@@ -147,7 +147,6 @@ void ONScripterLabel::executeSystemMenu()
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         menu_font.num_xy[0] = menu_link_width;
@@ -180,7 +179,7 @@ void ONScripterLabel::executeSystemSkip()
 {
     skip_flag = true;
     if ( !(shelter_event_mode & WAIT_BUTTON_MODE) )
-        shelter_event_mode &= ~WAIT_ANIMATION_MODE;
+        shelter_event_mode &= ~WAIT_TIMER_MODE;
     leaveSystemCall();
 }
 
@@ -206,7 +205,6 @@ void ONScripterLabel::executeWindowErase()
     }
     else{
         refreshSurface( text_surface, NULL, mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         event_mode = WAIT_INPUT_MODE;
@@ -244,7 +242,6 @@ void ONScripterLabel::executeSystemLoad()
     else{
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
         
         system_font.xy[0] = (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2;
@@ -309,7 +306,6 @@ void ONScripterLabel::executeSystemSave()
     else{
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         system_font.xy[0] = (system_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2;
@@ -401,7 +397,6 @@ void ONScripterLabel::executeSystemYesNo()
     else{
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
-        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD ){

@@ -89,7 +89,7 @@ public:
     void remove();
     void removeTag();
 
-    void proceedAnimation();
+    bool proceedAnimation();
 };
 
 #endif // __ANIMATION_INFO_H__

@@ -81,25 +81,69 @@ Uint32 cdaudioCallback( Uint32 interval, void *param )
     return interval;
 }
 
+void ONScripterLabel::flushEventSub( SDL_Event &event )
+{
+    if ( event.type == ONS_SOUND_EVENT ){
+        if ( music_play_loop_flag ||
+             (cd_play_loop_flag && !cdaudio_flag ) ){
+            stopBGM( true );
+            playMP3( current_cd_track );
+        }
+        else{
+            stopBGM( false );
+        }
+    }
+    else if ( event.type == ONS_CDAUDIO_EVENT ){
+        if ( cd_play_loop_flag ){
+            stopBGM( true );
+            playCDAudio( current_cd_track );
+        }
+        else{
+            stopBGM( false );
+        }
+    }
+    else if ( event.type == ONS_MIDI_EVENT ){
+        if ( midi_play_loop_flag ){
+            Mix_FreeMusic( midi_info );
+            playMIDI();
+        }
+    }
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    else if ( event.type == ONS_MUSIC_EVENT ){
+        ext_music_play_once_flag = !music_play_loop_flag;
+        Mix_FreeMusic( music_info );
+        playMusic();
+    }
+#endif
+    else if ( event.type == ONS_WAVE_EVENT ){ // for processing btntim2 and automode correctly
+        if ( wave_sample[event.user.code] ){
+            Mix_FreeChunk( wave_sample[event.user.code] );
+            wave_sample[event.user.code] = NULL;
+        }
+    }
+}
+
 void ONScripterLabel::flushEvent()
 {
     SDL_Event event;
-    while( SDL_PollEvent( &event ) );
+    while( SDL_PollEvent( &event ) )
+        flushEventSub( event );
 }
 
 void ONScripterLabel::startTimer( int count )
 {
     int duration = proceedAnimation();
-
+    
     if ( duration > 0 && duration < count ){
         resetRemainingTime( duration );
         advancePhase( duration );
-        event_mode |= WAIT_ANIMATION_MODE;
         remaining_time = count;
     }
     else{
         advancePhase( count );
+        remaining_time = 0;
     }
+    event_mode |= WAIT_TIMER_MODE;
 }
 
 void ONScripterLabel::advancePhase( int count )
@@ -190,7 +234,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     if ( variable_edit_mode ) return;
     
     if ( automode_flag ){
-        remaining_time = 0;
+        remaining_time = -1;
         automode_flag = false;
         return;
     }
@@ -483,7 +527,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
     if ( automode_flag ){
-        remaining_time = 0;
+        remaining_time = -1;
         automode_flag = false;
         return;
     }
@@ -710,26 +754,46 @@ void ONScripterLabel::timerEvent( void )
 
     int ret;
 
-    if ( event_mode & WAIT_ANIMATION_MODE ){
+    if ( event_mode & WAIT_TIMER_MODE ){
         int duration = proceedAnimation();
 
         if ( duration == 0 ||
              ( remaining_time > 0 &&
                remaining_time-duration <= 0 ) ){
 
-            if ( remaining_time > 0 ){
-                remaining_time = 0;
-                advancePhase();
+            bool end_flag = true;
+            bool loop_flag = false;
+            if ( remaining_time >= 0 ){
+                remaining_time = -1;
+                if ( event_mode & WAIT_VOICE_MODE && wave_sample[0] ){
+                    end_flag = false;
+                    if ( duration > 0 ){
+                        resetRemainingTime( duration );
+                        advancePhase( duration );
+                    }
+                }
+                else{
+                    loop_flag = true;
+                    if ( automode_flag )
+                        current_button_state.button = 0;
+                    else if ( usewheel_flag )
+                        current_button_state.button = -5;
+                    else
+                        current_button_state.button = -2;
+                }
             }
 
-            if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) && 
+            if ( end_flag &&
+                 event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) && 
                  ( clickstr_state == CLICK_WAIT || 
-                   clickstr_state == CLICK_NEWPAGE ) ){ 
+                   clickstr_state == CLICK_NEWPAGE ) ){
                 playClickVoice(); 
                 stopAnimation( clickstr_state ); 
             } 
 
-            event_mode &= ~WAIT_ANIMATION_MODE;
+            if ( end_flag || duration == 0 )
+                event_mode &= ~WAIT_TIMER_MODE;
+            if ( loop_flag ) goto timerEventTop;
         }
         else{
             if ( remaining_time > 0 )
@@ -783,7 +847,7 @@ void ONScripterLabel::timerEvent( void )
              ( event_mode & WAIT_INPUT_MODE && 
                volatile_button_state.button == -1 ) ){
             if ( !system_menu_enter_flag )
-                event_mode |= WAIT_ANIMATION_MODE;
+                event_mode |= WAIT_TIMER_MODE;
             executeSystemCall();
         }
         else
@@ -828,65 +892,32 @@ int ONScripterLabel::eventLoop()
             break;
                 
           case ONS_SOUND_EVENT:
-            if ( music_play_loop_flag ||
-                 (cd_play_loop_flag && !cdaudio_flag ) ){
-                stopBGM( true );
-                playMP3( current_cd_track );
-            }
-            else{
-                stopBGM( false );
-            }
-            break;
-                
           case ONS_CDAUDIO_EVENT:
-            if ( cd_play_loop_flag ){
-                stopBGM( true );
-                playCDAudio( current_cd_track );
-            }
-            else{
-                stopBGM( false );
-            }
-            break;
-
           case ONS_MIDI_EVENT:
-            if ( midi_play_loop_flag ){
-                Mix_FreeMusic( midi_info );
-                playMIDI();
-            }
+#if defined(EXTERNAL_MUSIC_PLAYER)
+          case ONS_MUSIC_EVENT:
+#endif
+            flushEventSub( event );
             break;
 
           case ONS_WAVE_EVENT:
-            if ( wave_sample[event.user.code] ){
-                Mix_FreeChunk( wave_sample[event.user.code] );
-                wave_sample[event.user.code] = NULL;
-            }
+            flushEventSub( event );
             //printf("ONS_WAVE_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
-            if ( !wave_sample[0] &&
-                 automode_flag &&
-                 event_mode & (WAIT_SLEEP_MODE | WAIT_TEXTBTN_MODE) ){
-                if ( event_mode & WAIT_TEXTBTN_MODE )
-                    current_button_state.button = 0;
-                stopAnimation( clickstr_state );
-                advancePhase();
-            }
-            else if ( !wave_sample[0] &&
-                      btntime_value > 0 &&
-                      btntime2_flag &&
-                      event_mode & WAIT_BUTTON_MODE ){
-                current_button_state.button = 0;
-                stopAnimation( clickstr_state );
-                advancePhase();
-            }
-            
-            break;
+            if ( event.user.code != 0 ||
+                 !(event_mode & WAIT_VOICE_MODE) ) break;
 
-#if defined(EXTERNAL_MUSIC_PLAYER)
-          case ONS_MUSIC_EVENT:
-            ext_music_play_once_flag = !music_play_loop_flag;
-            Mix_FreeMusic( music_info );
-            playMusic();
+            if ( remaining_time <= 0 ){
+                event_mode &= ~WAIT_VOICE_MODE;
+                if ( automode_flag )
+                    current_button_state.button = 0;
+                else if ( usewheel_flag )
+                    current_button_state.button = -5;
+                else
+                    current_button_state.button = -2;
+                stopAnimation( clickstr_state );
+                advancePhase();
+            }
             break;
-#endif
 
           case SDL_ACTIVEEVENT:
             if ( event.active.gain ){

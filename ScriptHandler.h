@@ -260,6 +260,7 @@ private:
         char *filename;
     } log_info[2];
 
+    bool skip_enabled;
     bool kidokuskip_flag;
     char *kidoku_buffer;
 

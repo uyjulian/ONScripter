@@ -455,7 +455,6 @@ int ONScripterLabel::loadSaveFile( int no )
 
     refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
     refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
-    dirty_rect.fill( screen_width, screen_height );
     flush();
     display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 
@@ -465,7 +464,7 @@ int ONScripterLabel::loadSaveFile( int no )
     if ( event_mode & WAIT_SLEEP_MODE )
         event_mode &= ~WAIT_SLEEP_MODE;
     else
-        event_mode |= WAIT_ANIMATION_MODE;
+        event_mode |= WAIT_TIMER_MODE;
     
     return 0;
 }

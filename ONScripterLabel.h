@@ -222,6 +222,7 @@ protected:
     void mousePressEvent( SDL_MouseButtonEvent *event );
     void mouseMoveEvent( SDL_MouseMotionEvent *event );
     void timerEvent();
+    void flushEventSub( SDL_Event &event );
     void flushEvent();
     void startTimer( int count );
     void advancePhase( int count=0 );
@@ -236,8 +237,9 @@ private:
            WAIT_BUTTON_MODE     = 2, // For select and btnwait.
            WAIT_INPUT_MODE      = (4|8),  // For select and text wait. It allows the right click menu.
            WAIT_SLEEP_MODE      = 16,
-           WAIT_ANIMATION_MODE  = 32,
-           WAIT_TEXTBTN_MODE    = 64
+           WAIT_TIMER_MODE      = 32,
+           WAIT_TEXTBTN_MODE    = 64,
+           WAIT_VOICE_MODE      = 128
     };
     typedef enum { COLOR_EFFECT_IMAGE  = 0,
                    DIRECT_EFFECT_IMAGE = 1,

@@ -215,6 +215,7 @@ ScriptParser::ScriptParser( char *path )
     default_text_speed[1] = DEFAULT_TEXT_SPEED_MIDDLE;
     default_text_speed[2] = DEFAULT_TEXT_SPEED_HIGHT;
     max_text_buffer = MAX_TEXT_BUFFER;
+    num_chars_in_sentence = 0;
     text_buffer = NULL;
     current_text_buffer = start_text_buffer = NULL;
     
