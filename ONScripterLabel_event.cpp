@@ -758,7 +758,7 @@ void ONScripterLabel::timerEvent( void )
         int duration = proceedAnimation();
 
         if ( duration == 0 ||
-             ( remaining_time > 0 &&
+             ( remaining_time >= 0 &&
                remaining_time-duration <= 0 ) ){
 
             bool end_flag = true;

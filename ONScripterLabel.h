@@ -145,6 +145,7 @@ public:
     int isskipCommand();
     int isdownCommand();
     int inputCommand();
+    int humanorderCommand();
     int getzxcCommand();
     int getversionCommand();
     int gettimerCommand();
@@ -395,6 +396,7 @@ private:
     /* Tachi-e related variables */
     /* 0 ... left, 1 ... center, 2 ... right */
     AnimationInfo tachi_info[3];
+    int human_order[3];
 
     /* ---------------------------------------- */
     /* Sprite related variables */

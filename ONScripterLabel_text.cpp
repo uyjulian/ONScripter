@@ -265,7 +265,7 @@ void ONScripterLabel::restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip )
 
 int ONScripterLabel::clickWait( char *out_text )
 {
-    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
+    if ( (skip_flag || draw_one_page_flag || ctrl_pressed_status) && !textgosub_label ){
         clickstr_state = CLICK_NONE;
         if ( out_text ){
             drawChar( out_text, &sentence_font, false, true, text_surface );
@@ -336,7 +336,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
          ( sentence_font.wait_time == -1 && default_text_speed[text_speed_no] == 0 ) ||
          ctrl_pressed_status ) flush();
     
-    if ( skip_flag || ctrl_pressed_status ){
+    if ( (skip_flag || ctrl_pressed_status) && !textgosub_label  ){
         event_mode = WAIT_SLEEP_MODE;
         advancePhase();
         num_chars_in_sentence = 0;

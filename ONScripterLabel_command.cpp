@@ -767,6 +767,7 @@ int ONScripterLabel::resetCommand()
     script_h.setCurrent( current_link_label_info->label_info.start_address );
     string_buffer_offset = 0;
     
+    for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     barclearCommand();
     prnumclearCommand();
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
@@ -1334,6 +1335,30 @@ int ONScripterLabel::inputCommand()
     }
 
     return RET_CONTINUE;
+}
+
+int ONScripterLabel::humanorderCommand()
+{
+    const char *buf = script_h.readStr();
+    int i;
+    for ( i=0 ; i<3 ; i++ ){
+        if      ( buf[i] == 'l' ) human_order[i] = 0;
+        else if ( buf[i] == 'c' ) human_order[i] = 1;
+        else if ( buf[i] == 'r' ) human_order[i] = 2;
+    }
+
+    if ( event_mode & EFFECT_EVENT_MODE ){
+        int num = readEffect( &tmp_effect );
+        if ( num > 1 ) return doEffect( TMP_EFFECT, &bg_info, bg_effect_image );
+        else           return doEffect( tmp_effect.effect, &bg_info, bg_effect_image );
+    }
+    else{
+        for ( i=0 ; i<3 ; i++ )
+            dirty_rect.add( tachi_info[i].pos );
+
+        readEffect( &tmp_effect );
+        return setEffect( tmp_effect.effect );
+    }
 }
 
 int ONScripterLabel::getzxcCommand()
@@ -2049,7 +2074,8 @@ int ONScripterLabel::btnwaitCommand()
 
     script_h.readInt();
 
-    if ( event_mode & WAIT_BUTTON_MODE || (textbtn_flag && skip_flag) )
+    if ( event_mode & WAIT_BUTTON_MODE ||
+         (textbtn_flag && (skip_flag || draw_one_page_flag || ctrl_pressed_status)) )
     {
         btnwait_time = SDL_GetTicks() - internal_button_timer;
         btntime_value = 0;

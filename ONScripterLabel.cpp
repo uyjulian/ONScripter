@@ -124,6 +124,7 @@ static struct FuncLUT{
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"input", &ONScripterLabel::inputCommand},
+    {"humanorder", &ONScripterLabel::humanorderCommand},
     {"getzxc", &ONScripterLabel::getzxcCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
@@ -343,7 +344,8 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     tmp_save_fp = NULL;
     saveon_flag = true; // false while saveoff
     internal_saveon_flag = true; // false within a sentence
-    
+
+    for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
     monocro_flag = monocro_flag_new = false;
     nega_mode = 0;
     tateyoko_mode = 0;
@@ -1484,8 +1486,8 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
     }
 
     for ( i=0 ; i<3 ; i++ ){
-        if ( tachi_info[i].image_surface ){
-            drawTaggedSurface( surface, &tachi_info[i], clip );
+        if ( tachi_info[human_order[2-i]].image_surface ){
+            drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
         }
     }
 
