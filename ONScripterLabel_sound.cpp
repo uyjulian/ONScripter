@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods to play sound
  *
- *  Copyright (c) 2001-2002 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -248,6 +248,12 @@ int ONScripterLabel::playWave( const char *file_name, bool loop_flag, int channe
 
 void ONScripterLabel::stopBGM( bool continue_flag )
 {
+#if defined(EXTERNAL_MIDI_PROGRAM)
+    FILE *com_file;
+    if( (com_file = fopen("stop_bgm", "wb")) != NULL )
+        fclose(com_file);
+#endif
+    
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
 
@@ -273,11 +279,6 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( midi_info ){
-#if defined(EXTERNAL_MIDI_PROGRAM)
-        FILE *com_file;
-        if( (com_file = fopen("stop_midi", "wb")) != NULL )
-            fclose(com_file);
-#endif
         midi_play_once_flag = true;
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
