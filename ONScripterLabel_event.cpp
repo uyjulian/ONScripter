@@ -705,6 +705,10 @@ int ONScripterLabel::eventLoop()
             playMIDI();
             break;
 
+          case SDL_ACTIVEEVENT:
+            if ( event.active.gain ) flush();
+            break;
+            
           case SDL_QUIT:
             saveAll();
             if ( cdrom_info ){

@@ -602,7 +602,6 @@ void ONScripterLabel::executeLabel()
     int ret;
 
     while ( current_link_label_info->current_line<current_link_label_info->label_info.num_of_lines ){
-        //printf("line %d/%d\n", current_link_label_info->current_line,current_link_label_info->label_info.num_of_lines );
         const char *s_buf = script_h.getStringBuffer();
         if ( s_buf[string_buffer_offset] == '~' )
         {
@@ -708,7 +707,7 @@ int ONScripterLabel::parseLine( )
         if ( s_buf[0] != 0x0a && s_buf[0] != '@' && s_buf[0] != '\\' &&
              s_buf[0] != '/'  && s_buf[0] != '!' && s_buf[0] != '#'  &&
              s_buf[0] != '_'  && s_buf[0] != '%' && !(s_buf[0] & 0x80 ) ){
-            printf(" command [%s] is not supported yet!!\n", s_buf );
+            fprintf( stderr, " command [%s] is not supported yet!!\n", s_buf );
             skipToken();
             return RET_CONTINUE;
         }

@@ -139,7 +139,7 @@ int ONScripterLabel::loadSaveFile( int no )
     }
     printf("Save file version is %d.%d\n", file_version/100, file_version%100 );
     if ( file_version > SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR ){
-        printf("Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
+        fprintf( stderr, "Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
         return -1;
     }
     
@@ -720,6 +720,7 @@ void ONScripterLabel::executeSystemMenu()
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        flush();
 
         menu_font.num_xy[0] = menu_link_width;
         menu_font.num_xy[1] = menu_link_num;
@@ -736,7 +737,7 @@ void ONScripterLabel::executeSystemMenu()
             last_button_link->no = counter++;
 
             link = link->next;
-            flush();
+            flush( &last_button_link->image_rect );
         }
 
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
@@ -812,7 +813,8 @@ void ONScripterLabel::executeSystemLoad()
     
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
-
+        flush();
+        
         system_font.xy[0] = (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2;
         system_font.xy[1] = 0;
         drawString( load_menu_name, system_font.color, &system_font, true, text_surface );
@@ -844,7 +846,7 @@ void ONScripterLabel::executeSystemLoad()
             last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
             last_button_link = last_button_link->next;
             last_button_link->no = counter++;
-            flush();
+            flush( &last_button_link->image_rect );
         }
         delete[] buffer;
 
@@ -877,6 +879,7 @@ void ONScripterLabel::executeSystemSave()
 
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        flush();
 
         system_font.xy[0] = (system_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2;
         system_font.xy[1] = 0;
@@ -909,7 +912,7 @@ void ONScripterLabel::executeSystemSave()
             last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
             last_button_link = last_button_link->next;
             last_button_link->no = counter++;
-            flush();
+            flush( &last_button_link->image_rect );
         }
         delete[] buffer;
 
@@ -966,6 +969,7 @@ void ONScripterLabel::executeSystemYesNo()
     else{
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        flush();
 
         if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD )
             sprintf( name, "%s%s", 
@@ -989,6 +993,7 @@ void ONScripterLabel::executeSystemYesNo()
         last_button_link->next = getSelectableSentence( name, &system_font, false );
         last_button_link = last_button_link->next;
         last_button_link->no = 1;
+        flush( &last_button_link->image_rect );
 
         strcpy( name, "‚¢‚¢‚¦" );
         system_font.xy[0] = 18;
@@ -996,8 +1001,8 @@ void ONScripterLabel::executeSystemYesNo()
         last_button_link->next = getSelectableSentence( name, &system_font, false );
         last_button_link = last_button_link->next;
         last_button_link->no = 2;
-
-        flush();
+        flush( &last_button_link->image_rect );
+        
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();
     }

@@ -692,7 +692,7 @@ int ScriptHandler::readScript( char *path )
     
     if ( script_buffer ) delete[] script_buffer;
     if ( ( script_buffer = new char[ estimated_buffer_length ]) == NULL ){
-        printf(" *** can't allocate memory for the script ***\n");
+        fprintf( stderr, " *** can't allocate memory for the script ***\n");
         exit( -1 );
     }
     current_script = p_script_buffer = script_buffer;
@@ -705,7 +705,6 @@ int ScriptHandler::readScript( char *path )
     else{
         for ( i=0 ; i<file_counter ; i++ ){
             sprintf( file_name, "%d.txt", i );
-            printf("opening %s\n",file_name);
             fp = fopen( file_name, "rb" );
             readScriptSub( fp, &p_script_buffer, encrypt_flag );
             fclose( fp );
@@ -733,7 +732,6 @@ int ScriptHandler::labelScript()
         if ( *buf == '*' )
         {
             setCurrent( buf );
-            //printf("label %s\n", string_buffer );
             label_info[ ++label_counter ].name = new char[ strlen(string_buffer) ];
             for ( unsigned int i=0 ; i<strlen(string_buffer) ; i++ ){
                 label_info[ label_counter ].name[i] = string_buffer[i+1];

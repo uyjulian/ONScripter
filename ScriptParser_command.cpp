@@ -323,7 +323,7 @@ int ScriptParser::nsaCommand()
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path );
     if ( script_h.cBR->open( nsa_path, archive_type ) ){
-        printf(" *** failed to open Nsa archive, exitting ...  ***\n");
+        fprintf( stderr, " *** failed to open Nsa archive, exitting ...  ***\n");
         exit(-1);
     }
 
@@ -1044,8 +1044,8 @@ int ScriptParser::arcCommand()
         script_h.cBR = new SarReader( archive_path );
     }
     if ( script_h.cBR->open( buf2 ) ){
-        printf(" *** failed to open archive %s ...  ***\n", buf2 );
-        //exit(-1);
+        fprintf( stderr, " *** failed to open archive %s ...  ***\n", buf2 );
+        exit(-1);
     }
     return RET_CONTINUE;
 }

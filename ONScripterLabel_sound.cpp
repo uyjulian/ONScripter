@@ -79,7 +79,7 @@ int ONScripterLabel::playMIDI()
     Mix_SetMusicCMD( music_cmd );
 
     if ( (midi_info = Mix_LoadMUS( midi_file )) == NULL ) {
-        printf( "can't load MIDI file %s\n", midi_file );
+        fprintf( stderr, "can't load MIDI file %s\n", midi_file );
         return -1;
     }
 
