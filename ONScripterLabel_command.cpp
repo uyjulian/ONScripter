@@ -306,18 +306,19 @@ int ONScripterLabel::spbtnCommand()
 
     if ( sprite_info[ sprite_no ].num_of_cells == 0 ) return RET_CONTINUE;
 
-    last_button_link->next = new ButtonLink();
-    last_button_link = last_button_link->next;
+    ButtonLink *button = new ButtonLink();
+    button->next = root_button_link.next;
+    root_button_link.next = button;
 
-    last_button_link->button_type = ButtonLink::SPRITE_BUTTON;
-    last_button_link->sprite_no   = sprite_no;
-    last_button_link->no          = no;
+    button->button_type = ButtonLink::SPRITE_BUTTON;
+    button->sprite_no   = sprite_no;
+    button->no          = no;
 
     if ( sprite_info[ sprite_no ].image_surface ||
          sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING )
     {
-        last_button_link->image_rect = last_button_link->select_rect = sprite_info[ sprite_no ].pos;
-        allocateSelectedSurface( sprite_no );
+        button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
+        allocateSelectedSurface( sprite_no, button );
         sprite_info[ sprite_no ].visible = true;
     }
 
@@ -571,9 +572,10 @@ int ONScripterLabel::selectCommand()
             int counter = 1;
             while( last_select_link ){
                 if ( *last_select_link->text ){
-                    last_button_link->next = getSelectableSentence( last_select_link->text, &sentence_font );
-                    last_button_link = last_button_link->next;
-                    last_button_link->no = counter;
+                    ButtonLink *button = getSelectableSentence( last_select_link->text, &sentence_font );
+                    button->next = root_button_link.next;
+                    root_button_link.next = button;
+                    button->no = counter;
                 }
                 counter++;
                 last_select_link = last_select_link->next;
@@ -1682,8 +1684,8 @@ int ONScripterLabel::exbtnCommand()
         }
         
         button = new ButtonLink();
-        last_button_link->next = button;
-        last_button_link = last_button_link->next;
+        button->next = root_button_link.next;
+        root_button_link.next = button;
     }
 
     const char *buf = script_h.readStr();
@@ -1698,8 +1700,8 @@ int ONScripterLabel::exbtnCommand()
          ( sprite_info[ sprite_no ].image_surface ||
            sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) )
     {
-        last_button_link->image_rect = last_button_link->select_rect = sprite_info[ sprite_no ].pos;
-        allocateSelectedSurface( sprite_no );
+        button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
+        allocateSelectedSurface( sprite_no, button );
         sprite_info[ sprite_no ].visible = true;
     }
 
@@ -1858,11 +1860,12 @@ int ONScripterLabel::cselbtnCommand()
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
         errorAndExit( "cselbtn: no select text" );
 
-    last_button_link->next = getSelectableSentence( link->text, &csel_info );
-    last_button_link = last_button_link->next;
-    last_button_link->button_type = ButtonLink::CUSTOM_SELECT_BUTTON;
-    last_button_link->no          = button_no;
-    last_button_link->sprite_no   = csel_no;
+    ButtonLink *button = getSelectableSentence( link->text, &csel_info );
+    button->next = root_button_link.next;
+    root_button_link.next = button;
+    button->button_type = ButtonLink::CUSTOM_SELECT_BUTTON;
+    button->no          = button_no;
+    button->sprite_no   = csel_no;
 
     sentence_font.ttf_font = csel_info.ttf_font;
 
@@ -2152,34 +2155,34 @@ int ONScripterLabel::btnCommand()
 {
     SDL_Rect src_rect;
 
-    ButtonLink *b_link = new ButtonLink();
+    ButtonLink *button = new ButtonLink();
     
-    b_link->no           = script_h.readInt();
-    b_link->image_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    b_link->image_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    b_link->image_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    b_link->image_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    b_link->select_rect = b_link->image_rect;
+    button->no           = script_h.readInt();
+    button->image_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    button->image_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    button->image_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    button->image_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    button->select_rect = button->image_rect;
 
     src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    src_rect.w = b_link->image_rect.w;
-    src_rect.h = b_link->image_rect.h;
+    src_rect.w = button->image_rect.w;
+    src_rect.h = button->image_rect.h;
 
-    b_link->selected_surface    = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                        b_link->image_rect.w,
-                                                        b_link->image_rect.h,
+    button->selected_surface    = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                        button->image_rect.w,
+                                                        button->image_rect.h,
                                                         32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( b_link->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    b_link->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                        b_link->image_rect.w,
-                                                        b_link->image_rect.h,
+    SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    button->no_selected_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
+                                                        button->image_rect.w,
+                                                        button->image_rect.h,
                                                         32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( b_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    SDL_BlitSurface( btndef_info.image_surface, &src_rect, b_link->selected_surface, NULL );
+    SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+    SDL_BlitSurface( btndef_info.image_surface, &src_rect, button->selected_surface, NULL );
 
-    last_button_link->next = b_link;
-    last_button_link = last_button_link->next;
+    button->next = root_button_link.next;
+    root_button_link.next = button;
     
     return RET_CONTINUE;
 }

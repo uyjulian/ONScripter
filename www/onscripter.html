@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Aug. 23, 2003<br>
+Last updated: Aug. 24, 2003<br>
 ベータ版を更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20030823.tar.gz">onscripter-beta-20030823.tar.gz</A>
+<A HREF="onscripter-beta-20030824.tar.gz">onscripter-beta-20030824.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20030819.tar.gz">onscripter-beta-20030819.tar.gz</A>
+<A HREF="onscripter-beta-20030823.tar.gz">onscripter-beta-20030823.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -133,7 +133,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <H3><A NAME="feature_engine">実行環境としての特徴</A></H3>
 
 <OL>
-  <LI> セーブ・ロードができます。セーブファイルには、互換性維持のためのヘッダが付きますが、ゲームのスクリプトがある場所に sav というディレクトリがある場合はヘッダの無しのセーブファイルを sav 以下にも同時に作成します。<BR>
+  <LI> セーブ・ロードができます。セーブファイルには、互換性維持のためのバージョン番号の入ったヘッダが付きますが、ゲームのスクリプトがある場所に sav というディレクトリがある場合はヘッダ無しのセーブファイルを sav 以下にも同時に作成します。このバージョン番号はセーブファイルのバージョンであり、ONScripter のバージョンとは関係ありません。セーブファイルの構造が変わるとバージョンアップします。読み込みは、ヘッダ付きセーブファイルか、もしくは ONScripter がサポートする最新バージョンのヘッダ無しセーブファイルを読み込むことができます。読み込みは常にアーカイブと同じ場所からなので、他から持ってくる場合にはそこに置いてください。<BR>
   <LI> sar, nsa (nbz lzss を含む) アーカイブのデコードを実装しています。<BR>
   <LI> 全ての画面効果（quake 系, 効果番号 1 - 18）を実装しています。<BR>
   <LI> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<BR>

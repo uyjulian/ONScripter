@@ -355,7 +355,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
     
-    last_button_link = &root_button_link;
     current_over_button = 0;
 
     variable_edit_mode = NOT_EDIT_MODE;
@@ -934,19 +933,16 @@ void ONScripterLabel::deleteLabelLink()
 }
 
 /* ---------------------------------------- */
-/* Delete button link */
 void ONScripterLabel::deleteButtonLink()
 {
-    ButtonLink *link;
+    ButtonLink *b1 = root_button_link.next;
 
-    last_button_link = root_button_link.next;
-    while( last_button_link ){
-        link = last_button_link;
-        last_button_link = last_button_link->next;
-        delete link;
+    while( b1 ){
+        ButtonLink *b2 = b1;
+        b1 = b1->next;
+        delete b2;
     }
     root_button_link.next = NULL;
-    last_button_link = &root_button_link;
 }
 
 void ONScripterLabel::refreshMouseOverButton()
@@ -1749,7 +1745,7 @@ void ONScripterLabel::quit()
 #endif
 }
 
-void ONScripterLabel::allocateSelectedSurface( int sprite_no )
+void ONScripterLabel::allocateSelectedSurface( int sprite_no, ButtonLink *button )
 {
     AnimationInfo *sp = &sprite_info[ sprite_no ];
     
@@ -1765,7 +1761,7 @@ void ONScripterLabel::allocateSelectedSurface( int sprite_no )
                                                         32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( sp->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     }
-    last_button_link->no_selected_surface = sp->no_selected_surface;
+    button->no_selected_surface = sp->no_selected_surface;
 
     if ( sp->selected_surface &&
          ( sp->selected_surface->w != sp->pos.w ||
@@ -1779,7 +1775,7 @@ void ONScripterLabel::allocateSelectedSurface( int sprite_no )
                                                      32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     }
-    last_button_link->selected_surface = sp->selected_surface;
+    button->selected_surface = sp->selected_surface;
 }
 
 void ONScripterLabel::disableGetButtonFlag()

@@ -26,8 +26,7 @@
 void ONScripterLabel::enterSystemCall()
 {
     shelter_button_link = root_button_link.next;
-    last_button_link = &root_button_link;
-    last_button_link->next = NULL;
+    root_button_link.next = NULL;
     shelter_select_link = root_select_link.next;
     root_select_link.next = NULL;
     SDL_BlitSurface( text_surface, NULL, shelter_text_surface, NULL );
@@ -161,12 +160,13 @@ void ONScripterLabel::executeSystemMenu()
 
         link = root_menu_link.next;
         while( link ){
-            last_button_link->next = getSelectableSentence( link->label, &menu_font, false );
-            last_button_link = last_button_link->next;
-            last_button_link->no = counter++;
+            ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
+            button->next = root_button_link.next;
+            root_button_link.next = button;
+            button->no = counter++;
 
             link = link->next;
-            flush( &last_button_link->image_rect );
+            flush( &button->image_rect );
         }
 
         flushEvent();
@@ -276,10 +276,11 @@ void ONScripterLabel::executeSystemLoad()
                          save_file_info.sjis_no );
                 nofile_flag = true;
             }
-            last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
-            last_button_link = last_button_link->next;
-            last_button_link->no = i;
-            flush( &last_button_link->image_rect );
+            ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
+            button->next = root_button_link.next;
+            root_button_link.next = button;
+            button->no = i;
+            flush( &button->image_rect );
         }
         delete[] buffer;
 
@@ -342,10 +343,11 @@ void ONScripterLabel::executeSystemSave()
                          save_file_info.sjis_no );
                 nofile_flag = true;
             }
-            last_button_link->next = getSelectableSentence( buffer, &system_font, false, nofile_flag );
-            last_button_link = last_button_link->next;
-            last_button_link->no = i;
-            flush( &last_button_link->image_rect );
+            ButtonLink *button = getSelectableSentence( buffer, &system_font, false, nofile_flag );
+            button->next = root_button_link.next;
+            root_button_link.next = button;
+            button->no = i;
+            flush( &button->image_rect );
         }
         delete[] buffer;
 
@@ -427,18 +429,20 @@ void ONScripterLabel::executeSystemYesNo()
         strcpy( name, "‚Í‚¢" );
         system_font.xy[0] = 12;
         system_font.xy[1] = 12;
-        last_button_link->next = getSelectableSentence( name, &system_font, false );
-        last_button_link = last_button_link->next;
-        last_button_link->no = 1;
-        flush( &last_button_link->image_rect );
+        ButtonLink *button = getSelectableSentence( name, &system_font, false );
+        button->next = root_button_link.next;
+        root_button_link.next = button;
+        button->no = 1;
+        flush( &button->image_rect );
 
         strcpy( name, "‚¢‚¢‚¦" );
         system_font.xy[0] = 18;
         system_font.xy[1] = 12;
-        last_button_link->next = getSelectableSentence( name, &system_font, false );
-        last_button_link = last_button_link->next;
-        last_button_link->no = 2;
-        flush( &last_button_link->image_rect );
+        button = getSelectableSentence( name, &system_font, false );
+        button->next = root_button_link.next;
+        root_button_link.next = button;
+        button->no = 2;
+        flush( &button->image_rect );
         
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         refreshMouseOverButton();
@@ -457,45 +461,46 @@ void ONScripterLabel::setupLookbackButton()
     /* Previous button check */
     if ( (current_text_buffer->previous->buffer2_count > 0 ) &&
          current_text_buffer != start_text_buffer ){
-        last_button_link->next = new ButtonLink();
-        last_button_link = last_button_link->next;
+        ButtonLink *button = new ButtonLink();
+        button->next = root_button_link.next;
+        root_button_link.next = button;
     
-        last_button_link->no = 1;
-        last_button_link->select_rect.x = sentence_font_info.pos.x;
-        last_button_link->select_rect.y = sentence_font_info.pos.y;
-        last_button_link->select_rect.w = sentence_font_info.pos.w;
-        last_button_link->select_rect.h = sentence_font_info.pos.h/3;
+        button->no = 1;
+        button->select_rect.x = sentence_font_info.pos.x;
+        button->select_rect.y = sentence_font_info.pos.y;
+        button->select_rect.w = sentence_font_info.pos.w;
+        button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[0] >= 0 ){
             info[0] = &sprite_info[ lookback_sp[0] ];
             info[0]->current_cell = 0;
             info[1] = &sprite_info[ lookback_sp[0] ];
-            last_button_link->image_rect.x = sprite_info[ lookback_sp[0] ].pos.x;
-            last_button_link->image_rect.y = sprite_info[ lookback_sp[0] ].pos.y;
+            button->image_rect.x = sprite_info[ lookback_sp[0] ].pos.x;
+            button->image_rect.y = sprite_info[ lookback_sp[0] ].pos.y;
         }
         else{
             info[0] = &lookback_info[0];
             info[1] = &lookback_info[1];
-            last_button_link->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
-            last_button_link->image_rect.y = sentence_font_info.pos.y;
+            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
+            button->image_rect.y = sentence_font_info.pos.y;
         }
             
         if ( info[0]->image_surface ){
-            last_button_link->image_rect.w = info[0]->pos.w;
-            last_button_link->image_rect.h = info[0]->pos.h;
+            button->image_rect.w = info[0]->pos.w;
+            button->image_rect.h = info[0]->pos.h;
             
-            last_button_link->selected_surface =
+            button->selected_surface =
                 SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
                                       info[0]->pos.w, info[0]->pos.h,
                                       32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( last_button_link->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 
             offset = (info[0]->pos.w + info[0]->alpha_offset) * info[0]->current_cell;
             rect.x = rect.y = 0;
             rect.w = info[0]->pos.w;
             rect.h = info[0]->pos.h;
-            alphaBlend( last_button_link->selected_surface, rect,
-                        text_surface, last_button_link->image_rect.x, last_button_link->image_rect.y,
+            alphaBlend( button->selected_surface, rect,
+                        text_surface, button->image_rect.x, button->image_rect.y,
                         info[0]->image_surface, offset, 0,
                         info[0]->mask_surface, info[0]->alpha_offset,
                         info[0]->trans_mode );
@@ -504,67 +509,68 @@ void ONScripterLabel::setupLookbackButton()
         if ( lookback_sp[0] >= 0 ) info[1]->current_cell = 1;
 
         if ( info[1]->image_surface ){
-            last_button_link->no_selected_surface =
+            button->no_selected_surface =
                 SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
                                       info[1]->pos.w, info[1]->pos.h,
                                       32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( last_button_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         
             offset = (info[1]->pos.w + info[1]->alpha_offset) * info[1]->current_cell;
             rect.x = rect.y = 0;
             rect.w = info[1]->pos.w;
             rect.h = info[1]->pos.h;
-            alphaBlend( last_button_link->no_selected_surface, rect,
-                        text_surface, last_button_link->image_rect.x, last_button_link->image_rect.y,
+            alphaBlend( button->no_selected_surface, rect,
+                        text_surface, button->image_rect.x, button->image_rect.y,
                         info[1]->image_surface, offset, 0,
                         info[1]->mask_surface, info[1]->alpha_offset,
                         info[1]->trans_mode );
-            SDL_BlitSurface( last_button_link->no_selected_surface, NULL, text_surface, &last_button_link->image_rect );
+            SDL_BlitSurface( button->no_selected_surface, NULL, text_surface, &button->image_rect );
         }
     }
 
     /* ---------------------------------------- */
     /* Next button check */
     if ( current_text_buffer->next != shelter_text_buffer ){
-        last_button_link->next = new ButtonLink();
-        last_button_link = last_button_link->next;
+        ButtonLink *button = new ButtonLink();
+        button->next = root_button_link.next;
+        root_button_link.next = button;
     
-        last_button_link->no = 2;
-        last_button_link->select_rect.x = sentence_font_info.pos.x;
-        last_button_link->select_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h*2/3;
-        last_button_link->select_rect.w = sentence_font_info.pos.w;
-        last_button_link->select_rect.h = sentence_font_info.pos.h/3;
+        button->no = 2;
+        button->select_rect.x = sentence_font_info.pos.x;
+        button->select_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h*2/3;
+        button->select_rect.w = sentence_font_info.pos.w;
+        button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[1] >= 0 ){
             info[0] = &sprite_info[ lookback_sp[1] ];
             info[0]->current_cell = 0;
             info[1] = &sprite_info[ lookback_sp[1] ];
-            last_button_link->image_rect.x = sprite_info[ lookback_sp[1] ].pos.x;
-            last_button_link->image_rect.y = sprite_info[ lookback_sp[1] ].pos.y;
+            button->image_rect.x = sprite_info[ lookback_sp[1] ].pos.x;
+            button->image_rect.y = sprite_info[ lookback_sp[1] ].pos.y;
         }
         else{
             info[0] = &lookback_info[2];
             info[1] = &lookback_info[3];
-            last_button_link->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
-            last_button_link->image_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h - info[0]->pos.h;
+            button->image_rect.x = sentence_font_info.pos.x + sentence_font_info.pos.w - info[0]->pos.w;
+            button->image_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h - info[0]->pos.h;
         }
             
         if ( info[0]->image_surface ){
-            last_button_link->image_rect.w = info[0]->pos.w;
-            last_button_link->image_rect.h = info[0]->pos.h;
+            button->image_rect.w = info[0]->pos.w;
+            button->image_rect.h = info[0]->pos.h;
             
-            last_button_link->selected_surface =
+            button->selected_surface =
                 SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
                                       info[0]->pos.w, info[0]->pos.h,
                                       32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( last_button_link->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetAlpha( button->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 
             offset = (info[0]->pos.w + info[0]->alpha_offset) * info[0]->current_cell;
             rect.x = rect.y = 0;
             rect.w = info[0]->pos.w;
             rect.h = info[0]->pos.h;
-            alphaBlend( last_button_link->selected_surface, rect,
-                        text_surface, last_button_link->image_rect.x, last_button_link->image_rect.y,
+            alphaBlend( button->selected_surface, rect,
+                        text_surface, button->image_rect.x, button->image_rect.y,
                         info[0]->image_surface, offset, 0,
                         info[0]->mask_surface, info[0]->alpha_offset,
                         info[0]->trans_mode );
@@ -573,22 +579,22 @@ void ONScripterLabel::setupLookbackButton()
         if ( lookback_sp[1] >= 0 ) info[1]->current_cell = 1;
 
         if ( info[1]->image_surface ){
-            last_button_link->no_selected_surface =
+            button->no_selected_surface =
                 SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
                                       info[1]->pos.w, info[1]->pos.h,
                                       32, rmask, gmask, bmask, amask );
-            SDL_SetAlpha( last_button_link->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         
             offset = (info[1]->pos.w + info[1]->alpha_offset) * info[1]->current_cell;
             rect.x = rect.y = 0;
             rect.w = info[1]->pos.w;
             rect.h = info[1]->pos.h;
-            alphaBlend( last_button_link->no_selected_surface, rect,
-                        text_surface, last_button_link->image_rect.x, last_button_link->image_rect.y,
+            alphaBlend( button->no_selected_surface, rect,
+                        text_surface, button->image_rect.x, button->image_rect.y,
                         info[1]->image_surface, offset, 0,
                         info[1]->mask_surface, info[1]->alpha_offset,
                         info[1]->trans_mode );
-            SDL_BlitSurface( last_button_link->no_selected_surface, NULL, text_surface, &last_button_link->image_rect );
+            SDL_BlitSurface( button->no_selected_surface, NULL, text_surface, &button->image_rect );
         }
     }
 }

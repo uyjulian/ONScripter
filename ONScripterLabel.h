@@ -351,7 +351,7 @@ private:
                 SDL_FreeSurface( no_selected_surface );
             if ( exbtn_ctl ) delete[] exbtn_ctl;
         };
-    } root_button_link, *last_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
+    } root_button_link, *current_button_link, *shelter_button_link, exbtn_d_button_link;
 
     int current_over_button;
 
@@ -387,7 +387,7 @@ private:
     AnimationInfo sprite_info[MAX_SPRITE_NUM];
     bool all_sprite_hide_flag;
     
-    void allocateSelectedSurface( int sprite_no );
+    void allocateSelectedSurface( int sprite_no, ButtonLink *button );
     
     /* ---------------------------------------- */
     /* Parameter related variables */

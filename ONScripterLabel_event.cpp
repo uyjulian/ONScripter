@@ -189,6 +189,12 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 {
     if ( variable_edit_mode ) return;
     
+    if ( automode_flag ){
+        remaining_time = 0;
+        automode_flag = false;
+        return;
+    }
+
     if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ){
         current_button_state.x = event->x;
         current_button_state.y = event->y;
@@ -205,7 +211,6 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
          ( rmode_flag || (event_mode & WAIT_BUTTON_MODE) ) ) {
         current_button_state.button = -1;
         volatile_button_state.button = -1;
-        automode_flag = false;
     }
     else if ( event->button == SDL_BUTTON_LEFT &&
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
@@ -478,6 +483,11 @@ void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
 void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
+    if ( automode_flag ){
+        remaining_time = 0;
+        automode_flag = false;
+        return;
+    }
     
     if ( event->type == SDL_KEYUP ){
         if ( variable_edit_mode ){
@@ -551,7 +561,6 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if ( !useescspc_flag && event->keysym.sym == SDLK_ESCAPE && rmode_flag ){
             current_button_state.button  = -1;
-            automode_flag = false;
             if ( event_mode & WAIT_INPUT_MODE &&
                  root_menu_link.next ){
                 system_menu_mode = SYSTEM_MENU;
