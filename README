@@ -32,7 +32,7 @@ ONScripter
 	$ make -f Makefile.MacOSX
 	$ onscripter
 
-	Zaurus (SL-5500, SL-A300, SL-C700) の場合
+	Zaurus (SL-5500, SL-A300, SL-B500, SL-C700) の場合
 	別のマシン(Linux 等)上でクロスコンパイル
 	$ make -f Makefile.ARMLinux
 	Zaurus の Qtopia 上から実行
