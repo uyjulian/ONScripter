@@ -2081,7 +2081,7 @@ int ONScripterLabel::btnwaitCommand()
         if ( textbtn_flag && skip_flag ) current_button_state.button = 0;
         script_h.setInt( &script_h.current_variable, current_button_state.button );
 
-        if ( del_flag ){
+        if ( current_button_state.button >= 1 && del_flag ){
             deleteButtonLink();
             if ( exbtn_d_button_link.exbtn_ctl ){
                 delete[] exbtn_d_button_link.exbtn_ctl;
@@ -2140,7 +2140,7 @@ int ONScripterLabel::btnwaitCommand()
             }
             else{
                 if ( p_button_link->no_selected_surface )
-                    SDL_BlitSurface( accumulation_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+                    SDL_BlitSurface( picture_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
 
             p_button_link = p_button_link->next;
