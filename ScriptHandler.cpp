@@ -25,6 +25,9 @@
 
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
+#define IS_TWO_BYTE(x) \
+        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+
 static struct {
     char *first_file;
     int  encrypt_mode;
@@ -149,7 +152,7 @@ const char *ScriptHandler::readToken()
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
         bool loop_flag = true;
         do{
-            if (ch & 0x80){
+            if ( IS_TWO_BYTE(ch) ){
                 if ( textgosub_flag && checkClickstr(buf) > 0) loop_flag = false;
                 addStringBuffer( ch );
                 ch = *++buf;
@@ -170,7 +173,7 @@ const char *ScriptHandler::readToken()
                         i = 1;
                     }
                     else{
-                        if (textgosub_flag && (ch == '@' || ch == '\\'))
+                        if (textgosub_flag && checkClickstr(buf) == 1)
                             loop_flag = false;
                         addStringBuffer( ch );
                         buf++;
@@ -184,7 +187,7 @@ const char *ScriptHandler::readToken()
         }
         while (ch != 0x0a && ch != '\0' && loop_flag);
         if (linepage_flag) addStringBuffer( '\\' );
-        if (!textgosub_flag && loop_flag && ch == 0x0a){
+        if (loop_flag && ch == 0x0a){
             addStringBuffer( ch );
             markAsKidoku( buf++ );
         }
@@ -195,7 +198,7 @@ const char *ScriptHandler::readToken()
     else if (ch == '`'){
         ch = *++buf;
         while (ch != '`' && ch != 0x0a && ch !='\0'){
-            if (ch & 0x80){
+            if ( IS_TWO_BYTE(ch) ){
                 addStringBuffer( ch );
                 ch = *++buf;
             }
@@ -332,7 +335,7 @@ void ScriptHandler::skipToken()
         if ( *buf == 0x0a || 
              (!quat_flag && !text_flag && (*buf == ':' || *buf == ';') ) ) break;
         if ( *buf == '"' ) quat_flag = !quat_flag;
-        if ( *buf & 0x80 ){
+        if ( IS_TWO_BYTE(*buf) ){
             buf += 2;
             if ( !quat_flag ) text_flag = true;
         }

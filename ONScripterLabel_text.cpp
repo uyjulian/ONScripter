@@ -25,6 +25,9 @@
 
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
+#define IS_TWO_BYTE(x) \
+        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+
 #define IS_KINSOKU(x)	\
         ( *(x) == (char)0x81 && *((x)+1) == (char)0x41 || \
           *(x) == (char)0x81 && *((x)+1) == (char)0x42 || \
@@ -35,7 +38,7 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
           *(x) == (char)0x81 && *((x)+1) == (char)0x5b )
 
 #define IS_ROTATION_REQUIRED(x)	\
-        ( !(*(x) & 0x80) || \
+        ( !IS_TWO_BYTE(*(x)) || \
           *(x) == (char)0x81 && *((x)+1) == (char)0x50 || \
           *(x) == (char)0x81 && *((x)+1) == (char)0x51 || \
           *(x) == (char)0x81 && *((x)+1) >= 0x5b && *((x)+1) <= 0x5d || \
@@ -49,16 +52,18 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
 void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
-    if ( text[0] & 0x80 ){
+    if (IS_TWO_BYTE(text[0])){
         unsigned index = ((unsigned char*)text)[0];
         index = index << 8 | ((unsigned char*)text)[1];
         unicode = convSJIS2UTF16( index );
     }
     else if ( text[1] ){
-        unicode = text[1];
+        if ((text[1] & 0xe0) == 0xa0 || (text[1] & 0xe0) == 0xc0) unicode = ((unsigned char*)text)[1] - 0xa0 + 0xff60;
+        else unicode = text[1];
     }
     else{
-        unicode = text[0];
+        if ((text[0] & 0xe0) == 0xa0 || (text[0] & 0xe0) == 0xc0) unicode = ((unsigned char*)text)[0] - 0xa0 + 0xff60;
+        else unicode = text[0];
     }
 
     int minx, maxx, miny, maxy, advanced;
@@ -134,8 +139,8 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
 
     int xy[2];
-    xy[0] = info->x(!(text[0] & 0x80) && text[1]) * screen_ratio1 / screen_ratio2;
-    xy[1] = info->y(!(text[0] & 0x80) && text[1]) * screen_ratio1 / screen_ratio2;
+    xy[0] = info->x(!IS_TWO_BYTE(text[0]) && text[1]) * screen_ratio1 / screen_ratio2;
+    xy[1] = info->y(!IS_TWO_BYTE(text[0]) && text[1]) * screen_ratio1 / screen_ratio2;
     
     SDL_Color color;
     SDL_Rect dst_rect;
@@ -163,7 +168,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     info->advanceChar();
     if ( lookback_flag ){
         current_text_buffer->addBuffer( text[0] );
-        if ( text[0] & 0x80 || text[1] )
+        if ( IS_TWO_BYTE(text[0]) || text[1] )
             current_text_buffer->addBuffer( text[1] );
     }
 }
@@ -172,7 +177,7 @@ void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_fl
 {
     char text2[3]= {text[0], '\0', '\0'};
     
-    if (text[0] & 0x80){
+    if ( IS_TWO_BYTE(text[0]) ){
         drawChar( text, info, flush_flag, lookback_flag, surface, cache_surface, clip );
     }
     else if (text[1]){
@@ -216,7 +221,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             continue;
         }
 #endif            
-        if ( *str & 0x80 ){
+        if ( IS_TWO_BYTE(*str) ){
             /* Kinsoku process */
             if (info->isEndOfLine(1) && IS_KINSOKU( str+2 )) info->newLine();
             text[0] = *str++;
@@ -277,7 +282,7 @@ void ONScripterLabel::restoreTextBuffer()
         }
         else{
             out_text[0] = current_text_buffer->buffer2[i];
-            if ( !(out_text[0] & 0x80) ){
+            if ( !IS_TWO_BYTE(out_text[0]) ){
                 out_text[1] = '\0';
                 drawChar( out_text, &f_info, false, false, NULL, text_surface );
                 f_info.advanceChar(-1);
@@ -479,7 +484,7 @@ int ONScripterLabel::textCommand()
             clickstr_state = CLICK_NONE;
             return RET_CONTINUE | RET_NOREAD;
         }
-        else if ( script_h.getStringBuffer()[ string_buffer_offset ] & 0x80 ){
+        else if ( IS_TWO_BYTE(script_h.getStringBuffer()[ string_buffer_offset ]) ){
             string_buffer_offset += 2;
         }
         else if ( script_h.getStringBuffer()[ string_buffer_offset ] == '!' ){
@@ -515,7 +520,7 @@ int ONScripterLabel::textCommand()
            script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
 
     char ch = script_h.getStringBuffer()[string_buffer_offset];
-    if ( ch & 0x80 ){ // Shift jis
+    if ( IS_TWO_BYTE(ch) ){ // Shift jis
         /* ---------------------------------------- */
         /* Kinsoku process */
         if (IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2)){
@@ -622,7 +627,7 @@ int ONScripterLabel::textCommand()
             ruby_font.clear();
             for ( i=ruby_struct.ruby_start ; i<string_buffer_offset ; i++ ){
                 out_text[0] = script_h.getStringBuffer()[i];
-                if ( script_h.getStringBuffer()[i] & 0x80 ){
+                if ( IS_TWO_BYTE(script_h.getStringBuffer()[i]) ){
                     out_text[1] = script_h.getStringBuffer()[i+1];
                     drawChar( out_text, &ruby_font, flush_flag, false, accumulation_surface, text_surface );
                     i++;

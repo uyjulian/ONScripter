@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Sep. 9, 2004<br>
+Last updated: Sep. 10, 2004<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040909.tar.gz">onscripter-beta-20040909.tar.gz</A>
+<A HREF="onscripter-beta-20040910.tar.gz">onscripter-beta-20040910.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040902.tar.gz">onscripter-beta-20040902.tar.gz</A>
+<A HREF="onscripter-beta-20040909.tar.gz">onscripter-beta-20040909.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -604,9 +604,13 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
 て表示するようにします。半角スペースが表示として有効になりますが、テキ
 スト内の変数表示は無効になり、また色・時間指定も開始位置によっては無効
 になります。テキスト途中で色を変える場合は、/ で行を分けるなどしてくだ
-さい。ただし、クリック待ち(@)改ページ待ち(\\)直後の強制クリック文字を
-無視(_)は有効です。これは ONScripter 独自の拡張です。将来本家で ` に何
-か機能を割り振った場合には、削除もしくは別の文字に変更されます。</P>
+さい。ただし、クリック待ち(@)改ページ待ち(\)直後の強制クリック文字を無
+視(_)は有効です。</P>
+
+<P>これは ONScripter 独自の拡張です。将来本家で ` に何か機能を割り振っ
+た場合には、削除もしくは別の文字に変更される可能性があります。現状のよ
+うに ENABLE_1BYTE_CHAR で使い分けられるようにするかもしれませんが、保
+証の限りではありません。</P>
 
 <P>以下にスクリプト例を書きます。<BR>
 
