@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file2.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -381,8 +381,8 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     fclose(fp);
 
     dirty_rect.fill( screen_width, screen_height );
-    flush( refresh_shadow_text_mode );
-    display_mode = next_display_mode = TEXT_DISPLAY_MODE;
+    flush( REFRESH_NORMAL_MODE );
+    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
 
     clickstr_state = CLICK_NONE;
     event_mode = 0;//WAIT_SLEEP_MODE;

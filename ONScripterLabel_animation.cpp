@@ -2,7 +2,7 @@
  * 
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -186,11 +186,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
     anim->trans_mode = trans_mode;
 
     if ( buffer[0] == ':' ){
-        buffer++;
-        if ( buffer[0] == '/' || buffer[0] == ';' ){
-            // default trans mode
-        }
-        else if ( buffer[0] == 'a' ){
+        while (*++buffer == ' ');
+        
+        if ( buffer[0] == 'a' ){
             anim->trans_mode = AnimationInfo::TRANS_ALPHA;
             buffer++;
         }
@@ -229,7 +227,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
                 anim->font_size_xy[1] = sentence_font.font_size_xy[1];
                 anim->font_pitch = sentence_font.pitch_xy[0];
             }
-            if ( *buffer == ';' ) buffer++;
+            while(buffer[0] != '#' && buffer[0] != '\0') buffer++;
             i=0;
             while( buffer[i] == '#' ){
                 anim->num_of_cells++;
@@ -258,9 +256,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             buffer++;
             anim->pallet_number = getNumberFromBuffer( (const char**)&buffer );
         }
-        else{
-            buffer++; // skip an illegal trans_mode
-        }
+
+        if (anim->trans_mode != AnimationInfo::TRANS_STRING)
+            while(buffer[0] != '/' && buffer[0] != ';' && buffer[0] != '\0') buffer++;
     }
 
     if ( buffer[0] == '/' ){
@@ -291,6 +289,8 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
         
         anim->loop_mode = *buffer++ - '0'; // 3...no animation
         if ( anim->loop_mode != 3 ) anim->is_animatable = true;
+
+        while(buffer[0] != ';' && buffer[0] != '\0') buffer++;
     }
 
     if ( buffer[0] == ';' ) buffer++;

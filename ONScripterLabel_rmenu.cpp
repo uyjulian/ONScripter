@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -445,7 +445,7 @@ void ONScripterLabel::executeSystemYesNo()
                 leaveSystemCall( false );
                 saveon_flag = true;
                 internal_saveon_flag = true;
-                text_on_flag = true;
+                text_on_flag = false;
                 indent_offset = 0;
                 line_enter_flag = false;
                 readToken();

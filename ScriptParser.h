@@ -71,10 +71,12 @@ public:
     int transmodeCommand();
     int timeCommand();
     int textgosubCommand();
+    int tanCommand();
     int subCommand();
     int straliasCommand();
     int soundpressplginCommand();
     int skipCommand();
+    int sinCommand();
     int shadedistanceCommand();
     int selectvoiceCommand();
     int selectcolorCommand();
@@ -133,6 +135,7 @@ public:
     int defaultfontCommand();
     int decCommand();
     int dateCommand();
+    int cosCommand();
     int cmpCommand();
     int clickvoiceCommand();
     int clickstrCommand();

@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +22,11 @@
  */
 
 #include "ScriptParser.h"
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 int ScriptParser::windowbackCommand()
 {
@@ -115,6 +120,17 @@ int ScriptParser::textgosubCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::tanCommand()
+{
+    script_h.readInt();
+    script_h.pushVariable();
+
+    int val = script_h.readInt();
+    script_h.setInt(&script_h.pushed_variable, (int)(tan(M_PI*val/180.0)*1000.0));
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::subCommand()
 {
     int val1 = script_h.readInt();
@@ -162,6 +178,17 @@ int ScriptParser::skipCommand()
     current_line = script_h.getLineByAddress( buf );
     
     script_h.setCurrent( buf );
+
+    return RET_CONTINUE;
+}
+
+int ScriptParser::sinCommand()
+{
+    script_h.readInt();
+    script_h.pushVariable();
+
+    int val = script_h.readInt();
+    script_h.setInt(&script_h.pushed_variable, (int)(sin(M_PI*val/180.0)*1000.0));
 
     return RET_CONTINUE;
 }
@@ -1019,6 +1046,17 @@ int ScriptParser::dateCommand()
 
     script_h.readInt();
     script_h.setInt( &script_h.current_variable, tm->tm_mday );
+
+    return RET_CONTINUE;
+}
+
+int ScriptParser::cosCommand()
+{
+    script_h.readInt();
+    script_h.pushVariable();
+
+    int val = script_h.readInt();
+    script_h.setInt(&script_h.pushed_variable, (int)(cos(M_PI*val/180.0)*1000.0));
 
     return RET_CONTINUE;
 }

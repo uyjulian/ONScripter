@@ -861,6 +861,18 @@ int ONScripterLabel::parseLine( )
     if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
     ret = textCommand();
 
+#if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
+    if (script_h.getStringBuffer()[string_buffer_offset] == ' '){
+        char *tmp = strchr(script_h.getStringBuffer()+string_buffer_offset+1, ' ');
+        if (tmp){
+            int len = tmp - script_h.getStringBuffer() - string_buffer_offset - 1;
+            if (len > 0 && sentence_font.isEndOfLine(len/2)){
+                current_text_buffer->addBuffer( 0x0a );
+                sentence_font.newLine();
+            }
+        }
+    }
+#endif    
     if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
         if (!sentence_font.isLineEmpty()){

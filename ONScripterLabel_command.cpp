@@ -1259,7 +1259,7 @@ int ONScripterLabel::loadgameCommand()
         deleteButtonLink();
         deleteSelectLink();
         key_pressed_flag = false;
-        text_on_flag = true;
+        text_on_flag = false;
         indent_offset = 0;
         line_enter_flag = false;
         
