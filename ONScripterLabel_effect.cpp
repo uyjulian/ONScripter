@@ -97,44 +97,44 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
       case 2: // Left shutter
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
-            src_rect.x = dst_rect.x = i * EFFECT_STRIPE_WIDTH;
-            src_rect.y = dst_rect.y = 0;
-            src_rect.w = dst_rect.w = width;
-            src_rect.h = dst_rect.h = screen_height;
-            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+            src_rect.x = i * EFFECT_STRIPE_WIDTH;
+            src_rect.y = 0;
+            src_rect.w = width;
+            src_rect.h = screen_height;
+            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
         }
         break;
 
       case 3: // Right shutter
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
-            src_rect.x = dst_rect.x = i * EFFECT_STRIPE_WIDTH - width - 1;
-            src_rect.y = dst_rect.y = 0;
-            src_rect.w = dst_rect.w = width;
-            src_rect.h = dst_rect.h = screen_height;
-            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+            src_rect.x = i * EFFECT_STRIPE_WIDTH - width - 1;
+            src_rect.y = 0;
+            src_rect.w = width;
+            src_rect.h = screen_height;
+            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
         }
         break;
 
       case 4: // Top shutter
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
-            src_rect.x = dst_rect.x = 0;
-            src_rect.y = dst_rect.y = i * EFFECT_STRIPE_WIDTH;
-            src_rect.w = dst_rect.w = screen_width;
-            src_rect.h = dst_rect.h = height;
-            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+            src_rect.x = 0;
+            src_rect.y = i * EFFECT_STRIPE_WIDTH;
+            src_rect.w = screen_width;
+            src_rect.h = height;
+            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
         }
         break;
 
       case 5: // Bottom shutter
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
-            src_rect.x = dst_rect.x = 0;
-            src_rect.y = dst_rect.y = i * EFFECT_STRIPE_WIDTH - height - 1;
-            src_rect.w = dst_rect.w = screen_width;
-            src_rect.h = dst_rect.h = height;
-            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+            src_rect.x = 0;
+            src_rect.y = i * EFFECT_STRIPE_WIDTH - height - 1;
+            src_rect.w = screen_width;
+            src_rect.h = height;
+            SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
         }
         break;
 
@@ -143,11 +143,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
             if ( width2 >= 0 ){
-                src_rect.x = dst_rect.x = i * EFFECT_STRIPE_CURTAIN_WIDTH;
-                src_rect.y = dst_rect.y = 0;
-                src_rect.w = dst_rect.w = width2;
-                src_rect.h = dst_rect.h = screen_height;
-                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+                src_rect.x = i * EFFECT_STRIPE_CURTAIN_WIDTH;
+                src_rect.y = 0;
+                src_rect.w = width2;
+                src_rect.h = screen_height;
+                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
             }
         }
         break;
@@ -158,11 +158,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
             if ( width2 >= 0 ){
                 if ( width2 > EFFECT_STRIPE_CURTAIN_WIDTH ) width2 = EFFECT_STRIPE_CURTAIN_WIDTH;
-                src_rect.x = dst_rect.x = screen_width - i * EFFECT_STRIPE_CURTAIN_WIDTH - width2;
-                src_rect.y = dst_rect.y = 0;
-                src_rect.w = dst_rect.w = width2;
-                src_rect.h = dst_rect.h = screen_height;
-                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+                src_rect.x = screen_width - i * EFFECT_STRIPE_CURTAIN_WIDTH - width2;
+                src_rect.y = 0;
+                src_rect.w = width2;
+                src_rect.h = screen_height;
+                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
             }
         }
         break;
@@ -172,11 +172,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
             if ( height2 >= 0 ){
-                src_rect.x = dst_rect.x = 0;
-                src_rect.y = dst_rect.y = i * EFFECT_STRIPE_CURTAIN_WIDTH;
-                src_rect.w = dst_rect.w = screen_width;
-                src_rect.h = dst_rect.h = height2;
-                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+                src_rect.x = 0;
+                src_rect.y = i * EFFECT_STRIPE_CURTAIN_WIDTH;
+                src_rect.w = screen_width;
+                src_rect.h = height2;
+                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
             }
         }
         break;
@@ -186,11 +186,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
             if ( height2 >= 0 ){
-                src_rect.x = dst_rect.x = 0;
-                src_rect.y = dst_rect.y = screen_height - i * EFFECT_STRIPE_CURTAIN_WIDTH - height2;
-                src_rect.w = dst_rect.w = screen_width;
-                src_rect.h = dst_rect.h = height2;
-                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &dst_rect );
+                src_rect.x = 0;
+                src_rect.y = screen_height - i * EFFECT_STRIPE_CURTAIN_WIDTH - height2;
+                src_rect.w = screen_width;
+                src_rect.h = height2;
+                SDL_BlitSurface( effect_dst_surface, &src_rect, text_surface, &src_rect );
             }
         }
         break;
@@ -307,7 +307,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.x = 0;
         dst_rect.y = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( background_surface->format, 0, 0, 0, 0 ) );
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         SDL_BlitSurface( effect_dst_surface, NULL, text_surface, &dst_rect );
         break;
         
@@ -317,14 +317,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         dst_rect.x = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
         dst_rect.y = 0;
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( background_surface->format, 0, 0, 0, 0 ) );
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         SDL_BlitSurface( effect_dst_surface, NULL, text_surface, &dst_rect );
         break;
         
       case (CUSTOM_EFFECT_NO + 2 ): // quake
         dst_rect.x = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         dst_rect.y = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( background_surface->format, 0, 0, 0, 0 ) );
+        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         SDL_BlitSurface( effect_dst_surface, NULL, text_surface, &dst_rect );
         break;
     }
@@ -337,7 +337,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             if ( erase_text_window_mode == 0 && text_on_flag && effect_no < CUSTOM_EFFECT_NO ){
                 restoreTextBuffer();
             }
-            flush();
+            flush( NULL, false );
         }
         return RET_WAIT;
     }

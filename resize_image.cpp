@@ -97,13 +97,13 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
     /* resampling */
     unsigned char *dst_buf = dst_buffer;
     for ( i=0 ; i<dst_height ; i++ ){
+        int y = (i<<3) * src_height / dst_height;
+        int dy = y & 0x7;
+        y >>= 3;
         for ( j=0 ; j<dst_width ; j++ ){
             int x = (j<<3) * src_width  / dst_width;
-            int y = (i<<3) * src_height / dst_height;
             int dx = x & 0x7;
-            int dy = y & 0x7;
             x >>= 3;
-            y >>= 3;
 
             int k = src_total_width * y + x * byte_per_pixel;
             

@@ -97,6 +97,8 @@ void AnimationInfo::removeTag(){
     num_of_cells = 0;
     remaining_time = 0;
     is_animatable = false;
+
+    color[0] = color[1] = color[2] = 0;
 }
 
 // 0 ... restart at the end

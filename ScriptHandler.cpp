@@ -227,6 +227,11 @@ int ScriptHandler::readToken()
 
     if (line_head_flag) text_flag = true;
 
+    if ( ch == '*' ){ // FIXME: Is this a correct fix ?
+        // to interpret "goto* label" or "goto * label"
+        SKIP_SPACE(buf);
+    }
+
     if ( ch == ';' ){
         addStringBuffer( ch, string_counter++ );
         do{
@@ -373,8 +378,10 @@ int ScriptHandler::readToken()
                    ch == '*' ) ) break;
             if ( !text_flag && string_counter>0 &&
                  ( ch == '-' ||
-                   ch == '/' ) ) break;
-            addStringBuffer( ch, string_counter++ );
+                   ch == '/' ||
+                   ch == '*' ) ) break;
+            if ( ch != ' ' && ch != '\t' )
+                addStringBuffer( ch, string_counter++ );
         }
             
         ch = *buf++;
@@ -725,7 +732,7 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
     else{
         *num = parseInt( buf );
         if ( current_variable.type == VAR_NONE ){
-            *op = OP_INVALID;
+            if (op) *op = OP_INVALID;
             *buf = buf_start;
         }
     }

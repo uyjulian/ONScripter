@@ -273,7 +273,6 @@ private:
     
     int display_mode;
     int event_mode;
-    SDL_Surface *background_surface; // Backgroud image
     SDL_Surface *accumulation_surface; // Text window + Sprite + Tachi image + background
     SDL_Surface *text_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
@@ -338,7 +337,9 @@ private:
     /* ---------------------------------------- */
     /* Background related variables */
     AnimationInfo bg_info;
-    EFFECT_IMAGE bg_effect_image;
+    EFFECT_IMAGE bg_effect_image; // This is no longer used. Remove it later.
+
+    void setBackground( SDL_Surface *surface, SDL_Rect *clip=NULL );
 
     /* ---------------------------------------- */
     /* Tachi-e related variables */
@@ -394,6 +395,7 @@ private:
     
     /* ---------------------------------------- */
     /* Effect related variables */
+    SDL_Rect dirty_rect, dirty_rect_tmp; // only this region is updated
     int effect_counter; // counter in each effect
     int effect_timer_resolution;
     int effect_start_time;
@@ -475,13 +477,17 @@ private:
     
     void deleteLabelLink();
     void blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect );
-    void flush( SDL_Rect *rect=NULL );
-    void flush( int x, int y, int w, int h );
+    void flush( SDL_Rect *rect=NULL, bool clear_dirty_flag=true );
+    void flush( int x, int y, int w, int h, bool clear_dirty_flag=true );
     void executeLabel();
     int parseLine();
     void parseTaggedString( AnimationInfo *anim );
     void setupAnimationInfo( AnimationInfo *anim );
     int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
+    int shiftRect( SDL_Rect &dst, SDL_Rect &clip );
+    void addBoundingBox( SDL_Rect &dst, SDL_Rect &src );
+    void clearDirtyRect();
+    void fillDirtyRect();
     void alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                      SDL_Surface *src1_surface, int x1, int y1,
                      SDL_Surface *src2_surface, int x2, int y2,

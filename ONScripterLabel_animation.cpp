@@ -246,6 +246,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             while ( *buffer >= '0' && *buffer <= '9' )
                 anim->pallet_number = anim->pallet_number * 10 + *buffer++ - '0';
         }
+        else{
+            buffer++; // skip an illegal trans_mode
+        }
     }
 
     if ( buffer[0] == '/' ){

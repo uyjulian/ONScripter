@@ -12,7 +12,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Apr. 9, 2003<br>
+Last updated: May 10, 2003<br>
 3月18日発売の<A HREF="http://www.enterbrain.co.jp/techwin/linux/index.html">Linux Power</A>に、αβεさんよる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -37,8 +37,8 @@ href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">ダウンロード</a>
 HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
-<P>現在はベータ版<A HREF="onscripter-beta-20030409a.tar.gz">onscripter-beta-20030409a.tar.gz</A>を配布しております。<br>
-(一つ前のベータ版<A HREF="onscripter-beta-20030323a.tar.gz">onscripter-beta-20030323a.tar.gz</A>)<br>
+<P>現在はベータ版<A HREF="onscripter-beta-20030510.tar.gz">onscripter-beta-20030510.tar.gz</A>を配布しております。<br>
+(一つ前のベータ版<A HREF="onscripter-beta-20030409a.tar.gz">onscripter-beta-20030409a.tar.gz</A>)<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20021218.tar.gz">onscripter-beta-exp20021218.tar.gz</A>。問題がなければベータ版になります)<br>-->
 </P>
 
@@ -208,15 +208,13 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
 
 <OL>
-  <LI> (<FONT color="#ff0000">高</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
-  <LI> (<FONT color="#ff0000">高</FONT>)windowback の挙動がおかしいのを直す
+  <LI> (<FONT color="#ff0000">高</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
+  <LI> (<FONT color="#ff0000">高</FONT>)変化のあったところだけ flush で描画するようにする。
+  <LI> (<FONT color="#ff0000">中</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
+  <LI> (<FONT color="#ff0000">中</FONT>)windowback の挙動がおかしいのを直す
   <LI> (<FONT color="#ff8800">中</FONT>)btndown + btnwait でマウスのドラッグに対応させる。
-  <LI> (<FONT color="#ff8800">中</FONT>)雪をスムーズに降らせる
-  <LI> (<FONT color="#ff8800">中</FONT>)erasetextwindow off 時の選択画面での表示の正常化。
   <LI> (<FONT color="#00ff00">低</FONT>)btntime2 を正規に実装
   <LI> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
-  <LI> (<FONT color="#00ff00">低</FONT>)archive の検索の高速化
-  <LI> (<FONT color="#00ff00">低</FONT>)alpha blend が遅いのをなんとかしたい
   <LI> (<FONT color="#00ff00">低</FONT>)sprite の現在の表示 cell を保存する？
   <LI> (<FONT color="#00ff00">低</FONT>)skip でマイナス方向にラベルをまたぐと破綻するバグ？を取る。lchk とのからみも考えて調べる。
   <LI> (<FONT color="#00ff00">低</FONT>)文字の色を変えたあとに絵の描画が入ると、文字の色が全部同じになってしまう。

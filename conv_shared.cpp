@@ -76,10 +76,9 @@ void rescaleImage( unsigned char *original_buffer, int width, int height, int by
         rescaled_tmp_length = len;
     }
 
-    if  ( (width * byte_per_pixel + width_pad) * height > rescaled_tmp2_length ){
-        int len = (width * byte_per_pixel + width_pad) * height;
-        if ( len<16 ) len = 16;
-        
+    size_t len = (width * byte_per_pixel + width_pad) * (height+1) + byte_per_pixel;
+    if ( len<16 ) len = 16;
+    if ( len > rescaled_tmp2_length ){
         if ( rescaled_tmp2_buffer ) delete[] rescaled_tmp2_buffer;
         rescaled_tmp2_buffer = new unsigned char[ len ];
         rescaled_tmp2_length = len;

@@ -701,15 +701,18 @@ int ONScripterLabel::resetCommand()
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
         sprite_info[i].remove();
     }
-
+    for ( i=0 ; i<3 ; i++ ){
+        tachi_info[i].remove();
+    }
+    bg_info.remove();
+    
     deleteButtonLink();
     deleteSelectLink();
 
     wavestopCommand();
     stopBGM( false );
 
-    SDL_FillRect( background_surface, NULL, SDL_MapRGBA( background_surface->format, 0, 0, 0, 0 ) );
-    SDL_BlitSurface( background_surface, NULL, accumulation_surface, NULL );
+    setBackground( accumulation_surface );
     SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
 
     return RET_JUMP;
@@ -2003,26 +2006,12 @@ int ONScripterLabel::bgCommand()
                 readColor( &bg_info.color, buf );
             }
             else{
+                bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
                 setStr( &bg_info.image_name, buf );
                 parseTaggedString( &bg_info );
                 setupAnimationInfo( &bg_info );
                 bg_effect_image = BG_EFFECT_IMAGE;
-                if ( bg_info.image_surface ){
-                    SDL_Rect src_rect, dst_rect;
-                    src_rect.x = 0;
-                    src_rect.y = 0;
-                    src_rect.w = bg_info.image_surface->w;
-                    src_rect.h = bg_info.image_surface->h;
-                    dst_rect.x = (screen_width - bg_info.image_surface->w) / 2;
-                    dst_rect.y = (screen_height - bg_info.image_surface->h) / 2;
-
-                    SDL_BlitSurface( bg_info.image_surface, &src_rect, background_surface, &dst_rect );
-                }
             }
-        }
-
-        if ( bg_effect_image == COLOR_EFFECT_IMAGE ){
-            SDL_FillRect( background_surface, NULL, SDL_MapRGB( effect_dst_surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
         }
 
         readEffect( &tmp_effect );
