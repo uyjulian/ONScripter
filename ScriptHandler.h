@@ -67,8 +67,8 @@ public:
     };
     struct VariableInfo{
         int type;
-        int var_no;   // for integer(%), string($)
-        int *var_ptr; // for array(?)
+        int var_no;   // for integer(%), array(?), string($)
+        ArrayVariable array; // for array(?)
     };
 
     ScriptHandler();
@@ -162,6 +162,7 @@ public:
            SCREEN_SIZE_400x300 = 2,
            SCREEN_SIZE_320x240 = 3
     };
+    int global_variable_border;
 
     BaseReader *cBR;
     
@@ -230,8 +231,8 @@ private:
 
     void readNextOp( char **buf, int *op, int *num );
     int calcArithmetic( int num1, int op, int num2 );
-    int decodeArraySub( char **buf, ArrayVariable *array );
-    int *decodeArray( char **buf, int offset = 0 );
+    int decodeArray( char **buf, ArrayVariable &array );
+    int *getArrayPtr( int no, ArrayVariable &array, int offset );
 
 
     /* ---------------------------------------- */

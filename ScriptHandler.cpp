@@ -58,6 +58,9 @@ ScriptHandler::ScriptHandler()
         str_variables[i] = NULL;
     }
 
+    screen_size = SCREEN_SIZE_640x480;
+    global_variable_border = 200;
+
     last_name_alias = &root_name_alias;
     last_name_alias->next = NULL;
     last_str_alias = &root_str_alias;
@@ -540,7 +543,7 @@ int ScriptHandler::getIntVariable( VariableInfo *var_info )
     if ( var_info->type == VAR_INT )
         return num_variables[ var_info->var_no];
     else if ( var_info->type == VAR_PTR )
-        return *var_info->var_ptr;
+        return *getArrayPtr( var_info->var_no, var_info->array, 0 );
     return 0;
 }
 
@@ -715,9 +718,9 @@ int ScriptHandler::parseInt( char **buf )
         return num_variables[ current_variable.var_no ];
     }
     else if ( **buf == '?' ){
-        current_variable.var_ptr = decodeArray(buf);
+        current_variable.var_no = decodeArray( buf, current_variable.array );
         current_variable.type = VAR_PTR;
-        return *current_variable.var_ptr;
+        return *getArrayPtr( current_variable.var_no, current_variable.array, 0 );
     }
     else{
         char ch, alias_buf[256];
@@ -895,7 +898,7 @@ void ScriptHandler::setInt( VariableInfo *var_info, int val, int offset )
         setNumVariable( var_info->var_no + offset, val );
     }
     else if ( var_info->type == VAR_PTR ){
-        *var_info->var_ptr = val;
+        *getArrayPtr( var_info->var_no, var_info->array, offset ) = val;
     }
     else{
         errorAndExit( "setInt: no variables." );
@@ -915,28 +918,6 @@ void ScriptHandler::setNumVariable( int no, int val )
         else if ( val > num_limit_upper[no] ) val = num_limit_upper[no];
     }
     num_variables[no] = val;
-}
-
-int ScriptHandler::decodeArraySub( char **buf, struct ArrayVariable *array )
-{
-    SKIP_SPACE( *buf );
-    
-    (*buf)++; // skip '?'
-    int no = parseInt( buf );
-
-    SKIP_SPACE( *buf );
-    array->num_dim = 0;
-    while ( **buf == '[' ){
-        (*buf)++;
-        array->dim[array->num_dim] = parseIntExpression(buf);
-        array->num_dim++;
-        SKIP_SPACE( *buf );
-        if ( **buf != ']' ) errorAndExit( "decodeArraySub: no ']' is found." );
-        (*buf)++;
-    }
-    for ( int i=array->num_dim ; i<20 ; i++ ) array->dim[i] = 0;
-
-    return no;
 }
 
 void ScriptHandler::getSJISFromInteger( char *buffer, int no, bool add_space_flag )
@@ -1063,15 +1044,33 @@ int ScriptHandler::readScript( char *path )
     script_buffer_length = p_script_buffer - script_buffer;
     
     /* ---------------------------------------- */
-    /* screen size check */
-    if      ( !strncmp( script_buffer, ";mode800", 8 ) )
-        screen_size = SCREEN_SIZE_800x600;
-    else if ( !strncmp( script_buffer, ";mode400", 8 ) )
-        screen_size = SCREEN_SIZE_400x300;
-    else if ( !strncmp( script_buffer, ";mode320", 8 ) )
-        screen_size = SCREEN_SIZE_320x240;
-    else
-        screen_size = SCREEN_SIZE_640x480;
+    /* screen size and value check */
+    char *buf = script_buffer+1;
+    while( script_buffer[0] == ';' ){
+        if ( !strncmp( buf, "mode", 4 ) ){
+            buf += 4;
+            if      ( !strncmp( buf, "800", 3 ) )
+                screen_size = SCREEN_SIZE_800x600;
+            else if ( !strncmp( buf, "400", 3 ) )
+                screen_size = SCREEN_SIZE_400x300;
+            else if ( !strncmp( buf, "320", 3 ) )
+                screen_size = SCREEN_SIZE_320x240;
+            else
+                screen_size = SCREEN_SIZE_640x480;
+            buf += 3;
+        }
+        else if ( !strncmp( buf, "value", 5 ) ){
+            buf += 5;
+            global_variable_border = 0;
+            while ( *buf >= '0' && *buf <= '9' )
+                global_variable_border = global_variable_border * 10 + *buf++ - '0';
+        }
+        else{
+            break;
+        }
+        if ( *buf != ',' ) break;
+        buf++;
+    }
 
     return labelScript();
 }
@@ -1350,24 +1349,38 @@ int ScriptHandler::findLabel( const char *label )
     return -1;
 }
 
-int *ScriptHandler::decodeArray( char **buf, int offset )
+int ScriptHandler::decodeArray( char **buf, struct ArrayVariable &array )
 {
-    struct ArrayVariable array;
-    int dim, i;
-
-    int no = decodeArraySub( buf, &array );
+    SKIP_SPACE( *buf );
     
-    if ( array_variables[ no ].data == NULL ) errorAndExit( "decodeArray: data = NULL." );
-    if ( array_variables[ no ].dim[0] <= array.dim[0] ) errorAndExit( "dim[0] <= array.dim[0]." );
-    dim = array.dim[0];
-    for ( i=1 ; i<array_variables[ no ].num_dim ; i++ ){
-        if ( array_variables[ no ].dim[i] <= array.dim[i] ) errorAndExit( "dim[i] <= array.dim[i]." );
-        dim = dim * array_variables[ no ].dim[i] + array.dim[i];
-    }
-    if ( array_variables[ no ].dim[i-1] <= array.dim[i-1] + offset ) errorAndExit( "dim[i-1] <= array.dim[i-1] + offset." );
-    dim += offset;
+    (*buf)++; // skip '?'
+    int no = parseInt( buf );
 
-    return &array_variables[ no ].data[ dim ];
+    SKIP_SPACE( *buf );
+    array.num_dim = 0;
+    while ( **buf == '[' ){
+        (*buf)++;
+        array.dim[array.num_dim] = parseIntExpression(buf);
+        array.num_dim++;
+        SKIP_SPACE( *buf );
+        if ( **buf != ']' ) errorAndExit( "decodeArray: no ']' is found." );
+        (*buf)++;
+    }
+    for ( int i=array.num_dim ; i<20 ; i++ ) array.dim[i] = 0;
+
+    return no;
+}
+
+int *ScriptHandler::getArrayPtr( int no, ArrayVariable &array, int offset )
+{
+    int dim = 0, i;
+    for ( i=0 ; i<array_variables[no].num_dim ; i++ ){
+        if ( array_variables[no].dim[i] <= array.dim[i] ) errorAndExit( "dim[i] <= array.dim[i]." );
+        dim = dim * array_variables[no].dim[i] + array.dim[i];
+    }
+    if ( array_variables[no].dim[i-1] <= array.dim[i-1] + offset ) errorAndExit( "dim[i-1] <= array.dim[i-1] + offset." );
+
+    return &array_variables[no].data[dim+offset];
 }
 
 void ScriptHandler::declareDim()
@@ -1375,17 +1388,16 @@ void ScriptHandler::declareDim()
     current_script = next_script;
     char *buf = current_script;
 
-    struct ScriptHandler::ArrayVariable array;
+    ScriptHandler::ArrayVariable array;
+    int no = decodeArray( &buf, array );
+
     int dim = 1;
-
-    int no = decodeArraySub( &buf, &array );
-
     array_variables[no].num_dim = array.num_dim;
     for ( int i=0 ; i<array.num_dim ; i++ ){
         array_variables[no].dim[i] = array.dim[i]+1;
         dim *= (array.dim[i]+1);
     }
-    array_variables[ no ].data = new int[dim];
+    array_variables[no].data = new int[dim];
     memset( array_variables[no].data, 0, sizeof(int) * dim );
 
     next_script = buf;

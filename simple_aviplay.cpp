@@ -39,10 +39,10 @@ int main( int argc, char **argv )
         exit(-1);
     }
 
-    SDL_Surface *screen_surface = SDL_SetVideoMode( 640, 480, 32, SDL_SWSURFACE );
-
     AVIWrapper avi;
-    avi.init( argv[1], screen_surface, true );
+    if ( avi.init( argv[1], true ) ) exit(-1);
+    SDL_Surface *screen_surface = SDL_SetVideoMode( avi.getWidth(), avi.getHeight(), 32, SDL_SWSURFACE );
+    if ( avi.initAV( screen_surface, true ) ) exit(-1);
     avi.play( true );
 
     exit(0);

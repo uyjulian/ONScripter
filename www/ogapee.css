@@ -64,7 +64,7 @@ border-width: 1pt 1pt 3pt 5pt;
 border-style: solid;
 border-bottom-style: double;
 font-weight: bold;
-background-color: #cccccc;
+background-color: #dddddd;
 }
 
 DIV.block2{
@@ -101,12 +101,9 @@ H3{
 text-indent: 0.5em;
 position: relative;
 left: 0.5em;
-background-color: #ccccff;
-border-width: 1pt 1pt 1pt 3pt;
-border-top-color: #ddddff;
-border-left-color: #8888ff;
-border-right-color: #ddddff;
-border-bottom-color: #8888ff;
+background-color: #eeeeff;
+border-width: 0pt 0pt 1pt 5pt;
+border-color: #4444ff;
 border-style: solid;
 }
 

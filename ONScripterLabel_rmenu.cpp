@@ -628,11 +628,13 @@ void ONScripterLabel::executeSystemLookback()
             return;
         }
 
+        SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+        
         event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_LOOKBACK;
     }
 
-    shadowTextDisplay( text_surface, accumulation_surface, NULL, &menu_font );
+    shadowTextDisplay( text_surface, accumulation_surface, NULL, &sentence_font );
     for ( i=0 ; i<3 ; i++ ){
         color[i] = sentence_font.color[i];
         sentence_font.color[i] = lookback_color[i];

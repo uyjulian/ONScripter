@@ -129,6 +129,7 @@ public:
     int monocroCommand();
     int menu_windowCommand();
     int menu_fullCommand();
+    int menu_automodeCommand();
     int lspCommand();
     int lookbackspCommand();
     int lookbackflushCommand();
@@ -139,6 +140,8 @@ public:
     int jumpfCommand();
     int jumpbCommand();
     int ispageCommand();
+    int isfullCommand();
+    int isskipCommand();
     int isdownCommand();
     int inputCommand();
     int getversionCommand();
@@ -148,6 +151,7 @@ public:
     int getretCommand();
     int getregCommand();
     int getpageupCommand();
+    int getpageCommand();
     int getmouseposCommand();
     int getfunctionCommand();
     int getenterCommand();
@@ -184,6 +188,7 @@ public:
     int barclearCommand();
     int barCommand();
     int aviCommand();
+    int automode_timeCommand();
     int autoclickCommand();
     int allspresumeCommand();
     int allsphideCommand();
@@ -247,7 +252,9 @@ private:
     int mouse_rotation_mode;
     
     long internal_timer;
-    long autoclick_timer;
+    bool automode_flag;
+    long automode_time;
+    long autoclick_time;
     long remaining_time;
 
     FILE *tmp_save_fp;
@@ -272,6 +279,7 @@ private:
 
     Uint32 rmask, gmask, bmask, amask;
 
+    bool btntime2_flag;
     long btntime_value;
     long internal_button_timer;
     long btnwait_time;
@@ -349,6 +357,7 @@ private:
 
     bool gettab_flag;
     bool getpageup_flag;
+    bool getpagedown_flag;
     bool getfunction_flag;
     bool getenter_flag;
     bool getcursor_flag;
@@ -359,6 +368,7 @@ private:
     void refreshMouseOverButton();
     void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no );
     void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str );
+    void disableGetButtonFlag();
     
     /* ---------------------------------------- */
     /* Background related variables */

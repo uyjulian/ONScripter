@@ -31,8 +31,9 @@
 #define ONS_SOUND_EVENT   (SDL_USEREVENT+1)
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
 #define ONS_MIDI_EVENT    (SDL_USEREVENT+3)
+#define ONS_WAVE_EVENT    (SDL_USEREVENT+4)
 #if defined(EXTERNAL_MUSIC_PLAYER)
-#define ONS_MUSIC_EVENT   (SDL_USEREVENT+4)
+#define ONS_MUSIC_EVENT   (SDL_USEREVENT+5)
 #endif
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
@@ -128,6 +129,16 @@ void midiCallback( int sig )
     SDL_PushEvent(&event);
 }
 
+void waveCallback( int channel )
+{
+    if ( channel == 0 ){
+        SDL_Event event;
+        event.type = ONS_WAVE_EVENT;
+        event.user.code = channel;
+        SDL_PushEvent(&event);
+    }
+}
+
 #if defined(EXTERNAL_MUSIC_PLAYER)
 void musicCallback( int sig )
 {
@@ -194,6 +205,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
          ( rmode_flag || (event_mode & WAIT_BUTTON_MODE) ) ) {
         current_button_state.button = -1;
         volatile_button_state.button = -1;
+        automode_flag = false;
     }
     else if ( event->button == SDL_BUTTON_LEFT &&
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
@@ -223,14 +235,14 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     if ( skip_flag ) skip_flag = false;
 
     if ( ( event_mode & WAIT_INPUT_MODE ) &&
-         ( autoclick_timer == 0 || (event_mode & WAIT_BUTTON_MODE) ) &&
+         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE) ) &&
          volatile_button_state.button == -1 && 
          root_menu_link.next ){
         system_menu_mode = SYSTEM_MENU;
     }
     
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) &&
-         ( autoclick_timer == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
+         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         playClickVoice();
         stopAnimation( clickstr_state );
         advancePhase();
@@ -536,9 +548,10 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     if ( event->type == SDL_KEYDOWN ) return;
     
     if ( ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ) &&
-         ( autoclick_timer == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
+         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if ( !useescspc_flag && event->keysym.sym == SDLK_ESCAPE && rmode_flag ){
             current_button_state.button  = -1;
+            automode_flag = false;
             if ( event_mode & WAIT_INPUT_MODE &&
                  root_menu_link.next ){
                 system_menu_mode = SYSTEM_MENU;
@@ -552,6 +565,9 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){
             current_button_state.button  = -12;
+        }
+        else if ( getpagedown_flag && event->keysym.sym == SDLK_PAGEDOWN ){
+            current_button_state.button  = -13;
         }
         else if ( getenter_flag && event->keysym.sym == SDLK_RETURN ){
             current_button_state.button  = -19;
@@ -606,7 +622,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     }
     
     if ( event_mode & WAIT_INPUT_MODE && !key_pressed_flag &&
-         ( autoclick_timer == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
+         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if (event->keysym.sym == SDLK_RETURN || 
             event->keysym.sym == SDLK_SPACE ){
             skip_flag = false;
@@ -619,7 +635,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     
     if ( event_mode & ( WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE ) && 
          !key_pressed_flag ){
-        if ( event->keysym.sym == SDLK_LEFT || event->keysym.sym == SDLK_s ){
+        if ( (event->keysym.sym == SDLK_LEFT || event->keysym.sym == SDLK_s) &&
+             !automode_flag ){
             skip_flag = true;
             printf("toggle skip to true\n");
             key_pressed_flag = true;
@@ -635,6 +652,15 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
                 if ( (event_mode & (WAIT_BUTTON_MODE | WAIT_TEXTBTN_MODE)) != WAIT_BUTTON_MODE )
                     advancePhase();
             }
+        }
+        else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
+            automode_flag = true;
+            skip_flag = false;
+            printf("change to automode\n");
+            key_pressed_flag = true;
+            stopAnimation( clickstr_state );
+            if ( (event_mode & (WAIT_BUTTON_MODE | WAIT_TEXTBTN_MODE)) != WAIT_BUTTON_MODE )
+                advancePhase();
         }
         else if ( event->keysym.sym == SDLK_1 ){
             text_speed_no = 0;
@@ -807,6 +833,31 @@ int ONScripterLabel::eventLoop()
                 Mix_FreeMusic( midi_info );
                 playMIDI();
             }
+            break;
+
+          case ONS_WAVE_EVENT:
+            if ( wave_sample[event.user.code] ){
+                Mix_FreeChunk( wave_sample[event.user.code] );
+                wave_sample[event.user.code] = NULL;
+            }
+            //printf("ONS_WAVE_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
+            if ( !wave_sample[0] &&
+                 automode_flag &&
+                 event_mode & (WAIT_SLEEP_MODE | WAIT_TEXTBTN_MODE) ){
+                if ( event_mode & WAIT_TEXTBTN_MODE )
+                    current_button_state.button = 0;
+                stopAnimation( clickstr_state );
+                advancePhase();
+            }
+            else if ( !wave_sample[0] &&
+                      btntime_value > 0 &&
+                      btntime2_flag &&
+                      event_mode & WAIT_BUTTON_MODE ){
+                current_button_state.button = 0;
+                stopAnimation( clickstr_state );
+                advancePhase();
+            }
+            
             break;
 
 #if defined(EXTERNAL_MUSIC_PLAYER)

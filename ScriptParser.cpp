@@ -82,6 +82,7 @@ static struct FuncLUT{
     {"mov3",      &ScriptParser::movCommand},
     {"mov",      &ScriptParser::movCommand},
     {"mode_saya", &ScriptParser::mode_sayaCommand},
+    {"mode_ext", &ScriptParser::mode_extCommand},
     {"mod",      &ScriptParser::modCommand},
     {"mid",      &ScriptParser::midCommand},
     {"menusetwindow",      &ScriptParser::menusetwindowCommand},
@@ -123,6 +124,7 @@ static struct FuncLUT{
     {"clickvoice",   &ScriptParser::clickvoiceCommand},
     {"clickstr",   &ScriptParser::clickstrCommand},
     {"break",   &ScriptParser::breakCommand},
+    {"automode", &ScriptParser::mode_extCommand},
     {"atoi",      &ScriptParser::atoiCommand},
     {"arc",      &ScriptParser::arcCommand},
     {"add",      &ScriptParser::addCommand},
@@ -146,6 +148,7 @@ ScriptParser::ScriptParser( char *path )
     usewheel_flag = false;
     useescspc_flag = false;
     mode_saya_flag = false;
+    mode_ext_flag = false;
     
     string_buffer_offset = 0;
 
@@ -265,12 +268,18 @@ ScriptParser::ScriptParser( char *path )
 
     if ( open( path ) ) exit(-1);
     
+    script_h.loadLog( ScriptHandler::LABEL_LOG );
+    
+    root_link_label_info.label_info = script_h.lookupLabel("define");
+    script_h.setCurrent( root_link_label_info.label_info.start_address );
+    current_link_label_info = &root_link_label_info;
+
     current_mode = DEFINE_MODE;
+
     script_h.pushCurrent( "effect 1,1" );
     script_h.readToken();
     effectCommand();
     script_h.popCurrent();
-    //current_mode = NORMAL_MODE;
 }
 
 ScriptParser::~ScriptParser()
@@ -330,16 +339,6 @@ int ScriptParser::open( char *path )
         screen_height = 480 * screen_ratio1 / screen_ratio2;
         break;
     }
-
-    root_link_label_info.previous = NULL;
-    root_link_label_info.next = NULL;
-    root_link_label_info.current_line = 0;
-
-    root_link_label_info.label_info = script_h.lookupLabel("define");
-    script_h.setCurrent( root_link_label_info.label_info.start_address );
-
-    current_mode = DEFINE_MODE;
-    current_link_label_info = &root_link_label_info;
 
     return 0;
 }
@@ -439,7 +438,7 @@ void ScriptParser::saveGlovalData()
         exit( -1 );
     }
 
-    saveVariables( fp, 200, VARIABLE_RANGE );
+    saveVariables( fp, script_h.global_variable_border, VARIABLE_RANGE );
     fclose( fp );
 }
 

@@ -40,7 +40,6 @@ AVIWrapper::AVIWrapper()
     a_stream = NULL;
     remaining_buffer = new char[DEFAULT_AUDIOBUF*4];
     remaining_count = 0;
-    avm::out.resetDebugLevels(-1);
 }
 
 AVIWrapper::~AVIWrapper()
@@ -54,10 +53,13 @@ AVIWrapper::~AVIWrapper()
     if ( remaining_buffer ) delete[] remaining_buffer;
 }
 
-int AVIWrapper::init( char *filename, SDL_Surface *surface, bool audio_open_flag )
+int AVIWrapper::init( char *filename, bool debug_flag )
 {
+    this->debug_flag = debug_flag;
+    if ( !debug_flag ) avm::out.resetDebugLevels(-1);
+
     i_avi = CreateIAviReadFile( filename );
-    if ( i_avi == NULL ){
+    if ( i_avi == NULL || i_avi->IsValid() == false ){
         fprintf( stderr, "can't CreateIAviReadFile from %s\n", filename );
         return -1;
     }
@@ -70,14 +72,24 @@ int AVIWrapper::init( char *filename, SDL_Surface *surface, bool audio_open_flag
 
     width  = v_stream->GetStreamInfo()->GetVideoWidth();
     height = v_stream->GetStreamInfo()->GetVideoHeight();
+    if ( debug_flag ) fprintf( stderr, "width %d height %d\n", width, height );
 
+    return 0;
+}
+
+int AVIWrapper::initAV( SDL_Surface *surface, bool audio_open_flag )
+{
     screen_rect.x = screen_rect.y = 0;
     screen_rect.w = surface->w;
     screen_rect.h = surface->h;
 
     v_stream->StartStreaming();
+    if ( v_stream->GetVideoDecoder() == NULL ){
+        if ( debug_flag ) fprintf( stderr, "GetVideoDecoder() return 0.\n" );
+        return -1;
+    }
     IVideoDecoder::CAPS cap = v_stream->GetVideoDecoder()->GetCapabilities();
-    //printf("cap %x\n", cap );
+    if ( debug_flag ) printf("cap %x\n", cap );
 
     if ( cap & IVideoDecoder::CAP_YV12 ){
         v_stream->GetVideoDecoder()->SetDestFmt( 0, fccYV12 );
@@ -94,21 +106,20 @@ int AVIWrapper::init( char *filename, SDL_Surface *surface, bool audio_open_flag
     if ( !audio_open_flag ) return 0;
     a_stream = i_avi->GetStream(0, AviStream::Audio);
     if ( a_stream == NULL ){
-        //fprintf( stderr, "Audio Stream is NULL\n" );
+        if ( debug_flag ) fprintf( stderr, "Audio Stream is NULL\n" );
         return 0;
     }
 
     a_stream->StartStreaming();
     WAVEFORMATEX wave_fmt;
     a_stream->GetAudioDecoder()->GetOutputFormat( &wave_fmt );
-    //printf(" format %d ch %d sample %d bit %d avg Bps %d\n", wave_fmt.wFormatTag, wave_fmt.nChannels, wave_fmt.nSamplesPerSec, wave_fmt.wBitsPerSample, wave_fmt.nAvgBytesPerSec );
+    if ( debug_flag ) printf(" format %d ch %d sample %d bit %d avg Bps %d\n", wave_fmt.wFormatTag, wave_fmt.nChannels, wave_fmt.nSamplesPerSec, wave_fmt.wBitsPerSample, wave_fmt.nAvgBytesPerSec );
     
     if ( Mix_OpenAudio( wave_fmt.nSamplesPerSec, MIX_DEFAULT_FORMAT, wave_fmt.nChannels, DEFAULT_AUDIOBUF ) < 0 ){
         fprintf( stderr, "can't open audio device\n" );
         a_stream->StopStreaming();
         delete a_stream;
         a_stream = NULL;
-        return 0;
     }
 
     return 0;
@@ -117,81 +128,156 @@ int AVIWrapper::init( char *filename, SDL_Surface *surface, bool audio_open_flag
 static void audioCallback( void *userdata, Uint8 *stream, int len )
 {
     AVIWrapper &avi = *(AVIWrapper*)userdata;
+    avi.audioCallback( userdata, stream, len );
+}
 
+void AVIWrapper::audioCallback( void *userdata, Uint8 *stream, int len )
+{
     if ( len == 0 )
-        avi.status = AVIWrapper::AVI_STOP;
+        status = AVI_STOP;
 
     uint_t ocnt;
     uint_t samples;
     uint_t count = 0;
 
-    if ( avi.remaining_count > 0 ){
-        if ( avi.remaining_count <= len ){
-            memcpy( stream, avi.remaining_buffer, avi.remaining_count );
-            count = avi.remaining_count;
-            len -= avi.remaining_count;
-            avi.remaining_count = 0;
+    if ( remaining_count > 0 ){
+        if ( remaining_count <= len ){
+            memcpy( stream, remaining_buffer, remaining_count );
+            count = remaining_count;
+            len -= remaining_count;
+            remaining_count = 0;
         }
         else{
-            memmove( stream, avi.remaining_buffer, len );
+            memmove( stream, remaining_buffer, len );
             count = len;
             len = 0;
-            avi.remaining_count -= len;
+            remaining_count -= len;
             return;
         }
     }
         
-    while ( len > 0 && !avi.a_stream->Eof() ){
-        avi.a_stream->ReadFrames( avi.remaining_buffer, len, len, samples, ocnt );
+    while ( len > 0 && !a_stream->Eof() ){
+        a_stream->ReadFrames( remaining_buffer, len, len, samples, ocnt );
         if ( ocnt <= len ){
-            memcpy( stream+count, avi.remaining_buffer, ocnt );
+            memcpy( stream+count, remaining_buffer, ocnt );
             len -= ocnt;
         }
         else{
-            memcpy( stream+count, avi.remaining_buffer, len );
-            memmove( avi.remaining_buffer, avi.remaining_buffer+len, ocnt-len );
-            avi.remaining_count = ocnt-len;
+            memcpy( stream+count, remaining_buffer, len );
+            if ( ocnt-len < DEFAULT_AUDIOBUF*4 - len ){
+                memmove( remaining_buffer, remaining_buffer+len, ocnt-len );
+                remaining_count = ocnt-len;
+            }
+            else{
+                remaining_count = 0;
+            }
             len = 0;
         }
         count += ocnt;
     }
 }
 
-double AVIWrapper::getVideoTime()
+double AVIWrapper::getAudioTime()
 {
     if ( time_start == 0 )
     {
         frame_start = (v_stream) ? v_stream->GetTime() : 0.;
-        last_frame_start = frame_start;
         time_start = longcount();
     }
 
-    double current_time;
     if ( a_stream )
-        current_time = a_stream->GetTime();
+        return a_stream->GetTime();
     else
-        current_time = frame_start + to_float(longcount(), time_start);
-
-    return current_time - v_stream->GetTime();
+        return frame_start + to_float(longcount(), time_start);
 }
 
 static int playVideo( void *userdata )
 {
     AVIWrapper &avi = *(AVIWrapper*)userdata;
+    return avi.playVideo( userdata );
+}
 
-    while ( avi.status == AVIWrapper::AVI_PLAYING && !avi.v_stream->Eof() ){
-        float async = avi.getVideoTime();
-        if ( async > -0.016 ){
-            avi.v_stream->ReadFrame();
-            CImage *image = avi.v_stream->GetFrame();
-            if ( async > 0.016 ) continue;
-            avi.drawFrame( image );
+#define NUM_CACHES 3
+int AVIWrapper::playVideo( void *userdata )
+{
+    int i;
+
+    struct{
+        bool valid;
+        CImage *image;
+        double time;
+    } cache[NUM_CACHES];
+    for ( i=0 ; i<NUM_CACHES ; i++ ){
+        cache[i].valid = false;
+    }
+    int remaining_cache = NUM_CACHES;
+
+    while ( status == AVI_PLAYING && !v_stream->Eof() ){
+        CImage *image = v_stream->GetFrame( true );
+        if ( image == NULL ) break;
+
+        double current_time = v_stream->GetTime();
+        double minimum_time = current_time;
+        
+        // look for the nearest in the cache
+        int nearest_cache=-1;
+        for ( i=0 ; i<NUM_CACHES ; i++ ){
+            if ( cache[i].valid ){
+                if ( nearest_cache == -1 ||
+                     nearest_cache >= 0 &&
+                     cache[i].time < cache[nearest_cache].time ){
+                    nearest_cache = i;
+                    if ( minimum_time > cache[nearest_cache].time )
+                        minimum_time = cache[nearest_cache].time;
+                }
+            }
+        }
+
+        double async = getAudioTime() - minimum_time;
+        //printf("audio %f (%f - %f) minimum %d %f cur %f\n", async, getAudioTime(), minimum_time, nearest_cache, minimum_time, current_time );
+        if ( async < -0.01 ){
+            if ( remaining_cache == 0 ){
+                //printf("sync0 %f %f %f %f\n", async, (a_stream)?a_stream->GetTime():0.0, v_stream->GetTime(), minimum_time );
+                SDL_Delay( (int)(-async*1000) );
+            }
+        }
+        if ( async < -0.01 && remaining_cache > 0 ||
+             nearest_cache >= 0 ){
+            // add cache
+            for ( i=0 ; i<NUM_CACHES ; i++ ){
+                if ( cache[i].valid == false ){
+                    cache[i].valid = true;
+                    cache[i].image = new CImage(image);
+                    cache[i].time = current_time;
+                    remaining_cache--;
+                    break;
+                }
+            }
+            if ( async < -0.01 ){
+                image->Release();
+                continue;
+            }
+        }
+                
+        if ( nearest_cache >= 0 && minimum_time == cache[nearest_cache].time ){
+            //printf("draw cache %d %f\n", nearest_cache, cache[nearest_cache].time );
+            //if ( async <= 0.033 ) // drop frame if necessary
+            drawFrame( cache[nearest_cache].image );
+            cache[nearest_cache].image->Release();
+            cache[nearest_cache].valid = false;
+            remaining_cache++;
         }
         else{
-            SDL_Delay( 33 );
+            //printf("draw real %f\n", current_time );
+            //if ( async <= 0.033 ) // drop frame if necessary
+            drawFrame( image );
         }
+        image->Release();
     }
-    avi.status = AVIWrapper::AVI_STOP;
+    status = AVI_STOP;
+
+    for ( i=0 ; i<NUM_CACHES ; i++ )
+        if ( cache[i].valid ) cache[i].image->Release();
 
     return 0;
 }
@@ -201,9 +287,9 @@ int AVIWrapper::play( bool click_flag )
     time_start = 0;
     status = AVI_PLAYING;
     if ( v_stream )
-        thread_id = SDL_CreateThread( playVideo, this );
+        thread_id = SDL_CreateThread( ::playVideo, this );
     if ( a_stream )
-        Mix_HookMusic( audioCallback, this );
+        Mix_HookMusic( ::audioCallback, this );
     
     bool done_flag = false;
     while( !(done_flag & click_flag) && status == AVI_PLAYING ){

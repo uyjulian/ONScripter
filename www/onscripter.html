@@ -9,10 +9,10 @@
 
 <BODY>
 
-<H1>ONScripter のページ</H1>
+<center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Aug. 15, 2003<br>
+Last updated: Aug. 23, 2003<br>
 ベータ版を更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20030815.tar.gz">onscripter-beta-20030815.tar.gz</A>
+<A HREF="onscripter-beta-20030823.tar.gz">onscripter-beta-20030823.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20030811.tar.gz">onscripter-beta-20030811.tar.gz</A>
+<A HREF="onscripter-beta-20030819.tar.gz">onscripter-beta-20030819.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -220,9 +220,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <LI> (<FONT color="#ff0000">高</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
   <LI> (<FONT color="#ff0000">中</FONT>)mask 画像等の読み込みの際に、directory 付きのファイル名を parse できるようにする。
   <LI> (<FONT color="#ff8800">中</FONT>)btndown + btnwait でマウスのドラッグに対応させる。
-  <LI> (<FONT color="#00ff00">低</FONT>)btntime2 を正規に実装
   <LI> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
-  <LI> (<FONT color="#00ff00">低</FONT>)sprite の現在の表示 cell を保存する？
   <LI> (<FONT color="#00ff00">低</FONT>)skip でマイナス方向にラベルをまたぐと破綻するバグ？を取る。lchk とのからみも考えて調べる。
   <LI> (<FONT color="#00ff00">低</FONT>)文字の色を変えたあとに絵の描画が入ると、文字の色が全部同じになってしまう。
   <LI> (<FONT color="#00ff00">低</FONT>)コードの clean up。
@@ -274,6 +272,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>s, ←</td><td>次の選択肢まで飛ばすモードに切り替え</td></tr>
 <tr><td>o, →</td><td>１ページ表示をするかしないかの切り替え</td></tr>
 <tr><td> f </td><td>Full screen mode と Window mode の切り替え</td></tr>
+<tr><td> a </td><td>automode もしくは mode_ext が設定されている場合に、読み上げモードに入る</td></tr>
 <tr><td> z </td><td>--edit オプションを指定して起動したときに、音量及び変数変更モードに入る</td></tr>
 <tr><td> 1, 2, 3 </td><td>文字の描画速度を変更</td></tr>
 <tr><td> Shift + q </td><td>終了（end コマンドを発行）</td></tr>

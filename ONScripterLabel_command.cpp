@@ -512,6 +512,7 @@ int ONScripterLabel::selectCommand()
         shortcut_mouse_line = -1;
         //flush();
         skip_flag = false;
+        automode_flag = false;
         xy[0] = sentence_font.xy[0];
         xy[1] = sentence_font.xy[1];
 
@@ -718,7 +719,7 @@ int ONScripterLabel::resetCommand()
 {
     int i;
 
-    for ( i=0 ; i<200 ; i++ ){
+    for ( i=0 ; i<script_h.global_variable_border ; i++ ){
         script_h.num_variables[i] = 0;
         if ( script_h.str_variables[i] ) delete[] script_h.str_variables[i];
         script_h.str_variables[i] = NULL;
@@ -1081,6 +1082,15 @@ int ONScripterLabel::menu_fullCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::menu_automodeCommand()
+{
+    automode_flag = true;
+    skip_flag = false;
+    printf("menu_automode: change to automode\n");
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::lspCommand()
 {
     bool v;
@@ -1167,6 +1177,7 @@ int ONScripterLabel::loadgameCommand()
     if ( loadSaveFile( no ) ) return RET_CONTINUE;
     else {
         skip_flag = false;
+        automode_flag = false;
         deleteButtonLink();
         deleteSelectLink();
         key_pressed_flag = false;
@@ -1234,6 +1245,28 @@ int ONScripterLabel::ispageCommand()
     script_h.readInt();
 
     if ( clickstr_state == CLICK_NEWPAGE )
+        script_h.setInt( &script_h.current_variable, 1 );
+    else
+        script_h.setInt( &script_h.current_variable, 0 );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::isfullCommand()
+{
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, fullscreen_mode?1:0 );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::isskipCommand()
+{
+    script_h.readInt();
+
+    if ( automode_flag )
+        script_h.setInt( &script_h.current_variable, 2 );
+    else if ( skip_flag )
         script_h.setInt( &script_h.current_variable, 1 );
     else
         script_h.setInt( &script_h.current_variable, 0 );
@@ -1337,6 +1370,14 @@ int ONScripterLabel::gettabCommand()
 int ONScripterLabel::getpageupCommand()
 {
     getpageup_flag = true;
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getpageCommand()
+{
+    getpageup_flag = true;
+    getpagedown_flag = true;
     
     return RET_CONTINUE;
 }
@@ -1541,7 +1582,7 @@ int ONScripterLabel::gameCommand()
 
     /* ---------------------------------------- */
     /* Initialize local variables */
-    for ( i=0 ; i<200 ; i++ ){
+    for ( i=0 ; i<script_h.global_variable_border ; i++ ){
         script_h.num_variables[i] = 0;
         delete[] script_h.str_variables[i];
         script_h.str_variables[i] = NULL;
@@ -1967,14 +2008,7 @@ int ONScripterLabel::btnwaitCommand()
         }
 
         event_mode = IDLE_EVENT_MODE;
-        btndown_flag = false;
-
-        gettab_flag = false;
-        getpageup_flag = false;
-        getfunction_flag = false;
-        getenter_flag = false;
-        getcursor_flag = false;
-        spclclk_flag = false;
+        disableGetButtonFlag();
             
         return RET_CONTINUE;
     }
@@ -2045,7 +2079,6 @@ int ONScripterLabel::btnwaitCommand()
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
         
-        if ( textbtn_flag ) event_mode |= WAIT_TEXTBTN_MODE;
         if ( btntime_value > 0 ){
             startTimer( btntime_value );
             if ( usewheel_flag ) current_button_state.button = -5;
@@ -2054,9 +2087,19 @@ int ONScripterLabel::btnwaitCommand()
         internal_button_timer = SDL_GetTicks();
 
         if ( textbtn_flag ){
+            event_mode |= WAIT_TEXTBTN_MODE;
             if ( btntime_value == 0 ){
-                event_mode |= WAIT_ANIMATION_MODE;
-                advancePhase();
+                if ( !wave_sample[0] && automode_flag ){
+                    if ( automode_time < 0 )
+                        startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
+                    else
+                        startTimer( automode_time );
+                    current_button_state.button = 0;
+                }
+                else{
+                    event_mode |= WAIT_ANIMATION_MODE;
+                    advancePhase();
+                }
             }
         }
         return RET_WAIT;
@@ -2065,12 +2108,10 @@ int ONScripterLabel::btnwaitCommand()
 
 int ONScripterLabel::btntimeCommand()
 {
-    if ( script_h.isName( "btntime2" ) ){
-        ;
-    }
-    else{
-        ;
-    }
+    if ( script_h.isName( "btntime2" ) )
+        btntime2_flag = true;
+    else
+        btntime2_flag = false;
     
     btntime_value = script_h.readInt();
     
@@ -2102,12 +2143,7 @@ int ONScripterLabel::btndefCommand()
     
     deleteButtonLink();
 
-    gettab_flag = false;
-    getpageup_flag = false;
-    getfunction_flag = false;
-    getenter_flag = false;
-    getcursor_flag = false;
-    spclclk_flag = false;
+    disableGetButtonFlag();
     
     return RET_CONTINUE;
 }
@@ -2295,9 +2331,11 @@ int ONScripterLabel::barCommand()
     int no = script_h.readInt();
     if ( bar_info[no] ){
         dirty_rect.add( bar_info[no]->pos );
-        delete bar_info[no];
+        bar_info[no]->remove();
     }
-    bar_info[no] = new AnimationInfo();
+    else{
+        bar_info[no] = new AnimationInfo();
+    }
     bar_info[no]->trans_mode = AnimationInfo::TRANS_COPY;
     bar_info[no]->abs_flag = true;
     bar_info[no]->num_of_cells = 1;
@@ -2316,15 +2354,14 @@ int ONScripterLabel::barCommand()
     const char *buf = script_h.readStr();
     readColor( &bar_info[no]->color, buf );
 
+    dirty_rect.add( bar_info[no]->pos );
+
+    bar_info[no]->max_width = bar_info[no]->pos.w;
+    bar_info[no]->pos.w = bar_info[no]->pos.w * bar_info[no]->param / bar_info[no]->max_param;
     if ( bar_info[no]->pos.w > 0 ){
-        bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w * bar_info[no]->param / bar_info[no]->max_param, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
+        bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( bar_info[no]->image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGB( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2] ) );
-        dirty_rect.add( bar_info[no]->pos );
-    }
-    else{
-        delete bar_info[no];
-        bar_info[no] = NULL;
     }
 
     return RET_CONTINUE;
@@ -2343,9 +2380,16 @@ int ONScripterLabel::aviCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::automode_timeCommand()
+{
+    automode_time = script_h.readInt();
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::autoclickCommand()
 {
-    autoclick_timer = script_h.readInt();
+    autoclick_time = script_h.readInt();
 
     return RET_CONTINUE;
 }

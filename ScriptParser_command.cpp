@@ -428,6 +428,14 @@ int ScriptParser::mode_sayaCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::mode_extCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "mode_ext: not in the define section" );
+    mode_ext_flag = true;
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::modCommand()
 {
     int val1 = script_h.readInt();

@@ -81,6 +81,7 @@ public:
     int mulCommand();
     int movCommand();
     int mode_sayaCommand();
+    int mode_extCommand();
     int modCommand();
     int midCommand();
     int menusetwindowCommand();
@@ -136,6 +137,7 @@ protected:
 
         LinkLabelInfo(){
             previous = next = NULL;
+            current_line = 0;
         };
     } last_tilde;
 
@@ -183,6 +185,7 @@ protected:
     bool usewheel_flag;
     bool useescspc_flag;
     bool mode_saya_flag;
+    bool mode_ext_flag;
     bool force_button_shortcut_flag;
     
     int string_buffer_offset;

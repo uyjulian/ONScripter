@@ -21,8 +21,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __MAD_WRAPPER_H__
-#define __MAD_WRAPPER_H__
+#ifndef __AVI_WRAPPER_H__
+#define __AVI_WRAPPER_H__
 
 #include <SDL.h>
 #include <SDL_thread.h>
@@ -39,11 +39,20 @@ public:
     AVIWrapper();
     ~AVIWrapper();
 
-    int init( char *filename, SDL_Surface *surface, bool audio_open_flag );
+    int init( char *filename, bool debug_flag );
+    int initAV( SDL_Surface *surface, bool audio_open_flag );
     int play( bool click_flag );
+
+    void audioCallback( void *userdata, Uint8 *stream, int len );
+    int playVideo( void *userdata );
+
+    unsigned int getWidth(){ return width; };
+    unsigned int getHeight(){ return height; };
+
+private:    
+    double getAudioTime();
     int drawFrame( CImage *image );
-    double getVideoTime();
-    
+
     SDL_Overlay *screen_overlay;
     SDL_Rect screen_rect;
     unsigned int width;
@@ -55,11 +64,11 @@ public:
     int remaining_count;
     char *remaining_buffer;
 
+    bool debug_flag;
     int status;
     SDL_Thread *thread_id;
     int64_t time_start;
     double frame_start;
-    double last_frame_start;
 };
 
-#endif // __MAD_WRAPPER_H__
+#endif // __AVI_WRAPPER_H__

@@ -167,7 +167,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp )
         loadInt( fp, &sprite_info[i].current_cell );
     }
 
-    loadVariables( fp, 0, 200 );
+    loadVariables( fp, 0, script_h.global_variable_border );
 
     // nested link label
     int num_nest = 0;
@@ -423,7 +423,7 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
         saveInt( fp, sprite_info[i].current_cell );
     }
 
-    saveVariables( fp, 0, 200 );
+    saveVariables( fp, 0, script_h.global_variable_border );
 
     // nested link label
     int num_nest = 0;
@@ -469,7 +469,7 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
             saveInt( fp, bar_info[i]->param );
             saveInt( fp, bar_info[i]->pos.x * screen_ratio2 / screen_ratio1 );
             saveInt( fp, bar_info[i]->pos.y * screen_ratio2 / screen_ratio1 );
-            saveInt( fp, bar_info[i]->pos.w * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, bar_info[i]->max_width * screen_ratio2 / screen_ratio1 );
             saveInt( fp, bar_info[i]->pos.h * screen_ratio2 / screen_ratio1 );
             saveInt( fp, bar_info[i]->max_param );
             for ( j=0 ; j<3 ; j++ )

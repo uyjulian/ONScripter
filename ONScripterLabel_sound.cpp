@@ -291,11 +291,12 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
     if ( audio_open_flag ) Mix_CloseAudio();
 
     AVIWrapper *avi = new AVIWrapper();
-    if ( !avi->init( absolute_filename, screen_surface, audio_open_flag ) ){
+    if ( avi->init( absolute_filename, false ) == 0 &&
+         avi->initAV( screen_surface, audio_open_flag ) == 0 ){
         avi->play( click_flag );
-        delete avi;
-        delete[] absolute_filename;
     }
+    delete avi;
+    delete[] absolute_filename;
 
     if ( audio_open_flag ){
         Mix_CloseAudio();
@@ -419,4 +420,3 @@ void ONScripterLabel::playClickVoice()
             playWave( clickvoice_file_name[CLICKVOICE_NORMAL], false, DEFAULT_WAVE_CHANNEL );
     }
 }
-

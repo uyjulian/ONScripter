@@ -302,9 +302,22 @@ int ONScripterLabel::clickWait( char *out_text )
             gosubReal( textgosub_label, true, script_h.getCurrent() );
             return RET_JUMP;
         }
-        if ( autoclick_timer > 0 ){
+        if ( automode_flag ){
+            if ( wave_sample[0] ){
+                event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
+                advancePhase();
+            }
+            else{
+                event_mode = WAIT_INPUT_MODE;
+                if ( automode_time < 0 )
+                    startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
+                else
+                    startTimer( automode_time );
+            }
+        }
+        else if ( autoclick_time > 0 ){
             event_mode = WAIT_SLEEP_MODE;
-            startTimer( autoclick_timer );
+            startTimer( autoclick_time );
         }
         else{
             event_mode = WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
@@ -344,9 +357,22 @@ int ONScripterLabel::clickNewPage( char *out_text )
             new_line_skip_flag = true;
             return RET_JUMP;
         }
-        if ( autoclick_timer > 0 ){
+        if ( automode_flag ){
+            if ( wave_sample[0] ){
+                event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;
+                advancePhase();
+            }
+            else{
+                event_mode = WAIT_INPUT_MODE;
+                if ( automode_time < 0 )
+                    startTimer( -automode_time * current_text_buffer->buffer2_count / 2 );
+                else
+                    startTimer( automode_time );
+            }
+        }
+        else if ( autoclick_time > 0 ){
             event_mode = WAIT_SLEEP_MODE;
-            startTimer( autoclick_timer );
+            startTimer( autoclick_time );
         }
         else /*if ( cursor_info[ CURSOR_NEWPAGE_NO ].num_of_cells > 0 )*/{
             event_mode = WAIT_INPUT_MODE | WAIT_ANIMATION_MODE;

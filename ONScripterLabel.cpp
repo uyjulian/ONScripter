@@ -25,6 +25,7 @@
 #include "resize_image.h"
 
 extern void initSJIS2UTF16();
+extern void waveCallback( int channel );
 
 #define DEFAULT_AUDIOBUF  4096
 
@@ -105,6 +106,7 @@ static struct FuncLUT{
     {"monocro", &ONScripterLabel::monocroCommand},
     {"menu_window", &ONScripterLabel::menu_windowCommand},
     {"menu_full", &ONScripterLabel::menu_fullCommand},
+    {"menu_automode", &ONScripterLabel::menu_automodeCommand},
     {"lsph", &ONScripterLabel::lspCommand},
     {"lsp", &ONScripterLabel::lspCommand},
     {"lookbacksp", &ONScripterLabel::lookbackspCommand},
@@ -115,6 +117,8 @@ static struct FuncLUT{
     {"ld", &ONScripterLabel::ldCommand},
     {"jumpf", &ONScripterLabel::jumpfCommand},
     {"jumpb", &ONScripterLabel::jumpbCommand},
+    {"isfull", &ONScripterLabel::isfullCommand},
+    {"isskip", &ONScripterLabel::isskipCommand},
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"input", &ONScripterLabel::inputCommand},
@@ -125,6 +129,7 @@ static struct FuncLUT{
     {"getret", &ONScripterLabel::getretCommand},
     {"getreg", &ONScripterLabel::getregCommand},
     {"getpageup", &ONScripterLabel::getpageupCommand},
+    {"getpage", &ONScripterLabel::getpageCommand},
     {"getmousepos", &ONScripterLabel::getmouseposCommand},
     {"getfunction", &ONScripterLabel::getfunctionCommand},
     {"getenter", &ONScripterLabel::getenterCommand},
@@ -170,6 +175,7 @@ static struct FuncLUT{
     {"barclear",      &ONScripterLabel::barclearCommand},
     {"bar",      &ONScripterLabel::barCommand},
     {"avi",      &ONScripterLabel::aviCommand},
+    {"automode_time",      &ONScripterLabel::automode_timeCommand},
     {"autoclick",      &ONScripterLabel::autoclickCommand},
     {"amsp",      &ONScripterLabel::amspCommand},
     {"allspresume",      &ONScripterLabel::allspresumeCommand},
@@ -287,6 +293,7 @@ void ONScripterLabel::openAudio()
         audio_open_flag = true;
 
         Mix_AllocateChannels( ONS_MIX_CHANNELS );
+        Mix_ChannelFinished( waveCallback );
     }
 }
 
@@ -316,19 +323,16 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     SDL_SetAlpha( shelter_text_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
 
     internal_timer = SDL_GetTicks();
-    autoclick_timer = 0;
+    automode_flag = false;
+    automode_time = 3000;
+    autoclick_time = 0;
     remaining_time = 0;
+    btntime2_flag = false;
     btntime_value = 0;
     btnwait_time = 0;
-    btndown_flag = false;
 
     this->force_button_shortcut_flag = force_button_shortcut_flag;
-    gettab_flag = false;
-    getpageup_flag = false;
-    getfunction_flag = false;
-    getenter_flag = false;
-    getcursor_flag = false;
-    spclclk_flag = false;
+    disableGetButtonFlag();
     
     tmp_save_fp = NULL;
     saveon_flag = true; // false while saveoff
@@ -446,11 +450,9 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
 
     if ( ( fp = fopen( "gloval.sav", "rb" ) ) != NULL ||
          ( fp = fopen( "global.sav", "rb" ) ) != NULL ){
-        loadVariables( fp, 200, VARIABLE_RANGE );
+        loadVariables( fp, script_h.global_variable_border, VARIABLE_RANGE );
         fclose( fp );
     }
-
-    script_h.loadLog( ScriptHandler::LABEL_LOG );
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -1778,4 +1780,17 @@ void ONScripterLabel::allocateSelectedSurface( int sprite_no )
         SDL_SetAlpha( sp->selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
     }
     last_button_link->selected_surface = sp->selected_surface;
+}
+
+void ONScripterLabel::disableGetButtonFlag()
+{
+    btndown_flag = false;
+        
+    gettab_flag = false;
+    getpageup_flag = false;
+    getpagedown_flag = false;
+    getfunction_flag = false;
+    getenter_flag = false;
+    getcursor_flag = false;
+    spclclk_flag = false;
 }
