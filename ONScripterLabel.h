@@ -25,6 +25,7 @@
 #define __ONSCRIPTER_LABEL_H__
 
 #include "ScriptParser.h"
+#include "DirtyRect.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -271,7 +272,7 @@ private:
            REFRESH_CURSOR_MODE = 4
     };
     
-    int display_mode;
+    int display_mode, next_display_mode;
     int event_mode;
     SDL_Surface *accumulation_surface; // Text window + Sprite + Tachi image + background
     SDL_Surface *text_surface; // Text + Select_image + Tachi image + background
@@ -307,6 +308,7 @@ private:
         SDL_Surface *no_selected_surface;
 
         ButtonLink(){
+            button_type = NORMAL_BUTTON;
             next = NULL;
             exbtn_ctl = NULL;
             selected_surface = NULL;
@@ -330,9 +332,8 @@ private:
     void resetSentenceFont();
     void deleteButtonLink();
     void refreshMouseOverButton();
-    int refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no, bool draw_flag, bool change_flag );
-    int decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, bool draw_flag, bool change_flag );
-    void drawExbtn( char *ctl_str );
+    void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no );
+    void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str );
     
     /* ---------------------------------------- */
     /* Background related variables */
@@ -363,7 +364,7 @@ private:
     AnimationInfo cursor_info[2];
 
     int proceedAnimation();
-    int estimateNextDuration( AnimationInfo *anim, SDL_Rect *rect, int minimum );
+    int estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
     void resetRemainingTime( int t );
     void stopAnimation( int click );
     void loadCursor( int no, const char *str, int x, int y, bool abs_flag = false );
@@ -382,7 +383,7 @@ private:
     AnimationInfo sentence_font_info;
     char *font_file;
     int erase_text_window_mode;
-    bool text_on_flag;
+    bool text_on_flag; // suppress the effect of erase_text_window_mode
     int  tateyoko_mode;
 
     inline void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
@@ -392,15 +393,15 @@ private:
     int clickWait( char *out_text );
     int clickNewPage( char *out_text );
     int textCommand();
+    bool isTextVisible();
     
     /* ---------------------------------------- */
     /* Effect related variables */
-    SDL_Rect dirty_rect, dirty_rect_tmp; // only this region is updated
+    DirtyRect dirty_rect, dirty_rect_tmp; // only this region is updated
     int effect_counter; // counter in each effect
     int effect_timer_resolution;
     int effect_start_time;
     int effect_start_time_old;
-    bool first_mouse_over_flag;
     
     int  setEffect( int effect_no );
     int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
@@ -477,17 +478,14 @@ private:
     
     void deleteLabelLink();
     void blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect );
-    void flush( SDL_Rect *rect=NULL, bool clear_dirty_flag=true );
-    void flush( int x, int y, int w, int h, bool clear_dirty_flag=true );
+    void flush( SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
+    void flushSub( SDL_Rect &rect );
     void executeLabel();
     int parseLine();
     void parseTaggedString( AnimationInfo *anim );
     void setupAnimationInfo( AnimationInfo *anim );
     int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
     int shiftRect( SDL_Rect &dst, SDL_Rect &clip );
-    void addBoundingBox( SDL_Rect &dst, SDL_Rect &src );
-    void clearDirtyRect();
-    void fillDirtyRect();
     void alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                      SDL_Surface *src1_surface, int x1, int y1,
                      SDL_Surface *src2_surface, int x2, int y2,

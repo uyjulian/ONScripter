@@ -45,6 +45,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
     if ( restore_flag ){
         SDL_BlitSurface( shelter_text_surface, NULL, text_surface, NULL );
 
+        dirty_rect.fill( screen_width, screen_height );
         flush();
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
@@ -77,6 +78,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 void ONScripterLabel::executeSystemCall()
 {
     //printf("*****  executeSystemCall %d %d %d*****\n", system_menu_enter_flag, volatile_button_state.button, system_menu_mode );
+    dirty_rect.fill( screen_width, screen_height );
     
     if ( !system_menu_enter_flag ){
         enterSystemCall();
@@ -150,6 +152,7 @@ void ONScripterLabel::executeSystemMenu()
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, DEFAULT_WAVE_CHANNEL );
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         menu_font.num_xy[0] = menu_link_width;
@@ -207,6 +210,7 @@ void ONScripterLabel::executeWindowErase()
     }
     else{
         refreshSurface( text_surface, NULL, mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         event_mode = WAIT_INPUT_MODE;
@@ -243,6 +247,7 @@ void ONScripterLabel::executeSystemLoad()
     
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
         
         system_font.xy[0] = (system_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2;
@@ -309,6 +314,7 @@ void ONScripterLabel::executeSystemSave()
 
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         system_font.xy[0] = (system_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2;
@@ -399,6 +405,7 @@ void ONScripterLabel::executeSystemYesNo()
     else{
         refreshSurface( text_surface, NULL );
         shadowTextDisplay( text_surface, text_surface, NULL, &menu_font );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
 
         if ( yesno_caller == SYSTEM_SAVE || yesno_caller == SYSTEM_LOAD )
@@ -627,5 +634,6 @@ void ONScripterLabel::executeSystemLookback()
     for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
     setupLookbackButton();
     refreshMouseOverButton();
+    dirty_rect.fill( screen_width, screen_height );
     flush();
 }

@@ -682,22 +682,25 @@ void ONScripterLabel::timerEvent( void )
              strncmp( script_h.getStringBuffer(), "quake", 5 ) ){
 
             if ( effect_counter == 0 ){
-                flush();
+                next_display_mode = NORMAL_DISPLAY_MODE;
                 SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
-                SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
+                dirty_rect_tmp = dirty_rect;
+                dirty_rect.clear();
+                dirty_rect.add( sentence_font_info.pos );
             }
             if ( doEffect( WINDOW_EFFECT, NULL, DIRECT_EFFECT_IMAGE ) == RET_CONTINUE ){
                 display_mode = NORMAL_DISPLAY_MODE;
                 effect_counter = 0;
                 event_mode = EFFECT_EVENT_MODE;
+                dirty_rect = dirty_rect_tmp;
             }
             advancePhase();
             return;
         }
-        
+
         char *current = script_h.getCurrent();
         ret = this->parseLine();
-
+        
         if ( ret == RET_CONTINUE || ret == RET_CONTINUE_NOREAD){
             if ( ret == RET_CONTINUE ){
                 script_h.readToken(); // skip tailing \0 and mark kidoku

@@ -383,14 +383,12 @@ int ONScripterLabel::loadSaveFile( int no )
 
     fclose( fp );
 
-    refreshSurface( accumulation_surface, NULL, REFRESH_SHADOW_MODE );
-    SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+    refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
     restoreTextBuffer();
-    dirty_rect.x = dirty_rect.y = 0;
-    dirty_rect.w = screen_width;
-    dirty_rect.h = screen_height;
+    dirty_rect.fill( screen_width, screen_height );
     flush();
-    display_mode = TEXT_DISPLAY_MODE;
+    display_mode = next_display_mode = TEXT_DISPLAY_MODE;
 
     event_mode = tmp_event_mode;
     if ( event_mode & WAIT_BUTTON_MODE ) event_mode = WAIT_SLEEP_MODE; // Re-execute the selectCommand, etc.

@@ -31,14 +31,14 @@ int ONScripterLabel::proceedAnimation()
     for ( i=0 ; i<3 ; i++ ){
         anim = &tachi_info[i];
         if ( anim->valid && anim->is_animatable ){
-            minimum_duration = estimateNextDuration( anim, &anim->pos, minimum_duration );
+            minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
         }
     }
 
     for ( i=MAX_SPRITE_NUM-1 ; i>=0 ; i-- ){
         anim = &sprite_info[i];
         if ( anim->valid && anim->is_animatable ){
-            minimum_duration = estimateNextDuration( anim, &anim->pos, minimum_duration );
+            minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
         }
     }
 
@@ -58,18 +58,18 @@ int ONScripterLabel::proceedAnimation()
                 dst_rect.y += sentence_font.y( tateyoko_mode ) * screen_ratio1 / screen_ratio2;
             }
 
-            minimum_duration = estimateNextDuration( anim, &dst_rect, minimum_duration );
+            minimum_duration = estimateNextDuration( anim, dst_rect, minimum_duration );
         }
     }
 
     return minimum_duration;
 }
 
-int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect *rect, int minimum )
+int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum )
 {
     if ( anim->remaining_time == 0 ){
-        refreshSurface( text_surface, rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
-        flush( rect );
+        refreshSurface( text_surface, &rect, REFRESH_SHADOW_MODE | REFRESH_CURSOR_MODE );
+        flush( &rect );
         if ( minimum == 0 ||
              minimum > anim->duration_list[ anim->current_cell ] )
             minimum = anim->duration_list[ anim->current_cell ];
@@ -140,7 +140,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim )
             f_info.ttf_font = NULL;
         }
 
-        drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, true, NULL, &anim->pos );
+        drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
         if ( anim->font_size_xy[0] >= 0 ){
             f_info.closeFont();
         }
@@ -373,6 +373,11 @@ void ONScripterLabel::stopAnimation( int click )
         dst_rect.y += sentence_font.y( tateyoko_mode ) * screen_ratio1 / screen_ratio2;
     }
 
+    
     refreshSurface( text_surface, &dst_rect, REFRESH_SHADOW_MODE );
+
+    DirtyRect dirty = dirty_rect;
+    dirty_rect.clear();
     flush( &dst_rect );
+    dirty_rect = dirty;
 }

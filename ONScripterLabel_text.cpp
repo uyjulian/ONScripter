@@ -52,23 +52,24 @@ inline void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, char *text, Fo
         if ( dst_surface ){
             bool out_of_region = false;
             if ( clip ){
-                if ( doClipping( &dst_rect, clip, &clipped_rect ) ){
+                if ( doClipping( &dst_rect, clip, &clipped_rect ) )
                     out_of_region = true;
-                }
-                else{
-                    src_rect.x += clipped_rect.x;
-                    src_rect.y += clipped_rect.y;
-                    src_rect.w = dst_rect.w;
-                    src_rect.h = dst_rect.h;
-                }
+                else
+                    shiftRect( src_rect, clipped_rect );
             }
-            if ( !out_of_region )
+            if ( !out_of_region ){
                 SDL_BlitSurface( tmp_surface, &src_rect, dst_surface, &dst_rect );
+                if ( dst_surface == text_surface && !flush_flag ) dirty_rect.add( dst_rect );
+            }
         }
         SDL_FreeSurface( tmp_surface );
     }
 
-    if ( flush_flag ) flush( dst_rect.x, dst_rect.y, src_rect.w + 1, src_rect.h + 1 );
+    if ( flush_flag ){
+        dst_rect.w += 1;
+        dst_rect.h += 1;
+        flush( &dst_rect, false, true );
+    }
 }
 
 void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, SDL_Surface *surface, bool buffering_flag, SDL_Rect *clip )

@@ -77,6 +77,7 @@ int ONScripterLabel::vspCommand()
     int no = script_h.readInt();
     int v  = script_h.readInt();
     sprite_info[ no ].valid = (v==1)?true:false;
+    dirty_rect.add( sprite_info[no].pos );
     
     return RET_CONTINUE;
 }
@@ -132,10 +133,12 @@ int ONScripterLabel::textonCommand()
 {
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
-        SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+        refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
         restoreTextBuffer();
+        dirty_rect.fill( screen_width, screen_height );
         flush();
-        display_mode = TEXT_DISPLAY_MODE;
+        display_mode = next_display_mode = TEXT_DISPLAY_MODE;
     }
 
     return RET_CONTINUE;
@@ -145,9 +148,11 @@ int ONScripterLabel::textoffCommand()
 {
     text_on_flag = false;
     if ( display_mode & TEXT_DISPLAY_MODE ){
+        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
         SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+        dirty_rect.fill( screen_width, screen_height );
         flush();
-        display_mode = NORMAL_DISPLAY_MODE;
+        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
 
     return RET_CONTINUE;
@@ -200,6 +205,7 @@ int ONScripterLabel::talCommand()
         else if ( trans < 0   ) trans = 0;
 
         tachi_info[ no ].trans = trans;
+        dirty_rect.add( tachi_info[ no ].pos );
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -250,7 +256,7 @@ int ONScripterLabel::stopCommand()
 int ONScripterLabel::spstrCommand()
 {
     const char *buf = script_h.readStr();
-    decodeExbtnControl( NULL, buf, false, true );
+    decodeExbtnControl( NULL, buf );
     
     return RET_CONTINUE;
 }
@@ -329,6 +335,7 @@ int ONScripterLabel::setwindowCommand()
     sentence_font.is_shadow = script_h.readInt()?true:false;
 
     const char *buf = script_h.readStr();
+    dirty_rect.add( sentence_font_info.pos );
     if ( buf[0] == '#' ){
         sentence_font.is_transparent = true;
         readColor( &sentence_font.window_color, buf );
@@ -347,9 +354,10 @@ int ONScripterLabel::setwindowCommand()
         sentence_font_info.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     }
 
+    dirty_rect.add( sentence_font_info.pos );
     lookbackflushCommand();
     clearCurrentTextBuffer();
-    display_mode = NORMAL_DISPLAY_MODE;
+    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
 }
@@ -454,7 +462,7 @@ int ONScripterLabel::selectCommand()
         }
         SelectLink *link = NULL;
         shortcut_mouse_line = -1;
-        flush();
+        //flush();
         skip_flag = false;
         xy[0] = sentence_font.xy[0];
         xy[1] = sentence_font.xy[1];
@@ -714,15 +722,17 @@ int ONScripterLabel::resetCommand()
 
     setBackground( accumulation_surface );
     SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+    dirty_rect.fill( screen_width, screen_height );
 
     return RET_JUMP;
 }
 
 int ONScripterLabel::repaintCommand()
 {
-    refreshSurface( accumulation_surface, NULL, (display_mode&TEXT_DISPLAY_MODE)?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-    SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+    refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
     restoreTextBuffer();
+    dirty_rect.fill( screen_width, screen_height );
     flush();
     
     return RET_CONTINUE;
@@ -748,13 +758,14 @@ int ONScripterLabel::quakeCommand()
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         if ( effect_counter == 0 ){
-            SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
+            //SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
             SDL_BlitSurface( text_surface, NULL, effect_dst_surface, NULL );
         }
         tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
         return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
     }
     else{
+        dirty_rect.fill( screen_width, screen_height );
         setEffect( 2 ); // 2 is dummy value
         return RET_WAIT; // RET_WAIT de yoi?
         //return RET_WAIT_NEXT;
@@ -778,6 +789,7 @@ int ONScripterLabel::prnumclearCommand()
 {
     for ( int i=0 ; i<MAX_PARAM_NUM ; i++ ) {
         if ( prnum_info[i] ) {
+            dirty_rect.add( prnum_info[i]->pos );
             delete prnum_info[i];
             prnum_info[i] = NULL;
         }
@@ -788,7 +800,10 @@ int ONScripterLabel::prnumclearCommand()
 int ONScripterLabel::prnumCommand()
 {
     int no = script_h.readInt();
-    if ( prnum_info[no] ) delete prnum_info[no];
+    if ( prnum_info[no] ){
+        dirty_rect.add( prnum_info[no]->pos );
+        delete prnum_info[no];
+    }
     prnum_info[no] = new AnimationInfo();
     prnum_info[no]->trans_mode = AnimationInfo::TRANS_STRING;
     prnum_info[no]->abs_flag = true;
@@ -831,7 +846,8 @@ int ONScripterLabel::prnumCommand()
     setStr( &prnum_info[no]->file_name, buf2 );
 
     setupAnimationInfo( prnum_info[no] );
-
+    dirty_rect.add( prnum_info[no]->pos );
+    
     return RET_CONTINUE;
 }
 
@@ -909,8 +925,10 @@ int ONScripterLabel::negaCommand()
 int ONScripterLabel::mspCommand()
 {
     int no = script_h.readInt();
+    dirty_rect.add( sprite_info[ no ].pos );
     sprite_info[ no ].pos.x += script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y += script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dirty_rect.add( sprite_info[ no ].pos );
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans += script_h.readInt();
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
@@ -1030,7 +1048,8 @@ int ONScripterLabel::lspCommand()
 
     int no = script_h.readInt();
     sprite_info[ no ].valid = v;
-
+    dirty_rect.add( sprite_info[ no ].pos );
+    
     const char *buf = script_h.readStr();
     sprite_info[ no ].setImageName( buf );
 
@@ -1044,6 +1063,7 @@ int ONScripterLabel::lspCommand()
 
     parseTaggedString( &sprite_info[ no ] );
     setupAnimationInfo( &sprite_info[ no ] );
+    dirty_rect.add( sprite_info[ no ].pos );
 
     return RET_CONTINUE;
 }
@@ -1104,6 +1124,7 @@ int ONScripterLabel::ldCommand()
         else if ( loc == 'c' ) no = 1;
         else if ( loc == 'r' ) no = 2;
         
+        dirty_rect.add( tachi_info[ no ].pos );
         tachi_info[ no ].setImageName( buf );
         parseTaggedString( &tachi_info[ no ] );
         setupAnimationInfo( &tachi_info[ no ] );
@@ -1112,6 +1133,7 @@ int ONScripterLabel::ldCommand()
         
         tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
         tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
+        dirty_rect.add( tachi_info[ no ].pos );
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -1458,6 +1480,7 @@ int ONScripterLabel::exbtnCommand()
 int ONScripterLabel::erasetextwindowCommand()
 {
     erase_text_window_mode = script_h.readInt();
+    dirty_rect.add( sentence_font_info.pos );
 
     return RET_CONTINUE;
 }
@@ -1559,9 +1582,11 @@ int ONScripterLabel::cspCommand()
 
     if ( no == -1 )
         for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+            dirty_rect.add( sprite_info[i].pos );
             sprite_info[i].remove();
         }
     else{
+        dirty_rect.add( sprite_info[no].pos );
         sprite_info[no].remove();
     }
 
@@ -1650,12 +1675,15 @@ int ONScripterLabel::clCommand()
     }
     else{
         if ( loc == 'l' || loc == 'a' ){
+            dirty_rect.add( tachi_info[0].pos );
             tachi_info[0].remove();
         }
         if ( loc == 'c' || loc == 'a' ){
+            dirty_rect.add( tachi_info[1].pos );
             tachi_info[1].remove();
         }
         if ( loc == 'r' || loc == 'a' ){
+            dirty_rect.add( tachi_info[2].pos );
             tachi_info[2].remove();
         }
 
@@ -1724,11 +1752,11 @@ int ONScripterLabel::btnwaitCommand()
     bool del_flag=false, textbtn_flag=false, selectbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
-        display_mode = NORMAL_DISPLAY_MODE;
+        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "btnwait" ) ){
         del_flag = true;
-        display_mode = NORMAL_DISPLAY_MODE;
+        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "textbtnwait" ) ){
         textbtn_flag = true;
@@ -1780,21 +1808,18 @@ int ONScripterLabel::btnwaitCommand()
             p_button_link = p_button_link->next;
         }
 
-        refreshSurface( accumulation_surface,
-                        NULL,
-                        ( display_mode == TEXT_DISPLAY_MODE || erase_text_window_mode == 0 && text_on_flag)?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
-        SDL_BlitSurface( accumulation_surface, NULL, text_surface, NULL );
+        refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+        refreshSurface( text_surface, NULL, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
 
-        if ( display_mode == TEXT_DISPLAY_MODE || erase_text_window_mode == 0 && text_on_flag ){
+        if ( isTextVisible() ){
             restoreTextBuffer();
-            display_mode = TEXT_DISPLAY_MODE;
+            display_mode = next_display_mode = TEXT_DISPLAY_MODE;
         }
-        
+
         /* ---------------------------------------- */
         /* Resotre csel button */
+        /* reduntant, no_selected_surface is already stored in cselbtn. */
         FontInfo f_info = sentence_font;
-        f_info.xy[0] = 0;
-        f_info.xy[1] = 0;
         
         p_button_link = root_button_link.next;
         while ( p_button_link ){
@@ -1811,10 +1836,11 @@ int ONScripterLabel::btnwaitCommand()
                     if ( p_button_link->sprite_no == counter++ ) break;
                     s_link = s_link->next;
                 }
-                
-                drawString( s_link->text, f_info.off_color, &f_info, false, text_surface );
-            }
 
+                drawString( s_link->text, f_info.off_color, &f_info, false, text_surface );
+                dirty_rect.add( p_button_link->image_rect );
+            }
+            
             if ( p_button_link->no_selected_surface )
                 SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
 
@@ -1841,7 +1867,6 @@ int ONScripterLabel::btnwaitCommand()
                 advancePhase();
             }
         }
-        
         return RET_WAIT;
     }
 }
@@ -1955,10 +1980,7 @@ int ONScripterLabel::bltCommand()
         clip.w = screen_width;
         clip.h = screen_height;
         doClipping( &dst_rect, &clip, &clipped );
-        src_rect.x += clipped.x;
-        src_rect.y += clipped.y;
-        src_rect.w -= clipped.x;
-        src_rect.h -= clipped.y;
+        shiftRect( src_rect, clipped );
         
 #ifndef SCREEN_ROTATION    
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
@@ -1966,10 +1988,12 @@ int ONScripterLabel::bltCommand()
 #else    
         blitRotation( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.y, screen_width - dst_rect.x - dst_rect.w, dst_rect.h, dst_rect.w );
-#endif    
+#endif
+        dirty_rect.clear();
     }
     else{
         resizeSurface( btndef_info.image_surface, &src_rect, text_surface, &dst_rect );
+        dirty_rect.add( dst_rect );
         flush( &dst_rect );
     }
     
@@ -1992,6 +2016,7 @@ int ONScripterLabel::bgCommand()
         bg_info.remove();
 
         bg_effect_image = COLOR_EFFECT_IMAGE;
+        dirty_rect.fill( screen_width, screen_height );
 
         if ( !strcmp( script_h.getStringBuffer(), "white" ) ){
             bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
@@ -2023,6 +2048,7 @@ int ONScripterLabel::barclearCommand()
 {
     for ( int i=0 ; i<MAX_PARAM_NUM ; i++ ) {
         if ( bar_info[i] ) {
+            dirty_rect.add( bar_info[i]->pos );
             delete bar_info[i];
             bar_info[i] = NULL;
         }
@@ -2033,7 +2059,10 @@ int ONScripterLabel::barclearCommand()
 int ONScripterLabel::barCommand()
 {
     int no = script_h.readInt();
-    if ( bar_info[no] ) delete bar_info[no];
+    if ( bar_info[no] ){
+        dirty_rect.add( bar_info[no]->pos );
+        delete bar_info[no];
+    }
     bar_info[no] = new AnimationInfo();
     bar_info[no]->trans_mode = AnimationInfo::TRANS_COPY;
     bar_info[no]->abs_flag = true;
@@ -2058,6 +2087,7 @@ int ONScripterLabel::barCommand()
         bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( bar_info[no]->image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGB( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2] ) );
+        dirty_rect.add( bar_info[no]->pos );
     }
     else{
         delete bar_info[no];
@@ -2085,6 +2115,7 @@ int ONScripterLabel::amspCommand()
 
     if ( sprite_info[ no ].trans > 255 ) sprite_info[ no ].trans = 255;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
+    dirty_rect.add( sprite_info[ no ].pos );
     
     return RET_CONTINUE;
 }
@@ -2092,12 +2123,20 @@ int ONScripterLabel::amspCommand()
 int ONScripterLabel::allspresumeCommand()
 {
     all_sprite_hide_flag = false;
+    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        if ( sprite_info[i].valid )
+            dirty_rect.add( sprite_info[i].pos );
+    }
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::allsphideCommand()
 {
     all_sprite_hide_flag = true;
+    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        if ( sprite_info[i].valid )
+            dirty_rect.add( sprite_info[i].pos );
+    }
     return RET_CONTINUE;
 }
 
