@@ -31,8 +31,13 @@ ScriptHandler::ScriptHandler()
     
     script_buffer = NULL;
     end_status = END_NONE;
-    num_of_labels = 0;
-    num_of_labels_accessed = 0;
+    log_info[LABEL_LOG].current_log = &log_info[LABEL_LOG].root_log;
+    log_info[LABEL_LOG].num_logs = 0;
+    log_info[LABEL_LOG].filename = "NScrllog.dat";
+    log_info[FILE_LOG].current_log = &log_info[FILE_LOG].root_log;
+    log_info[FILE_LOG].num_logs = 0;
+    log_info[FILE_LOG].filename = "NScrflog.dat";
+    kidokuskip_flag = false;
     kidoku_buffer = NULL;
 
     text_flag = true;
@@ -65,6 +70,8 @@ ScriptHandler::~ScriptHandler()
     if ( string_buffer )       delete[] string_buffer;
     if ( str_string_buffer )   delete[] string_buffer;
     if ( saved_string_buffer ) delete[] saved_string_buffer;
+    deleteLog( LABEL_LOG );
+    deleteLog( FILE_LOG );
 }
 
 FILE *ScriptHandler::fopen( const char *path, const char *mode )
@@ -84,6 +91,16 @@ char *ScriptHandler::saveStringBuffer()
     return saved_string_buffer;
 }
 
+int ScriptHandler::getOffset( char *pos )
+{
+    return pos - script_buffer;
+}
+
+char *ScriptHandler::getAddress( int offset )
+{
+    return script_buffer + offset;
+}
+
 char *ScriptHandler::getCurrent()
 {
     return current_script;
@@ -99,6 +116,63 @@ void ScriptHandler::setCurrent( char *pos, bool reread_flag )
         rereadToken();
     else
         next_script = pos;
+}
+
+int ScriptHandler::getLineByAddress( char *address )
+{
+    int i;
+    
+    for ( i=0 ; i<num_of_labels-1 ; i++ ){
+        if ( label_info[i+1].start_address > address )
+            break;
+    }
+
+    char *addr = label_info[i].start_address;
+    int line = 0;
+    while ( address > addr ){
+        if ( *addr == 0x0a ) line++;
+        addr++;
+    }
+    return line;
+}
+
+char *ScriptHandler::getAddressByLine( int line )
+{
+    int i;
+    
+    for ( i=0 ; i<num_of_labels-1 ; i++ ){
+        if ( label_info[i+1].start_line > line )
+            break;
+    }
+
+    int l = line - label_info[i].start_line;
+    char *addr = label_info[i].start_address;
+    while ( l > 0 ){
+        while( *addr != 0x0a ) addr++;
+        addr++;
+        l--;
+    }
+    return addr;
+}
+
+ScriptHandler::LabelInfo ScriptHandler::getLabelByAddress( char *address )
+{
+    for ( int i=0 ; i<num_of_labels-1 ; i++ ){
+        if ( label_info[i+1].start_address > address )
+            return label_info[i];
+    }
+    errorAndExit( "getLabelByAddress: Label is not found." );
+    return label_info[0];
+}
+
+ScriptHandler::LabelInfo ScriptHandler::getLabelByLine( int line )
+{
+    for ( int i=0 ; i<num_of_labels-1 ; i++ ){
+        if ( label_info[i+1].start_line > line )
+            return label_info[i];
+    }
+    errorAndExit( "getLabelByLine: Label is not found." );
+    return label_info[0];
 }
 
 char *ScriptHandler::getNext()
@@ -178,10 +252,12 @@ bool ScriptHandler::isKidoku()
     return (kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)))?true:false;
 }
 
-void ScriptHandler::markAsKidoku()
+void ScriptHandler::markAsKidoku( char *address )
 {
+    if ( !kidokuskip_flag ) return;
     int offset = current_script - script_buffer;
-    
+    if ( address ) offset = address - script_buffer;
+    //printf("mark (%c)%x:%x\n", *current_script, offset /8, offset%8);
     kidoku_buffer[ offset/8 ] |= ((char)1 << (offset % 8));
 }
 
@@ -207,13 +283,31 @@ int ScriptHandler::readToken()
     char ch = *buf++;
     //printf("read %x %x %c(%x)\n", buf-1, script_buffer, ch, ch );
     while ( ch == ' ' || ch == '\t' || ch == ':' ){
-        if ( ch == ':' ) text_flag = false;
+        if ( ch == ':' ){
+            line_head_flag = true;
+            text_flag = false;
+            markAsKidoku( buf-1 );
+            
+            addStringBuffer( ch, string_counter++ );
+            addStringBuffer( '\0', string_counter++ );
+            next_script = buf;
+            
+            return end_status;
+        }
+        if ( line_head_flag &&
+             last_stack_info == &root_stack_info ){
+            markAsKidoku( buf-1 );
+        }
+
         ch = *buf++;
     }
 
     if ( ch == 0x0a || ch == '\0' )
     {
-        if (line_head_flag) text_flag = false;
+        if ( last_stack_info == &root_stack_info )
+            markAsKidoku( buf-1 );
+        if (line_head_flag)
+            text_flag = false;
         line_head_flag = true;
 
         addStringBuffer( ch, string_counter++ );
@@ -224,7 +318,11 @@ int ScriptHandler::readToken()
         return end_status;
     }
 
-    if (line_head_flag) text_flag = true;
+    if ( line_head_flag ){
+        text_flag = true;
+        if ( last_stack_info == &root_stack_info )
+            markAsKidoku( buf-1 );
+    }
 
     if ( ch == '*' ){ // FIXME: Is this a correct fix ?
         // to interpret "goto* label" or "goto * label"
@@ -232,6 +330,8 @@ int ScriptHandler::readToken()
     }
 
     if ( ch == ';' ){
+        if ( last_stack_info == &root_stack_info )
+            markAsKidoku( buf-1 );
         addStringBuffer( ch, string_counter++ );
         do{
             ch = *buf++;
@@ -396,10 +496,12 @@ int ScriptHandler::readToken()
         buf++;
         SKIP_SPACE( buf );
     }
+#if 0
     else if ( *buf == ':' ){
+        text_flag = true;
         end_status |= END_COLON;
     }
-
+#endif
     if ( linepage_flag && text_flag )
         addStringBuffer( '\\', string_counter++ );
     
@@ -410,7 +512,7 @@ int ScriptHandler::readToken()
     return end_status;
 }
 
-bool ScriptHandler::skipToken()
+void ScriptHandler::skipToken()
 {
     current_script = next_script;
     char *buf = current_script;
@@ -419,7 +521,7 @@ bool ScriptHandler::skipToken()
     bool text_flag = false;
     while(1){
         if ( *buf == 0x0a || 
-             (!quat_flag && !text_flag && *buf == ':' ) ) break;
+             (!quat_flag && !text_flag && (*buf == ':' || *buf == ';') ) ) break;
         if ( *buf == '"' ) quat_flag = !quat_flag;
         if ( *buf & 0x80 ){
             buf += 2;
@@ -429,9 +531,6 @@ bool ScriptHandler::skipToken()
             buf++;
     }
     next_script = buf;
-
-    if ( *buf == 0x0a ) return true;
-    return false;
 }
 
 int ScriptHandler::getIntVariable( VariableInfo *var_info )
@@ -461,7 +560,7 @@ void ScriptHandler::parseStr( char **buf )
         if ( (*buf)[0] != ')' ) errorAndExit("parseStr: ) is not found.");
         (*buf)++;
 
-        if ( cBR->getAccessFlag( str_string_buffer ) ){
+        if ( findAndAddLog( FILE_LOG, str_string_buffer, false ) ){
             parseStr(buf);
             char *tmp_buf = new char[ strlen( str_string_buffer ) + 1 ];
             strcpy( tmp_buf, str_string_buffer );
@@ -566,9 +665,11 @@ const char *ScriptHandler::readStr( bool reread_flag )
         buf++;
         SKIP_SPACE( buf );
     }
+#if 0    
     else if ( *buf == ':' ){
         end_status |= END_COLON;
     }
+#endif    
     next_script = buf;
     
     strcpy( string_buffer, str_string_buffer );
@@ -591,9 +692,11 @@ int ScriptHandler::readInt( bool reread_flag )
         buf++;
         SKIP_SPACE( buf );
     }
+#if 0    
     else if ( *buf == ':' ){
         end_status |= END_COLON;
     }
+#endif    
     next_script = buf;
 
     return ret;
@@ -975,7 +1078,8 @@ int ScriptHandler::readScript( char *path )
 
 int ScriptHandler::labelScript()
 {
-    int  label_counter = -1;
+    int label_counter = -1;
+    int current_line = 0;
     char *buf = script_buffer;
     label_info = new LabelInfo[ num_of_labels ];
 
@@ -985,22 +1089,27 @@ int ScriptHandler::labelScript()
         {
             setCurrent( buf );
             label_info[ ++label_counter ].name = new char[ strlen(string_buffer) ];
+            label_info[ label_counter ].label_header = buf;
             for ( unsigned int i=0 ; i<strlen(string_buffer) ; i++ ){
                 label_info[ label_counter ].name[i] = string_buffer[i+1];
                 if ( 'a' <= label_info[ label_counter ].name[i] && label_info[ label_counter ].name[i] <= 'z' )
                     label_info[ label_counter ].name[i] += 'A' - 'a';
             }
-            while( *buf != 0x0a ) buf++;
-            buf++;
+            while( *buf != 0x0a && *buf != ';' && *buf != ':' ) buf++;
+            label_info[ label_counter ].num_of_lines = 0; // ';' or ':'
+            if ( *buf == 0x0a ){
+                buf++;
+                current_line++;
+            }
             label_info[ label_counter ].start_address = buf;
-            label_info[ label_counter ].num_of_lines  = 0;
-            label_info[ label_counter ].access_flag   = false;
+            label_info[ label_counter ].start_line    = current_line;
         }
         else{
             if ( label_counter >= 0 )
                 label_info[ label_counter ].num_of_lines++;
             while( *buf != 0x0a ) buf++;
             buf++;
+            current_line++;
         }
         text_flag = true;
     }
@@ -1011,10 +1120,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabel( const char *label )
 {
     int i = findLabel( label );
     if ( i >= 0 ){
-        if ( !label_info[i].access_flag ){
-            num_of_labels_accessed++;
-            label_info[i].access_flag = true;
-        }
+        findAndAddLog( LABEL_LOG, label_info[i].name, true );
         return label_info[i];
     }
 
@@ -1029,10 +1135,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabelNext( const char *labe
 {
     int i = findLabel( label );
     if ( i >= 0 && i+1 < num_of_labels ){
-        if ( !label_info[i+1].access_flag ){
-            num_of_labels_accessed++;
-            label_info[i+1].access_flag = true;
-        }
+        findAndAddLog( LABEL_LOG, label_info[i+1].name, true );
         return label_info[i+1];
     }
 
@@ -1040,64 +1143,126 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabelNext( const char *labe
     return label_info[0];
 }
 
-bool ScriptHandler::getLabelAccessFlag( const char *label )
+ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LOG_TYPE type, const char *name, bool add_flag )
 {
-    int i = findLabel( label );
-    if ( i >= 0 ){
-        return label_info[i].access_flag;
+    char capital_name[256];
+    for ( unsigned int i=0 ; i<strlen(name)+1 ; i++ ){
+        capital_name[i] = name[i];
+        if ( 'a' <= capital_name[i] && capital_name[i] <= 'z' ) capital_name[i] += 'A' - 'a';
+        else if ( capital_name[i] == '/' ) capital_name[i] = '\\';
     }
+    
+    LogInfo *info = NULL;
+    if ( type == LABEL_LOG )
+        info = &log_info[LABEL_LOG];
+    else
+        info = &log_info[FILE_LOG];
 
-    return false;
+    LogLink *cur = info->root_log.next;
+    while( cur ){
+        if ( !strcmp( cur->name, capital_name ) ) break;
+        cur = cur->next;
+    }
+    if ( !add_flag || cur ) return cur;
+
+    LogLink *link = new LogLink();
+    link->name = new char[strlen(capital_name)+1];
+    strcpy( link->name, capital_name );
+    info->current_log->next = link;
+    info->current_log = info->current_log->next;
+    info->num_logs++;
+    
+    return link;
 }
 
-void ScriptHandler::saveLabelLog()
+void ScriptHandler::deleteLog( LOG_TYPE type )
 {
-    FILE *fp;
-    int  i;
-    char buf[10];
+    LogInfo *info = NULL;
+    if ( type == LABEL_LOG )
+        info = &log_info[LABEL_LOG];
+    else
+        info = &log_info[FILE_LOG];
+    info->current_log = &info->root_log;
 
-    if ( ( fp = fopen( "NScrllog.dat", "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write NScrllog.dat\n" );
-        exit( -1 );
+    LogLink *link = info->root_log.next;
+
+    while( link ){
+        LogLink *tmp = link;
+        link = link->next;
+        delete tmp;
     }
-    
-    sprintf( buf, "%d", num_of_labels_accessed );
-    for ( i=0 ; i<(int)strlen( buf ) ; i++ ) fputc( buf[i], fp );
-    fputc( 0x0a, fp );
-    
-    for ( i=0 ; i<num_of_labels ; i++ ){
-        if ( label_info[i].access_flag ){
-            fputc( '"', fp );
-            for ( unsigned j=0 ; j<strlen( label_info[i].name ) ; j++ )
-                fputc( label_info[i].name[j] ^ 0x84, fp );
-            fputc( '"', fp );
-        }
-    }
-    
-    fclose( fp );
+    info->num_logs = 0;
+    info->root_log.next = NULL;
 }
 
-void ScriptHandler::loadLabelLog()
+void ScriptHandler::loadLog( LOG_TYPE type )
 {
-    FILE *fp;
+    deleteLog( type );
+    
     int i, j, ch, count = 0;
     char buf[100];
-    
-    if ( ( fp = fopen( "NScrllog.dat", "rb" ) ) != NULL ){
+
+    LogInfo *info = NULL;
+    if ( type == LABEL_LOG )
+        info = &log_info[LABEL_LOG];
+    else
+        info = &log_info[FILE_LOG];
+
+    FILE *fp; 
+    if ( ( fp = fopen( info->filename, "rb" ) ) != NULL ){
         while( (ch = fgetc( fp )) != 0x0a ){
             count = count * 10 + ch - '0';
         }
 
         for ( i=0 ; i<count ; i++ ){
             fgetc( fp );
-            j = 0;
+            j = 0; 
             while( (ch = fgetc( fp )) != '"' ) buf[j++] = ch ^ 0x84;
             buf[j] = '\0';
-            lookupLabel( buf );
+
+            findAndAddLog( type, buf, true );
         }
-        
+
         fclose( fp );
     }
+}
+
+void ScriptHandler::saveLog( LOG_TYPE type )
+{
+    int  i,j;
+    char buf[10];
+
+    LogInfo *info = NULL;
+    if ( type == LABEL_LOG )
+        info = &log_info[LABEL_LOG];
+    else
+        info = &log_info[FILE_LOG];
+
+    FILE *fp;
+    if ( ( fp = fopen( info->filename, "wb" ) ) == NULL ){
+        fprintf( stderr, "can't write NScrllog.dat\n" );
+        exit( -1 );
+    }
+
+    sprintf( buf, "%d", info->num_logs );
+    for ( i=0 ; i<(int)strlen( buf ) ; i++ ) fputc( buf[i], fp );
+    fputc( 0x0a, fp );
+
+    LogLink *cur = info->root_log.next;
+    for ( i=0 ; i<info->num_logs ; i++ ){
+        fputc( '"', fp );
+        for ( j=0 ; j<(int)strlen( cur->name ) ; j++ )
+            fputc( cur->name[j] ^ 0x84, fp );
+        fputc( '"', fp );
+        cur = cur->next;
+    }
+    
+    fclose( fp );
+}
+
+void ScriptHandler::setKidokuskip( bool kidokuskip_flag )
+{
+    this->kidokuskip_flag = kidokuskip_flag;
 }
 
 void ScriptHandler::saveKidokuData()
@@ -1109,7 +1274,7 @@ void ScriptHandler::saveKidokuData()
         return;
     }
 
-    fwrite( kidoku_buffer, 1, script_buffer_length/8 + 1, fp );
+    fwrite( kidoku_buffer, 1, script_buffer_length/8, fp );
     fclose( fp );
 }
 
@@ -1117,11 +1282,12 @@ void ScriptHandler::loadKidokuData()
 {
     FILE *fp;
 
+    setKidokuskip( true );
     kidoku_buffer = new char[ script_buffer_length/8 + 1 ];
     memset( kidoku_buffer, 0, script_buffer_length/8 + 1 );
 
     if ( ( fp = fopen( "kidoku.dat", "rb" ) ) != NULL ){
-        fread( kidoku_buffer, 1, script_buffer_length/8 + 1, fp );
+        fread( kidoku_buffer, 1, script_buffer_length/8, fp );
         fclose( fp );
     }
 }
@@ -1170,19 +1336,17 @@ void ScriptHandler::addStringBuffer( char ch, int string_counter )
 int ScriptHandler::findLabel( const char *label )
 {
     int i;
-    char *capital_label = new char[ strlen( label ) + 1 ];
+    char capital_label[256];
 
     for ( i=0 ; i<(int)strlen( label )+1 ; i++ ){
         capital_label[i] = label[i];
         if ( 'a' <= capital_label[i] && capital_label[i] <= 'z' ) capital_label[i] += 'A' - 'a';
     }
-    for ( i=0 ; i<num_of_labels ; i++ )
-        if ( !strcmp( label_info[i].name, capital_label ) ){
-            delete[] capital_label;
+    for ( i=0 ; i<num_of_labels ; i++ ){
+        if ( !strcmp( label_info[i].name, capital_label ) )
             return i;
-        }
+    }
 
-    delete[] capital_label;
     return -1;
 }
 

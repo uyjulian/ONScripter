@@ -22,6 +22,7 @@
  */
 
 #include "ONScripterLabel.h"
+#include "version.h"
 
 void optionHelp()
 {
@@ -40,7 +41,7 @@ void optionHelp()
 
 void optionVersion()
 {
-    printf("ONScripter version beta\n");
+    printf("ONScripter version %s\n", ONS_VERSION );
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
     printf("Copyright (c) 2001-2003 Ogapee.\n");
     printf("This is free software; see the source for copying conditions.\n");

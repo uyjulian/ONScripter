@@ -30,6 +30,8 @@ extern void initSJIS2UTF16();
 
 #define FONT_FILE "default.ttf"
 #define REGISTRY_FILE "registry.txt"
+#define DEFAULT_ENV_FONT "ÇlÇr ÉSÉVÉbÉN"
+#define DEFAULT_VOLUME 100
 
 typedef int (ONScripterLabel::*FuncList)();
 static struct FuncLUT{
@@ -103,7 +105,9 @@ static struct FuncLUT{
     {"menu_full", &ONScripterLabel::menu_fullCommand},
     {"lsph", &ONScripterLabel::lspCommand},
     {"lsp", &ONScripterLabel::lspCommand},
+    {"lookbacksp", &ONScripterLabel::lookbackspCommand},
     {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
+    {"lookbackbutton",      &ONScripterLabel::lookbackbuttonCommand},
     {"locate", &ONScripterLabel::locateCommand},
     {"loadgame", &ONScripterLabel::loadgameCommand},
     {"ld", &ONScripterLabel::ldCommand},
@@ -189,7 +193,6 @@ void ONScripterLabel::initSDL( bool cdaudio_flag )
     /* Initialize SDL */
     if ( TTF_Init() < 0 ){
         fprintf( stderr, "can't initialize SDL TTF\n");
-        SDL_Quit();
         exit(-1);
     }
 
@@ -318,7 +321,8 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     spclclk_flag = false;
     
     tmp_save_fp = NULL;
-    saveon_flag = true;
+    saveon_flag = true; // false while saveoff
+    internal_saveon_flag = true; // false within a sentence
     
     monocro_flag = monocro_flag_new = false;
     nega_mode = 0;
@@ -336,7 +340,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
-    fullscreen_mode = false;
     
     last_button_link = &root_button_link;
     current_over_button = 0;
@@ -363,10 +366,19 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
         cdrom_info = NULL;
     }
 
+    wave_play_loop_flag = false;
+    wave_file_name = NULL;
+    
+    midi_play_loop_flag = false;
+    midi_file_name = NULL;
+    midi_info  = NULL;
+
+    music_play_loop_flag = false;
+    cd_play_loop_flag = false;
+    mp3save_flag = false;
     mp3_sample = NULL;
     music_file_name = NULL;
     mp3_buffer = NULL;
-    midi_info  = NULL;
 #if defined(EXTERNAL_MUSIC_PLAYER)
     music_info = NULL;
 #endif
@@ -393,8 +405,6 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
         sprintf( font_file, "%s%s", archive_path, FONT_FILE );
     }
     
-    text_speed_no = 1;
-    
     new_line_skip_flag = false;
     erase_text_window_mode = 1;
     text_on_flag = true;
@@ -402,24 +412,27 @@ ONScripterLabel::ONScripterLabel( bool cdaudio_flag, char *default_font, char *d
     resetSentenceFont();
     if ( sentence_font.openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
         fprintf( stderr, "can't open font file: %s\n", font_file );
-        SDL_Quit();
         exit(-1);
     }
 
     /* ---------------------------------------- */
     /* Effect related variables */
+    setStr( &bg_info.file_name, "black");
     bg_effect_image = COLOR_EFFECT_IMAGE;
-
-    clearCurrentTextBuffer();
 
     /* ---------------------------------------- */
     /* Load global variables if available */
+    loadEnvData();
+    
     FILE *fp;
 
-    if ( ( fp = fopen( "global.sav", "rb" ) ) != NULL ){
+    if ( ( fp = fopen( "gloval.sav", "rb" ) ) != NULL ||
+         ( fp = fopen( "global.sav", "rb" ) ) != NULL ){
         loadVariables( fp, 200, VARIABLE_RANGE );
         fclose( fp );
     }
+
+    script_h.loadLog( ScriptHandler::LABEL_LOG );
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -437,12 +450,12 @@ void ONScripterLabel::resetSentenceFont()
     sentence_font.num_xy[1] = 16;
     sentence_font.pitch_xy[0] = sentence_font.font_size_xy[0];
     sentence_font.pitch_xy[1] = 2 + sentence_font.font_size_xy[1];
-    sentence_font.wait_time = default_text_speed[text_speed_no];
+    sentence_font.wait_time = 20;
     sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0x99;
     sentence_font_info.pos.x = 0;
     sentence_font_info.pos.y = 0;
-    sentence_font_info.pos.w = screen_width;
-    sentence_font_info.pos.h = screen_height;
+    sentence_font_info.pos.w = screen_width+1;
+    sentence_font_info.pos.h = screen_height+1;
 }
 
 void ONScripterLabel::blitRotation( SDL_Surface *src_surface, SDL_Rect *src_rect, SDL_Surface *dst_surface, SDL_Rect *dst_rect )
@@ -582,6 +595,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             }
             if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                  current_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                sprite_info[ current_button_link->sprite_no ].visible = true;
                 sprite_info[ current_button_link->sprite_no ].current_cell = 0;
             }
             dirty_rect.add( current_button_link->image_rect );
@@ -603,10 +617,11 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                 }
                 if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                      p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                    sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                     if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                         decodeExbtnControl( text_surface, p_button_link->exbtn_ctl );
                     }
+                    sprite_info[ p_button_link->sprite_no ].visible = true;
+                    sprite_info[ p_button_link->sprite_no ].current_cell = 1;
                 }
                 if ( nega_mode == 1 && !(event_mode & WAIT_INPUT_MODE) ) makeNegaSurface( text_surface, &p_button_link->image_rect );
                 if ( monocro_flag && !(event_mode & WAIT_INPUT_MODE) ) makeMonochromeSurface( text_surface, &p_button_link->image_rect );
@@ -647,6 +662,7 @@ void ONScripterLabel::executeLabel()
             last_tilde.current_script = script_h.getCurrent();
 
             if ( jumpf_flag ) jumpf_flag = false;
+            script_h.setKidokuskip( kidokuskip_flag );
 
             script_h.readToken(); string_buffer_offset = 0;
             continue;
@@ -662,9 +678,9 @@ void ONScripterLabel::executeLabel()
 
         if ( kidokuskip_flag ){
             if ( skip_flag && kidokumode_flag && !script_h.isKidoku() ) skip_flag = false;
-            script_h.markAsKidoku();
+            //script_h.markAsKidoku();
         }
-        
+
         char *current = script_h.getCurrent();
         ret = ScriptParser::parseLine();
         if ( ret == RET_NOMATCH ) ret = this->parseLine();
@@ -711,6 +727,12 @@ void ONScripterLabel::executeLabel()
     current_link_label_info->current_line = 0;
 
     if ( current_link_label_info->label_info.start_address != NULL ){
+        if ( kidokuskip_flag ){
+            char *buf = current_link_label_info->label_info.label_header;
+            script_h.markAsKidoku( buf );
+            while( *buf != 0x0a ) buf++;
+            script_h.markAsKidoku( buf );
+        }
         script_h.setCurrent( current_link_label_info->label_info.start_address );
         string_buffer_offset = 0;
         goto executeLabelTop;
@@ -742,18 +764,20 @@ int ONScripterLabel::parseLine( )
             fprintf( stderr, " command [%s] is not supported yet!!\n", s_buf );
 
             string_buffer_offset = 0;
-            if ( script_h.skipToken() ){
-                if ( kidokuskip_flag ) script_h.markAsKidoku();
-            }
+            script_h.skipToken();
+
             return RET_CONTINUE;
         }
     }
 
     /* Text */
-    if ( s_buf[string_buffer_offset] != 0x0a )
+    if ( s_buf[string_buffer_offset] != 0x0a ){
+        if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
         ret = textCommand();
-    else
+    }
+    else{
         ret = RET_CONTINUE;
+    }
 
     if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
          // for puttext
@@ -761,8 +785,14 @@ int ONScripterLabel::parseLine( )
            script_h.getEndStatus() & ScriptHandler::END_QUAT ) ){
         ret = RET_CONTINUE;
         if ( !new_line_skip_flag && script_h.isText() ){
+            if ( sentence_font.xy[0] < sentence_font.num_xy[0] ) // otherwise already done in drawChar
+                current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
             sentence_font.xy[0] = 0;
             sentence_font.xy[1]++;
+            if ( internal_saveon_flag ){
+                internal_saveon_flag = false;
+                saveSaveFile(-1);
+            }
         }
 
         event_mode = IDLE_EVENT_MODE;
@@ -825,6 +855,8 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         fprintf( stderr, " *** can't find file [%s] ***\n", file_name );
         return NULL;
     }
+    if ( filelog_flag )
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, file_name, true );
     //printf(" ... loading %s length %ld\n", file_name, length );
     buffer = new unsigned char[length];
     script_h.cBR->getFile( file_name, buffer );
@@ -1191,28 +1223,22 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
 
 void ONScripterLabel::clearCurrentTextBuffer()
 {
-    int i, j;
-    current_text_buffer->xy[0] = sentence_font.xy[0] = 0;
-    current_text_buffer->xy[1] = sentence_font.xy[1] = 0;
+    sentence_font.xy[0] = 0;
+    sentence_font.xy[1] = 0;
 
-    if ( current_text_buffer->buffer &&
+    if ( current_text_buffer->buffer2 &&
          (current_text_buffer->num_xy[0] != sentence_font.num_xy[0] ||
           current_text_buffer->num_xy[1] != sentence_font.num_xy[1] ) ){
-        delete[] current_text_buffer->buffer;
-        current_text_buffer->buffer = NULL;
+        delete[] current_text_buffer->buffer2;
+        current_text_buffer->buffer2 = NULL;
     }
-    if ( !current_text_buffer->buffer ){
-        current_text_buffer->buffer = new char[ sentence_font.num_xy[0] * sentence_font.num_xy[1] * 2];
+    if ( !current_text_buffer->buffer2 ){
+        current_text_buffer->buffer2 = new char[ (sentence_font.num_xy[0]*2+1) * sentence_font.num_xy[1] + 1 ];
         current_text_buffer->num_xy[0] = sentence_font.num_xy[0];
         current_text_buffer->num_xy[1] = sentence_font.num_xy[1];
     }
 
-    for ( i=0 ; i<current_text_buffer->num_xy[1] ; i++ ){
-        for ( j=0 ; j<current_text_buffer->num_xy[0] ; j++ ){
-            current_text_buffer->buffer[ (i * current_text_buffer->num_xy[0] + j) * 2 ] = 0x0;
-            current_text_buffer->buffer[ (i * current_text_buffer->num_xy[0] + j) * 2 + 1 ] = 0x0;
-        }
-    }
+    current_text_buffer->buffer2_count = 0;
 }
 
 void ONScripterLabel::shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *src_surface, SDL_Rect *clip, FontInfo *info )
@@ -1237,7 +1263,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *dst_surface, SDL_Surface *
         makeMonochromeSurface( dst_surface, &rect, info );
     }
     else if ( sentence_font_info.image_surface ){
-        /* drawTaggedSurface must be used intead !! */
+        /* drawTaggedSurface must be used instead !! */
         alphaBlend( dst_surface, sentence_font_info.pos,
                     src_surface, sentence_font_info.pos.x, sentence_font_info.pos.y,
                     sentence_font_info.image_surface, 0, 0,
@@ -1254,10 +1280,14 @@ void ONScripterLabel::newPage( bool next_flag )
     /* ---------------------------------------- */
     /* Set forward the text buffer */
     if ( next_flag ){
-        if ( current_text_buffer->xy[0] != 0 || current_text_buffer->xy[1] != 0 )
+        if ( current_text_buffer->buffer2_count != 0 ){
             current_text_buffer = current_text_buffer->next;
+            if ( start_text_buffer == current_text_buffer )
+                start_text_buffer = start_text_buffer->next;
+        }
     }
 
+    internal_saveon_flag = true;
     clearCurrentTextBuffer();
     if ( need_refresh_flag ){
         refreshSurfaceParameters();
@@ -1418,7 +1448,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         else
             top = z_order;
         for ( i=MAX_SPRITE_NUM-1 ; i>top ; i-- ){
-            if ( sprite_info[i].valid ){
+            if ( sprite_info[i].image_name && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
@@ -1441,7 +1471,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         else
             top = 0;
         for ( i=z_order ; i>=top ; i-- ){
-            if ( sprite_info[i].valid ){
+            if ( sprite_info[i].image_name && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
@@ -1491,13 +1521,13 @@ void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no, bool a
     }
 
     if ( sprite_info[sprite_no].image_name && 
-         ( sprite_info[ sprite_no ].valid != active_flag ||
+         ( sprite_info[ sprite_no ].visible != active_flag ||
            (cell_no >= 0 && sprite_info[ sprite_no ].current_cell != cell_no ) ) )
     {
         if ( cell_no >= 0 )
             sprite_info[ sprite_no ].current_cell = cell_no;
 
-        sprite_info[ sprite_no ].valid = active_flag;
+        sprite_info[ sprite_no ].visible = active_flag;
 
         if ( surface ){
             refreshSurface( surface, &sprite_info[ sprite_no ].pos );
@@ -1553,9 +1583,16 @@ void ONScripterLabel::setBackground( SDL_Surface *surface, SDL_Rect *clip )
 {
     if ( !bg_info.image_surface ||
          bg_info.image_surface->w != surface->w ||
-         bg_info.image_surface->h != surface->h )
-        SDL_FillRect( surface, clip, SDL_MapRGB( surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
-    
+         bg_info.image_surface->h != surface->h ){
+        if ( clip ){
+            SDL_Rect rect = *clip;
+            SDL_FillRect( surface, &rect, SDL_MapRGB( surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
+        }
+        else{
+            SDL_FillRect( surface, NULL, SDL_MapRGB( surface->format, bg_info.color[0], bg_info.color[1], bg_info.color[2]) );
+        }
+    }
+
     if ( bg_info.image_surface ){
         SDL_Rect src_rect, dst_rect;
         src_rect.x = 0;
@@ -1585,21 +1622,108 @@ void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool ab
 
     parseTaggedString( &cursor_info[ no ] );
     setupAnimationInfo( &cursor_info[ no ] );
-    if ( cursor_info[ no ].image_surface )
-        cursor_info[ no ].valid = true;
+    if ( filelog_flag )
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, cursor_info[ no ].file_name, true ); // a trick for save file
     cursor_info[ no ].abs_flag = abs_flag;
+    if ( cursor_info[ no ].image_surface )
+        cursor_info[ no ].visible = true;
+    else
+        cursor_info[ no ].remove();
 }
 
 void ONScripterLabel::saveAll()
 {
+    saveEnvData();
     saveGlovalData();
-    saveFileLog();
-    if ( labellog_flag ) script_h.saveLabelLog();
+    if ( filelog_flag )  script_h.saveLog( ScriptHandler::FILE_LOG );
+    if ( labellog_flag ) script_h.saveLog( ScriptHandler::LABEL_LOG );
     if ( kidokuskip_flag ) script_h.saveKidokuData();
+}
+
+void ONScripterLabel::loadEnvData()
+{
+    fullscreen_mode = false;
+    volume_on_flag = true;
+    text_speed_no = 1;
+    draw_one_page_flag = false;
+    default_env_font = NULL;
+    cdaudio_on_flag = true;
+    default_cdrom_drive = NULL;
+    kidokumode_flag = true;
+    
+    FILE *fp;
+    int i;
+    
+    if ( (fp = fopen( "envdata", "r" )) != NULL ){
+        loadInt( fp, &i );
+        if (i == 1) menu_fullCommand();
+        loadInt( fp, &i );
+        if (i == 0) volume_on_flag = false;
+        loadInt( fp, &text_speed_no );
+        loadInt( fp, &i );
+        if (i == 1) draw_one_page_flag = true;
+        loadStr( fp, &default_env_font );
+        loadInt( fp, &i );
+        if (i == 0) cdaudio_on_flag = false;
+        loadStr( fp, &default_cdrom_drive );
+        loadInt( fp, &voice_volume );
+        voice_volume = DEFAULT_VOLUME - voice_volume;
+        loadInt( fp, &se_volume );
+        se_volume = DEFAULT_VOLUME - se_volume;
+        loadInt( fp, &mp3_volume );
+        mp3_volume = DEFAULT_VOLUME - mp3_volume;
+        loadInt( fp, &i );
+        if (i == 0) kidokumode_flag = false;
+        fclose( fp );
+    }
+    else{
+        setStr( &default_env_font, DEFAULT_ENV_FONT );
+        voice_volume = se_volume = mp3_volume = DEFAULT_VOLUME;
+    }
+}
+
+void ONScripterLabel::saveEnvData()
+{
+    FILE *fp;
+
+    if ( (fp = fopen( "envdata", "w" )) != NULL ){
+        saveInt( fp, fullscreen_mode?1:0 );
+        saveInt( fp, volume_on_flag?1:0 );
+        saveInt( fp, text_speed_no );
+        saveInt( fp, draw_one_page_flag?1:0 );
+        saveStr( fp, default_env_font );
+        saveInt( fp, cdaudio_on_flag?1:0 );
+        saveStr( fp, default_cdrom_drive );
+        saveInt( fp, DEFAULT_VOLUME - voice_volume );
+        saveInt( fp, DEFAULT_VOLUME - se_volume );
+        saveInt( fp, DEFAULT_VOLUME - mp3_volume );
+        saveInt( fp, kidokumode_flag?1:0 );
+        fclose( fp );
+    }
 }
 
 bool ONScripterLabel::isTextVisible()
 {
     return ( next_display_mode == TEXT_DISPLAY_MODE ||
              erase_text_window_mode == 0 && text_on_flag );
+}
+
+void ONScripterLabel::quit()
+{
+    saveAll();
+    
+    if ( cdrom_info ){
+        SDL_CDStop( cdrom_info );
+        SDL_CDClose( cdrom_info );
+    }
+    if ( midi_info ){
+        Mix_HaltMusic();
+        Mix_FreeMusic( midi_info );
+    }
+#if defined(EXTERNAL_MUSIC_PLAYER)
+    if ( music_info ){
+        Mix_HaltMusic();
+        Mix_FreeMusic( music_info );
+    }
+#endif
 }

@@ -33,9 +33,10 @@ AnimationInfo::AnimationInfo(){
     file_name = NULL;
     mask_file_name = NULL;
     is_animatable = false;
+    pos.x = pos.y = 0;
 
     /* Variables from AnimationInfo */
-    valid = false;
+    visible = false;
     image_name = NULL;
     image_surface = NULL;
     mask_surface = NULL;
@@ -75,7 +76,6 @@ void AnimationInfo::deleteSurface(){
 }
 
 void AnimationInfo::remove(){
-    valid = false;
     trans = 255;
     deleteImageName();
     deleteSurface();

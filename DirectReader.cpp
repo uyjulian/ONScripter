@@ -235,11 +235,6 @@ struct DirectReader::FileInfo DirectReader::getFileByIndex( int index )
     return fi;
 }
 
-bool DirectReader::getAccessFlag( const char *file_name )
-{
-    return false;
-}
-
 FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
 {
     FILE *fp;

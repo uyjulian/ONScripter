@@ -34,8 +34,8 @@
 #endif
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
-#define SAVEFILE_VERSION_MAJOR 1
-#define SAVEFILE_VERSION_MINOR 7
+#define SAVEFILE_VERSION_MAJOR 2
+#define SAVEFILE_VERSION_MINOR 0
 
 #define READ_LENGTH 4096
 
@@ -105,7 +105,7 @@ int ONScripterLabel::loadSaveFile( int no )
 {
     FILE *fp;
     char file_name[256], *str = NULL;
-    int  i, j, address;
+    int  i, j, k, address;
     int  file_version;
     
     sprintf( file_name, "save%d.dat", no );
@@ -118,9 +118,30 @@ int ONScripterLabel::loadSaveFile( int no )
     /* Load magic number */
     for ( i=0 ; i<(int)strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
         if ( fgetc( fp ) != SAVEFILE_MAGIC_NUMBER[i] ) break;
-    if ( i != (int)strlen( SAVEFILE_MAGIC_NUMBER ) ){ // in the case of old file format
-        file_version = 0;
+    if ( i != (int)strlen( SAVEFILE_MAGIC_NUMBER ) ){ // if not ONS save file
         fseek( fp, 0, SEEK_SET );
+        // check for ONS version 0
+        bool ons_ver0_flag = false;
+        loadInt( fp, &j );
+        if ( j != 1 ) ons_ver0_flag = true;
+        loadInt( fp, &j );
+        loadInt( fp, &j );
+        loadInt( fp, &j );
+        if ( j != 0 ) ons_ver0_flag = true;
+        loadInt( fp, &j );
+        loadInt( fp, &j );
+        if ( j != 0xff ) ons_ver0_flag = true;
+        loadInt( fp, &j );
+        if ( j != 0xff ) ons_ver0_flag = true;
+        loadInt( fp, &j );
+        if ( j != 0xff ) ons_ver0_flag = true;
+        
+        fseek( fp, 0, SEEK_SET );
+        if ( !ons_ver0_flag ){
+            printf("Save file version is unknown\n" );
+            return loadSaveFile2( fp );
+        }
+        file_version = 0;
     }
     else{
         file_version = (fgetc( fp ) * 100) + fgetc( fp );
@@ -130,6 +151,9 @@ int ONScripterLabel::loadSaveFile( int no )
         fprintf( stderr, "Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
         return -1;
     }
+
+    if ( file_version >= 200 )
+        return loadSaveFile2( fp );
     
     deleteLabelLink();
 
@@ -139,20 +163,49 @@ int ONScripterLabel::loadSaveFile( int no )
         loadInt( fp, &tateyoko_mode );
     else
         tateyoko_mode = 0;
+    int text_history_num;
     loadInt( fp, &text_history_num );
-    struct TextBuffer *tb = &text_buffer[0];
+    struct TextBuffer *tb = current_text_buffer;
     for ( i=0 ; i<text_history_num ; i++ ){
         loadInt( fp, &tb->num_xy[0] );
         loadInt( fp, &tb->num_xy[1] );
-        loadInt( fp, &tb->xy[0] );
-        loadInt( fp, &tb->xy[1] );
-        if ( tb->buffer ) delete[] tb->buffer;
-        tb->buffer = new char[ tb->num_xy[0] * tb->num_xy[1] * 2 ];
-        for ( j=0 ; j<tb->num_xy[0] * tb->num_xy[1] * 2 ; j++ )
-            tb->buffer[j] = fgetc( fp );
+        int xy[2];
+        loadInt( fp, &xy[0] );
+        loadInt( fp, &xy[1] );
+        if ( tb->buffer2 ) delete[] tb->buffer2;
+        tb->buffer2_count = 0;
+        tb->buffer2 = new char[ (tb->num_xy[0]*2+1) * tb->num_xy[1] + 1 ];
+
+        char ch1, ch2;
+        for ( j=0, k=0 ; j<tb->num_xy[0] * tb->num_xy[1] ; j++ ){
+            ch1 = fgetc( fp );
+            ch2 = fgetc( fp );
+            if ( ch1 == ((char*)"@")[0] &&
+                 ch2 == ((char*)"@")[1] ){
+                k += 2;
+            }
+            else{
+                if ( ch1 ){
+                    tb->buffer2[tb->buffer2_count++] = ch1;
+                    k++;
+                }
+                if ( ch1 & 0x80 || ch2 ){
+                    tb->buffer2[tb->buffer2_count++] = ch2;
+                    k++;
+                }
+            }
+            if ( k >= tb->num_xy[0] * 2 ){
+                tb->buffer2[tb->buffer2_count++] = 0x0a;
+                k = 0;
+            }
+        }
         tb = tb->next;
+        if ( i==0 ){
+            for ( j=0 ; j<max_text_buffer - text_history_num ; j++ )
+                tb = tb->next;
+            start_text_buffer = tb;
+        }
     }
-    current_text_buffer = &text_buffer[0];
 
     /* ---------------------------------------- */
     /* Load sentence font */
@@ -214,13 +267,19 @@ int ONScripterLabel::loadSaveFile( int no )
     
     /* ---------------------------------------- */
     /* Load link label info */
-    label_stack_depth = 0;
 
     while( 1 ){
         loadStr( fp, &str );
         current_link_label_info->label_info = script_h.lookupLabel( str );
         
         loadInt( fp, &current_link_label_info->current_line );
+        current_link_label_info->current_line++;
+        char *buf = current_link_label_info->label_info.label_header;
+        while( buf < current_link_label_info->label_info.start_address ){
+            if ( *buf == 0x0a )
+                current_link_label_info->current_line--;
+            buf++;
+        }
 
         int offset;
         loadInt( fp, &offset );
@@ -250,7 +309,6 @@ int ONScripterLabel::loadSaveFile( int no )
         current_link_label_info->next->previous = current_link_label_info;
         current_link_label_info = current_link_label_info->next;
         current_link_label_info->next = NULL;
-        label_stack_depth++;
     }
     script_h.setCurrent( current_link_label_info->current_script );
     string_buffer_offset = current_link_label_info->string_buffer_offset;
@@ -321,9 +379,9 @@ int ONScripterLabel::loadSaveFile( int no )
 
     /* ---------------------------------------- */
     /* Load current sprites */
-    for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+    for ( i=0 ; i<256 ; i++ ){
         loadInt( fp, &j );
-        sprite_info[i].valid = (j==1)?true:false;
+        sprite_info[i].visible = (j==1)?true:false;
         loadInt( fp, &j ); sprite_info[i].pos.x = j * screen_ratio1 / screen_ratio2;
         loadInt( fp, &j ); sprite_info[i].pos.y = j * screen_ratio1 / screen_ratio2;
         loadInt( fp, &sprite_info[i].trans );
@@ -338,9 +396,27 @@ int ONScripterLabel::loadSaveFile( int no )
     /* Load current playing CD track */
     stopBGM( false );
     current_cd_track = (Sint8)fgetc( fp );
-    music_play_once_flag = (fgetc( fp )==1)?true:false;
-    loadStr( fp, &music_file_name );
-
+    bool play_once_flag = (fgetc( fp )==1)?true:false;
+    if ( current_cd_track == -2 ){
+        loadStr( fp, &midi_file_name );
+        midi_play_loop_flag = !play_once_flag;
+        setStr( &music_file_name, NULL );
+        music_play_loop_flag = false;
+    }
+    else{
+        loadStr( fp, &music_file_name );
+        if ( music_file_name ){
+            music_play_loop_flag = !play_once_flag;
+            cd_play_loop_flag = false;
+        }
+        else{
+            music_play_loop_flag = false;
+            cd_play_loop_flag = !play_once_flag;
+        }
+        setStr( &midi_file_name, NULL );
+        midi_play_loop_flag = false;
+    }
+    
     if ( current_cd_track >= 0 ){
         if ( cdaudio_flag ){
             if ( cdrom_info ) playCDAudio( current_cd_track );
@@ -349,16 +425,22 @@ int ONScripterLabel::loadSaveFile( int no )
             playMP3( current_cd_track );
         }
     }
-    else if ( music_file_name ){
-        if ( current_cd_track == -2 )
-            playMIDIFile();
-        else
-            if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+    else if ( midi_file_name && midi_play_loop_flag ){
+        playMIDIFile();
+    }
+    else if ( music_file_name && music_play_loop_flag ){
+        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
 #if defined(EXTERNAL_MUSIC_PLAYER)
-                playMusicFile();
+            playMusicFile();
 #else
-                playMP3( current_cd_track );
+            playMP3( 0 );
 #endif
+        else{
+            setStr( &wave_file_name, music_file_name );
+            wave_play_loop_flag = music_play_loop_flag;
+            setStr( &music_file_name, NULL );
+            music_play_loop_flag = false;
+        }
     }
 
     /* ---------------------------------------- */
@@ -380,43 +462,81 @@ int ONScripterLabel::loadSaveFile( int no )
     event_mode = tmp_event_mode;
     if ( event_mode & WAIT_BUTTON_MODE ) event_mode = WAIT_SLEEP_MODE; // Re-execute the selectCommand, etc.
 
+    if ( event_mode & WAIT_SLEEP_MODE )
+        event_mode &= ~WAIT_SLEEP_MODE;
+    else
+        event_mode |= WAIT_ANIMATION_MODE;
+    
     return 0;
+}
+
+void ONScripterLabel::saveMagicNumber( FILE *fp )
+{
+    for ( unsigned int i=0 ; i<strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
+        fputc( SAVEFILE_MAGIC_NUMBER[i], fp );
+    fputc( SAVEFILE_VERSION_MAJOR, fp );
+    fputc( SAVEFILE_VERSION_MINOR, fp );
+}
+
+void ONScripterLabel::saveSaveFileFromTmpFile( FILE *fp )
+{
+    int c;
+    long len;
+    char *buf = new char[ READ_LENGTH ];
+        
+    fseek( tmp_save_fp, 0, SEEK_END );
+    len = ftell( tmp_save_fp );
+    fseek( tmp_save_fp, 0, SEEK_SET );
+    while( len > 0 ){
+        if ( len > READ_LENGTH ) c = READ_LENGTH;
+        else                     c = len;
+        len -= c;
+        fread( buf, 1, c, tmp_save_fp );
+        fwrite( buf, 1, c, fp );
+    }
+
+    delete[] buf;
 }
 
 int ONScripterLabel::saveSaveFile( int no )
 {
-    FILE *fp;
-    int i, j;
-    char file_name[256];
+    if ( no >= 0 )
+    {
+        FILE *fp;
+        char file_name[256];
 
-    if ( no >= 0 ){
         saveAll();
-        sprintf( file_name, "save%d.dat", no );
 
+        sprintf( file_name, "save%d.dat", no );
         if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
-            fprintf( stderr, "can't open save file %s\n", file_name );
+            fprintf( stderr, "can't open save file %s for writing\n", file_name );
             return -1;
         }
 
-        if ( !saveon_flag ){
-            int c;
-            long len;
-            char *buf = new char[ READ_LENGTH ];
-        
-            fseek( tmp_save_fp, 0, SEEK_END );
-            len = ftell( tmp_save_fp );
-            fseek( tmp_save_fp, 0, SEEK_SET );
-            while( len > 0 ){
-                if ( len > READ_LENGTH ) c = READ_LENGTH;
-                else                     c = len;
-                len -= c;
-                fread( buf, 1, c, tmp_save_fp );
-                fwrite( buf, 1, c, fp );
-            }
+        if ( !saveon_flag || !internal_saveon_flag ){
+            saveMagicNumber( fp );
+            saveSaveFileFromTmpFile( fp );
             fclose( fp );
+        }
+        else{
+            saveMagicNumber( fp );
+            saveSaveFile2( fp );
+            fclose(fp);
+        }
 
-            delete[] buf;
+        sprintf( file_name, "sav/save%d.dat", no );
+        if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
+            fprintf( stderr, "can't open save file %s for writing (not error)\n", file_name );
             return 0;
+        }
+
+        if ( !saveon_flag || !internal_saveon_flag ){
+            saveSaveFileFromTmpFile( fp );
+            fclose( fp );
+        }
+        else{
+            saveSaveFile2( fp );
+            fclose(fp);
         }
     }
     else{
@@ -425,142 +545,8 @@ int ONScripterLabel::saveSaveFile( int no )
             fprintf( stderr, "can't open tmp_file\n");
             return -1;
         }
-        fp = tmp_save_fp;
+        saveSaveFile2( tmp_save_fp );
     }
-
-    /* ---------------------------------------- */
-    /* Save magic number */
-    for ( i=0 ; i<(int)strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
-        fputc( SAVEFILE_MAGIC_NUMBER[i], fp );
-    fputc( SAVEFILE_VERSION_MAJOR, fp );
-    fputc( SAVEFILE_VERSION_MINOR, fp );
-    
-    /* ---------------------------------------- */
-    /* Save text history */
-    saveInt( fp, tateyoko_mode );
-    saveInt( fp, text_history_num );
-    struct TextBuffer *tb = current_text_buffer;
-    for ( i=0 ; i<text_history_num ; i++ ){
-        saveInt( fp, tb->num_xy[0] );
-        saveInt( fp, tb->num_xy[1] );
-        saveInt( fp, tb->xy[0] );
-        saveInt( fp, tb->xy[1] );
-        for ( j=0 ; j<tb->num_xy[0] * tb->num_xy[1] * 2 ; j++ )
-            fputc( tb->buffer[j], fp );
-        tb = tb->next;
-    }
-
-    /* ---------------------------------------- */
-    /* Save sentence font */
-    //saveInt( fp, (sentence_font.is_valid?1:0) );
-    saveInt( fp, 0 ); // dummy write, must be removed later
-    saveInt( fp, sentence_font.font_size_xy[0] );
-    saveInt( fp, sentence_font.font_size_xy[1] );
-    saveInt( fp, sentence_font.top_xy[0] );
-    saveInt( fp, sentence_font.top_xy[1] );
-    saveInt( fp, sentence_font.num_xy[0] );
-    saveInt( fp, sentence_font.num_xy[1] );
-    saveInt( fp, sentence_font.xy[0] );
-    saveInt( fp, sentence_font.xy[1] );
-    saveInt( fp, sentence_font.pitch_xy[0] );
-    saveInt( fp, sentence_font.pitch_xy[1] );
-    saveInt( fp, sentence_font.wait_time );
-    saveInt( fp, (sentence_font.is_bold?1:0) );
-    saveInt( fp, (sentence_font.is_shadow?1:0) );
-    saveInt( fp, (sentence_font.is_transparent?1:0) );
-    /* Dummy, must be removed later !! */
-    for ( i=0 ; i<8 ; i++ )
-        saveInt( fp, 0 );
-    /* Should be char, not integer !! */
-    for ( i=0 ; i<3 ; i++ )
-        saveInt( fp, sentence_font.window_color[i] );
-    saveStr( fp, sentence_font_info.image_name );
-    saveInt( fp, sentence_font_info.pos.x * screen_ratio2 / screen_ratio1 );
-    saveInt( fp, sentence_font_info.pos.y * screen_ratio2 / screen_ratio1 );
-    saveInt( fp, sentence_font_info.pos.w * screen_ratio2 / screen_ratio1 );
-    saveInt( fp, sentence_font_info.pos.h * screen_ratio2 / screen_ratio1 );
-
-    saveInt( fp, clickstr_state );
-    saveInt( fp, new_line_skip_flag?1:0 );
-    saveInt( fp, erase_text_window_mode );
-    
-    /* ---------------------------------------- */
-    /* Save link label info */
-    current_link_label_info->current_script = script_h.getCurrent();
-    current_link_label_info->string_buffer_offset = string_buffer_offset;
-    LinkLabelInfo *info = &root_link_label_info;
-
-    while( info ){
-        fprintf( fp, "%s", info->label_info.name );
-        fputc( 0, fp );
-        saveInt( fp, info->current_line );
-
-        script_h.pushCurrent( info->label_info.start_address );
-        script_h.skipLine( info->current_line );
-        saveInt( fp, info->current_script - script_h.getCurrent() );
-        script_h.popCurrent();
-        saveInt( fp, info->string_buffer_offset );
-
-        if ( info->next ) fputc( 1, fp );
-        info = info->next;
-    }
-    fputc( 0, fp );
-
-    fputc( shelter_event_mode, fp );
-    
-    /* ---------------------------------------- */
-    /* Save variables */
-    saveVariables( fp, 0, 200 );
-    
-    /* ---------------------------------------- */
-    /* Save monocro flag */
-    monocro_flag?fputc(1,fp):fputc(0,fp);
-    monocro_flag_new?fputc(1,fp):fputc(0,fp);
-    for ( i=0 ; i<3 ; i++ ) fputc( monocro_color[i], fp );
-    for ( i=0 ; i<3 ; i++ ) fputc( monocro_color_new[i], fp );
-
-    need_refresh_flag?fputc(1,fp):fputc(0,fp);
-    
-    /* Save nega flag */
-    fputc( nega_mode, fp );
-
-    /* ---------------------------------------- */
-    /* Save current images */
-    fputc( bg_info.color[0], fp );
-    fputc( bg_info.color[1], fp );
-    fputc( bg_info.color[2], fp );
-    saveStr( fp, bg_info.file_name );
-    fputc( bg_effect_image, fp );
-
-    saveStr( fp, tachi_info[0].image_name );
-    saveStr( fp, tachi_info[1].image_name );
-    saveStr( fp, tachi_info[2].image_name );
-
-    /* ---------------------------------------- */
-    /* Save current sprites */
-    for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        saveInt( fp, sprite_info[i].valid?1:0 );
-        saveInt( fp, sprite_info[i].pos.x * screen_ratio2 / screen_ratio1 );
-        saveInt( fp, sprite_info[i].pos.y * screen_ratio2 / screen_ratio1 );
-        saveInt( fp, sprite_info[i].trans );
-        saveStr( fp, sprite_info[i].image_name );
-    }
-
-    /* ---------------------------------------- */
-    /* Save current playing CD track */
-    fputc( (Sint8)current_cd_track, fp );
-    music_play_once_flag?fputc(1,fp):fputc(0,fp);
-    saveStr( fp, music_file_name );
-    
-    /* ---------------------------------------- */
-    /* Save rmode flag */
-    rmode_flag?fputc(1,fp):fputc(0,fp);
-
-    /* ---------------------------------------- */
-    /* Save text on flag */
-    text_on_flag?fputc(1,fp):fputc(0,fp);
-
-    if ( no >= 0 ) fclose( fp );
 
     return 0;
 }

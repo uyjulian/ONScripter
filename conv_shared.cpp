@@ -94,7 +94,7 @@ void init_source (j_decompress_ptr cinfo)
 {
 }
 
-int fill_input_buffer (j_decompress_ptr cinfo)
+boolean fill_input_buffer (j_decompress_ptr cinfo)
 {
     my_source_mgr *src = (my_source_mgr *)cinfo->src;
     
@@ -124,7 +124,7 @@ void init_destination (j_compress_ptr cinfo)
     dest->pub.free_in_buffer = dest->left;
 }
 
-int empty_output_buffer (j_compress_ptr cinfo)
+boolean empty_output_buffer (j_compress_ptr cinfo)
 {
     my_destination_mgr * dest = (my_destination_mgr *) cinfo->dest;
 

@@ -274,7 +274,7 @@ int ScriptParser::rmenuCommand()
 
 int ScriptParser::returnCommand()
 {
-    if ( --label_stack_depth < 0 ) errorAndExit( "return: too many returns" );
+    if ( current_link_label_info->previous == NULL ) errorAndExit( "return: too many returns" );
     
     current_link_label_info = current_link_label_info->previous;
 
@@ -517,10 +517,11 @@ int ScriptParser::menuselectcolorCommand()
     return RET_CONTINUE;
 }
 
-int ScriptParser::lookbackspCommand()
+int ScriptParser::maxkaisoupageCommand()
 {
-    for ( int i=0 ; i<2 ; i++ )
-        lookback_sp[i] = script_h.readInt();
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "maxkaisoupage: not in the define section" );
+
+    max_text_buffer = script_h.readInt();
 
     return RET_CONTINUE;
 }
@@ -530,15 +531,6 @@ int ScriptParser::lookbackcolorCommand()
     const char *buf = script_h.readStr();
     readColor( &lookback_color, buf );
 
-    return RET_CONTINUE;
-}
-
-int ScriptParser::lookbackbuttonCommand()
-{
-    for ( int i=0 ; i<4 ; i++ ){
-        const char *buf = script_h.readStr();
-        setStr( &lookback_image_name[i], buf );
-    }
     return RET_CONTINUE;
 }
 
@@ -564,9 +556,10 @@ int ScriptParser::lenCommand()
 
 int ScriptParser::labellogCommand()
 {
-    script_h.loadLabelLog();
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "labellog: not in the define section" );
 
     labellog_flag = true;
+
     return RET_CONTINUE;
 }
 
@@ -640,14 +633,14 @@ int ScriptParser::ifCommand()
     while(1){
         if ( script_h.getStringBuffer()[0] == 'f' ){ // fchk
             const char *buf = script_h.readStr();
-            f = script_h.cBR->getAccessFlag( buf );
-            //printf("fchk %s(%d,%d) ", tmp_string_buffer, cBR->getAccessFlag( tmp_string_buffer ), condition_flag );
+            f = (script_h.findAndAddLog( ScriptHandler::FILE_LOG, buf, false ));
+            //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
         else if ( script_h.getStringBuffer()[0] == 'l' ){ // lchk
             script_h.readToken();
             const char *buf = script_h.getStringBuffer();
-            f = script_h.getLabelAccessFlag( buf+1 );
-            //printf("lchk %s(%d,%d) ", tmp_string_buffer, getLabelAccessFlag( tmp_string_buffer+1 ), condition_flag );
+            f = (script_h.findAndAddLog( ScriptHandler::LABEL_LOG, buf+1, false ));
+            //printf("lchk %s(%d,%d) ", tmp_string_buffer, script_h.fineAndAddLabelLog( tmp_string_buffer+1, false ), condition_flag );
         }
         else if ( script_h.current_variable.type == ScriptHandler::VAR_STR || 
                   script_h.current_variable.type == ScriptHandler::VAR_STR_CONST ){
@@ -694,7 +687,9 @@ int ScriptParser::ifCommand()
         }
         condition_flag &= (if_flag)?(f):(!f);
 
+        script_h.setKidokuskip( false );
         script_h.readToken();
+        script_h.setKidokuskip( kidokuskip_flag );
         if ( script_h.getStringBuffer()[0] == '&' ){
             script_h.readToken();
             continue;
@@ -703,8 +698,10 @@ int ScriptParser::ifCommand()
     };
 
     /* Execute command */
-    if ( condition_flag )
+    if ( condition_flag ){
+        script_h.markAsKidoku();
         return RET_CONTINUE_NOREAD;
+    }
     else
         return RET_SKIP_LINE;
 }
@@ -730,8 +727,6 @@ int ScriptParser::gotoCommand()
 
 void ScriptParser::gosubReal( const char *label, bool textgosub_flag, char *current )
 {
-    label_stack_depth++;
-    
     current_link_label_info->current_script = current;
     current_link_label_info->string_buffer_offset = string_buffer_offset;
 
@@ -816,6 +811,8 @@ int ScriptParser::filelogCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "filelog: not in the define section" );
 
     filelog_flag = true;
+    script_h.loadLog( ScriptHandler::FILE_LOG );
+    
     return RET_CONTINUE;
 }
 
@@ -906,6 +903,15 @@ int ScriptParser::defaultspeedCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "defaultspeed: not in the define section" );
 
     for ( int i=0 ; i<3 ; i++ ) default_text_speed[i] = script_h.readInt();
+
+    return RET_CONTINUE;
+}
+
+int ScriptParser::defaultfontCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "defaultfont: not in the define section" );
+
+    setStr( &default_env_font, script_h.readStr() );
 
     return RET_CONTINUE;
 }

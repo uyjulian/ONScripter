@@ -40,8 +40,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define MAX_TEXT_BUFFER 10
-
 typedef unsigned char uchar3[3];
 
 class ScriptParser
@@ -55,10 +53,7 @@ public:
 
     FILE *fopen(const char *path, const char *mode);
     void saveGlovalData();
-    void loadFileLog();
-    void saveFileLog();
-    void saveLabelLog();
-    
+
     /* Command */
     int windowbackCommand();
     int versionstrCommand();
@@ -91,9 +86,9 @@ public:
     int menusetwindowCommand();
     int menuselectvoiceCommand();
     int menuselectcolorCommand();
-    int lookbackspCommand();
+    int maxkaisoupageCommand();
     int lookbackcolorCommand();
-    int lookbackbuttonCommand();
+    //int lookbackbuttonCommand();
     int linepageCommand();
     int lenCommand();
     int labellogCommand();
@@ -119,6 +114,7 @@ public:
     int defsevolCommand();
     int defmp3volCommand();
     int defaultspeedCommand();
+    int defaultfontCommand();
     int decCommand();
     int dateCommand();
     int cmpCommand();
@@ -137,6 +133,10 @@ protected:
         bool textgosub_flag; // Set if the current token is in text line, used when encountered an atmark while textgosub
         int string_buffer_offset;
         char *current_script;
+
+        LinkLabelInfo(){
+            previous = next = NULL;
+        };
     } last_tilde;
 
     enum { SYSTEM_NULL        = 0,
@@ -171,11 +171,10 @@ protected:
     char *archive_path;
     char *nsa_path;
     bool globalon_flag;
-    bool filelog_flag;
     bool labellog_flag;
+    bool filelog_flag;
     bool kidokuskip_flag;
     bool kidokumode_flag;
-    int label_stack_depth;
 
     bool jumpf_flag;
     int z_order;
@@ -214,7 +213,7 @@ protected:
         EffectLink(){
             next = NULL;
             effect = 10;
-            duration = 1000;
+            duration = 0;
         };
     };
     
@@ -228,7 +227,7 @@ protected:
 
     /* ---------------------------------------- */
     /* Lookback related variables */
-    char *lookback_image_name[4];
+    //char *lookback_image_name[4];
     int lookback_sp[2];
     uchar3 lookback_color;
     
@@ -278,14 +277,15 @@ protected:
 
     /* ---------------------------------------- */
     /* Text related variables */
+    char *default_env_font;
     int default_text_speed[3];
     struct TextBuffer{
         struct TextBuffer *next, *previous;
-        char *buffer;
+        char *buffer2;
         int num_xy[2];
-        int xy[2];
-    } text_buffer[ MAX_TEXT_BUFFER ], *current_text_buffer; // ring buffer
-    int text_history_num;
+        int buffer2_count;
+    } *text_buffer, *start_text_buffer, *current_text_buffer; // ring buffer
+    int max_text_buffer;
     int  clickstr_num;
     char *clickstr_list;
     int  clickstr_line;

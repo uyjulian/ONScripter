@@ -40,7 +40,6 @@
 
 static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
-bool midi_play_once_flag = false;
 #if defined(EXTERNAL_MUSIC_PLAYER)
 bool ext_music_play_once_flag = false;
 #endif
@@ -124,11 +123,9 @@ void midiCallback( int sig )
     int status;
     wait( &status );
 #endif
-    if ( !midi_play_once_flag ){
-        SDL_Event event;
-        event.type = ONS_MIDI_EVENT;
-        SDL_PushEvent(&event);
-    }
+    SDL_Event event;
+    event.type = ONS_MIDI_EVENT;
+    SDL_PushEvent(&event);
 }
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
@@ -164,11 +161,17 @@ void ONScripterLabel::trapHandler()
  * **************************************** */
 void ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
 {
-    if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE )
-        mouseOverCheck( event->x, event->y );
+    if      ( mouse_rotation_mode == MOUSE_ROTATION_NONE ){
+        current_button_state.x = event->x;
+        current_button_state.y = event->y;
+    }
     else if ( mouse_rotation_mode == MOUSE_ROTATION_PDA ||
-              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA )
-        mouseOverCheck( event->y, screen_height - event->x - 1 );
+              mouse_rotation_mode == MOUSE_ROTATION_PDA_VGA ){
+        current_button_state.x = event->y;
+        current_button_state.y = screen_height - event->x - 1;
+    }
+    if ( event_mode & WAIT_BUTTON_MODE )
+        mouseOverCheck( current_button_state.x, current_button_state.y );
 }
 
 void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
@@ -185,7 +188,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         current_button_state.y = screen_height - event->x - 1;
     }
     current_button_state.down_flag = false;
-    
+
     if ( event->button == SDL_BUTTON_RIGHT &&
          event->type == SDL_MOUSEBUTTONUP &&
          ( rmode_flag || (event_mode & WAIT_BUTTON_MODE) ) ) {
@@ -196,7 +199,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
         current_button_state.button = current_over_button;
         volatile_button_state.button = current_over_button;
-        if ( event->type == SDL_MOUSEBUTTONUP )
+        if ( event->type == SDL_MOUSEBUTTONDOWN )
                 current_button_state.down_flag = true;
         if ( trap_flag ){
             trapHandler();
@@ -204,11 +207,13 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         }
     }
 #if SDL_VERSION_ATLEAST(1, 2, 5)
-    else if ( event->button == SDL_BUTTON_WHEELUP && usewheel_flag ){
+    else if ( event->button == SDL_BUTTON_WHEELUP &&
+              ( usewheel_flag || system_menu_mode == SYSTEM_LOOKBACK ) ){
         current_button_state.button = -2;
         volatile_button_state.button = -2;
     }
-    else if ( event->button == SDL_BUTTON_WHEELDOWN && usewheel_flag ){
+    else if ( event->button == SDL_BUTTON_WHEELDOWN &&
+              ( usewheel_flag || system_menu_mode == SYSTEM_LOOKBACK ) ){
         current_button_state.button = -3;
         volatile_button_state.button = -3;
     }
@@ -633,15 +638,15 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
         else if ( event->keysym.sym == SDLK_1 ){
             text_speed_no = 0;
-            sentence_font.wait_time = default_text_speed[ text_speed_no ];
+            sentence_font.wait_time = -1;
         }
         else if ( event->keysym.sym == SDLK_2 ){
             text_speed_no = 1;
-            sentence_font.wait_time = default_text_speed[ text_speed_no ];
+            sentence_font.wait_time = -1;
         }
         else if ( event->keysym.sym == SDLK_3 ){
             text_speed_no = 2;
-            sentence_font.wait_time = default_text_speed[ text_speed_no ];
+            sentence_font.wait_time = -1;
         }
     }
 
@@ -730,8 +735,11 @@ void ONScripterLabel::timerEvent( void )
     else{
         if ( system_menu_mode != SYSTEM_NULL || 
              ( event_mode & WAIT_INPUT_MODE && 
-               volatile_button_state.button == -1 ) )
+               volatile_button_state.button == -1 ) ){
+            if ( !system_menu_enter_flag )
+                event_mode |= WAIT_ANIMATION_MODE;
             executeSystemCall();
+        }
         else
             executeLabel();
     }
@@ -774,7 +782,8 @@ int ONScripterLabel::eventLoop()
             break;
                 
           case ONS_SOUND_EVENT:
-            if ( !music_play_once_flag ){
+            if ( music_play_loop_flag ||
+                 (cd_play_loop_flag && !cdaudio_flag ) ){
                 stopBGM( true );
                 playMP3( current_cd_track );
             }
@@ -784,7 +793,7 @@ int ONScripterLabel::eventLoop()
             break;
                 
           case ONS_CDAUDIO_EVENT:
-            if ( !music_play_once_flag ){
+            if ( cd_play_loop_flag ){
                 stopBGM( true );
                 playCDAudio( current_cd_track );
             }
@@ -794,14 +803,15 @@ int ONScripterLabel::eventLoop()
             break;
 
           case ONS_MIDI_EVENT:
-            midi_play_once_flag = music_play_once_flag;
-            Mix_FreeMusic( midi_info );
-            playMIDI();
+            if ( midi_play_loop_flag ){
+                Mix_FreeMusic( midi_info );
+                playMIDI();
+            }
             break;
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
           case ONS_MUSIC_EVENT:
-            ext_music_play_once_flag = music_play_once_flag;
+            ext_music_play_once_flag = !music_play_loop_flag;
             Mix_FreeMusic( music_info );
             playMusic();
             break;
@@ -816,18 +826,6 @@ int ONScripterLabel::eventLoop()
                 flush( &rect, false, true );
             }
             break;
-            
-          case SDL_QUIT:
-            saveAll();
-            if ( cdrom_info ){
-                SDL_CDStop( cdrom_info );
-                SDL_CDClose( cdrom_info );
-            }
-            if ( midi_info ){
-                Mix_HaltMusic();
-                Mix_FreeMusic( midi_info );
-            }
-            return(0);
             
           default:
             break;

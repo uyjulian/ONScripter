@@ -28,20 +28,26 @@
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
 
+#define DEFAULT_LOOKBACK_NAME0 "uoncur.bmp"
+#define DEFAULT_LOOKBACK_NAME1 "uoffcur.bmp"
+#define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
+#define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
+
 #define CONTINUOUS_PLAY
 
 int ONScripterLabel::waveCommand()
 {
-    bool loop_flag = false;
+    wave_play_loop_flag = false;
     
     if ( script_h.isName( "waveloop" ) ){
-        loop_flag = true;
+        wave_play_loop_flag = true;
     }
 
     wavestopCommand();
 
     const char *buf = script_h.readStr();
-    playWave( buf, loop_flag, DEFAULT_WAVE_CHANNEL );
+    setStr( &wave_file_name, buf );
+    playWave( buf, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
         
     return RET_CONTINUE;
 }
@@ -53,6 +59,7 @@ int ONScripterLabel::wavestopCommand()
         Mix_FreeChunk( wave_sample[DEFAULT_WAVE_CHANNEL] );
         wave_sample[DEFAULT_WAVE_CHANNEL] = NULL;
     }
+    setStr( &wave_file_name, NULL );
 
     return RET_CONTINUE;
 }
@@ -76,7 +83,7 @@ int ONScripterLabel::vspCommand()
 {
     int no = script_h.readInt();
     int v  = script_h.readInt();
-    sprite_info[ no ].valid = (v==1)?true:false;
+    sprite_info[ no ].visible = (v==1)?true:false;
     dirty_rect.add( sprite_info[no].pos );
     
     return RET_CONTINUE;
@@ -237,10 +244,9 @@ int ONScripterLabel::systemcallCommand()
 {
     script_h.readToken();
     system_menu_mode = getSystemCallNo( script_h.getStringBuffer() );
-    event_mode = WAIT_SLEEP_MODE;
 
     enterSystemCall();
-    
+
     advancePhase();
     return RET_WAIT_NEXT;
 }
@@ -311,7 +317,7 @@ int ONScripterLabel::spbtnCommand()
         }
         last_button_link->selected_surface = sp->selected_surface;
         last_button_link->no_selected_surface = sp->no_selected_surface;
-        sp->valid = true;
+        sp->visible = true;
     }
 
     return RET_CONTINUE;
@@ -386,6 +392,13 @@ int ONScripterLabel::setwindowCommand()
         setupAnimationInfo( &sentence_font_info );
         sentence_font_info.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
         sentence_font_info.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+#if 0        
+        if ( sentence_font_info.image_surface ){
+            sentence_font_info.pos.w = sentence_font_info.image_surface->w * screen_ratio1 / screen_ratio2;
+            sentence_font_info.pos.h = sentence_font_info.image_surface->h * screen_ratio1 / screen_ratio2;
+        }
+#endif        
+        sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0xff;
     }
 
     dirty_rect.add( sentence_font_info.pos );
@@ -623,7 +636,7 @@ int ONScripterLabel::saveonCommand()
 
 int ONScripterLabel::saveoffCommand()
 {
-    if ( saveon_flag )
+    if ( saveon_flag && internal_saveon_flag )
         saveSaveFile( -1 );
     
     saveon_flag = false;
@@ -639,10 +652,10 @@ int ONScripterLabel::savegameCommand()
         errorAndExit("savegame: the specified number is less than 0.");
     else{
         shelter_event_mode = event_mode;
-        char *p_buf = script_h.getCurrent();
-        script_h.readToken(); // save point is the next token to no
+        //char *p_buf = script_h.getNext();
+        //script_h.readToken(); // save point is the next token to no
         saveSaveFile( no ); 
-        script_h.setCurrent( p_buf ); 
+        //script_h.setCurrent( p_buf, false );
     }
 
     return RET_CONTINUE;
@@ -737,6 +750,7 @@ int ONScripterLabel::resetCommand()
         tachi_info[i].remove();
     }
     bg_info.remove();
+    setStr( &bg_info.file_name, "black");
     
     deleteButtonLink();
     deleteSelectLink();
@@ -834,9 +848,9 @@ int ONScripterLabel::prnumCommand()
     prnum_info[no]->current_cell = 0;
     prnum_info[no]->color_list = new uchar3[ prnum_info[no]->num_of_cells ];
     
-    int param = script_h.readInt();
-    prnum_info[no]->pos.x = script_h.readInt();
-    prnum_info[no]->pos.y = script_h.readInt();
+    prnum_info[no]->param = script_h.readInt();
+    prnum_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    prnum_info[no]->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     prnum_info[no]->font_size_xy[0] = script_h.readInt();
     prnum_info[no]->font_size_xy[1] = script_h.readInt();
 
@@ -846,15 +860,15 @@ int ONScripterLabel::prnumCommand()
     char num_buf[12], buf2[7];
     int ptr = 0;
 
-    sprintf( num_buf, "%3d", param );
-    if ( param<0 ){
-        if ( param>-10 ) {
+    sprintf( num_buf, "%3d", prnum_info[no]->param );
+    if ( prnum_info[no]->param<0 ){
+        if ( prnum_info[no]->param>-10 ) {
             buf2[ptr++] = "@"[0];
             buf2[ptr++] = "@"[1];
         }
         buf2[ptr++] = "|"[0];
         buf2[ptr++] = "|"[1];
-        sprintf( num_buf, "%d", -param );
+        sprintf( num_buf, "%d", -prnum_info[no]->param );
     }
     for ( int i=0 ; i<(int)strlen( num_buf ) ; i++ ){
         if ( num_buf[i] == ' ' ) {
@@ -896,18 +910,19 @@ int ONScripterLabel::playstopCommand()
 
 int ONScripterLabel::playCommand()
 {
+    bool loop_flag = true;
     if ( script_h.isName( "playonce" ) )
-        music_play_once_flag = true;
-    else
-        music_play_once_flag = false;
+        loop_flag = false;
 
     const char *buf = script_h.readStr();
     if ( buf[0] == '*' ){
+        cd_play_loop_flag = loop_flag;
         int new_cd_track = atoi( buf + 1 );
 #ifdef CONTINUOUS_PLAY        
         if ( current_cd_track != new_cd_track ) {
 #endif        
             stopBGM( false );
+            cd_play_loop_flag = loop_flag;
             current_cd_track = new_cd_track;
 
             if ( cdaudio_flag ){
@@ -923,7 +938,8 @@ int ONScripterLabel::playCommand()
     else{ // play MIDI
         stopBGM( false );
         
-        setStr( &music_file_name, buf );
+        setStr( &midi_file_name, buf );
+        midi_play_loop_flag = loop_flag;
         playMIDIFile();
     }
 
@@ -985,14 +1001,17 @@ int ONScripterLabel::mp3volCommand()
 int ONScripterLabel::mp3Command()
 {
     if      ( script_h.isName( "mp3save" ) ){
-        music_play_once_flag = true;
+        mp3save_flag = true;
+        music_play_loop_flag = false;
     }
     else if ( script_h.isName( "mp3loop" ) ||
               script_h.isName( "bgm" ) ){
-        music_play_once_flag = false;
+        mp3save_flag = false;
+        music_play_loop_flag = true;
     }
     else{
-        music_play_once_flag = true;
+        mp3save_flag = false;
+        music_play_loop_flag = false;
     }
 
     stopBGM( false );
@@ -1000,7 +1019,7 @@ int ONScripterLabel::mp3Command()
     const char *buf = script_h.readStr();
     if ( buf[0] != '\0' ){
         setStr( &music_file_name, buf );
-        if ( playWave( music_file_name, !music_play_once_flag, ONS_MIX_CHANNELS-1 ) )
+        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
 #if defined(EXTERNAL_MUSIC_PLAYER)
             playMusicFile();
 #else
@@ -1070,15 +1089,14 @@ int ONScripterLabel::lspCommand()
         v = true;
 
     int no = script_h.readInt();
-    if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
-    sprite_info[ no ].valid = v;
+    if ( sprite_info[no].visible ) dirty_rect.add( sprite_info[no].pos );
+    sprite_info[ no ].visible = v;
     
     const char *buf = script_h.readStr();
     sprite_info[ no ].setImageName( buf );
 
     sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite_info[ no ].trans = script_h.readInt();
     else
@@ -1086,7 +1104,22 @@ int ONScripterLabel::lspCommand()
 
     parseTaggedString( &sprite_info[ no ] );
     setupAnimationInfo( &sprite_info[ no ] );
-    if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
+    if ( sprite_info[no].visible ) dirty_rect.add( sprite_info[no].pos );
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::lookbackspCommand()
+{
+    for ( int i=0 ; i<2 ; i++ )
+        lookback_sp[i] = script_h.readInt();
+
+    if ( filelog_flag ){
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME0, true );
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME1, true );
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME2, true );
+        script_h.findAndAddLog( ScriptHandler::FILE_LOG, DEFAULT_LOOKBACK_NAME3, true );
+    }
 
     return RET_CONTINUE;
 }
@@ -1094,11 +1127,23 @@ int ONScripterLabel::lspCommand()
 int ONScripterLabel::lookbackflushCommand()
 {
     current_text_buffer = current_text_buffer->next;
-    for ( int i=0 ; i<MAX_TEXT_BUFFER-1 ; i++ ){
-        current_text_buffer->xy[1] = -1;
+    for ( int i=0 ; i<max_text_buffer-1 ; i++ ){
+        current_text_buffer->buffer2_count = 0;
         current_text_buffer = current_text_buffer->next;
     }
+    start_text_buffer = current_text_buffer;
+    
+    return RET_CONTINUE;
+}
 
+int ONScripterLabel::lookbackbuttonCommand()
+{
+    for ( int i=0 ; i<4 ; i++ ){
+        const char *buf = script_h.readStr();
+        setStr( &lookback_info[i].image_name, buf );
+        parseTaggedString( &lookback_info[i] );
+        setupAnimationInfo( &lookback_info[i] );
+    }
     return RET_CONTINUE;
 }
 
@@ -1151,12 +1196,12 @@ int ONScripterLabel::ldCommand()
         tachi_info[ no ].setImageName( buf );
         parseTaggedString( &tachi_info[ no ] );
         setupAnimationInfo( &tachi_info[ no ] );
-        if ( tachi_info[ no ].image_surface )
-            tachi_info[ no ].valid = true;
-        
-        tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
-        tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
-        dirty_rect.add( tachi_info[ no ].pos );
+        if ( tachi_info[ no ].image_surface ){
+            tachi_info[ no ].visible = true;
+            tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
+            tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
+            dirty_rect.add( tachi_info[ no ].pos );
+        }
 
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
@@ -1166,6 +1211,7 @@ int ONScripterLabel::ldCommand()
 int ONScripterLabel::jumpfCommand()
 {
     jumpf_flag = true;
+    script_h.setKidokuskip( false );
 
     return RET_CONTINUE;
 }
@@ -1266,16 +1312,12 @@ int ONScripterLabel::gettextCommand()
     script_h.readStr();
     int no = script_h.current_variable.var_no;
 
-    char *buf = new char[ current_text_buffer->num_xy[1] * current_text_buffer->num_xy[0] * 2 ];
-    int c=0;
-    for ( int i=0 ; i<current_text_buffer->num_xy[1] * current_text_buffer->num_xy[0] ; i++ ){
-        if ( current_text_buffer->buffer[ i*2 ] != 0x0 ){
-            buf[ c*2 ]   = current_text_buffer->buffer[ i*2 ];
-            buf[ c*2+1 ] = current_text_buffer->buffer[ i*2+1 ];
-            c++;
-        }
+    char *buf = new char[ current_text_buffer->buffer2_count + 1 ];
+    int i=0;
+    for ( i=0 ; i<current_text_buffer->buffer2_count ; i++ ){
+        buf[i] = current_text_buffer->buffer2[i];
     }
-    buf[ c*2 ] = '\0';
+    buf[i] = '\0';
 
     setStr( &script_h.str_variables[no], buf );
     delete[] buf;
@@ -1429,25 +1471,47 @@ int ONScripterLabel::gameCommand()
     string_buffer_offset = 0;
     current_mode = NORMAL_MODE;
 
-    sentence_font.wait_time = default_text_speed[text_speed_no];
+    //text_speed_no = 1;
+    //sentence_font.wait_time = -1;
 
+    /* ---------------------------------------- */
+    setStr( &lookback_info[0].image_name, DEFAULT_LOOKBACK_NAME0 );
+    parseTaggedString( &lookback_info[0] );
+    setupAnimationInfo( &lookback_info[0] );
+    setStr( &lookback_info[1].image_name, DEFAULT_LOOKBACK_NAME1 );
+    parseTaggedString( &lookback_info[1] );
+    setupAnimationInfo( &lookback_info[1] );
+    setStr( &lookback_info[2].image_name, DEFAULT_LOOKBACK_NAME2 );
+    parseTaggedString( &lookback_info[2] );
+    setupAnimationInfo( &lookback_info[2] );
+    setStr( &lookback_info[3].image_name, DEFAULT_LOOKBACK_NAME3 );
+    parseTaggedString( &lookback_info[3] );
+    setupAnimationInfo( &lookback_info[3] );
+    
     /* ---------------------------------------- */
     /* Load default cursor */
     loadCursor( CURSOR_WAIT_NO, DEFAULT_CURSOR_WAIT, 0, 0 );
+    //cursor_info[ CURSOR_WAIT_NO ].deleteImageName(); // a trick for save file
     loadCursor( CURSOR_NEWPAGE_NO, DEFAULT_CURSOR_NEWPAGE, 0, 0 );
-    
-    /* ---------------------------------------- */
-    /* Load log files */
-    if ( filelog_flag ) loadFileLog();
+    //cursor_info[ CURSOR_NEWPAGE_NO ].deleteImageName(); // a trick for save file
 
     /* ---------------------------------------- */
-    /* Lookback related variables */
-    for ( i=0 ; i<4 ; i++ ){
-        setStr( &lookback_info[i].image_name, lookback_image_name[i] );
-        parseTaggedString( &lookback_info[i] );
-        setupAnimationInfo( &lookback_info[i] );
+    /* Initialize text buffer */
+    text_buffer = new TextBuffer[max_text_buffer];
+    for ( i=0 ; i<max_text_buffer-1 ; i++ ){
+        text_buffer[i].next = &text_buffer[i+1];
+        text_buffer[i+1].previous = &text_buffer[i];
+        text_buffer[i].buffer2 = NULL;
+        text_buffer[i].buffer2_count = 0;
     }
-    
+    text_buffer[0].previous = &text_buffer[max_text_buffer-1];
+    text_buffer[max_text_buffer-1].next = &text_buffer[0];
+    text_buffer[max_text_buffer-1].buffer2 = NULL;
+    text_buffer[max_text_buffer-1].buffer2_count = 0;
+    start_text_buffer = current_text_buffer = &text_buffer[0];
+
+    clearCurrentTextBuffer();
+
     /* ---------------------------------------- */
     /* Initialize local variables */
     for ( i=0 ; i<200 ; i++ ){
@@ -1514,7 +1578,7 @@ int ONScripterLabel::exbtnCommand()
                                                             sprite_info[ button->sprite_no ].pos.h,
                                                             32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( button->no_selected_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        //sprite_info[ sprite_no ].valid = true;
+        //sprite_info[ sprite_no ].visible = true;
     }
 
     return RET_CONTINUE;
@@ -1530,22 +1594,7 @@ int ONScripterLabel::erasetextwindowCommand()
 
 int ONScripterLabel::endCommand()
 {
-    saveAll();
-    if ( cdrom_info ){
-        SDL_CDStop( cdrom_info );
-        SDL_CDClose( cdrom_info );
-    }
-    if ( midi_info ){
-        Mix_HaltMusic();
-        Mix_FreeMusic( midi_info );
-    }
-#if defined(EXTERNAL_MUSIC_PLAYER)
-    if ( music_info ){
-        Mix_HaltMusic();
-        Mix_FreeMusic( music_info );
-    }
-#endif
-    SDL_Quit();
+    quit();
     exit(0);
     return RET_CONTINUE; // dummy
 }
@@ -1607,12 +1656,12 @@ int ONScripterLabel::delayCommand()
 {
     int t = script_h.readInt();
 
-    if ( event_mode & (WAIT_SLEEP_MODE | WAIT_INPUT_MODE ) ){
+    if ( event_mode & WAIT_INPUT_MODE ){
         event_mode = IDLE_EVENT_MODE;
         return RET_CONTINUE;
     }
     else{
-        event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE;
+        event_mode = WAIT_INPUT_MODE;
         key_pressed_flag = false;
         startTimer( t );
         return RET_WAIT;
@@ -1625,11 +1674,17 @@ int ONScripterLabel::cspCommand()
 
     if ( no == -1 )
         for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-            if ( sprite_info[i].valid ) dirty_rect.add( sprite_info[i].pos );
+            if ( sprite_info[i].visible )
+                dirty_rect.add( sprite_info[i].pos );
+            if ( sprite_info[i].image_name ){
+                sprite_info[i].pos.x = -1000 * screen_ratio1 / screen_ratio2;
+                sprite_info[i].pos.y = -1000 * screen_ratio1 / screen_ratio2;
+            }
             sprite_info[i].remove();
         }
     else{
-        if ( sprite_info[no].valid ) dirty_rect.add( sprite_info[no].pos );
+        if ( sprite_info[no].visible )
+            dirty_rect.add( sprite_info[no].pos );
         sprite_info[no].remove();
     }
 
@@ -1867,20 +1922,27 @@ int ONScripterLabel::btnwaitCommand()
 
                 drawString( s_link->text, f_info.off_color, &f_info, false, text_surface );
                 dirty_rect.add( p_button_link->image_rect );
+                if ( p_button_link->no_selected_surface )
+                    SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
             }
             else if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON ||
                       p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                int cell_no = sprite_info[p_button_link->sprite_no].current_cell;
+                bool visible = sprite_info[p_button_link->sprite_no].visible;
+                sprite_info[p_button_link->sprite_no].visible = true;
                 sprite_info[p_button_link->sprite_no].current_cell = 1;
                 refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
                 SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->selected_surface, NULL );
                 sprite_info[p_button_link->sprite_no].current_cell = 0;
-                if ( cell_no != 0 && sprite_info[p_button_link->sprite_no].valid ){
-                    refreshSurface( text_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                if ( p_button_link->no_selected_surface ){
+                    refreshSurface( effect_dst_surface, &p_button_link->image_rect, isTextVisible()?REFRESH_SHADOW_MODE:REFRESH_NORMAL_MODE );
+                    SDL_BlitSurface( effect_dst_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
                 }
+                sprite_info[p_button_link->sprite_no].visible = visible;
             }
-            if ( p_button_link->no_selected_surface )
-                SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+            else{
+                if ( p_button_link->no_selected_surface )
+                    SDL_BlitSurface( text_surface, &p_button_link->image_rect, p_button_link->no_selected_surface, NULL );
+            }
 
             p_button_link = p_button_link->next;
         }
@@ -1895,13 +1957,13 @@ int ONScripterLabel::btnwaitCommand()
             decodeExbtnControl( text_surface, exbtn_d_button_link.exbtn_ctl  );
         }
         flush();
-        refreshMouseOverButton();
 
         flushEvent();
         event_mode = WAIT_BUTTON_MODE;
+        refreshMouseOverButton();
+        
         if ( textbtn_flag ) event_mode |= WAIT_TEXTBTN_MODE;
         if ( btntime_value > 0 ){
-            event_mode |= WAIT_SLEEP_MODE;
             startTimer( btntime_value );
             if ( usewheel_flag ) current_button_state.button = -5;
             else                 current_button_state.button = -2;
@@ -2010,6 +2072,11 @@ int ONScripterLabel::brCommand()
 
     sentence_font.xy[0] = 0;
     sentence_font.xy[1]++;
+    current_text_buffer->buffer2[current_text_buffer->buffer2_count++] = 0x0a;
+    if ( internal_saveon_flag ){
+        internal_saveon_flag = false;
+        saveSaveFile(-1);
+    }
 
     return RET_CONTINUE;
 }
@@ -2100,15 +2167,18 @@ int ONScripterLabel::bgCommand()
         dirty_rect.fill( screen_width, screen_height );
 
         if ( !strcmp( script_h.getStringBuffer(), "white" ) ){
+            setStr( &bg_info.file_name, "white" );
             bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
         }
-        else if ( !strcmp(  script_h.getStringBuffer(), "black" ) ){
+        else if ( !strcmp( script_h.getStringBuffer(), "black" ) ){
+            setStr( &bg_info.file_name, "black" );
             bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
         }
         else{
             const char *buf = script_h.readStr( true );
             
             if ( buf[0] == '#' ){
+                setStr( &bg_info.file_name, buf );
                 readColor( &bg_info.color, buf );
             }
             else{
@@ -2151,21 +2221,20 @@ int ONScripterLabel::barCommand()
     bar_info[no]->current_cell = 0;
     bar_info[no]->alpha_offset = 0;
 
-    int param           = script_h.readInt();
+    bar_info[no]->param = script_h.readInt();
     bar_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     bar_info[no]->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
                           
     bar_info[no]->pos.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
     bar_info[no]->pos.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    int max             = script_h.readInt();
-    if ( max == 0 ) errorAndExit( "bar: max = 0." );
-    bar_info[no]->pos.w = bar_info[no]->pos.w * param / max;
+    bar_info[no]->max_param = script_h.readInt();
+    if ( bar_info[no]->max_param == 0 ) errorAndExit( "bar: max = 0." );
 
     const char *buf = script_h.readStr();
     readColor( &bar_info[no]->color, buf );
 
     if ( bar_info[no]->pos.w > 0 ){
-        bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
+        bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w * bar_info[no]->param / bar_info[no]->max_param, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
         SDL_SetAlpha( bar_info[no]->image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
         SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGB( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2] ) );
         dirty_rect.add( bar_info[no]->pos );
@@ -2206,7 +2275,7 @@ int ONScripterLabel::allspresumeCommand()
 {
     all_sprite_hide_flag = false;
     for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        if ( sprite_info[i].valid )
+        if ( sprite_info[i].visible )
             dirty_rect.add( sprite_info[i].pos );
     }
     return RET_CONTINUE;
@@ -2216,7 +2285,7 @@ int ONScripterLabel::allsphideCommand()
 {
     all_sprite_hide_flag = true;
     for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        if ( sprite_info[i].valid )
+        if ( sprite_info[i].visible )
             dirty_rect.add( sprite_info[i].pos );
     }
     return RET_CONTINUE;

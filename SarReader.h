@@ -38,7 +38,6 @@ public:
     int getNumFiles();
     int getNumAccessed();
     
-    bool getAccessFlag( const char *file_name );
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf );
     struct FileInfo getFileByIndex( int index );

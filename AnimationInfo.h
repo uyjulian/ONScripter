@@ -63,7 +63,7 @@ public:
     char *mask_file_name;
 
     /* Variables from AnimationInfo */
-    bool valid;
+    bool visible;
     bool abs_flag;
     int alpha_offset;
     int trans;
@@ -77,6 +77,9 @@ public:
     int font_pitch; // used by lsp string
     int remaining_time;
 
+    int param; // used by prnum and bar
+    int max_param; // used by bar
+    
     AnimationInfo();
     ~AnimationInfo();
     void deleteImageName();

@@ -114,21 +114,6 @@ int NsaReader::getNumAccessed(){
     return total;
 }
 
-bool NsaReader::getAccessFlag( const char *file_name )
-{
-    int i, j;
-
-    j = getIndexFromFile( &archive_info, file_name );
-    if ( archive_info.num_of_files != j ) return archive_info.fi_list[j].access_flag;
-
-    for ( i=0 ; i<num_of_nsa_archives ; i++ ){
-        j = getIndexFromFile( &archive_info2[i], file_name );
-        if ( archive_info2[i].num_of_files != j ) return archive_info2[i].fi_list[j].access_flag;
-    }
-
-    return false;
-}
-
 size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
 {
     int i = getIndexFromFile( ai, file_name );

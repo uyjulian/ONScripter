@@ -30,16 +30,11 @@
 #define DEFAULT_LOAD_MENU_NAME "ÅÉÉçÅ[ÉhÅÑ"
 #define DEFAULT_SAVE_ITEM_NAME "ÇµÇ®ÇË"
 
-#define DEFAULT_LOOKBACK_NAME0 "uoncur.bmp"
-#define DEFAULT_LOOKBACK_NAME1 "uoffcur.bmp"
-#define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
-#define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
-
 #define DEFAULT_TEXT_SPEED_LOW    40
 #define DEFAULT_TEXT_SPEED_MIDDLE 20
 #define DEFAULT_TEXT_SPEED_HIGHT  10
 
-#define DEFAULT_VOLUME 100
+#define MAX_TEXT_BUFFER 17
 
 typedef int (ScriptParser::*FuncList)();
 static struct FuncLUT{
@@ -92,9 +87,10 @@ static struct FuncLUT{
     {"menusetwindow",      &ScriptParser::menusetwindowCommand},
     {"menuselectvoice",      &ScriptParser::menuselectvoiceCommand},
     {"menuselectcolor",      &ScriptParser::menuselectcolorCommand},
-    {"lookbacksp",      &ScriptParser::lookbackspCommand},
+    {"maxkaisoupage",      &ScriptParser::maxkaisoupageCommand},
+    //{"lookbacksp",      &ScriptParser::lookbackspCommand},
     {"lookbackcolor",      &ScriptParser::lookbackcolorCommand},
-    {"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
+    //{"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
     {"linepage",    &ScriptParser::linepageCommand},
     {"len",      &ScriptParser::lenCommand},
     {"labellog",      &ScriptParser::labellogCommand},
@@ -120,6 +116,7 @@ static struct FuncLUT{
     {"defsevol",   &ScriptParser::defsevolCommand},
     {"defmp3vol",   &ScriptParser::defmp3volCommand},
     {"defaultspeed", &ScriptParser::defaultspeedCommand},
+    {"defaultfont", &ScriptParser::defaultfontCommand},
     {"dec",   &ScriptParser::decCommand},
     {"date",   &ScriptParser::dateCommand},
     {"cmp",      &ScriptParser::cmpCommand},
@@ -141,10 +138,9 @@ ScriptParser::ScriptParser( char *path )
     archive_path = "";
     nsa_path = "";
     globalon_flag = false;
-    filelog_flag = false;
     labellog_flag = false;
+    filelog_flag = false;
     kidokuskip_flag = false;
-    kidokumode_flag = false;
     rmode_flag = true;
     windowback_flag = false;
     usewheel_flag = false;
@@ -168,6 +164,7 @@ ScriptParser::ScriptParser( char *path )
     
     /* ---------------------------------------- */
     /* Lookback related variables */
+#if 0    
     lookback_image_name[0] = new char[ strlen( DEFAULT_LOOKBACK_NAME0 ) + 1 ];
     memcpy( lookback_image_name[0], DEFAULT_LOOKBACK_NAME0, strlen( DEFAULT_LOOKBACK_NAME0 ) + 1 );
     lookback_image_name[1] = new char[ strlen( DEFAULT_LOOKBACK_NAME1 ) + 1 ];
@@ -176,6 +173,7 @@ ScriptParser::ScriptParser( char *path )
     memcpy( lookback_image_name[2], DEFAULT_LOOKBACK_NAME2, strlen( DEFAULT_LOOKBACK_NAME2 ) + 1 );
     lookback_image_name[3] = new char[ strlen( DEFAULT_LOOKBACK_NAME3 ) + 1 ];
     memcpy( lookback_image_name[3], DEFAULT_LOOKBACK_NAME3, strlen( DEFAULT_LOOKBACK_NAME3 ) + 1 );
+#endif    
     lookback_sp[0] = lookback_sp[1] = -1;
     lookback_color[0] = 0xff;
     lookback_color[1] = 0xff;
@@ -212,19 +210,10 @@ ScriptParser::ScriptParser( char *path )
     default_text_speed[0] = DEFAULT_TEXT_SPEED_LOW;
     default_text_speed[1] = DEFAULT_TEXT_SPEED_MIDDLE;
     default_text_speed[2] = DEFAULT_TEXT_SPEED_HIGHT;
-    text_history_num = MAX_TEXT_BUFFER;
-    for ( i=0 ; i<MAX_TEXT_BUFFER-1 ; i++ ){
-        text_buffer[i].next = &text_buffer[i+1];
-        text_buffer[i+1].previous = &text_buffer[i];
-        text_buffer[i].buffer = NULL;
-        text_buffer[i].xy[1] = -1; // It means an invalid text buffer.
-    }
-    text_buffer[0].previous = &text_buffer[MAX_TEXT_BUFFER-1];
-    text_buffer[MAX_TEXT_BUFFER-1].next = &text_buffer[0];
-    text_buffer[MAX_TEXT_BUFFER-1].buffer = NULL;
-    text_buffer[MAX_TEXT_BUFFER-1].xy[1] = -1; // It means an invalid text buffer.
-    current_text_buffer = &text_buffer[0];
-
+    max_text_buffer = MAX_TEXT_BUFFER;
+    text_buffer = NULL;
+    current_text_buffer = start_text_buffer = NULL;
+    
     clickstr_num = 0;
     clickstr_list = NULL;
     clickstr_line = 0;
@@ -232,7 +221,6 @@ ScriptParser::ScriptParser( char *path )
     
     /* ---------------------------------------- */
     /* Sound related variables */
-    mp3_volume = voice_volume = se_volume = DEFAULT_VOLUME;
     for ( i=0 ; i<     CLICKVOICE_NUM ; i++ )
              clickvoice_file_name[i] = NULL;
     for ( i=0 ; i<    SELECTVOICE_NUM ; i++ )
@@ -267,6 +255,8 @@ ScriptParser::ScriptParser( char *path )
 
     /* ---------------------------------------- */
     /* Effect related variables */
+    window_effect.effect = 1;
+    window_effect.duration = 0;
     root_effect_link.num = 0;
     root_effect_link.effect = 0;
     root_effect_link.duration = 0;
@@ -341,8 +331,6 @@ int ScriptParser::open( char *path )
         break;
     }
 
-    label_stack_depth = 0;
-
     root_link_label_info.previous = NULL;
     root_link_label_info.next = NULL;
     root_link_label_info.current_line = 0;
@@ -353,9 +341,6 @@ int ScriptParser::open( char *path )
     current_mode = DEFINE_MODE;
     current_link_label_info = &root_link_label_info;
 
-    last_tilde.label_info = script_h.lookupLabel( "start" );
-    last_tilde.current_line = 0;
-    
     return 0;
 }
 
@@ -400,6 +385,7 @@ int ScriptParser::parseLine()
     if ( debug_level > 0 ) printf("ScriptParser::Parseline %s\n", script_h.getStringBuffer() );
 
     if ( script_h.getStringBuffer()[0] == ';' ) return RET_COMMENT;
+    else if ( script_h.getStringBuffer()[0] == ':' ) return RET_CONTINUE;
     else if ( script_h.isText() ) return RET_NOMATCH;
 
     while( func_lut[ lut_counter ].method ){
@@ -448,67 +434,12 @@ void ScriptParser::saveGlovalData()
 
     FILE *fp;
 
-    if ( ( fp = fopen( "global.sav", "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write global.sav\n" );
+    if ( ( fp = fopen( "gloval.sav", "wb" ) ) == NULL ){
+        fprintf( stderr, "can't write gloval.sav\n" );
         exit( -1 );
     }
 
     saveVariables( fp, 200, VARIABLE_RANGE );
-    fclose( fp );
-}
-
-void ScriptParser::loadFileLog()
-{
-    FILE *fp; 
-    int i, j, ch, count = 0;
-    char buf[100];
-
-    if ( ( fp = fopen( "NScrflog.dat", "rb" ) ) != NULL ){
-        while( (ch = fgetc( fp )) != 0x0a ){
-            count = count * 10 + ch - '0';
-        }
-
-        for ( i=0 ; i<count ; i++ ){
-            fgetc( fp );
-            j = 0; 
-            while( (ch = fgetc( fp )) != '"' ) buf[j++] = ch ^ 0x84;
-            buf[j] = '\0';
-
-            script_h.cBR->getFileLength( buf );
-        }
-
-        fclose( fp );
-    }
-}
-
-void ScriptParser::saveFileLog()
-{
-    if ( !filelog_flag ) return;
-
-    FILE *fp;
-    int  i,j;
-    char buf[10];
-
-    if ( ( fp = fopen( "NScrflog.dat", "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write NScrflog.dat\n" );
-        exit( -1 );
-    }
-
-    sprintf( buf, "%d", script_h.cBR->getNumAccessed() );
-    for ( i=0 ; i<(int)strlen( buf ) ; i++ ) fputc( buf[i], fp );
-    fputc( 0x0a, fp );
-    
-    SarReader::FileInfo fi;
-    for ( i=0 ; i<script_h.cBR->getNumFiles() ; i++ ){
-        fi = script_h.cBR->getFileByIndex( i );
-        if ( fi.access_flag ){
-            fputc( '"', fp );
-            for ( j=0 ; j<(int)strlen( fi.name ) ; j++ )
-                fputc( fi.name[j] ^ 0x84, fp );
-            fputc( '"', fp );
-        }
-    }
-    
     fclose( fp );
 }
 
@@ -622,11 +553,7 @@ int ScriptParser::readEffect( EffectLink *effect )
         else
             effect->anim.remove();
     }
-    else{
-        effect->duration = 0;
-    }
 
-    if ( effect->effect == 1 ) effect->duration = 0;
     //printf("readEffect %d: %d %d %s\n", num, effect->effect, effect->duration, effect->anim.image_name );
     return num;
 }

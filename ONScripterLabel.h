@@ -43,7 +43,7 @@
 #define DEFAULT_BLIT_FLAG (0)
 //#define DEFAULT_BLIT_FLAG (SDL_RLEACCEL)
 
-#define MAX_SPRITE_NUM 256
+#define MAX_SPRITE_NUM 1000
 #define MAX_PARAM_NUM 100
 #define CUSTOM_EFFECT_NO 100
 #define ONS_MIX_CHANNELS 50
@@ -129,7 +129,9 @@ public:
     int menu_windowCommand();
     int menu_fullCommand();
     int lspCommand();
+    int lookbackspCommand();
     int lookbackflushCommand();
+    int lookbackbuttonCommand();
     int locateCommand();
     int loadgameCommand();
     int ldCommand();
@@ -245,6 +247,7 @@ private:
 
     FILE *tmp_save_fp;
     bool saveon_flag;
+    bool internal_saveon_flag;
     bool shelter_soveon_flag; // used by csel
     int yesno_caller;
     int yesno_selected_file_no;
@@ -268,6 +271,8 @@ private:
     long internal_button_timer;
     long btnwait_time;
     bool btndown_flag;
+
+    void quit();
 
     /* ---------------------------------------- */
     /* Script related variables */
@@ -378,6 +383,8 @@ private:
     void stopAnimation( int click );
     void loadCursor( int no, const char *str, int x, int y, bool abs_flag = false );
     void saveAll();
+    void loadEnvData();
+    void saveEnvData();
     
     /* ---------------------------------------- */
     /* Lookback related variables */
@@ -396,7 +403,7 @@ private:
     int  tateyoko_mode;
 
     void drawGlyph( SDL_Surface *dst_surface, char *text, FontInfo *info, SDL_Color &color, unsigned short unicode, int xy[2], int minx, int maxy, int shadow_offset, bool flush_flag, SDL_Rect *clip );
-    void drawChar( char* text, FontInfo *info, bool flush_flag, SDL_Surface *surface, bool buffering_flag = true, SDL_Rect *clip=NULL );
+    void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, bool buffering_flag = true, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, bool buffering_flag = false, SDL_Rect *clip=NULL );
     void restoreTextBuffer( SDL_Surface *surface, SDL_Rect *clip=NULL );
     int clickWait( char *out_text );
@@ -441,17 +448,28 @@ private:
     
     /* ---------------------------------------- */
     /* Sound related variables */
+    char *default_cdrom_drive;
+    bool cdaudio_on_flag; // false if mute
+    bool volume_on_flag; // false if mute
     SDL_AudioSpec audio_format;
     bool audio_open_flag;
     bool cdaudio_flag;
     
+    bool wave_play_loop_flag;
+    char *wave_file_name;
+    
+    bool midi_play_loop_flag;
+    char *midi_file_name;
+    Mix_Music *midi_info;
+    
     SDL_CD *cdrom_info;
     int current_cd_track;
-    bool music_play_once_flag;
+    bool cd_play_loop_flag;
+    bool music_play_loop_flag;
+    bool mp3save_flag;
     char *music_file_name;
     unsigned char *mp3_buffer;
     SMPEG *mp3_sample;
-    Mix_Music *midi_info;
 #if defined(EXTERNAL_MUSIC_PLAYER)
     Mix_Music *music_info;
 #endif
@@ -521,7 +539,11 @@ private:
     
     void searchSaveFile( SaveFileInfo &info, int no );
     int loadSaveFile( int no );
+    void saveMagicNumber( FILE *fp );
+    void saveSaveFileFromTmpFile( FILE *fp );
     int saveSaveFile( int no );
+    int loadSaveFile2( FILE *fp );
+    void saveSaveFile2( FILE *fp );
     void setupLookbackButton();
 
     void enterSystemCall();

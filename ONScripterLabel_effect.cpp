@@ -59,7 +59,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     if ( effect_cut_flag && skip_flag ) effect_no = 1;
     
     if ( effect_counter == 0 ){
-        SDL_BlitSurface( text_surface, &dirty_rect.bounding_box, effect_src_surface, &dirty_rect.bounding_box );
+        SDL_BlitSurface( text_surface, NULL, effect_src_surface, NULL );
 
         if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
@@ -82,7 +82,8 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                 setupAnimationInfo( &effect->anim );
             }
         }
-        if ( effect_no == 16 || effect_no == 17 )
+        if ( effect_no == 11 || effect_no == 12 || effect_no == 13 || effect_no == 14 ||
+             effect_no == 16 || effect_no == 17 )
             dirty_rect.fill( screen_width, screen_height );
     }
 
@@ -361,7 +362,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
         
     effect_counter += effect_timer_resolution;
-    if ( effect_counter < effect->duration ){
+    if ( effect_counter < effect->duration && effect_no != 1 ){
         if ( effect_no != 0 ){
             flush( NULL, false );
         }

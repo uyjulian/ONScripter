@@ -90,7 +90,6 @@ struct BaseReader
     virtual int getNumAccessed() = 0;
     virtual void registerCompressionType( const char *ext, int type ) = 0;
 
-    virtual bool getAccessFlag( const char *file_name ) = 0;
     virtual struct FileInfo getFileByIndex( int index ) = 0;
     virtual size_t getFileLength( const char *file_name ) = 0;
     virtual size_t getFile( const char *file_name, unsigned char *buffer ) = 0;

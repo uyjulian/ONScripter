@@ -26,7 +26,6 @@
 #include <signal.h>
 #endif
 
-extern bool midi_play_once_flag;
 #if defined(EXTERNAL_MUSIC_PLAYER)
 extern bool ext_music_play_once_flag;
 #endif
@@ -53,26 +52,24 @@ int ONScripterLabel::playMIDIFile()
         return -1;
     }
 
-    unsigned long length = script_h.cBR->getFileLength( music_file_name );
+    unsigned long length = script_h.cBR->getFileLength( midi_file_name );
     if ( length == 0 ){
-        fprintf( stderr, " *** can't find file [%s] ***\n", music_file_name );
+        fprintf( stderr, " *** can't find file [%s] ***\n", midi_file_name );
         return -1;
     }
     unsigned char *buffer = new unsigned char[length];
-    script_h.cBR->getFile( music_file_name, buffer );
+    script_h.cBR->getFile( midi_file_name, buffer );
     fwrite( buffer, 1, length, fp );
     delete[] buffer;
 
     fclose( fp );
 
-    midi_play_once_flag = music_play_once_flag;
-    
     return playMIDI();
 }
 
 int ONScripterLabel::playMIDI()
 {
-    int midi_looping = music_play_once_flag ? 0 : -1;
+    int midi_looping = midi_play_loop_flag ? -1 : 0;
     char *midi_file = new char[ strlen(archive_path) + strlen(TMP_MIDI_FILE) + 1 ];
     sprintf( midi_file, "%s%s", archive_path, TMP_MIDI_FILE );
 
@@ -80,12 +77,12 @@ int ONScripterLabel::playMIDI()
 
 #if defined(EXTERNAL_MIDI_PROGRAM)
     FILE *com_file;
-    if ( midi_play_once_flag ){
-        if( (com_file = fopen("playonce_midi", "wb")) != NULL )
+    if ( midi_play_loop_flag ){
+        if( (com_file = fopen("play_midi", "wb")) != NULL )
             fclose(com_file);
     }
     else{
-        if( (com_file = fopen("play_midi", "wb")) != NULL )
+        if( (com_file = fopen("playonce_midi", "wb")) != NULL )
             fclose(com_file);
     }
 #endif
@@ -142,7 +139,7 @@ int ONScripterLabel::playMusicFile()
 
     fclose( fp );
 
-    ext_music_play_once_flag = music_play_once_flag;
+    ext_music_play_once_flag = !music_play_loop_flag;
     
     return playMusic();
 }
@@ -151,7 +148,7 @@ int ONScripterLabel::playMusic()
 {
     if ( !audio_open_flag ) return -1;
     
-    int music_looping = music_play_once_flag ? 0 : -1;
+    int music_looping = music_play_loop_flag ? -1 : 0;
     char *music_file = new char[ strlen(archive_path) + strlen(TMP_MUSIC_FILE) + 1 ];
     sprintf( music_file, "%s%s", archive_path, TMP_MUSIC_FILE );
 
@@ -184,7 +181,7 @@ int ONScripterLabel::playMP3( int cd_no )
 
     if ( music_file_name == NULL ){
         char file_name[128];
-        
+
         sprintf( file_name, "%scd%ctrack%2.2d.mp3", archive_path, DELIMITER, cd_no );
         mp3_sample = SMPEG_new( file_name, NULL, 0 );
     }
@@ -277,7 +274,6 @@ int ONScripterLabel::playCDAudio( int cd_no )
 {
     int length = cdrom_info->track[cd_no - 1].length / 75;
 
-    printf("playCDAudio %d\n", cd_no );
     SDL_CDPlayTracks( cdrom_info, cd_no - 1, 0, 1, 0 );
     timer_cdaudio_id = SDL_AddTimer( length * 1000, cdaudioCallback, NULL );
 
@@ -329,7 +325,7 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if( (com_file = fopen("stop_bgm", "wb")) != NULL )
         fclose(com_file);
 #endif
-    
+
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
 
@@ -341,6 +337,7 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             SDL_CDStop( cdrom_info );
     }
 
+    mp3save_flag = false;
     if ( mp3_sample ){
         Mix_HookMusic( NULL, NULL );
         SMPEG_stop( mp3_sample );
@@ -351,16 +348,17 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             delete[] mp3_buffer;
             mp3_buffer = NULL;
         }
-        if ( !continue_flag ) setStr( &music_file_name, NULL );
     }
+    if ( !continue_flag )
+        setStr( &music_file_name, NULL );
 
     if ( midi_info ){
-        midi_play_once_flag = true;
+        midi_play_loop_flag = false;
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
         midi_info = NULL;
-        setStr( &music_file_name, NULL );
     }
+    setStr( &music_file_name, NULL );
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
     if ( music_info ){
@@ -368,8 +366,8 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_HaltMusic();
         Mix_FreeMusic( music_info );
         music_info = NULL;
-        setStr( &music_file_name, NULL );
     }
+    setStr( &music_file_name, NULL );
 #endif
     if ( !continue_flag ) current_cd_track = -1;
 }

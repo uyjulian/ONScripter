@@ -1,0 +1,544 @@
+/* -*- C++ -*-
+ *
+ *  ONScripterLabel_file2.cpp - FILE I/O of ONScripter
+ *
+ *  Copyright (c) 2001-2003 Ogapee. All rights reserved.
+ *
+ *  ogapee@aqua.dti2.ne.jp
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "ONScripterLabel.h"
+
+int ONScripterLabel::loadSaveFile2( FILE *fp )
+{
+    deleteLabelLink();
+    
+    int i, j;
+    
+    loadInt( fp, &i ); // 1
+    loadInt( fp, &i );
+    if ( i==1 ) sentence_font.is_bold = true;
+    else        sentence_font.is_bold = false;
+    loadInt( fp, &i );
+    if ( i==1 ) sentence_font.is_shadow = true;
+    else        sentence_font.is_shadow = false;
+
+    loadInt( fp, &i ); // 0
+    loadInt( fp, &i );
+    rmode_flag = (i==1)?true:false;
+    loadInt( fp, &i ); // 0xff
+    loadInt( fp, &i ); // 0xff
+    loadInt( fp, &i ); // 0xff
+    cursor_info[0].remove();
+    loadStr( fp, &cursor_info[0].image_name );
+    if ( cursor_info[0].image_name ){
+        parseTaggedString( &cursor_info[0] );
+        setupAnimationInfo( &cursor_info[0] );
+    }
+    cursor_info[1].remove();
+    loadStr( fp, &cursor_info[1].image_name );
+    if ( cursor_info[1].image_name ){
+        parseTaggedString( &cursor_info[1] );
+        setupAnimationInfo( &cursor_info[1] );
+    }
+
+    loadInt( fp, &window_effect.effect );
+    loadInt( fp, &window_effect.duration );
+    loadStr( fp, &window_effect.anim.image_name ); // probably
+
+    sentence_font.xy[0] = sentence_font.xy[1] = 0;
+    sentence_font.ttf_font  = NULL;
+    loadInt( fp, &sentence_font.top_xy[0] );
+    loadInt( fp, &sentence_font.top_xy[1] );
+    loadInt( fp, &sentence_font.num_xy[0] );
+    loadInt( fp, &sentence_font.num_xy[1] );
+    loadInt( fp, &sentence_font.font_size_xy[0] );
+    loadInt( fp, &sentence_font.font_size_xy[1] );
+    loadInt( fp, &sentence_font.pitch_xy[0] );
+    loadInt( fp, &sentence_font.pitch_xy[1] );
+    for ( i=0 ; i<3 ; i++ )
+        sentence_font.window_color[2-i] = fgetc( fp );
+    if ( fgetc( fp ) == 0x00 ) sentence_font.is_transparent = true;
+    else                       sentence_font.is_transparent = false;
+    loadInt( fp, &sentence_font.wait_time );
+    loadInt( fp, &i );
+    sentence_font_info.pos.x = i * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    sentence_font_info.pos.y = i * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    sentence_font_info.pos.w = (i + 1 - sentence_font_info.pos.x * screen_ratio1 / screen_ratio2) * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    sentence_font_info.pos.h = (i + 1 - sentence_font_info.pos.y * screen_ratio1 / screen_ratio2) * screen_ratio1 / screen_ratio2;
+    loadStr( fp, &sentence_font_info.image_name );
+    if ( sentence_font_info.image_name ){
+        parseTaggedString( &sentence_font_info );
+        setupAnimationInfo( &sentence_font_info );
+    }
+
+    loadInt( fp, &i );
+    if ( i==1 ) cursor_info[0].abs_flag = false;
+    else        cursor_info[0].abs_flag = true;
+    loadInt( fp, &i );
+    if ( i==1 ) cursor_info[1].abs_flag = false;
+    else        cursor_info[1].abs_flag = true;
+    loadInt( fp, &i );
+    cursor_info[0].pos.x = i * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    cursor_info[1].pos.x = i * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    cursor_info[0].pos.y = i * screen_ratio1 / screen_ratio2;
+    loadInt( fp, &i );
+    cursor_info[1].pos.y = i * screen_ratio1 / screen_ratio2;
+
+    // load background surface
+    bg_info.remove();
+    bg_effect_image = COLOR_EFFECT_IMAGE;
+    loadStr( fp, &bg_info.file_name );
+    if ( !strcmp( bg_info.file_name, "white" ) ){
+        bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
+    }
+    else if ( !strcmp( bg_info.file_name, "black" ) ){
+        bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
+    }
+    else{
+        if ( bg_info.file_name[0] == '#' ){
+            readColor( &bg_info.color, bg_info.file_name );
+        }
+        else{
+            bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
+            setStr( &bg_info.image_name, bg_info.file_name );
+            parseTaggedString( &bg_info );
+            setupAnimationInfo( &bg_info );
+            bg_effect_image = BG_EFFECT_IMAGE;
+        }
+    }
+
+    for ( i=0 ; i<3 ; i++ ){
+        tachi_info[i].remove();
+        loadStr( fp, &tachi_info[i].image_name );
+        if ( tachi_info[i].image_name ){
+            parseTaggedString( &tachi_info[i] );
+            setupAnimationInfo( &tachi_info[i] );
+        }
+    }
+
+    for ( i=0 ; i<3 ; i++ ){
+        loadInt( fp, &j );
+        tachi_info[i].pos.x = j * screen_ratio1 / screen_ratio2;
+    }
+
+    for ( i=0 ; i<3 ; i++ ){
+        loadInt( fp, &j );
+        tachi_info[i].pos.y = j * screen_ratio1 / screen_ratio2;
+    }
+
+    loadInt( fp, &i ); // 0
+    loadInt( fp, &i ); // 0
+    loadInt( fp, &i ); // 0
+    
+    for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        sprite_info[i].remove();
+        loadStr( fp, &sprite_info[i].image_name );
+        if ( sprite_info[i].image_name ){
+            parseTaggedString( &sprite_info[i] );
+            setupAnimationInfo( &sprite_info[i] );
+        }
+        loadInt( fp, &j );
+        sprite_info[i].pos.x = j * screen_ratio1 / screen_ratio2;
+        loadInt( fp, &j );
+        sprite_info[i].pos.y = j * screen_ratio1 / screen_ratio2;
+        loadInt( fp, &j );
+        if ( j==1 ) sprite_info[i].visible = true;
+        else        sprite_info[i].visible = false;
+        loadInt( fp, &sprite_info[i].current_cell );
+    }
+
+    loadVariables( fp, 0, 200 );
+
+    // nested link label
+    int num_nest = 0;
+    loadInt( fp, &num_nest );
+    LinkLabelInfo *info = &root_link_label_info;
+    while( num_nest > 0 ){
+        loadInt( fp, &i );
+        info->current_script = script_h.getAddress( i );
+        info->string_buffer_offset = 0;
+        info->textgosub_flag = false;
+        info->current_line = script_h.getLineByAddress( info->current_script );
+        info->label_info = script_h.getLabelByAddress( info->current_script );
+        num_nest--;
+
+        info->next = new LinkLabelInfo();
+        info->next->previous = info;
+        info = info->next;
+    }
+    current_link_label_info = info;
+    
+    loadInt( fp, &i );
+    if (i == 1) monocro_flag_new = true;
+    else        monocro_flag_new = false;
+    for ( i=0 ; i<3 ; i++ ){
+        loadInt( fp, &j );
+        monocro_color_new[2-i] = j;
+    }
+    loadInt( fp, &nega_mode );
+    refreshSurfaceParameters();
+    
+    // ----------------------------------------
+    // Sound
+    stopBGM( false );
+    loadStr( fp, &midi_file_name ); // MIDI file
+    loadStr( fp, &wave_file_name ); // wave, waveloop
+    loadInt( fp, &i );
+    if ( i >= 0 ) current_cd_track = i;
+
+    loadInt( fp, &i ); // play, playonce MIDI
+    if ( i==1 ){
+        midi_play_loop_flag = true;
+        current_cd_track = -2;
+        playMIDIFile();
+    }
+    else
+        midi_play_loop_flag = false;
+    
+    loadInt( fp, &i ); // wave, waveloop
+    if ( i==1 ) wave_play_loop_flag = true;
+    else        wave_play_loop_flag = false;
+    if ( wave_file_name && wave_play_loop_flag )
+        playWave( wave_file_name, wave_play_loop_flag, DEFAULT_WAVE_CHANNEL );
+
+    loadInt( fp, &i ); // play, playonce
+    if ( i==1 ) cd_play_loop_flag = true;
+    else        cd_play_loop_flag = false;
+    if ( current_cd_track >= 0 ){
+        if ( cdaudio_flag ){
+            if ( cdrom_info ) playCDAudio( current_cd_track );
+        }
+        else{
+            playMP3( current_cd_track );
+        }
+    }
+
+    loadInt( fp, &i ); // bgm, mp3, mp3loop
+    if ( i==1 ) music_play_loop_flag = true;
+    else        music_play_loop_flag = false;
+    loadInt( fp, &i );
+    if ( i==1 && !music_play_loop_flag ) mp3save_flag = true;
+    else                                 mp3save_flag = false;
+    loadStr( fp, &music_file_name );
+    if ( music_file_name ){
+        if ( playWave( music_file_name, music_play_loop_flag, ONS_MIX_CHANNELS-1 ) )
+#if defined(EXTERNAL_MUSIC_PLAYER)
+            playMusicFile();
+#else
+            playMP3( 0 );
+#endif
+    }
+
+    loadInt( fp, &erase_text_window_mode );
+    loadInt( fp, &i ); // 1
+
+    for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
+        loadInt( fp, &j );
+        if ( j != 0 ){
+            bar_info[i] = new AnimationInfo();
+            bar_info[i]->param = j;
+            loadInt( fp, &j );
+            bar_info[i]->pos.x = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &j );
+            bar_info[i]->pos.y = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &j );
+            bar_info[i]->pos.w = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &j );
+            bar_info[i]->pos.h = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &j );
+            bar_info[i]->max_param = j;
+            for ( j=0 ; j<3 ; j++ )
+                bar_info[i]->color[2-j] = fgetc( fp );
+            fgetc( fp ); // 0x00
+        }
+        else{
+            loadInt( fp, &j ); // -1
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+        }
+    }
+
+    for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
+        loadInt( fp, &j );
+        if ( prnum_info[i] ){
+            prnum_info[i] = new AnimationInfo();
+            prnum_info[i]->param = j;
+            loadInt( fp, &j );
+            prnum_info[i]->pos.x = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &j );
+            prnum_info[i]->pos.y = j * screen_ratio1 / screen_ratio2;
+            loadInt( fp, &prnum_info[i]->font_size_xy[0] );
+            loadInt( fp, &prnum_info[i]->font_size_xy[1] );
+            for ( j=0 ; j<3 ; j++ )
+                prnum_info[i]->color_list[0][2-j] = fgetc( fp );
+            fgetc( fp ); // 0x00
+        }
+        else{
+            loadInt( fp, &j ); // -1
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+            loadInt( fp, &j ); // 0
+        }
+    }
+
+    loadInt( fp, &j ); // 1
+    loadInt( fp, &j ); // 0
+    loadInt( fp, &j ); // 1
+    loadStr( fp, &btndef_info.image_name );
+    loadInt( fp, &j ); // 0
+    if ( fgetc( fp ) == 1 ) erase_text_window_mode = 2;
+    fgetc( fp ); // 0
+    loadInt( fp, &j ); // 0
+
+    int text_num = 0;
+    loadInt( fp, &text_num );
+    start_text_buffer = current_text_buffer;
+    for ( i=0 ; i<text_num ; i++ ){
+        clearCurrentTextBuffer();
+        do{
+            current_text_buffer->buffer2[current_text_buffer->buffer2_count] = fgetc( fp );
+        }
+        while( current_text_buffer->buffer2[current_text_buffer->buffer2_count++] );
+        current_text_buffer->buffer2_count--;
+        current_text_buffer = current_text_buffer->next;
+    }
+    clearCurrentTextBuffer();
+
+    loadInt( fp, &i );
+    current_link_label_info->label_info = script_h.getLabelByLine( i );
+    current_link_label_info->current_line = i - current_link_label_info->label_info.start_line;
+    char *buf = script_h.getAddressByLine( i );
+
+    loadInt( fp, &j );
+    for ( i=0 ; i<j ; i++ ){
+        while( *buf != ':' ) buf++;
+        buf++;
+    }
+    script_h.setCurrent( buf );
+    string_buffer_offset = 0;
+
+
+    fclose(fp);
+
+    refreshSurface( accumulation_surface, NULL, REFRESH_NORMAL_MODE );
+    refreshSurface( text_surface, NULL, REFRESH_SHADOW_MODE );
+    dirty_rect.fill( screen_width, screen_height );
+    flush();
+    display_mode = next_display_mode = TEXT_DISPLAY_MODE;
+
+    clickstr_state = CLICK_NONE;
+    event_mode = 0;//WAIT_SLEEP_MODE;
+    
+    return 0;
+}
+
+void ONScripterLabel::saveSaveFile2( FILE *fp )
+{
+    int i, j;
+    
+    saveInt( fp, 1 );
+    saveInt( fp, (sentence_font.is_bold?1:0) );
+    saveInt( fp, (sentence_font.is_shadow?1:0) );
+
+    saveInt( fp, 0 );
+    saveInt( fp, (rmode_flag)?1:0 );
+    saveInt( fp, 0xff );
+    saveInt( fp, 0xff );
+    saveInt( fp, 0xff );
+    saveStr( fp, cursor_info[0].image_name );
+    saveStr( fp, cursor_info[1].image_name );
+
+    saveInt( fp, window_effect.effect );
+    saveInt( fp, window_effect.duration );
+    saveStr( fp, window_effect.anim.image_name ); // probably
+    
+    saveInt( fp, sentence_font.top_xy[0] );
+    saveInt( fp, sentence_font.top_xy[1] );
+    saveInt( fp, sentence_font.num_xy[0] );
+    saveInt( fp, sentence_font.num_xy[1] );
+    saveInt( fp, sentence_font.font_size_xy[0] );
+    saveInt( fp, sentence_font.font_size_xy[1] );
+    saveInt( fp, sentence_font.pitch_xy[0] );
+    saveInt( fp, sentence_font.pitch_xy[1] );
+    for ( i=0 ; i<3 ; i++ )
+        fputc( sentence_font.window_color[2-i], fp );
+    fputc( ( sentence_font.is_transparent )?0x00:0xff, fp ); 
+    saveInt( fp, sentence_font.wait_time );
+    saveInt( fp, sentence_font_info.pos.x * screen_ratio2 / screen_ratio1 );
+    saveInt( fp, sentence_font_info.pos.y * screen_ratio2 / screen_ratio1 );
+    saveInt( fp, sentence_font_info.pos.w * screen_ratio2 / screen_ratio1 + sentence_font_info.pos.x * screen_ratio2 / screen_ratio1 - 1 );
+    saveInt( fp, sentence_font_info.pos.h * screen_ratio2 / screen_ratio1 + sentence_font_info.pos.y * screen_ratio2 / screen_ratio1 - 1 );
+    saveStr( fp, sentence_font_info.image_name );
+
+    saveInt( fp, (cursor_info[0].abs_flag)?0:1 );
+    saveInt( fp, (cursor_info[1].abs_flag)?0:1 );
+    saveInt( fp, cursor_info[0].pos.x * screen_ratio2 / screen_ratio1 );
+    saveInt( fp, cursor_info[1].pos.x * screen_ratio2 / screen_ratio1 );
+    saveInt( fp, cursor_info[0].pos.y * screen_ratio2 / screen_ratio1 );
+    saveInt( fp, cursor_info[1].pos.y * screen_ratio2 / screen_ratio1 );
+    
+    saveStr( fp, bg_info.file_name );
+    for ( i=0 ; i<3 ; i++ )
+        saveStr( fp, tachi_info[i].image_name );
+
+    for ( i=0 ; i<3 ; i++ )
+        saveInt( fp, tachi_info[i].pos.x * screen_ratio2 / screen_ratio1 );
+
+    for ( i=0 ; i<3 ; i++ )
+        saveInt( fp, tachi_info[i].pos.y * screen_ratio2 / screen_ratio1 );
+
+    saveInt( fp, 0 );
+    saveInt( fp, 0 );
+    saveInt( fp, 0 );
+    
+    for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        saveStr( fp, sprite_info[i].image_name );
+        saveInt( fp, sprite_info[i].pos.x * screen_ratio2 / screen_ratio1 );
+        saveInt( fp, sprite_info[i].pos.y * screen_ratio2 / screen_ratio1 );
+        saveInt( fp, sprite_info[i].visible?1:0 );
+        saveInt( fp, sprite_info[i].current_cell );
+    }
+
+    saveVariables( fp, 0, 200 );
+
+    // nested link label
+    int num_nest = 0;
+    LinkLabelInfo *info = root_link_label_info.next;
+    while( info ){
+        info = info->next;
+        num_nest++;
+    }
+    saveInt( fp, num_nest );
+    info = &root_link_label_info;
+    for ( i=0 ; i<num_nest ; i++ ){
+        saveInt( fp, script_h.getOffset( info->current_script ) );
+        info = info->next;
+    }
+    
+    saveInt( fp, (monocro_flag_new)?1:0 );
+    for ( i=0 ; i<3 ; i++ )
+        saveInt( fp, monocro_color_new[2-i] );
+    saveInt( fp, nega_mode );
+
+    // sound
+    saveStr( fp, midi_file_name ); // MIDI file
+
+    saveStr( fp, wave_file_name ); // wave, waveloop
+
+    if ( current_cd_track >= 0 ) // play CD
+        saveInt( fp, current_cd_track );
+    else
+        saveInt( fp, -1 );
+
+    saveInt( fp, (midi_play_loop_flag)?1:0 ); // play, playonce MIDI
+    saveInt( fp, (wave_play_loop_flag)?1:0 ); // wave, waveloop
+    saveInt( fp, (cd_play_loop_flag)?1:0 ); // play, playonce
+    saveInt( fp, (music_play_loop_flag)?1:0 ); // bgm, mp3, mp3loop
+    saveInt( fp, (mp3save_flag|music_play_loop_flag)?1:0 );
+    saveStr( fp, music_file_name );
+    
+    saveInt( fp, (erase_text_window_mode>0)?1:0 );
+    saveInt( fp, 1 );
+    
+    for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
+        if ( bar_info[i] ){
+            saveInt( fp, bar_info[i]->param );
+            saveInt( fp, bar_info[i]->pos.x * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, bar_info[i]->pos.y * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, bar_info[i]->pos.w * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, bar_info[i]->pos.h * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, bar_info[i]->max_param );
+            for ( j=0 ; j<3 ; j++ )
+                fputc( bar_info[i]->color[2-j], fp );
+            fputc( 0x00, fp );
+        }
+        else{
+            saveInt( fp, 0 );
+            saveInt( fp, -1 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+        }
+    }
+    
+    for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
+        if ( prnum_info[i] ){
+            saveInt( fp, prnum_info[i]->param );
+            saveInt( fp, prnum_info[i]->pos.x * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, prnum_info[i]->pos.y * screen_ratio2 / screen_ratio1 );
+            saveInt( fp, prnum_info[i]->font_size_xy[0] );
+            saveInt( fp, prnum_info[i]->font_size_xy[1] );
+            for ( j=0 ; j<3 ; j++ )
+                fputc( prnum_info[i]->color_list[0][2-j], fp );
+            fputc( 0x00, fp );
+        }
+        else{
+            saveInt( fp, 0 );
+            saveInt( fp, -1 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+            saveInt( fp, 0 );
+        }
+    }
+
+    saveInt( fp, 1 );//
+    saveInt( fp, 0 );
+    saveInt( fp, 1 );
+    saveStr( fp, btndef_info.image_name );
+    saveInt( fp, 0 );
+    fputc( (erase_text_window_mode==2)?1:0, fp );
+    fputc( 0, fp );
+    saveInt( fp, 0 );
+
+    TextBuffer *tb = current_text_buffer;
+    int text_num = 0;
+    while( tb != start_text_buffer ){
+        tb = tb->previous;
+        text_num++;
+    }
+    saveInt( fp, text_num );
+
+    for ( i=0 ; i<text_num ; i++ ){
+        for ( j=0 ; j<tb->buffer2_count ; j++ )
+            fputc( tb->buffer2[j], fp );
+        fputc( 0, fp );
+        tb = tb->next;
+    }
+
+    saveInt( fp, current_link_label_info->label_info.start_line + current_link_label_info->current_line );
+
+    char *buf = script_h.getAddressByLine( current_link_label_info->label_info.start_line + current_link_label_info->current_line );
+    i = 0;
+    while( buf != script_h.getCurrent() ){
+        if ( *buf == ':' ) i++;
+        buf++;
+    }
+    saveInt( fp, i );
+}

@@ -43,7 +43,6 @@ public:
     int getNumAccessed();
     void registerCompressionType( const char *ext, int type );
 
-    bool getAccessFlag( const char *file_name );
     struct FileInfo getFileByIndex( int index );
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buffer );

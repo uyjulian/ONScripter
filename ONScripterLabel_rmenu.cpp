@@ -67,10 +67,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
 
-    if ( event_mode & WAIT_SLEEP_MODE )
-        event_mode &= ~WAIT_SLEEP_MODE;
-    else
-        event_mode |= WAIT_ANIMATION_MODE;
     refreshMouseOverButton();
     advancePhase();
 }
@@ -185,7 +181,7 @@ void ONScripterLabel::executeSystemSkip()
 {
     skip_flag = true;
     if ( !(shelter_event_mode & WAIT_BUTTON_MODE) )
-        shelter_event_mode |= WAIT_SLEEP_MODE;
+        shelter_event_mode &= ~WAIT_ANIMATION_MODE;
     leaveSystemCall();
 }
 
@@ -386,12 +382,12 @@ void ONScripterLabel::executeSystemYesNo()
                 }
                 leaveSystemCall( false );
                 saveon_flag = true;
+                internal_saveon_flag = true;
             }
             else if ( yesno_caller == SYSTEM_RESET || 
                       yesno_caller == SYSTEM_MENU ){
 
                 resetCommand();
-                //line_cache = -1;
                 event_mode = WAIT_SLEEP_MODE;
                 leaveSystemCall( false );
             }
@@ -459,8 +455,8 @@ void ONScripterLabel::setupLookbackButton()
     
     /* ---------------------------------------- */
     /* Previous button check */
-    if ( (current_text_buffer->previous->xy[1] != -1 ) &&
-         current_text_buffer->previous != shelter_text_buffer ){
+    if ( (current_text_buffer->previous->buffer2_count > 0 ) &&
+         current_text_buffer != start_text_buffer ){
         last_button_link->next = new ButtonLink();
         last_button_link = last_button_link->next;
     
@@ -603,22 +599,31 @@ void ONScripterLabel::executeSystemLookback()
     uchar3 color;
     
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
-        if ( current_button_state.button == 0 ) return;
-        if ( current_button_state.button < 0 ){
+        if ( current_button_state.button == 0 ||
+             ( current_text_buffer == start_text_buffer &&
+               current_button_state.button == -2 ) )
+            return;
+        if ( current_button_state.button == -1 ||
+             ( current_button_state.button == -3 &&
+               current_text_buffer->next == shelter_text_buffer ) ||
+             current_button_state.button <= -4 )
+        {
             event_mode = IDLE_EVENT_MODE;
             deleteButtonLink();
             leaveSystemCall();
             return;
         }
         
-        if ( current_button_state.button == 1 )
+        if ( current_button_state.button == 1 ||
+             current_button_state.button == -2 ){
             current_text_buffer = current_text_buffer->previous;
+        }
         else
             current_text_buffer = current_text_buffer->next;
     }
     else{
         current_text_buffer = current_text_buffer->previous;
-        if ( current_text_buffer->xy[1] == -1 ){
+        if ( current_text_buffer->buffer2_count == 0 ){
             leaveSystemCall();
             return;
         }

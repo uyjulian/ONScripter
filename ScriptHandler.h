@@ -39,14 +39,14 @@ class ScriptHandler
 public:
     enum { END_NONE  = 0,
            END_COMMA = 1,
-           END_COLON = 2,
-           END_QUAT  = 4
+           END_QUAT  = 2
     };
     struct LabelInfo{
         char *name;
+        char *label_header;
         char *start_address;
+        int  start_line;
         int  num_of_lines;
-        bool access_flag;
     };
 
     struct ArrayVariable{
@@ -76,8 +76,14 @@ public:
     FILE *fopen( const char *path, const char *mode );
 
     char *saveStringBuffer();
+    int  getOffset( char *pos );
+    char *getAddress( int offset );
     char *getCurrent();
     void setCurrent( char *pos, bool reread_flag=true );
+    int getLineByAddress( char *address );
+    char *getAddressByLine( int line );
+    LabelInfo getLabelByAddress( char *address );
+    LabelInfo getLabelByLine( int line );
     char *getNext();
     void pushCurrent( char *pos );
     void popCurrent();
@@ -91,14 +97,14 @@ public:
     void setLinepage( bool val );
 
     bool isKidoku();
-    void markAsKidoku();
+    void markAsKidoku( char *address=NULL );
 
     int  rereadToken();
     int  readToken();
     const char *readStr( bool reread_flag=false );
     int  readInt( bool reread_flag=false );
     void declareDim();
-    bool skipToken();
+    void skipToken();
 
     void setInt( VariableInfo *var_info, int val, int offset=0 );
     void setNumVariable( int no, int val );
@@ -113,19 +119,34 @@ public:
 
     LabelInfo lookupLabel( const char* label );
     LabelInfo lookupLabelNext( const char* label );
-    bool getLabelAccessFlag( const char *label );
     void errorAndExit( char *str );
 
-    void saveLabelLog();
-    void loadLabelLog();
-
+    void setKidokuskip( bool kidokuskip_flag );
     void saveKidokuData();
     void loadKidokuData();
     
     void addNumAlias( const char *str, int no );
     void addStrAlias( const char *str1, const char *str2 );
-    
 
+    typedef enum { LABEL_LOG = 0,
+                   FILE_LOG = 1
+    } LOG_TYPE;
+    struct LogLink{
+        LogLink *next;
+        char *name;
+        LogLink(){
+            next = NULL;
+            name = NULL;
+        };
+        ~LogLink(){
+            if ( name ) delete[] name;
+        };
+    };
+    LogLink *findAndAddLog( LOG_TYPE type, const char *name, bool add_flag );
+    void deleteLog( LOG_TYPE type );
+    void loadLog( LOG_TYPE type );
+    void saveLog( LOG_TYPE type );
+    
     /* ---------------------------------------- */
     /* Variable */
     int num_variables[ VARIABLE_RANGE ];
@@ -231,8 +252,14 @@ private:
 
     LabelInfo *label_info;
     int num_of_labels;
-    int num_of_labels_accessed;
+    struct LogInfo{
+        LogLink root_log;
+        LogLink *current_log;
+        int num_logs;
+        char *filename;
+    } log_info[2];
 
+    bool kidokuskip_flag;
     char *kidoku_buffer;
 
     bool text_flag; // true if the current token is text

@@ -30,14 +30,14 @@ int ONScripterLabel::proceedAnimation()
     
     for ( i=0 ; i<3 ; i++ ){
         anim = &tachi_info[i];
-        if ( anim->valid && anim->is_animatable ){
+        if ( anim->visible && anim->is_animatable ){
             minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
         }
     }
 
     for ( i=MAX_SPRITE_NUM-1 ; i>=0 ; i-- ){
         anim = &sprite_info[i];
-        if ( anim->valid && anim->is_animatable ){
+        if ( anim->visible && anim->is_animatable ){
             minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
         }
     }
@@ -51,7 +51,7 @@ int ONScripterLabel::proceedAnimation()
         else if ( clickstr_state == CLICK_NEWPAGE )
             anim = &cursor_info[CURSOR_NEWPAGE_NO];
 
-        if ( anim->valid && anim->is_animatable ){
+        if ( anim->visible && anim->is_animatable ){
             SDL_Rect dst_rect = anim->pos;
             if ( !anim->abs_flag ){
                 dst_rect.x += sentence_font.x( tateyoko_mode ) * screen_ratio1 / screen_ratio2;
@@ -91,14 +91,14 @@ void ONScripterLabel::resetRemainingTime( int t )
     
     for ( i=0 ; i<3 ; i++ ){
         anim = &tachi_info[i];
-        if ( anim->valid && anim->is_animatable){
+        if ( anim->visible && anim->is_animatable){
             anim->remaining_time -= t;
         }
     }
         
     for ( i=MAX_SPRITE_NUM-1 ; i>=0 ; i-- ){
         anim = &sprite_info[i];
-        if ( anim->valid && anim->is_animatable ){
+        if ( anim->visible && anim->is_animatable ){
             anim->remaining_time -= t;
         }
     }
@@ -111,7 +111,7 @@ void ONScripterLabel::resetRemainingTime( int t )
         else if ( clickstr_state == CLICK_NEWPAGE )
             anim = &cursor_info[CURSOR_NEWPAGE_NO];
         
-        if ( anim->valid && anim->is_animatable ){
+        if ( anim->visible && anim->is_animatable ){
             anim->remaining_time -= t;
         }
     }
@@ -301,6 +301,8 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 
 void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
 {
+    if ( anim->current_cell >= anim->num_of_cells ) return;
+    
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
         alphaBlend( dst_surface, anim->pos,
                     dst_surface, anim->pos.x, anim->pos.y,

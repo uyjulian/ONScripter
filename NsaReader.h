@@ -41,7 +41,6 @@ public:
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf );
     struct FileInfo getFileByIndex( int index );
-    bool getAccessFlag( const char *file_name );
 
     int openForConvert( char *nsa_name, int archive_type=ARCHIVE_TYPE_NSA );
     int writeHeader( FILE *fp, int archive_type=ARCHIVE_TYPE_NSA );

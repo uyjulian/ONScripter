@@ -240,22 +240,6 @@ int SarReader::getNumAccessed()
     return num;
 }
 
-bool SarReader::getAccessFlag( const char *file_name )
-{
-    ArchiveInfo *info = archive_info.next;
-    int j = 0;
-    
-    for ( int i=0 ; i<num_of_sar_archives ; i++ ){
-        j = getIndexFromFile( info, file_name );
-        if ( j != info->num_of_files ) break;
-        info = info->next;
-    }
-
-    if ( !info ) return false;
-    
-    return info->fi_list[j].access_flag;
-}
-
 int SarReader::getIndexFromFile( ArchiveInfo *ai, const char *file_name )
 {
     unsigned int i, len;
