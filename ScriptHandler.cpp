@@ -296,13 +296,12 @@ int ScriptHandler::readToken()
             if ( !text_flag && string_counter != 0 ) break;
 
             no = parseInt(&buf);
-            if ( text_flag )
-            {
-                if ( str_variables[no] ){
-                    for ( i=0 ; i<strlen( str_variables[no] ) ; i++ ){
-                        addStringBuffer( str_variables[no][i], string_counter++ );
-                    }
+            if ( str_variables[no] ){
+                for ( i=0 ; i<strlen( str_variables[no] ) ; i++ ){
+                    addStringBuffer( str_variables[no][i], string_counter++ );
                 }
+            }
+            if ( text_flag ){
                 current_variable.type = VAR_NONE;
             }
             else{

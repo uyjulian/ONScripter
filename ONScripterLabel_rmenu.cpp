@@ -92,7 +92,7 @@ void ONScripterLabel::searchSaveFiles( int no )
         save_file_info[i].hour   = stm.wHour;
         save_file_info[i].minute = stm.wMinute;
 #else
-        sprintf( file_name, "save%d.dat" );
+        sprintf( file_name, "save%d.dat", i+1 );
         FILE *fp;
         if ( (fp = fopen( file_name, "rb" )) == NULL ){
             save_file_info[i].valid = false;
