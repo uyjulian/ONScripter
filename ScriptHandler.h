@@ -129,8 +129,8 @@ public:
     void declareDim();
 
     void enableTextgosub(bool val);
-    void setClickstr( int num, const char *list );
-    bool checkClickstr(const char *buf);
+    void setClickstr( const char *list );
+    int  checkClickstr(const char *buf, bool recursive_flag=false);
 
     void setInt( VariableInfo *var_info, int val, int offset=0 );
     void setNumVariable( int no, int val );
@@ -279,7 +279,6 @@ private:
     int  end_status;
     bool linepage_flag;
     bool textgosub_flag;
-    int  clickstr_num;
     char *clickstr_list;
 
     char *current_script;

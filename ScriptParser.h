@@ -317,8 +317,6 @@ protected:
         };
     } *text_buffer, *start_text_buffer, *current_text_buffer; // ring buffer
     int  max_text_buffer;
-    int  clickstr_num;
-    char *clickstr_list;
     int  clickstr_line;
     int  clickstr_state;
     int  num_chars_in_sentence;

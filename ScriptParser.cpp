@@ -226,8 +226,6 @@ ScriptParser::ScriptParser( char *path, char *key_exe )
     text_buffer = NULL;
     current_text_buffer = start_text_buffer = NULL;
     
-    clickstr_num = 0;
-    clickstr_list = NULL;
     clickstr_line = 0;
     clickstr_state = CLICK_NONE;
     

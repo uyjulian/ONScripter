@@ -480,6 +480,7 @@ private:
     
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip=NULL );
+    void drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, SDL_Surface *cache_surface=NULL );
     void refreshText( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode=0 );
     void restoreTextBuffer();

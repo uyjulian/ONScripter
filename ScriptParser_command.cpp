@@ -1044,15 +1044,12 @@ int ScriptParser::clickvoiceCommand()
 
 int ScriptParser::clickstrCommand()
 {
-    const char *buf = script_h.readStr();
-
-    clickstr_num = strlen( buf ) / 2;
-    clickstr_list = new char[clickstr_num * 2];
-    for ( int i=0 ; i<clickstr_num*2 ; i++ ) clickstr_list[i] = buf[i];
+    script_h.readStr();
+    const char *buf = script_h.saveStringBuffer();
 
     clickstr_line = script_h.readInt();
 
-    script_h.setClickstr( clickstr_num, clickstr_list );
+    script_h.setClickstr( buf );
            
     return RET_CONTINUE;
 }

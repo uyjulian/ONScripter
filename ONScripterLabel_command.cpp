@@ -213,8 +213,6 @@ int ONScripterLabel::talCommand()
         tachi_info[ no ].trans = trans;
         dirty_rect.add( tachi_info[ no ].pos );
 
-        loadSubTexture( tachi_info[no].image_surface, tachi_info[no].tex_id );
-
         readEffect( &tmp_effect );
         return setEffect( tmp_effect.effect );
    }
@@ -834,6 +832,8 @@ int ONScripterLabel::puttextCommand()
     script_h.readStr();
     script_h.addStringBuffer(0x0a);
     string_buffer_offset = 0;
+    if ( script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR )
+        string_buffer_offset = 1; // skip the heading `
     script_h.setText( true );
 
     return RET_CONTINUE | RET_NOREAD;
@@ -1009,8 +1009,6 @@ int ONScripterLabel::mspCommand()
         sprite_info[ no ].trans += script_h.readInt();
     if ( sprite_info[ no ].trans > 256 ) sprite_info[ no ].trans = 256;
     else if ( sprite_info[ no ].trans < 0 ) sprite_info[ no ].trans = 0;
-
-    loadSubTexture( sprite_info[no].image_surface, sprite_info[no].tex_id );
 
     return RET_CONTINUE;
 }

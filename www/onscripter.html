@@ -12,7 +12,7 @@
 <center><H1>ONScripter のページ</H1></center>
 
 Since: Feb. 6, 2002<br>
-Last updated: Sep. 2, 2004<br>
+Last updated: Sep. 9, 2004<br>
 ソース更新。<br>
 ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
 <HR>
@@ -38,10 +38,10 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 てください。</P>
 
 <P>現在はベータ版
-<A HREF="onscripter-beta-20040902.tar.gz">onscripter-beta-20040902.tar.gz</A>
+<A HREF="onscripter-beta-20040909.tar.gz">onscripter-beta-20040909.tar.gz</A>
 を配布しております。<br>
 (一つ前のベータ版
-<A HREF="onscripter-beta-20040614.tar.gz">onscripter-beta-20040614.tar.gz</A>
+<A HREF="onscripter-beta-20040902.tar.gz">onscripter-beta-20040902.tar.gz</A>
 )<br>
 <!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </P>
@@ -66,7 +66,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <LI> <A HREF="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</A>（かつらさん）
   <LI> Windows 版 （バージョンの新しい方を使ってください）
       <UL>
-          <LI> <A HREF="http://eboshi.s27.xrea.com:8080/index.php">ONScripter Windows Binary</A>（かつをのえぼしさん）<font color=red>(updated in Jun. 5, 2004)</font>
+          <LI> <A HREF="http://eboshi.s27.xrea.com:8080/index.php">ONScripter Windows Binary</A>（かつをのえぼしさん）
           <LI> <A HREF="http://homepage1.nifty.com/nyomo/onscripter/index.html">ONScripter M$ Windows版バイナリ</A>（にょもさん）
       </UL>
   <LI> <A HREF="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</A>（bero さん）
@@ -112,6 +112,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 	 <LI> <A HREF="#midi">MIDI 演奏機能について</A>
 	 <LI> <A HREF="#archive_compression">アーカイブ圧縮について</A>
 	 <LI> <A HREF="#mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A>
+	 <LI> <A HREF="#enable_1byte">英語ノベル作成について</A><font color=red>(updated in Sep. 9, 2004)</font>
        </UL>
 </UL>
 
@@ -145,6 +146,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <LI> 右クリックメニュー（セーブ・ロード・回想・ウィンドウを消す・リセット・スキップ）を実装しています。<BR>
   <LI> カーソル・立ち絵・スプライトのアニメーションを実装しています。<BR>
   <LI> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<BR>
+  <LI> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
 </OL>
 
 </DIV>
@@ -590,6 +592,52 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
   ......
 }
 #pragma optimize( "g", on )
+</PRE>
+
+</DIV>
+
+<DIV CLASS="block2">
+<H3><A NAME="enable_1byte">英語ノベル作成について</A></H3>
+
+<P>コンパイル時に ENABLE_1BYTE_CHAR を定義することで、`(back quote) 以
+降行末もしくは別の ` までを、1byte 文字で記述されたテキスト文とみなし
+て表示するようにします。半角スペースが表示として有効になりますが、テキ
+スト内の変数表示は無効になり、また色・時間指定も開始位置によっては無効
+になります。テキスト途中で色を変える場合は、/ で行を分けるなどしてくだ
+さい。ただし、クリック待ち(@)改ページ待ち(\\)直後の強制クリック文字を
+無視(_)は有効です。これは ONScripter 独自の拡張です。将来本家で ` に何
+か機能を割り振った場合には、削除もしくは別の文字に変更されます。</P>
+
+<P>以下にスクリプト例を書きます。<BR>
+
+<PRE>
+*define 
+clickstr `.?"`, 2 
+game
+ 
+*start
+`Hi, this was test.
+`Hi, this is test again.
+`_"He said so."
+`_"She said so."
+`Does it work??
+br
+selgosub `Say "Turn to the right."`, *right, 
+`Say "Turn to the left."`, *left ,
+"`Do nothing.", *nothing
+end 
+
+*right
+`You turned to the right.
+return
+
+*left
+`You turned to the left.
+return
+
+*nothing
+`You didn't do anything.
+return
 </PRE>
 
 </DIV>

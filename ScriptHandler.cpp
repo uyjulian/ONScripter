@@ -57,7 +57,6 @@ ScriptHandler::ScriptHandler()
     text_flag = true;
     linepage_flag = false;
     textgosub_flag = false;
-    clickstr_num = 0;
     clickstr_list = NULL;
     
     string_buffer_length = 512;
@@ -144,13 +143,17 @@ const char *ScriptHandler::readToken()
              (ch >= '0' && ch <= '9') ||
              ch == '@' || ch == '\\' || ch == '/' ||
              ch == '%' || ch == '?' || ch == '$' ||
+#ifndef ENABLE_1BYTE_CHAR
+             ch == '`' ||
+#endif             
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
         bool loop_flag = true;
         do{
             if (ch & 0x80){
-                if ( textgosub_flag && checkClickstr(buf) ) loop_flag = false;
+                if ( textgosub_flag && checkClickstr(buf) > 0) loop_flag = false;
                 addStringBuffer( ch );
                 ch = *++buf;
+                if (ch == 0x0a || ch == '\0') break;
                 addStringBuffer( ch );
                 buf++;
                 SKIP_SPACE(buf);
@@ -172,10 +175,11 @@ const char *ScriptHandler::readToken()
                         addStringBuffer( ch );
                         buf++;
                     }
-                    SKIP_SPACE(buf);
                     ch = *buf;
                     if (ch == 0x0a || ch == '\0' || !loop_flag) break;
                 }
+                SKIP_SPACE(buf);
+                ch = *buf;
             }
         }
         while (ch != 0x0a && ch != '\0' && loop_flag);
@@ -251,7 +255,10 @@ const char *ScriptHandler::readLabel()
 
     string_counter = 0;
     char ch = *buf;
-    if ((ch >= 'a' && ch <= 'z') || 
+    if (ch == '$'){
+        addStrVariable(&buf);
+    }
+    else if ((ch >= 'a' && ch <= 'z') || 
         (ch >= 'A' && ch <= 'Z') ||
         ch == '_' || ch == '*'){
         if (ch >= 'A' && ch <= 'Z') ch += 'a' - 'A';
@@ -568,33 +575,47 @@ void ScriptHandler::enableTextgosub(bool val)
     textgosub_flag = val;
 }
 
-void ScriptHandler::setClickstr(int num, const char *list)
+void ScriptHandler::setClickstr(const char *list)
 {
-    clickstr_num = num;
-    clickstr_list = new char[clickstr_num * 2];
-    for ( int i=0 ; i<clickstr_num*2 ; i++ ) clickstr_list[i] = list[i];
+    if (clickstr_list) delete[] clickstr_list;
+    clickstr_list = new char[strlen(list)+2];
+    memcpy( clickstr_list, list, strlen(list)+1 );
+    clickstr_list[strlen(list)+1] = '\0';
 }
 
-bool ScriptHandler::checkClickstr(const char *buf)
+int ScriptHandler::checkClickstr(const char *buf, bool recursive_flag)
 {
-    int i, j, ret = false;
+    if ( buf[0] == '@' || buf[0] == '\\' ) return 1;
 
-    for (i=0 ; i<clickstr_num ; i++){
-        if ( clickstr_list[i*2] == buf[0] && clickstr_list[i*2+1] == buf[1] ){
-            ret = true;
-            if ( buf[2] == '@' || buf[2] == '\\' ) ret = false;
+    if (clickstr_list == NULL) return 0;
 
-            for (j=0 ; j<clickstr_num ; j++){
-                if ( clickstr_list[j*2] == buf[2] && clickstr_list[j*2+1] == buf[3] ){
-                    ret = false;
-                    break;
-                }
+    bool double_byte_check = true;
+    char *click_buf = clickstr_list;
+    while(click_buf[0]){
+#ifdef ENABLE_1BYTE_CHAR
+        if (click_buf[0] == '`'){
+            click_buf++;
+            double_byte_check = false;
+            continue;
+        }
+#endif
+        if (double_byte_check){
+            if ( click_buf[0] == buf[0] && click_buf[1] == buf[1] ){
+                if (!recursive_flag && checkClickstr(buf+2, true) > 0) return 0;
+                return 2;
             }
-            break;
+            click_buf += 2;
+        }
+        else{
+            if ( click_buf[0] == buf[0] ){
+                if (!recursive_flag && checkClickstr(buf+1, true) > 0) return 0;
+                return 1;
+            }
+            click_buf++;
         }
     }
-    
-    return ret;
+
+    return 0;
 }
 
 int ScriptHandler::getIntVariable( VariableInfo *var_info )
@@ -1171,8 +1192,19 @@ void ScriptHandler::parseStr( char **buf )
         str_string_buffer[c] = '\0';
         if ( **buf == '"' ) (*buf)++;
         current_variable.type |= VAR_CONST;
-        //end_status |= END_QUAT;
     }
+#ifdef ENABLE_1BYTE_CHAR
+    else if ( **buf == '`' ){
+        int c=0;
+        str_string_buffer[c++] = *(*buf)++;
+        while ( **buf != '`' && **buf != 0x0a )
+            str_string_buffer[c++] = *(*buf)++;
+        str_string_buffer[c] = '\0';
+        if ( **buf == '`' ) (*buf)++;
+        current_variable.type |= VAR_CONST;
+        end_status |= END_1BYTE_CHAR;
+    }
+#endif    
     else if ( **buf == '#' ){ // for color
         for ( int i=0 ; i<7 ; i++ )
             str_string_buffer[i] = *(*buf)++;
