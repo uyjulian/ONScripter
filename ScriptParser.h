@@ -63,6 +63,7 @@ public:
     void saveGlovalData();
 
     /* Command */
+    int zenkakkoCommand();
     int windowbackCommand();
     int versionstrCommand();
     int usewheelCommand();
@@ -105,6 +106,7 @@ public:
     int lookbackspCommand();
     int lookbackcolorCommand();
     //int lookbackbuttonCommand();
+    int loadgosubCommand();
     int linepageCommand();
     int lenCommand();
     int labellogCommand();
@@ -217,6 +219,7 @@ protected:
     bool mode_ext_flag;
     bool force_button_shortcut_flag;
     bool rubyon_flag;
+    bool zenkakko_flag;
     
     int string_buffer_offset;
 
@@ -421,6 +424,7 @@ protected:
     /* System customize related variables */
     char *textgosub_label;
     char *pretextgosub_label;
+    char *loadgosub_label;
 
     ScriptHandler script_h;
     

@@ -485,16 +485,25 @@ void ONScripterLabel::initOpenGL()
     glLoadIdentity();
     glOrtho(0, screen_width, 0, screen_height, -1.0, 1.0);
 
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
+#else    
     glEnable(GL_TEXTURE_2D);
+#endif
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    screen_texture_width  = screen_width;
+    screen_texture_height = screen_height;
+#else
     screen_texture_width = 1;
     while (screen_texture_width  < screen_width)  screen_texture_width <<= 1;
     screen_texture_height = 1;
     while (screen_texture_height < screen_height) screen_texture_height <<= 1;
+#endif
 
 #ifdef glBlendColor
     glBlendColor_ptr = glBlendColor;
@@ -539,10 +548,15 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id )
 #ifdef USE_OPENGL
     SDL_Rect rect = {0, 0, surface->w, surface->h};
 
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    int texture_width  = rect.w;
+    int texture_height = rect.h;
+#else
     int texture_width = 1;
     while (texture_width  < rect.w) texture_width <<= 1;
     int texture_height = 1;
     while (texture_height < rect.h) texture_height <<= 1;
+#endif
     
     if (texture_buffer_size < texture_width*texture_height*4){
         if (texture_buffer) delete[] texture_buffer;
@@ -568,11 +582,18 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id )
 #endif
     }
     SDL_UnlockSurface(surface);
-
+    
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA,
+                 texture_width, texture_height,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+#else
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  texture_width, texture_height,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+#endif
 #endif    
 }
 
@@ -606,11 +627,17 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
 #endif    
     }
     SDL_UnlockSurface(surface);
-
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
+    glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, rect2.x, surface->h-rect2.y-rect2.h,
+                    rect2.w, rect2.h,
+                    GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+#else
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexSubImage2D(GL_TEXTURE_2D, 0, rect2.x, surface->h-rect2.y-rect2.h,
                     rect2.w, rect2.h,
                     GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+#endif
 #endif    
 }
 
@@ -635,14 +662,31 @@ void ONScripterLabel::drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &t
     if (alpha >= 0)
         glColor4f(1.0, 1.0, 1.0, alpha/256.0f);
 
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
+#else
     glBindTexture(GL_TEXTURE_2D, tex_id);
+#endif
     
     float u[2], v[2];
+#ifdef USE_GL_TEXTURE_RECTANGLE
+#if 0    
     u[0] = (float)tex_rect.x/texture_width;
     u[1] = (float)(tex_rect.x+tex_rect.w)/texture_width;
     v[0] = (float)(image_height-tex_rect.y)/texture_height;
     v[1] = (float)(image_height-tex_rect.y-tex_rect.h)/texture_height;
-    
+#else
+    u[0] = (float)tex_rect.x;
+    u[1] = (float)(tex_rect.x+tex_rect.w);
+    v[0] = (float)(image_height-tex_rect.y);
+    v[1] = (float)(image_height-tex_rect.y-tex_rect.h);
+#endif
+#else    
+    u[0] = (float)tex_rect.x/texture_width;
+    u[1] = (float)(tex_rect.x+tex_rect.w)/texture_width;
+    v[0] = (float)(image_height-tex_rect.y)/texture_height;
+    v[1] = (float)(image_height-tex_rect.y-tex_rect.h)/texture_height;
+#endif    
     glBegin(GL_QUADS);
 
     glTexCoord2f(u[0], v[0]);
@@ -665,7 +709,29 @@ void ONScripterLabel::refreshTexture()
 {
 #ifdef USE_OPENGL    
     int i;
-    
+
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    if (effect_src_id > 0) glDeleteTextures(1, (const GLuint*)&effect_src_id);
+    glGenTextures(1, (GLuint*)&effect_src_id);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, effect_src_id);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    loadTexture(text_surface, effect_src_id);
+
+    if (effect_dst_id > 0) glDeleteTextures(1, (const GLuint*)&effect_dst_id);
+    glGenTextures(1, (GLuint*)&effect_dst_id);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, effect_dst_id);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    loadTexture(text_surface, effect_dst_id);
+
+    if (text_id > 0) glDeleteTextures(1, (const GLuint*)&text_id);
+    glGenTextures(1, (GLuint*)&text_id);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, text_id);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    loadTexture(text_surface, text_id);
+#else
     if (effect_src_id > 0) glDeleteTextures(1, (const GLuint*)&effect_src_id);
     glGenTextures(1, (GLuint*)&effect_src_id);
     glBindTexture(GL_TEXTURE_2D, effect_src_id);
@@ -686,6 +752,7 @@ void ONScripterLabel::refreshTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     loadTexture(text_surface, text_id);
+#endif
 
     if (bg_info.tex_id > 0){
         bg_info.bindTexture();

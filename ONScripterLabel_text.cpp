@@ -332,7 +332,7 @@ void ONScripterLabel::restoreTextBuffer()
 
 int ONScripterLabel::enterTextDisplayMode()
 {
-    if (saveon_flag && internal_saveon_flag) saveSaveFile( -1 );
+    if (!line_enter_flag && saveon_flag && internal_saveon_flag) saveSaveFile( -1 );
     internal_saveon_flag = false;
     
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
@@ -417,6 +417,8 @@ int ONScripterLabel::clickWait( char *out_text )
             if (script_h.getNext()[0] == 0x0a)
                 textgosub_clickstr_state |= CLICK_EOL;
             gosubReal( textgosub_label, script_h.getNext() );
+            indent_offset = 0;
+            line_enter_flag = false;
             return RET_CONTINUE;
         }
         if ( automode_flag ){
@@ -463,6 +465,8 @@ int ONScripterLabel::clickNewPage( char *out_text )
 
             textgosub_clickstr_state = CLICK_NEWPAGE;
             gosubReal( textgosub_label, script_h.getNext() );
+            indent_offset = 0;
+            line_enter_flag = false;
             return RET_CONTINUE;
         }
         if ( automode_flag ){
@@ -556,11 +560,13 @@ int ONScripterLabel::textCommand()
 {
     int ret = enterTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
-    
+
     if (pretextgosub_label && 
-        (line_enter_flag == false ||
+        (line_enter_flag == false /*||
          (string_buffer_offset == 0 &&
-          script_h.getStringBuffer()[string_buffer_offset] == '['))){
+          (!zenkakko_flag && script_h.getStringBuffer()[string_buffer_offset] == '[' ||
+           zenkakko_flag && script_h.getStringBuffer()[string_buffer_offset] == "Åy"[0] &&
+           script_h.getStringBuffer()[string_buffer_offset+1] == "Åy"[1])) */)){
         line_enter_flag = true;
         gosubReal( pretextgosub_label, script_h.getCurrent() );
         return RET_CONTINUE;

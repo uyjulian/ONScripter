@@ -279,6 +279,106 @@ int ONScripterLabel::stopCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::sp_rgb_gradationCommand()
+{
+    int no = script_h.readInt();
+    int upper_r = script_h.readInt();
+    int upper_g = script_h.readInt();
+    int upper_b = script_h.readInt();
+    int lower_r = script_h.readInt();
+    int lower_g = script_h.readInt();
+    int lower_b = script_h.readInt();
+    Uint32 key_r = script_h.readInt();
+    Uint32 key_g = script_h.readInt();
+    Uint32 key_b = script_h.readInt();
+    Uint32 alpha = script_h.readInt();
+
+    AnimationInfo *si;
+    if (no == -1) si = &sentence_font_info;
+    else          si = &sprite_info[no];
+    SDL_Surface *surface = si->image_surface;
+    if (surface == NULL) return RET_CONTINUE;
+    
+    Uint32 key_mask = key_r << surface->format->Rshift;
+    key_mask |= key_g << surface->format->Gshift;
+    key_mask |= key_b << surface->format->Bshift;
+    Uint32 rgb_mask = 0xff << surface->format->Rshift;
+    rgb_mask |= 0xff << surface->format->Gshift;
+    rgb_mask |= 0xff << surface->format->Bshift;
+
+    SDL_LockSurface(surface);
+    // check upper and lower bound
+    int i, j;
+    int upper_bound=0, lower_bound=0;
+    bool is_key_found = false;
+    for (i=0 ; i<surface->h ; i++){
+        Uint32 *buf = (Uint32 *)surface->pixels + surface->w * i;
+        for (j=0 ; j<surface->w ; j++, buf++){
+            if ((*buf & rgb_mask) == key_mask){
+                if (is_key_found == false){
+                    is_key_found = true;
+                    upper_bound = lower_bound = i;
+                }
+                else{
+                    lower_bound = i;
+                }
+                break;
+            }
+        }
+    }
+    
+    // replace pixels of the key-color with the specified color in gradation
+    for (i=upper_bound ; i<=lower_bound ; i++){
+        Uint32 *buf = (Uint32 *)surface->pixels + surface->w * i;
+        Uint32 color = alpha << surface->format->Ashift;
+        if (upper_bound != lower_bound){
+            color |= ((lower_r - upper_r) * (i-upper_bound) / (lower_bound - upper_bound) + upper_r) << surface->format->Rshift;
+            color |= ((lower_g - upper_g) * (i-upper_bound) / (lower_bound - upper_bound) + upper_g) << surface->format->Gshift;
+            color |= ((lower_b - upper_b) * (i-upper_bound) / (lower_bound - upper_bound) + upper_b) << surface->format->Bshift;
+        }
+        else{
+            color |= upper_r << surface->format->Rshift;
+            color |= upper_g << surface->format->Gshift;
+            color |= upper_b << surface->format->Bshift;
+        }
+        
+        for (j=0 ; j<surface->w ; j++, buf++)
+            if ((*buf & rgb_mask) == key_mask) *buf = color;
+    }
+    
+    SDL_UnlockSurface(surface);
+    if (si->image_surface)
+        loadTexture(si->image_surface, si->tex_id);
+    
+    if ( si->visible )
+        dirty_rect.add( si->pos );
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::spstrCommand()
+{
+    decodeExbtnControl( accumulation_surface, script_h.readStr() );
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::spreloadCommand()
+{
+    int no = script_h.readInt();
+    AnimationInfo *si;
+    if (no == -1) si = &sentence_font_info;
+    else          si = &sprite_info[no];
+
+    parseTaggedString( si );
+    setupAnimationInfo( si );
+    
+    if ( si->visible )
+        dirty_rect.add( si->pos );
+    
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::splitCommand()
 {
     script_h.readStr();
@@ -310,13 +410,6 @@ int ONScripterLabel::splitCommand()
     return RET_CONTINUE;
 }
 
-int ONScripterLabel::spstrCommand()
-{
-    decodeExbtnControl( accumulation_surface, script_h.readStr() );
-    
-    return RET_CONTINUE;
-}
-
 int ONScripterLabel::spclclkCommand()
 {
     if ( !force_button_shortcut_flag )
@@ -326,14 +419,10 @@ int ONScripterLabel::spclclkCommand()
 
 int ONScripterLabel::spbtnCommand()
 {
-    bool cellcheck_flag;
+    bool cellcheck_flag = false;
 
-    if ( script_h.isName( "cellcheckspbtn" ) ){
+    if ( script_h.isName( "cellcheckspbtn" ) )
         cellcheck_flag = true;
-    }
-    else{
-        cellcheck_flag = false;
-    }
 
     int sprite_no = script_h.readInt();
     int no        = script_h.readInt();
@@ -444,7 +533,8 @@ int ONScripterLabel::setwindowCommand()
 
     dirty_rect.add( sentence_font_info.pos );
     lookbackflushCommand();
-    clearCurrentTextBuffer();
+    indent_offset = 0;
+    line_enter_flag = false;
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
@@ -1112,12 +1202,10 @@ int ONScripterLabel::menu_automodeCommand()
 
 int ONScripterLabel::lspCommand()
 {
-    bool v;
+    bool v=true;
 
     if ( script_h.isName( "lsph" ) )
         v = false;
-    else
-        v = true;
 
     int no = script_h.readInt();
     if ( sprite_info[no].visible )
@@ -1198,19 +1286,33 @@ int ONScripterLabel::lookbackbuttonCommand()
 
 int ONScripterLabel::logspCommand()
 {
+    bool logsp2_flag = false;
+
+    if ( script_h.isName( "logsp2" ) )
+        logsp2_flag = true;
+
     int sprite_no = script_h.readInt();
 
     AnimationInfo &si = sprite_info[sprite_no];
     if ( si.visible ) dirty_rect.add( si.pos );
     si.remove();
     setStr( &si.file_name, script_h.readStr() );
-    si.trans_mode = AnimationInfo::TRANS_STRING;
-    si.font_size_xy[0] = sentence_font.font_size_xy[0];
-    si.font_size_xy[1] = sentence_font.font_size_xy[1];
-    si.font_pitch = sentence_font.pitch_xy[0];
 
     si.pos.x = script_h.readInt();
     si.pos.y = script_h.readInt();
+    
+    si.trans_mode = AnimationInfo::TRANS_STRING;
+    if (logsp2_flag){
+        si.font_size_xy[0] = script_h.readInt();
+        si.font_size_xy[1] = script_h.readInt();
+        si.font_pitch = script_h.readInt() + si.font_size_xy[0];
+        script_h.readInt(); // dummy read for y pitch
+    }
+    else{
+        si.font_size_xy[0] = sentence_font.font_size_xy[0];
+        si.font_size_xy[1] = sentence_font.font_size_xy[1];
+        si.font_pitch = sentence_font.pitch_xy[0];
+    }
     
     char *current = script_h.getNext();
     int num = 0;
@@ -1268,7 +1370,9 @@ int ONScripterLabel::loadgameCommand()
         text_on_flag = false;
         indent_offset = 0;
         line_enter_flag = false;
-        
+
+        if (loadgosub_label)
+            gosubReal( loadgosub_label, script_h.getCurrent() );
         readToken();
         
         if ( event_mode & WAIT_INPUT_MODE ) return RET_WAIT | RET_NOREAD;
@@ -1512,7 +1616,9 @@ int ONScripterLabel::gettagCommand()
         end_status = script_h.getEndStatus();
         script_h.pushVariable();
 
-        if (*buf == '[' || *buf == '/')
+        if (zenkakko_flag && buf[0] == "y"[0] && buf[1] == "y"[1])
+            buf += 2;
+        else if (!zenkakko_flag && *buf == '[' || *buf == '/')
             buf++;
         else
             end_flag = true;
@@ -1530,7 +1636,9 @@ int ONScripterLabel::gettagCommand()
                 setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
             else{
                 const char *buf_start = buf;
-                while(*buf != '/' && *buf != ']'){
+                while(*buf != '/' &&
+                      (!zenkakko_flag || (buf[0] != "z"[0] || buf[1] != "z"[1])) &&
+                      (zenkakko_flag || *buf != ']')){
                     if (IS_TWO_BYTE(*buf))
                         buf += 2;
                     else
@@ -1541,8 +1649,9 @@ int ONScripterLabel::gettagCommand()
         }
     }
     while(end_status & ScriptHandler::END_COMMA);
-    
-    if (*buf == ']') buf++;
+
+    if (zenkakko_flag && buf[0] == "z"[0] && buf[1] == "z"[1]) buf += 2;
+    else if (!zenkakko_flag && *buf == ']') buf++;
     last_nest_info->next_script = buf;
 
     return RET_CONTINUE;
@@ -1615,11 +1724,11 @@ int ONScripterLabel::getretCommand()
 
     if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
          script_h.current_variable.type == ScriptHandler::VAR_ARRAY ){
-        script_h.setInt( &script_h.current_variable, dll_ret );
+        script_h.setInt( &script_h.current_variable, getret_int );
     }
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         int no = script_h.current_variable.var_no;
-        setStr( &script_h.variable_data[no].str, dll_str );
+        setStr( &script_h.variable_data[no].str, getret_str );
     }
     else errorAndExit( "getret: no variable." );
     
@@ -1903,8 +2012,8 @@ int ONScripterLabel::exec_dllCommand()
                         unsigned int c2 = ++c;
                         while ( dll_buf2[c2] != '"' && dll_buf2[c2] != '\0' ) c2++;
                         dll_buf2[c2] = '\0';
-                        setStr( &dll_str, &dll_buf2[c] );
-                        printf("  dll_str = %s\n", dll_str );
+                        setStr( &getret_str, &dll_buf2[c] );
+                        printf("  getret_str = %s\n", getret_str );
                     }
                     else if ( !strncmp( &dll_buf2[c], "ret", 3 ) ){
                         c+=3;
@@ -1912,8 +2021,8 @@ int ONScripterLabel::exec_dllCommand()
                         if ( dll_buf2[c] != '=' ) continue;
                         c++;
                         while ( dll_buf2[c] == ' ' || dll_buf2[c] == '\t' ) c++;
-                        dll_ret = atoi( &dll_buf2[c] );
-                        printf("  dll_ret = %d\n", dll_ret );
+                        getret_int = atoi( &dll_buf2[c] );
+                        printf("  getret_int = %d\n", getret_int );
                     }
                     else if ( dll_buf2[c] == '[' )
                         break;
@@ -1938,10 +2047,16 @@ int ONScripterLabel::exbtnCommand()
         if ( button->exbtn_ctl ) delete[] button->exbtn_ctl;
     }
     else{
+        bool cellcheck_flag = false;
+
+        if ( script_h.isName( "cellcheckexbtn" ) )
+            cellcheck_flag = true;
+
         sprite_no = script_h.readInt();
         no = script_h.readInt();
 
-        if ( sprite_info[ sprite_no ].num_of_cells == 0 ){
+        if (cellcheck_flag  && (sprite_info[ sprite_no ].num_of_cells < 2) ||
+            !cellcheck_flag && (sprite_info[ sprite_no ].num_of_cells == 0)){
             script_h.readStr();
             return RET_CONTINUE;
         }
@@ -2132,10 +2247,18 @@ int ONScripterLabel::drawfillCommand()
 
 #ifdef USE_OPENGL
     glColor4f(r/256.0f, g/256.0f, b/256.0f, 1.0);
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glDisable(GL_TEXTURE_RECTANGLE_ARB);
+#else
     glDisable(GL_TEXTURE_2D);
+#endif
     Rect rect = {0, 0, screen_width, screen_height};
     drawTexture( effect_src_id, rect, rect, -1 );
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
+#else
     glEnable(GL_TEXTURE_2D);
+#endif
 #else    
     SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, r, g, b, 0xff) );
 #endif    

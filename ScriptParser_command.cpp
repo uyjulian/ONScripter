@@ -28,6 +28,14 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+int ScriptParser::zenkakkoCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    zenkakko_flag = true;
+    
+    return RET_CONTINUE;
+}
+
 int ScriptParser::windowbackCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
@@ -592,6 +600,15 @@ int ScriptParser::lookbackcolorCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::loadgosubCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "loadgosub: not in the define section" );
+
+    setStr( &loadgosub_label, script_h.readLabel()+1 );
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::linepageCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "linepage: not in the define section" );
@@ -647,6 +664,11 @@ int ScriptParser::kidokumodeCommand()
 
 int ScriptParser::itoaCommand()
 {
+    bool itoa2_flag = false;
+
+    if ( script_h.isName( "itoa2" ) )
+        itoa2_flag = true;
+    
     script_h.readVariable();
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
         errorAndExit( "itoa: no string variable." );
@@ -655,7 +677,10 @@ int ScriptParser::itoaCommand()
     int val = script_h.readInt();
 
     char val_str[20];
-    sprintf( val_str, "%d", val );
+    if (itoa2_flag)
+        script_h.getStringFromInteger(val_str, val, -1);
+    else
+        sprintf( val_str, "%d", val );
     setStr( &script_h.variable_data[no].str, val_str );
     
     return RET_CONTINUE;

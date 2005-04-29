@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML lang="ja">
+<html lang="ja">
 <HEAD>
 <meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
 <TITLE>ONScripter のページ</TITLE>
@@ -7,183 +7,203 @@
 <LINK REV="MADE" HREF="mailto:ogapee@aqua.dti2.ne.jp">
 </HEAD>
 
-<BODY>
+<body>
 
-<center><H1>ONScripter のページ</H1></center>
+
+<!--ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。-->
+
+<div class="container">
+
+<div class="title">
+<H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Mar. 8, 2005<br>
-ソース更新。<br>
-ONScripter のバイナリパッケージを提供してくださる方を募集中です。当方では Zaurus 用のバイナリパッケージのみ公開します。その他のプラットフォーム用のパッケージを公開していただける方は、リンクを張らせていただきますのでメールを下さい。
-<HR>
+Last updated: Apr. 28, 2005 [ソース更新]<br>
+<!--Last updated: Apr. 1, 2005 [Experimentalソース更新]<br>-->
+<a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
+</a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
+ミラーサイト</a><br>
+</div> <!-- title -->
 
-<DIV CLASS="block">
-<H2>はじめに</H2>
+<hr>
 
-<DIV CLASS="block2">
-<P>ONScripter（<A HREF="http://ogapee.at.infoseek.co.jp/onscripter.html">メ
-インサイト</A>、<A
-HREF="http://www.angelfire.com/space/ogapee/onscripter.html">ミラーサ
-イト</A>）とは、NScripter 用に作られたスクリプトを独自に解釈して実行す
-るプログラムです。</P>
+<div class="toc-container">
 
-<P>NScripterは<a
+<div class="toc">
+<div class="toc-title">
+目次
+</div>
+
+<div class="toc-top"></div>
+<ul>
+   <li> <a href="#introduction">はじめに</a>
+       <ul>
+	 <li> <a href="#package-source">ソースパッケージ</a></li>
+	 <li> <a href="#package-binary">バイナリパッケージ</a></li>
+	 <li> <a href="onscripter_devel.2005_1.html">開発日誌</a></li>
+       </ul>
+  <li> <a href="#feature">特徴</a>
+       <ul>
+	 <li> <a href="#feature-comparison">NScripter と比較した特徴</a>
+	 <li> <a href="#feature-engine">実行環境としての特徴</a>
+       </ul>
+  <li> <a href="#howto">実行方法</a>
+       <ul>
+	 <li> <a href="#environment">動作環境</a>
+	 <li> <a href="#compile">コンパイル</a>
+	 <li> <a href="#run">実行</a>
+       </ul>
+  <li> <a href="#todo">TODO</a>
+  <li> <a href="#link">リンク</a>
+  <li> <a href="#misc">雑多なこと</a>
+       <ul>
+	 <li> <a href="#keyboard-shortcut">キーボードショートカット</a>
+	 <li> <a href="#option">起動オプション</a>
+	 <li> <a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a><font color=red>(updated in Sep. 11, 2004)</font>
+	 <li> <a href="#registry">レジストリ読み込み</a>
+	 <li> <a href="#dll">DLL 読み込み</a>
+	 <li> <a href="#edit-mode">音量及び変数編集モード</a>
+	 <li> <a href="#truetype-font">TrueType font による漢字表示</a>
+	 <li> <a href="#cd-audio-mapping">CD audio 演奏の振り替え</a>
+	 <li> <a href="#midi">MIDI 演奏機能</a>
+	 <li> <a href="#archive-compression">アーカイブ圧縮</a>
+	 <li> <a href="#mp3-on-windows">Windows 上で MP3 の音がぶつぶつとぎれる問題</a>
+	 <li> <a href="#enable-1byte">英語ノベル作成</a>
+       </ul>
+  <li> <a href="index.html">戻る</a>
+</ul>
+<div class="toc-bottom"></div>
+
+
+</div> <!-- toc -->
+</div> <!-- toc-container -->
+
+
+<div class="main-container">
+<div class="main">
+
+<div class="content">
+<h2><a name="introduction">はじめに</a></h2>
+
+<p>ONScripter とは、NScripter 用に作られたスクリプトを独自に解釈して実
+行するプログラムです。NScripterは<a
 href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">高橋直樹</a>氏が
 開発されたゲーム実行エンジンであり、高橋氏のホームページから<a
 href="http://www2.osk.3web.ne.jp/~naokikun/index.htm">ダウンロード</a>
-できます。</P>
+できます。ONScripter で何ができるのかについてはαβεさんの[<A
+HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
+てください。</p>
 
-<P>ONScripter で何ができるのかについてはαβεさんの[<A
-HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
-てください。</P>
+<h3><a name="package-source">ソースパッケージ</a></h3>
+<div class="sub-content">
+<ul>
+  <li> <a href="onscripter-beta-20050429.tar.gz">onscripter-beta-20050429.tar.gz</a>
+  <li> <a href="onscripter-beta-20050308.tar.gz">onscripter-beta-20050308.tar.gz</a>(１つ前のバージョン)
+</ul>
+<!--(テスト版<a href="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</a>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
+</div> <!-- sub-content -->
 
-<P>現在はベータ版
-<A HREF="onscripter-beta-20050308.tar.gz">onscripter-beta-20050308.tar.gz</A>
-を配布しております。<br>
-(一つ前のベータ版
-<A HREF="onscripter-beta-20050218.tar.gz">onscripter-beta-20050218.tar.gz</A>
-)<br>
-<!--(テスト版<A HREF="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</A>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
-</P>
+<h3><a name="package-binary">バイナリパッケージ（Zaurus 用以外は当方では動作チェックをしておりません）</a></h3>
+<div class="sub-content">
 
-<P>バイナリパッケージ（ただし当方では動作チェックはしておりません）</P>
-<UL>
-  <LI> <A HREF="zaurus/index.html#Package">Zaurus(SL-5500, SL-A300, SL-B500, SL-C700, SL-C750, SL-C760)用</A>
-       （<A HREF="http://sourceforge.jp/projects/zaurus-ja/">zaurus-ja</A>でも公開中）
-  <LI> <A HREF="http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody/onscripter/">Debian Woody 用</A>（古賀さん）
-       <UL>
-         <LI> ;*** apt line ***
-<!--	 <LI> deb http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
-	 <LI> deb-src http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./-->
-	 <LI> deb http://detroit.ddo.jp/debian/woody/ ./ 
-	 <LI> deb-src http://detroit.ddo.jp/debian/woody/ ./ 
+<ul>
+  <li> <a href="zaurus/index.html#package-onscripter">Zaurus(SL-5500, SL-A300, SL-B500, SL-C700, SL-C750, SL-C760)用</a>
+       （<a href="http://sourceforge.jp/projects/zaurus-ja/">zaurus-ja</a>でも公開中）
+  <li> <a href="http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody/onscripter/">Debian Woody 用</a>（古賀さん）
+       <ul>
+         <li> ;*** apt line ***
+<!--	 <li> deb http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
+	 <li> deb-src http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./-->
+	 <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
+	 <li> deb-src http://detroit.ddo.jp/debian/woody/ ./ 
 
-       </UL>
-  <LI> <A HREF="http://abe.nwr.jp/onscripter/rpms/">Red Hat 系(RPM) 用</A>（αβεさん）
-       <UL>
-         <LI> ;*** apt line ***
-         <LI> rpm http://abe.nwr.jp/Vine/apt i386 nwr
-         <LI> rpm-src http://abe.nwr.jp/Vine/apt i386 nwr
-      </UL>
-  <LI> <A HREF="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </A>（藤田さんの Free BSD Ports）
-  <LI> <A HREF="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</A>（かつらさん）
-  <LI> Windows 版 （バージョンの新しい方を使ってください）
-      <UL>
-          <LI> <A HREF="http://eboshi.s27.xrea.com:8080/index.php">ONScripter Windows Binary</A>（かつをのえぼしさん）
-          <LI> <A HREF="http://homepage1.nifty.com/nyomo/onscripter/index.html">ONScripter M$ Windows版バイナリ</A>（にょもさん）
-      </UL>
-  <LI> <A HREF="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</A>（bero さん）
-  <LI> その他募集中。
-</UL>
+       </ul>
+  <li> <a href="http://abe.nwr.jp/onscripter/rpms/">Red Hat 系(RPM) 用</a>（αβεさん）
+       <ul>
+         <li> ;*** apt line ***
+         <li> rpm http://abe.nwr.jp/Vine/apt i386 nwr
+         <li> rpm-src http://abe.nwr.jp/Vine/apt i386 nwr
+      </ul>
+  <li> <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a>（藤田さんの Free BSD Ports）
+  <li> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）
+  <li> Windows 版 （バージョンの新しい方を使ってください）
+      <ul>
+          <li> <a href="http://eboshi.s27.xrea.com:8080/index.php">ONScripter Windows Binary</a>（かつをのえぼしさん）
+          <li> <a href="http://homepage1.nifty.com/nyomo/onscripter/index.html">ONScripter M$ Windows版バイナリ</a>（にょもさん）
+      </ul>
+  <li> <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a>（bero さん）
+  <li> その他募集中。
+</ul>
+</div> <!-- sub-content -->
 
-<P>更新内容については[<A HREF="onscripter_devel.2005_1.html">開発日誌</A>]を参照して下さい。</P>
+<p>更新内容については[<a href="onscripter_devel.2005_1.html">開発日誌
+</a>]を参照して下さい。動作報告・バグ報告・機能追加要望・パッチは随時
+受け付けますので[<a
+href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグ
+トラッキングシステム</a>]までお願いします。「○○ゲームの××場面
+がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。[<a
+href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
+接送っていただいても構いません。</p>
 
-<P>動作報告・バグ報告・機能追加要望・パッチは随時受け付けますので[<A HREF="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</A>]までお願いします。<br>
-「○○ゲームの××場面がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。<br>
-[<a href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直接送っていただいても構いません。</P>
-
-</DIV>
-
-<DIV CLASS="block2">
-
-<P>目次</P>
-
-<UL>
-  <LI> <A HREF="#feature"> 特徴 </A>
-       <UL>
-	 <LI> <A HREF="#feature_comparison">NScripter と比較した特徴</A>
-	 <LI> <A HREF="#feature_engine">実行環境としての特徴</A>
-       </UL>
-  <LI> <A HREF="#howto">実行方法</A>
-       <UL>
-	 <LI> <A HREF="#environment">動作環境</A>
-	 <LI> <A HREF="#compile">コンパイル</A>
-	 <LI> <A HREF="#run">実行</A>
-       </UL>
-  <LI> <A HREF="#todo">TODO</A>
-  <LI> <A HREF="#link">リンク</A>
-  <LI> <A HREF="#misc">雑多なこと</A>
-       <UL>
-	 <LI> <A HREF="#keyboard_shortcut">キーボードショートカットについて</A>
-	 <LI> <A HREF="#option">起動オプションについて</A>
-	 <LI> <A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A><font color=red>(updated in Sep. 11, 2004)</font>
-	 <LI> <A HREF="#registry">レジストリ読み込みについて</A>
-	 <LI> <A HREF="#dll">DLL 読み込みについて</A>
-	 <LI> <A HREF="#edit_mode">音量及び変数編集モードについて</A>
-	 <LI> <A HREF="#true_type_font">TrueType font による漢字表示について</A>
-	 <LI> <A HREF="#cd_audio_mapping">CD audio 演奏の振り替えについて</A>
-	 <LI> <A HREF="#midi">MIDI 演奏機能について</A>
-	 <LI> <A HREF="#archive_compression">アーカイブ圧縮について</A>
-	 <LI> <A HREF="#mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A>
-	 <LI> <A HREF="#enable_1byte">英語ノベル作成について</A><font color=red>(updated in Sep. 9, 2004)</font>
-       </UL>
-</UL>
-
-</DIV>
-</DIV>
+</div> <!-- content -->
 
 
-<DIV CLASS="block">
-<H2><A NAME="feature">特徴</A></H2>
+<div class="content">
+<h2><a name="feature">特徴</a></h2>
 
-<DIV CLASS="block2">
-<H3><A NAME="feature_comparison">NScripter と比較した特徴</A></H3>
+<h3><a name="feature-comparison">NScripter と比較した特徴</a></h3>
+<div class="sub-content">
+<ol>
+  <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
+  <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
+  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
+  <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
+</ol>
+</div> <!-- sub-content -->
 
+<h3><a name="feature-engine">実行環境としての特徴</a></h3>
+<div class="sub-content">
 <OL>
-  <LI> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
-  <LI> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
-  <LI> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <A HREF="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</A>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<BR>
-  <LI> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
+  <li> セーブ・ロードができます。現時点(2004.09.11)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
+  <li> sar, nsa (nbz lzss を含む) アーカイブのデコードを実装しています。<br>
+  <li> 全ての画面効果（quake 系, 効果番号 1 - 18）を実装しています。<br>
+  <li> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<br>
+  <li> 右クリックメニュー（セーブ・ロード・回想・ウィンドウを消す・リセット・スキップ）を実装しています。<br>
+  <li> カーソル・立ち絵・スプライトのアニメーションを実装しています。<br>
+  <li> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<br>
+  <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
 </OL>
+</div> <!-- sub-content -->
 
-</DIV>
+</div> <!-- content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="feature_engine">実行環境としての特徴</A></H3>
 
-<OL>
+<div class="content">
+<h2><a name="howto">実行方法</a></h2>
 
-  <LI> セーブ・ロードができます。現時点(2004.09.11)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<A HREF="#save">異なるプラットフォーム上で同時に遊ぶ方法</A>を参照してください。<BR>
-  <LI> sar, nsa (nbz lzss を含む) アーカイブのデコードを実装しています。<BR>
-  <LI> 全ての画面効果（quake 系, 効果番号 1 - 18）を実装しています。<BR>
-  <LI> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<BR>
-  <LI> 右クリックメニュー（セーブ・ロード・回想・ウィンドウを消す・リセット・スキップ）を実装しています。<BR>
-  <LI> カーソル・立ち絵・スプライトのアニメーションを実装しています。<BR>
-  <LI> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<BR>
-  <LI> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
-</OL>
-
-</DIV>
-
-</DIV>
-
-<DIV CLASS="block">
-<H2><A NAME="howto">実行方法</A></H2>
-
-<DIV CLASS="block2">
-<H3><A NAME="environment">動作環境</A></H3>
-
-<P>下記のライブラリと処理系が必要です。バージョンは最新である必要はないかもしれませんが、他のバージョンでは確認していません。</P>
+<h3><a name="environment">動作環境</a></h3>
+<div class="sub-content">
+<p>下記のライブラリと処理系が必要です。バージョンは最新である必要はないかもしれませんが、他のバージョンでは確認していません。</p>
 
 <DL>
-  <DT> ・<A HREF="http://www.ijg.org/">Independent JPEG Group</A>
+  <DT> ・<a href="http://www.ijg.org/">Independent JPEG Group</a>
   <DD> libjpeg-6b
-  <DT> ・<A HREF="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</A>
+  <DT> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
   <DD> bzip2-1.0.2
-  <DT> ・<A HREF="http://www.libsdl.org">SDL (Simple Direct Layer)</A>
+  <DT> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
   <DD> SDL-1.2.4, SDL_image-1.2.2, SDL_mixer-1.2.3, SDL_ttf-2.0.5
-  <DT> ・<A HREF="http://www.lokigames.com/development/smpeg.php3">SMPEG (SDL Mpeg Player Library)</A>
+  <DT> ・<a href="http://www.lokigames.com/development/smpeg.php3">SMPEG (SDL Mpeg Player Library)</a>
   <DD> SMPEG-0.4.4
-  <DT> ・<A HREF="http://www.freetype.org/"> FreeType </A>
+  <DT> ・<a href="http://www.freetype.org/"> FreeType </a>
   <DD> FreeType 2.1.3
-  <DT> ・<A HREF="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</A>
+  <DT> ・<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>
   <DD> mad-0.14.2b
   <DD> これは必要ではありませんが、Zaurus で MP3 を聞きたい方はほぼ必須。
   <DD> コンパイル時に MP3_MAD を定義することで、SMPEG に差し換えて使用されます。
-  <DT> ・<A HREF="http://www.xiph.org/ogg/vorbis/">The Ogg Vorbis CODEC Project</A>
+  <DT> ・<a href="http://www.xiph.org/ogg/vorbis/">The Ogg Vorbis CODEC Project</a>
   <DD> ogg-1.0, vorbis-1.0 (or Tremor vorbis)
   <DD> これは必要ではありませんが、Ogg Vorbis 形式で圧縮された音声を聞きたい場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。
-  <DT> ・<A HREF="http://avifile.sourceforge.net/">avifile</A>
+  <DT> ・<a href="http://avifile.sourceforge.net/">avifile</a>
   <DD> avifile-0.7-0.7.38
   <DD> これは必要ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
   <DD> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
@@ -193,87 +213,82 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
   <DD> Windows Visual C++ 6.0
 </DL>
 
-<P>当方では Windows, Linux, <A HREF="zaurus/index.html">Zaurus(SL-5500,SL-C700)</A>で動作確認をしています。<BR>
-また<A HREF="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</A>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), Dreamcast での動作報告をいただいております。<br>
+<p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
+また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), Dreamcast での動作報告をいただいております。<br>
 
-その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</P>
+その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</p>
 
-</DIV>
-
-<DIV CLASS="block2">
-
-<H3><A NAME="compile">コンパイル</A></H3>
-
-<P>適当な場所に ONScripter を展開し、Linux の場合は make -f Makefile.Linux, Windows の場合は、nmake -f Makefile.Win とやって下さい。Windows の場合は、bzip2, SDL と SMPEG のヘッダファイルとライブラリのある場所を Makefile.Win で指定しているので、自身の環境に合わせて適宜修正してください。</P>
-
-</DIV>
-
-<DIV CLASS="block2">
-
-<H3><A NAME="run">実行</A></H3>
-
-<P><FONT color="#ff0000">[必須]</FONT>まずゲームのアーカイブを一カ所にまとめます。通常は、スクリプト(0.txt もしくは nscript.dat)とアーカイブ(arc.sar もしくは arc.nsa)の２つのファイルがあれば十分なはずです。arc1.nsa 〜 arc9.nsa がある場合は、それも置いてください。またゲームによっては、アーカイブの外に一部の画像ファイルを置いていたりします。その場合は、それらのファイルも元と同じように置いてください。一番確実なのは、ディレクトリ毎全てのファイルをコピーしてくることです。</P>
-
-<P><FONT color="#ff0000">[必須]</FONT>下記の&quot;TrueType font による漢字表示について&quot;を参考に、日本語 TrueType font を用意し、&quot;default.ttf&quot; という名前で置いてください。</P>
-
-<P>[任意] CD audio の振り替え演奏をしたい場合は、下記の&quot;CD audio 演奏の振り替えについて&quot;に従って MP3 ファイルを用意してください。</P>
-
-<P><FONT color="#ff0000">[必須]</FONT>最後に、ONScripter を実行してください。同じディレクトリにある nscript.dat とアーカイブを自動的に探し、ゲームが開始されます。なお ONScripter は、同じディレクトリにセーブデータやファイルログ等の状態ファイルを保存するため、このディレクトリには write permission を出しておいてください。</P>
-
-</DIV>
-</DIV>
+</div> <!-- sub-content -->
 
 
-<DIV CLASS="block">
-<H2><A NAME="todo">TODO</A></H2>
+<h3><a name="compile">コンパイル</a></h3>
+<div class="sub-content">
 
-<DIV CLASS="block2">
+<p>適当な場所に ONScripter を展開し、Linux の場合は make -f Makefile.Linux, Windows の場合は、nmake -f Makefile.Win とやって下さい。Windows の場合は、bzip2, SDL と SMPEG のヘッダファイルとライブラリのある場所を Makefile.Win で指定しているので、自身の環境に合わせて適宜修正してください。</p>
 
-<P>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</P>
+</div> <!-- sub-content -->
+
+
+<h3><a name="run">実行</a></h3>
+<div class="sub-content">
+
+<p><FONT color="#ff0000">[必須]</FONT>まずゲームのアーカイブを一カ所にまとめます。通常は、スクリプト(0.txt もしくは nscript.dat)とアーカイブ(arc.sar もしくは arc.nsa)の２つのファイルがあれば十分なはずです。arc1.nsa 〜 arc9.nsa がある場合は、それも置いてください。またゲームによっては、アーカイブの外に一部の画像ファイルを置いていたりします。その場合は、それらのファイルも元と同じように置いてください。一番確実なのは、ディレクトリ毎全てのファイルをコピーしてくることです。</p>
+
+<p><FONT color="#ff0000">[必須]</FONT>下記の&quot;TrueType font による漢字表示について&quot;を参考に、日本語 TrueType font を用意し、&quot;default.ttf&quot; という名前で置いてください。</p>
+
+<p>[任意] CD audio の振り替え演奏をしたい場合は、下記の&quot;CD audio 演奏の振り替えについて&quot;に従って MP3 ファイルを用意してください。</p>
+
+<p><FONT color="#ff0000">[必須]</FONT>最後に、ONScripter を実行してください。同じディレクトリにある nscript.dat とアーカイブを自動的に探し、ゲームが開始されます。なお ONScripter は、同じディレクトリにセーブデータやファイルログ等の状態ファイルを保存するため、このディレクトリには write permission を出しておいてください。</p>
+
+</div> <!-- sub-content -->
+</div> <!-- content -->
+
+<div class="content">
+<h2><a name="todo">TODO</a></h2>
+
+<p>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</p>
 
 <OL>
-  <LI> (<FONT color="#ff0000">高</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
-  <LI> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
-  <LI> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
-  <LI> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
-  <LI> (<FONT color="#00ff00">低</FONT>)コードの clean up。
+  <li> (<FONT color="#ff0000">高</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
+  <li> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
+  <li> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
+  <li> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
+  <li> (<FONT color="#00ff00">低</FONT>)コードの clean up。
 </OL>       
 
-</DIV>
-</DIV>
+</div> <!-- content -->
 
-<DIV CLASS="block">
-<H2><A NAME="link">リンク</A></H2>
 
-<DIV CLASS="block2">
+<div class="content">
+<h2><a name="link">リンク</a></h2>
 
-<P>お世話になっているページ、よく利用させていただいているページへのリンクです。</P>
+<p>お世話になっているページ、よく利用させていただいているページへのリンクです。</p>
 
 <DL>
-  <DT> ○<A HREF="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</A>
+  <DT> ○<a href="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</a>
   <DD> 千熊屋さんによる様々なゲーム互換エンジンへのリンク集です。ONScripter も紹介していただいてます。
-  <DT> ○<A HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>
+  <DT> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
   <DD> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
        ONScripter を開発する上でたいへんお世話になっております。<br>
-       <A HREF="http://www.daifukuya.com/kagemai/">影舞</A>を利用した<A HREF="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</A>も運用していただいております。<br>
+       <a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。<br>
        ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
-  <DT> ○<A HREF="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</A>
+  <DT> ○<a href="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</a>
   <DD> Mac OS X で検証していただいている adas さんページです。<br>
        MacOS X 等に SDL をインストールする方法なども書かれています。
-  <DT> ○<A HREF="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</A>
+  <DT> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
   <DD> αβεさんよる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。
 </DL>
 
-</DIV>
-</DIV>
+</div> <!-- content -->
 
-<DIV CLASS="block">
-<H2><A NAME="misc">雑多なこと</A></H2>
 
-<DIV CLASS="block2">
-<H3><A NAME="keyboard_shortcut">キーボードショートカットについて</A></H3>
+<div class="content">
+<h2><a name="misc">雑多なこと</a></h2>
 
-<P> ONScripter は全ての操作をキーボードで行うことができます。下にショートカット一覧を書きます。ただし、スクリプトの方でショートカットキーを設定している場合は、そちらが優先されます。</P>
+<h3><a name="keyboard-shortcut">キーボードショートカット</a></h3>
+<div class="sub-content">
+
+<p> ONScripter は全ての操作をキーボードで行うことができます。下にショートカット一覧を書きます。ただし、スクリプトの方でショートカットキーを設定している場合は、そちらが優先されます。</p>
 
 <table>
 <tr><th>キー</th><th>説明</th></tr>
@@ -291,16 +306,17 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td> Shift + q </td><td>終了（end コマンドを発行）</td></tr>
 </table>
 
-<P>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画している最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任意のタイミングで s キーにより通常の状態に戻すことができます。</P>
+<p>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画している最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任意のタイミングで s キーにより通常の状態に戻すことができます。</p>
 
-<P>また、コンソール画面で Ctl-c することで ONScripter を終了できます。その場合、グローバル変数等は保存されるので、終了する場合はゲームのメニューから終了するか、これで強制終了するかしてください。</P>
+<p>また、コンソール画面で Ctl-c することで ONScripter を終了できます。その場合、グローバル変数等は保存されるので、終了する場合はゲームのメニューから終了するか、これで強制終了するかしてください。</p>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="option">起動オプションについて</A></H3>
 
-<P>以下に示すオプションを指定できます。ただし、オプション無しがデフォルト動作です。</P>
+<h3><a name="option">起動オプション</a></h3>
+<div class="sub-content">
+
+<p>以下に示すオプションを指定できます。ただし、オプション無しがデフォルト動作です。</p>
 
 <table>
 <tr><th> オプション </th><th>説明</th></tr>
@@ -312,25 +328,27 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td>--registry file</td><td>使用する registry file を指定します。</td></tr>
 <tr><td>--dll file</td><td>使用する dll file を指定します。</td></tr>
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
+<tr><td>--fullscreen</td><td>フルスクリーンモードで起動します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
 <tr><td>--edit</td><td>z キーを押したときに、音量及び変数の編集モードに入れるようになります。</td></tr>
 </table>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="save">異なるプラットフォーム上で同時に遊ぶ方法</A></H3>
 
-<P>例えば家では Windows、通勤中は Zaurus、職場では Linux といったよう
+<h3><a name="save">異なるプラットフォーム上で同時に遊ぶ方法</a></h3>
+<div class="sub-content">
+
+<p>例えば家では Windows、通勤中は Zaurus、職場では Linux といったよう
 に、同じゲームを別々のプラットフォーム上で同時に進行させることができま
 す。基本的には、それぞれの環境にゲームのアーカイブをセットアップし、プ
 ラットフォームを移るたびに ONScripter(もしくは NScripter) の書き出すファ
-イルを全てコピーすればよいのですが、注意点があります。</P>
+イルを全てコピーすればよいのですが、注意点があります。</p>
 
-<P>NScripter もしくは ONScripter が書き出すファイルには次のものがあり
+<p>NScripter もしくは ONScripter が書き出すファイルには次のものがあり
 ます。この内一部のファイルはゲームによっては書き出されませんので、無い
-場合もあります。</P>
+場合もあります。</p>
 
 <table>
 <tr><th>書き出しファイル</th><th>説明</th></tr>
@@ -344,68 +362,77 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</A>]を参照し
 <tr><td><i>archive_path/</i>その他画像ファイル</td><td>スクリーンショットを画像ファイルとして保存している場合があります。これはゲームによって場所や名前が異なるので、ゲーム毎に対応してください。</td></tr>
 </table>
 
-<P>上記のうち save*.dat (以下セーブファイル)の構造については、
+<p>上記のうち save*.dat (以下セーブファイル)の構造については、
 NScripter (ONScripter) のバージョンアップの際に拡張されることがあるた
 め、ONScripter の出力するセーブファイルには、構造識別のためにバージョ
 ン番号の入ったヘッダが付きます。ただし、ゲームのスクリプトがある場所に 
 sav というディレクトリがある場合には、ヘッダ無しのセーブファイルを sav 
 以下にも同時に作成します。このバージョン番号はセーブファイルのバージョ
 ンであり、ONScripter のバージョンとは関係ありません。セーブファイルの
-構造が変わるとバージョンアップします。</P>
+構造が変わるとバージョンアップします。</p>
 
-<P>save*.dat の読み込みに関しては、ONScripter は、ヘッダ付きセーブファ
+<p>save*.dat の読み込みに関しては、ONScripter は、ヘッダ付きセーブファ
 イルか、もしくは ONScripter がサポートする最新バージョンのヘッダ無しセー
 ブファイルを読み込むことができます。読み込みは常にアーカイブと同じディ
-レクトリからであり、sav/ 以下から読み込むことはありません。</P>
+レクトリからであり、sav/ 以下から読み込むことはありません。</p>
 
 <h4>ONScripter 環境から ONScripter 環境へデータを移動</h4>
 
-上記の書き出しファイルを全てそのままコピーしてください。<br>
-別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。<br>
+<ul>
+<li>上記の書き出しファイルを全てそのままコピーしてください。
+<li>別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。
 
-ONScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)<br>
-ONScripter_dir/sav/save*.dat -> ONScripter_dir/sav/save*.dat<br>
+<li>ONScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)
+<li>ONScripter_dir/sav/save*.dat -> ONScripter_dir/sav/save*.dat
+</ul>
 
 <h4>NScripter 環境から ONScripter 環境へデータを移動</h4>
 
-上記の書き出しファイルを全て（save*.datを含む）そのままコピーしてください。<br>
-さらに save*.dat については、sav というディレクトリ以下にもファイルをコピーしてください。この作業は、後で ONScripter 環境から NScripter 環境にデータを移す場合に必要になります。<br>
-
-NScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)<br>
-NScripter_dir/save*.dat -> ONScripter_dir/sav/save*.dat<br>
+<ul>
+<li>上記の書き出しファイルを全て（save*.datを含む）そのままコピーしてください。
+<li>さらに save*.dat については、sav というディレクトリ以下にもファイルをコピーしてください。この作業は、後で ONScripter 環境から NScripter 環境にデータを移す場合に必要になります。
+<li>NScripter_dir/* -> ONScripter_dir/* (上記の書き出しファイルのみ)
+<li>NScripter_dir/save*.dat -> ONScripter_dir/sav/save*.dat
+</ul>
 
 <h4>ONScripter 環境から NScripter 環境へデータを移動</h4>
-save*.dat を除く上記の書き出しファイルを全てそのままコピーしてください。<br>
 
-save*.dat については、sav というディレクトリ以下に生成されたファイルをコピーしてください。<br>
-ONScripter_dir/* -> NScripter_dir/* (save*.dat を除く上記の書き出しファイルのみ)<br>
-ONScripter_dir/sav/save*.dat -> NScripter_dir/save*.dat <br>
+<ul>
+<li>save*.dat を除く上記の書き出しファイルを全てそのままコピーしてください。
+<li>save*.dat については、sav というディレクトリ以下に生成されたファイルをコピーしてください。
+<li>ONScripter_dir/* -> NScripter_dir/* (save*.dat を除く上記の書き出しファイルのみ)
+<li>ONScripter_dir/sav/save*.dat -> NScripter_dir/save*.dat
+</ul>
 
 <h4>注意点</h4>
-<UL>
-  <LI>NScripter は、現時点(2004/09/11)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
-  <LI>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
-  <LI>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
-  <LI>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。
-</DIV>
+<ul>
+  <li>NScripter は、現時点(2004/09/11)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
+  <li>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
+  <li>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
+  <li>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。
+</ul>
 
-<DIV CLASS="block2">
-<H3><A NAME="registry">レジストリ読み込みについて</A></H3>
+</div> <!-- sub-content -->
 
-<P>getreg コマンドは Windows の registry から指定されたデータを取得し
+
+<h3><a name="registry">レジストリ読み込み</a></h3>
+<div class="sub-content">
+
+<p>getreg コマンドは Windows の registry から指定されたデータを取得し
 ます。ONScripter では、テキストファイル registry.txt にデータを記述し、
-これを読み込むことでこの機能を実現します。</P>
+これを読み込むことでこの機能を実現します。</p>
 
-<P>registry.txt の書式は次の通りです。大文字・小文字は区別されます。ま
+<p>registry.txt の書式は次の通りです。大文字・小文字は区別されます。ま
 た余計なスペース等を入れないようにして下さい。漢字が使われている場合、
-文字コードが Shift JIS になることに注意してください。</P>
+文字コードが Shift JIS になることに注意してください。</p>
 
 <pre>
 [getreg の２番目の引数（ただし前後の""は除く）]
-getreg の３番目の引数（前後の""は必要です）=比較対象文字列（前後の""は必要です）
+getreg の３番目の引数 = 比較対象文字列
+（前後の""は必要です）  （前後の""は必要です）
 </pre>
 
-registry.txt の例
+<p class="noindent">registry.txt の例</p>
 
 <pre>
 [software\StudioOGA\ONScripter]
@@ -416,25 +443,26 @@ registry.txt の例
 "Upload log file"="c:\nomad_up.log"
 </pre>
 
-<P>ONScripter 起動時に --registry オプションを指定することで、
+<p>ONScripter 起動時に --registry オプションを指定することで、
 registry.txt を一カ所にまとめておくことができます。--registry を指定し
-ない場合は、現在のディレクトリの registry.txt を読みにいきます。</P>
+ない場合は、現在のディレクトリの registry.txt を読みにいきます。</p>
 
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="dll">DLL 読み込みについて</A></H3>
 
-<P>exec_dll コマンドは Windows 上で実行可能な DLL (Dynamic Link
+<h3><a name="dll">DLL 読み込み</a></h3>
+<div class="sub-content">
+
+<p>exec_dll コマンドは Windows 上で実行可能な DLL (Dynamic Link
 Library) を実行します。ONScripter では、テキストファイル dll.txt に 
 DLL 名とその戻値の対応を記述し、これを読み込むことでこの機能を実現しま
 す。従って、実際に DLL が実行されるわけではなく、また戻値は固定になり
-ます。</P>
+ます。</p>
 
-<P>dll.txt の書式は次の通りです。大文字・小文字は区別されます。また余
+<p>dll.txt の書式は次の通りです。大文字・小文字は区別されます。また余
 計なスペース等を入れないようにして下さい。漢字が使われている場合、文字
-コードが Shift JIS になることに注意してください。</P>
+コードが Shift JIS になることに注意してください。</p>
 
 <pre>
 [dll 名]
@@ -442,7 +470,7 @@ str = "文字列(getret で受け取ることのできる文字列戻値))"
 ret = 整数(getret で受け取ることのできる数字戻値)
 </pre>
 
-dll.txt の例
+<p class="noindent">dll.txt の例</p>
 
 <pre>
 [test.dll]
@@ -454,44 +482,46 @@ str = "StudioOGA"
 ret = 2
 </pre>
 
-<P>ONScripter 起動時に --dll オプションを指定することで、dll.txt を一
+<p>ONScripter 起動時に --dll オプションを指定することで、dll.txt を一
 カ所にまとめておくことができます。--dll を指定しない場合は、現在のディ
-レクトリの dll.txt を読みにいきます。</P>
+レクトリの dll.txt を読みにいきます。</p>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="edit_mode">音量及び変数編集モードについて</A></H3>
 
-<P>これは暫定的なおまけ機能であり、今後変更されたり無くなったりする可能性があります。</P>
+<h3><a name="edit-mode">音量及び変数編集モード</a></h3>
+<div class="sub-content">
 
-<P>ONScripter 起動時に --edit オプションを指定することで有効になります。</P>
+<p>これは暫定的なおまけ機能であり、今後変更されたり無くなったりする可能性があります。</p>
 
-<P>任意のキー入力待ち状態時に z キーを押すことで、編集モードに入ります。この時、title bar に</P>
+<p>ONScripter 起動時に --edit オプションを指定することで有効になります。</p>
+
+<p>任意のキー入力待ち状態時に z キーを押すことで、編集モードに入ります。この時、title bar に</p>
 
 <pre>
 [EDIT MODE]  MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)
 </pre>
 
-と表示されるはずです。この状態で、m, s, v, n のいずれかのキーを押すこ
-とで、それぞれの値を変更するサブモードに入ります。また、Esc キーを押す
-ことによってモードを抜けることができます。<BR>
+<p class="noindent">と表示されるはずです。この状態で、m, s, v, n のい
+ずれかのキーを押すことで、それぞれの値を変更するサブモードに入ります。
+また、Esc キーを押すことによってモードを抜けることができます。</p>
 
-<P>数字変数の場合は、値変更の前にどの変数を変更するのかを選択します。</P>
+<p>数字変数の場合は、値変更の前にどの変数を変更するのかを選択します。</p>
 
-<P>値変更サブモードでは、0 から 9 までの数字と -, BackSpace, Esc, リター
+<p>値変更サブモードでは、0 から 9 までの数字と -, BackSpace, Esc, リター
 ンキーが使えます。- キーは、対象が数字変数でかつ数字が0の時のみ有効に
 なります。既に数字が入力されている場合には、一旦 BackSpace で数字を全
-部消してから - キーを押してください。</P>
+部消してから - キーを押してください。</p>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="true_type_font">TrueType font による漢字表示について</A></H3>
 
-<P> 漢字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TrueType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<BR>
+<h3><a name="truetype-font">TrueType font による漢字表示</a></h3>
+<div class="sub-content">
 
-ここで注意しなければいけないのは、TrueType font によっては正常に漢字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</P>
+<p> 漢字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TrueType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<br>
+
+ここで注意しなければいけないのは、TrueType font によっては正常に漢字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</p>
 
 <DL>
   <DT> ＭＳゴシック (msgothic.ttc)
@@ -502,70 +532,73 @@ ret = 2
   <DD> embedded bitmap は使っていませんが、UNICODE で記述されていないため使えません。
   <DT> HG ゴシック (hgrsmp.ttf)
   <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
-  <DT> <A HREF="http://mikachan-font.com/">みかちゃんフォント</A>(みかちゃん-pb.ttf)
+  <DT> <a href="http://mikachan-font.com/">みかちゃんフォント</a>(みかちゃん-pb.ttf)
   <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
 </DL>
 
-<P> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</P>
+<p> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</p>
 
-<P> ONScripter を起動する前に、使用する TrueType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</P>
+<p> ONScripter を起動する前に、使用する TrueType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</p>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="cd_audio_mapping">CD audio 演奏の振り替えについて</A></H3>
 
-<P>ゲームのスクリプトがある場所に cd というディレクトリを作り、そこに<BR>
-cd/track01.mp3<BR>
-cd/track02.mp3<BR>
-cd/track03.mp3<BR>
-...<BR>
-cd/track14.mp3<BR>
-...<BR>
-という名前で MP3 ファイルを置きます。</P>
+<h3><a name="cd-audio-mapping">CD audio 演奏の振り替え</a></h3>
+<div class="sub-content">
 
-<P>すると、スクリプトで CD audio の１曲目を演奏するコマンドがあった場合に、対応する track01.mp3 を演奏するようになります。</P>
+<p>ゲームのスクリプトがある場所に cd というディレクトリを作り、そこに<br>
+cd/track01.mp3<br>
+cd/track02.mp3<br>
+cd/track03.mp3<br>
+...<br>
+cd/track14.mp3<br>
+...<br>
+という名前で MP3 ファイルを置きます。</p>
 
-<P>MP3 を必ず用意する必要はなく、その場合は音が鳴らないだけです。</P>
+<p>すると、スクリプトで CD audio の１曲目を演奏するコマンドがあった場合に、対応する track01.mp3 を演奏するようになります。</p>
 
-</DIV>
+<p>MP3 を必ず用意する必要はなく、その場合は音が鳴らないだけです。</p>
 
-<DIV CLASS="block2">
-<H3><A NAME="midi">MIDI 演奏機能について</A></H3>
+</div> <!-- sub-content -->
 
-<P>MIDI は SDL_mixer の機能を使って演奏します。<br>
-この時、現在のディレクトリに tmp.mid という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</P>
+
+<h3><a name="midi">MIDI 演奏機能</a></h3>
+<div class="sub-content">
+
+<p>MIDI は SDL_mixer の機能を使って演奏します。<br>
+この時、現在のディレクトリに tmp.mid という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</p>
 
 <DL>
   <DT> Unix系(動作確認は Linux と Zaurus)でソフトウェア音源で演奏する場合（デフォルト）。
-  <DD> SDL_mixer に取り込まれている timidity を使用してソフトウェア音源で演奏します。この場合、MIDIの音色データ<A HREF="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</A>をダウンロードして /usr/local/lib/ 以下に展開してください。
+  <DD> SDL_mixer に取り込まれている timidity を使用してソフトウェア音源で演奏します。この場合、MIDIの音色データ<a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして /usr/local/lib/ 以下に展開してください。
   <DT> Windows の場合。
-  <DD> <A HREF="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</A>をダウンロードして c:\ 以下に展開してください。
+  <DD> <a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして c:\ 以下に展開してください。
        これをしなくても MIDI が鳴ったと思っていたのですが、こうしないと落ちるようです。
   <DT> Mac OS X の場合。
-  <DD> <A HREF="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</A>（かつらさん）のバイナリに添付されている外部プログラムを利用して演奏が可能です。（当方未確認）
+  <DD> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）のバイナリに添付されている外部プログラムを利用して演奏が可能です。（当方未確認）
   <DT> Unix系(動作確認は Linux)で外部 MIDI 音源を利用して演奏する場合。
   <DD> playmidi 等の外部音源を使用できる MIDI player をインストールし、環境変数 MUSIC_CMD を設定してください。（例 MUSIC_CMD=/usr/bin/playmidi）<br>
        当方では、シリアル接続で外部音源を繋ぎ、MUSIC_CMD に '/usr/bin/midiplay -q -o /dev/ttyS0' を設定して動作確認をしています。<br>
-       <A HREF="http://sourceforge.net/projects/playmidi/">playmidi</A>は、カーネルで認識される MIDI ポートに対してしか演奏できませんが、<A HREF="http://member.nifty.ne.jp/Breeze/softwares/unix/midiplay+.html">midiplay</A>はシリアルに直接出せます。<br>
-       <A HREF="http://crystal.apana.org.au/ghansper/MidiAxis.html">シリアルポートをMIDIポートにする patch</A>を使えば、playmidi でもシリアル接続音源を使えそうですが、未確認です。       
+       <a href="http://sourceforge.net/projects/playmidi/">playmidi</a>は、カーネルで認識される MIDI ポートに対してしか演奏できませんが、<a href="http://member.nifty.ne.jp/Breeze/softwares/unix/midiplay+.html">midiplay</a>はシリアルに直接出せます。<br>
+       <a href="http://crystal.apana.org.au/ghansper/MidiAxis.html">シリアルポートをMIDIポートにする patch</a>を使えば、playmidi でもシリアル接続音源を使えそうですが、未確認です。       
 </DL>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="archive_compression">アーカイブ圧縮について</A></H3>
 
-<P>Zaurus ( SL-5500, SL-A300, SL-B500, SL-C700 ) でプレイする場合は、画面の大きさが 320x240 になります。（SL-C700の場合は、VGA表示可能）。そこで、あらかじめアーカイブ中の画像ファイルを 320x240 に合うように小さくしておくことで、アーカイブサイズの減少を図ることができ、少ない記憶デバイスを有効活用することができます。なお、SPB 圧縮の画像は、後述の -e オプションを指定しない場合、BMP として格納されます。</P>
+<h3><a name="archive-compression">アーカイブ圧縮</a></h3>
+<div class="sub-content">
 
-<P>画面のサイズが 640x480 で、拡張子が sar のアーカイブを 320x240 にする場合は、</P>
+<p>Zaurus ( SL-5500, SL-A300, SL-B500, SL-C700 ) でプレイする場合は、画面の大きさが 320x240 になります。（SL-C700の場合は、VGA表示可能）。そこで、あらかじめアーカイブ中の画像ファイルを 320x240 に合うように小さくしておくことで、アーカイブサイズの減少を図ることができ、少ない記憶デバイスを有効活用することができます。なお、SPB 圧縮の画像は、後述の -e オプションを指定しない場合、BMP として格納されます。</p>
+
+<p>画面のサイズが 640x480 で、拡張子が sar のアーカイブを 320x240 にする場合は、</p>
 
 <pre>
 &gt; sarconv 640 arc.sar zaurus_dir/arc.sar
 ...
 </pre>
 
-<P>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン１）を 320x240 にする場合は、</P>
+<p>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン１）を 320x240 にする場合は、</p>
 
 <pre>
 &gt; nsaconv [-e] 800 arc.nsa zaurus_dir/arc.nsa
@@ -573,7 +606,7 @@ cd/track14.mp3<BR>
 ...
 </pre>
 
-<P>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン２）を 640x480 にする場合は、</P>
+<p>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン２）を 640x480 にする場合は、</p>
 
 <pre>
 &gt; nsaconv [-e] -vga -ns2 800 arc.nsa zaurus_dir/arc.nsa
@@ -581,33 +614,34 @@ cd/track14.mp3<BR>
 ...
 </pre>
 
-<P>として変換してください。</P>
+<p>として変換してください。</p>
 
-<P>最後の例は、-e オプション（後述）を指定したときに意味を持ちます。</p>
+<p>最後の例は、-e オプション（後述）を指定したときに意味を持ちます。</p>
 
-<P>NSA アーカイブのバージョン１と２と３の区別は手動です。スクリプトで ns2 コマンドが使われていればバージョン２、ns3 コマンドが使われていればバージョン３です。スクリプトが確認できない場合は、まず -ns2 を付けずに試し、うまくいかなかったら -ns2 もしくは -ns3 を付けて試してください。</P>
+<p>NSA アーカイブのバージョン１と２と３の区別は手動です。スクリプトで ns2 コマンドが使われていればバージョン２、ns3 コマンドが使われていればバージョン３です。スクリプトが確認できない場合は、まず -ns2 を付けずに試し、うまくいかなかったら -ns2 もしくは -ns3 を付けて試してください。</p>
 
-<P>-e オプションを付けると、wav と bmp ファイルを nbz 圧縮します。これを行うと、NSA アーカイブの圧縮の種類を示すフラグに ONScripter 独自の値を設定します。この独自拡張については、本家が将来アーカイブの仕様を拡張したときにバッティングする可能性がありますが、その時はそれを回避するようにコンバータを修正し、再コンバートすることで解決できます。その場合でも、save file 等には一切影響がありませんので、Zaurus で使用される方はこのオプションを付けてコンバートすることをお勧めします。wav を bzip2 で圧縮するので、wav を多用するゲームではかなりアーカイブが小さくなります。デメリットとしては、bzip2 の復号を行うため若干遅くなりますが、気がづかない程度です。</P>
+<p>-e オプションを付けると、wav と bmp ファイルを nbz 圧縮します。これを行うと、NSA アーカイブの圧縮の種類を示すフラグに ONScripter 独自の値を設定します。この独自拡張については、本家が将来アーカイブの仕様を拡張したときにバッティングする可能性がありますが、その時はそれを回避するようにコンバータを修正し、再コンバートすることで解決できます。その場合でも、save file 等には一切影響がありませんので、Zaurus で使用される方はこのオプションを付けてコンバートすることをお勧めします。wav を bzip2 で圧縮するので、wav を多用するゲームではかなりアーカイブが小さくなります。デメリットとしては、bzip2 の復号を行うため若干遅くなりますが、気がづかない程度です。</p>
 
-<P>-vga オプションをつけると、640x480(VGA)サイズに圧縮します。SL-C700用です。-e オプションと組み合わせると効果的です。</P>
+<p>-vga オプションをつけると、640x480(VGA)サイズに圧縮します。SL-C700用です。-e オプションと組み合わせると効果的です。</p>
 
-<P>さらに、サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
+<p>さらに、サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
 
 なお、Linux 等でも、-DPDA をつけてコンパイルすることにより、320x240 画面でゲームをすることができます。
-</P>
+</p>
 
-</DIV>
-
-<DIV CLASS="block2">
-<H3><A NAME="mp3_on_windows">Windows 上で MP3 の音がぶつぶつとぎれる問題について</A></H3>
-
-<P>Windows でコンパイル済の SMPEG のバイナリを持ってくると、MP3 によっては音がぶつぶつとぎれて演奏されます。これは、SMPEG を MSVC でコンパイルする時の最適化の問題で、下記の通りに MSVC の global optimization を一部抑制する指定をし、自分でコンパイルすることで解決できます。</P>
+</div> <!-- sub-content -->
 
 
-<P>修正するファイル: audio/mpeglayer3.cpp<BR>
+<h3><a name="mp3-on-windows">Windows 上で MP3 の音がぶつぶつとぎれる問題</a></h3>
+<div class="sub-content">
+
+<p>Windows でコンパイル済の SMPEG のバイナリを持ってくると、MP3 によっては音がぶつぶつとぎれて演奏されます。これは、SMPEG を MSVC でコンパイルする時の最適化の問題で、下記の通りに MSVC の global optimization を一部抑制する指定をし、自分でコンパイルすることで解決できます。</p>
+
+
+<p>修正するファイル: audio/mpeglayer3.cpp<br>
 
 関数 layer3reorderandantialias の前後に、下のように #pragma 指定を追加
-する。</P>
+する。</p>
 
 <PRE>
 #pragma optimize( "g", off )
@@ -619,34 +653,35 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
 #pragma optimize( "g", on )
 </PRE>
 
-</DIV>
+</div> <!-- sub-content -->
 
-<DIV CLASS="block2">
-<H3><A NAME="enable_1byte">英語ノベル作成について</A></H3>
 
-<P>これは Chend さん(chendo[at]gmail.com)からの要望に基づく ONScripter 
+<h3><a name="enable-1byte">英語ノベル作成</a></h3>
+<div class="sub-content">
+
+<p>これは Chend さん(chendo[at]gmail.com)からの要望に基づく ONScripter 
 独自の拡張です。これまで、仕様の提案やパッチなど多くの協力をしていただ
-きました。</P>
+きました。</p>
 
-<P>コンパイル時に ENABLE_1BYTE_CHAR を定義することで、`(back quote) 以
+<p>コンパイル時に ENABLE_1BYTE_CHAR を定義することで、`(back quote) 以
 降行末もしくは別の ` までを、1byte 文字で記述されたテキスト文とみなし
 て表示するようにします。この間では半角スペースが表示として有効になりま
 すが、テキスト内の変数表示は無効になり、また色・時間指定も開始位置によっ
 ては無効になります。テキスト途中で色を変える場合は、/ で行を分けるなど
 してください。ただし、クリック待ち(@)改ページ待ち(\)直後の強制クリック
-文字を無視(_)は有効です。</P>
+文字を無視(_)は有効です。</p>
 
-<P>将来本家で ` に何か機能を割り振った場合には、削除もしくは別の文字に
+<p>将来本家で ` に何か機能を割り振った場合には、削除もしくは別の文字に
 変更される可能性があります。現状のように ENABLE_1BYTE_CHAR の指定の有
 無で使い分けられるようにするかもしれませんが、保証の限りではありません。
-</P>
+</p>
 
-<P>また、コンパイル時に ENABLE_1BYTE_CHAR と合わせて FORCE_1BYTE_CHAR 
+<p>また、コンパイル時に ENABLE_1BYTE_CHAR と合わせて FORCE_1BYTE_CHAR 
 を指定すると、全ての表示を半角にすることが可能になります。具体的には、
 上記に加えて、右クリックメニューの表示が英語になり、また数字変数の表示
-が半角になります。</P>
+が半角になります。</p>
 
-<P>以下にスクリプト例を書きます。<BR>
+<p>以下にスクリプト例を書きます。<br>
 
 <PRE>
 *define 
@@ -680,16 +715,22 @@ return
 return
 </PRE>
 
-</DIV>
-</DIV>
+</div> <!-- sub-content -->
 
-<A HREF="index.html">戻る</A>
+</div> <!-- content -->
+
+</div> <!-- main -->
+</div> <!-- main-container -->
+
+</div> <!-- container -->
 
 <hr>
-<DIV ALIGN="CENTER">
-メール宛先 <a href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a> <BR>
-Copyright (c) 1998-2005 Studio O.G.A. All rights reserved.
-</DIV>
 
-</BODY>
-</HTML>
+<div class="footer">
+メール宛先 <a href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a> <br>
+Copyright (c) 1998-2005 Studio O.G.A. All rights reserved.
+</div> <!-- footer -->
+
+</body>
+</html>
+

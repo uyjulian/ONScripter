@@ -29,6 +29,12 @@
 
 #ifdef USE_OPENGL
 #include <SDL_opengl.h>
+
+#ifdef USE_GL_TEXTURE_RECTANGLE
+#ifndef GL_TEXTURE_RECTANGLE_ARB
+#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
+#endif
+#endif
 #endif
 
 typedef unsigned char uchar3[3];

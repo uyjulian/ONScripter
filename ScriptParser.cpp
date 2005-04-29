@@ -41,6 +41,7 @@ static struct FuncLUT{
     char command[40];
     FuncList method;
 } func_lut[] = {
+    {"zenkakko", &ScriptParser::zenkakkoCommand},
     {"windoweffect", &ScriptParser::effectCommand},
     {"windowback", &ScriptParser::windowbackCommand},
     {"versionstr", &ScriptParser::versionstrCommand},
@@ -99,12 +100,14 @@ static struct FuncLUT{
     {"lookbacksp",      &ScriptParser::lookbackspCommand},
     {"lookbackcolor",      &ScriptParser::lookbackcolorCommand},
     //{"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
+    {"loadgosub",      &ScriptParser::loadgosubCommand},
     {"linepage2",    &ScriptParser::linepageCommand},
     {"linepage",    &ScriptParser::linepageCommand},
     {"len",      &ScriptParser::lenCommand},
     {"labellog",      &ScriptParser::labellogCommand},
     {"kidokuskip", &ScriptParser::kidokuskipCommand},
     {"kidokumode", &ScriptParser::kidokumodeCommand},
+    {"itoa2", &ScriptParser::itoaCommand},
     {"itoa", &ScriptParser::itoaCommand},
     {"intlimit", &ScriptParser::intlimitCommand},
     {"inc",      &ScriptParser::incCommand},
@@ -211,6 +214,7 @@ void ScriptParser::reset()
     mode_saya_flag = false;
     mode_ext_flag = false;
     rubyon_flag = false;
+    zenkakko_flag = false;
 
     break_flag = false;
     trans_mode = AnimationInfo::TRANS_TOPLEFT;
@@ -226,6 +230,7 @@ void ScriptParser::reset()
 
     textgosub_label = NULL;
     pretextgosub_label = NULL;
+    loadgosub_label = NULL;
 
     /* ---------------------------------------- */
     /* Lookback related variables */

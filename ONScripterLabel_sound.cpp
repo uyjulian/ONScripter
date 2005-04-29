@@ -445,6 +445,13 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             mp3_buffer = NULL;
         }
     }
+
+    if ( wave_sample[MIX_BGM_CHANNEL] ){
+        Mix_Pause( MIX_BGM_CHANNEL );
+        Mix_FreeChunk( wave_sample[MIX_BGM_CHANNEL] );
+        wave_sample[MIX_BGM_CHANNEL] = NULL;
+    }
+
     if ( !continue_flag ){
         setStr( &music_file_name, NULL );
         music_play_loop_flag = false;

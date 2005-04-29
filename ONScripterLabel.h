@@ -38,6 +38,9 @@
 #endif
 
 #ifdef USE_OPENGL
+#ifndef APIENTRY
+#define APIENTRY
+#endif
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_OPENGL|SDL_DOUBLEBUF)
 #ifndef PFNGLBLENDCOLORPROC
 typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -83,6 +86,7 @@ public:
     void setRegistryFile(const char *filename);
     void setDLLFile(const char *filename);
     void setArchivePath(const char *path);
+    void setFullscreenMode();
     void enableButtonShortCut();
     void disableRescale();
     void enableEdit();
@@ -122,7 +126,9 @@ public:
     int tablegotoCommand();
     int systemcallCommand();
     int stopCommand();
+    int sp_rgb_gradationCommand();
     int spstrCommand();
+    int spreloadCommand();
     int splitCommand();
     int spclclkCommand();
     int spbtnCommand();
@@ -308,8 +314,8 @@ private:
     char *default_font;
     char *registry_file;
     char *dll_file;
-    char *dll_str;
-    int  dll_ret;
+    char *getret_str;
+    int  getret_int;
     bool force_button_shortcut_flag;
     bool disable_rescale_flag;
     bool edit_flag;

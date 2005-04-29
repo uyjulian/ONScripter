@@ -444,6 +444,9 @@ void ONScripterLabel::executeSystemYesNo()
                 text_on_flag = false;
                 indent_offset = 0;
                 line_enter_flag = false;
+
+                if (loadgosub_label)
+                    gosubReal( loadgosub_label, script_h.getCurrent() );
                 readToken();
             }
             else if ( yesno_caller & SYSTEM_RESET ){

@@ -33,6 +33,7 @@ void optionHelp()
     printf( "      --registry file\tuse file as a default registry file\n");
     printf( "      --dll file\tuse file as a default dll file\n");
     printf( "  -r, --root path\tuse path as a root path to the archives\n");
+    printf( "      --fullcsreen\t\tstart in fullscreen mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
@@ -96,6 +97,11 @@ int main( int argc, char **argv )
                 argc--;
                 argv++;
                 ons.setArchivePath(argv[0]);
+            }
+            else if ( !strcmp( argv[0]+1, "-fullscreen" ) ){
+                argc--;
+                argv++;
+                ons.setFullscreenMode();
             }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
                 ons.enableButtonShortCut();

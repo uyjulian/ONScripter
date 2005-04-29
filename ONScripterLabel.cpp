@@ -60,7 +60,9 @@ static struct FuncLUT{
     {"tablegoto",   &ONScripterLabel::tablegotoCommand},
     {"systemcall",   &ONScripterLabel::systemcallCommand},
     {"stop",   &ONScripterLabel::stopCommand},
+    {"sp_rgb_gradation",   &ONScripterLabel::sp_rgb_gradationCommand},
     {"spstr",   &ONScripterLabel::spstrCommand},
+    {"spreload",   &ONScripterLabel::spreloadCommand},
     {"splitstring",   &ONScripterLabel::splitCommand},
     {"split",   &ONScripterLabel::splitCommand},
     {"spclclk",   &ONScripterLabel::spclclkCommand},
@@ -118,6 +120,7 @@ static struct FuncLUT{
     {"loopbgm", &ONScripterLabel::loopbgmCommand},
     {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
     {"lookbackbutton",      &ONScripterLabel::lookbackbuttonCommand},
+    {"logsp2", &ONScripterLabel::logspCommand},
     {"logsp", &ONScripterLabel::logspCommand},
     {"locate", &ONScripterLabel::locateCommand},
     {"loadgame", &ONScripterLabel::loadgameCommand},
@@ -185,6 +188,7 @@ static struct FuncLUT{
     {"chvol", &ONScripterLabel::chvolCommand},
     {"checkpage", &ONScripterLabel::checkpageCommand},
     {"cellcheckspbtn", &ONScripterLabel::spbtnCommand},
+    {"cellcheckexbtn", &ONScripterLabel::exbtnCommand},
     {"cell", &ONScripterLabel::cellCommand},
     {"caption", &ONScripterLabel::captionCommand},
     {"btnwait2", &ONScripterLabel::btnwaitCommand},
@@ -327,11 +331,12 @@ ONScripterLabel::ONScripterLabel()
     setStr( &registry_file, REGISTRY_FILE );
     dll_file = NULL;
     setStr( &dll_file, DLL_FILE );
-    dll_str = NULL;
+    getret_str = NULL;
     force_button_shortcut_flag = false;
     disable_rescale_flag = false;
     edit_flag = false;
     key_exe_file = NULL;
+    fullscreen_mode = false;
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -368,6 +373,11 @@ void ONScripterLabel::setArchivePath(const char *path)
     if (archive_path) delete[] archive_path;
     archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
     sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
+}
+
+void ONScripterLabel::setFullscreenMode()
+{
+    fullscreen_mode = true;
 }
 
 void ONScripterLabel::enableButtonShortCut()
@@ -486,6 +496,7 @@ int ONScripterLabel::init()
         return -1;
     }
 
+    if (fullscreen_mode) SDL_WM_ToggleFullScreen( screen_surface );
     loadEnvData();
     
     return 0;
@@ -528,8 +539,8 @@ void ONScripterLabel::reset()
 
     resetSentenceFont();
 
-    setStr(&dll_str, NULL);
-    dll_ret = 0;
+    setStr(&getret_str, NULL);
+    getret_int = 0;
     
     // ----------------------------------------
     // Sound related variables
@@ -959,6 +970,9 @@ void ONScripterLabel::deleteButtonLink()
         delete b2;
     }
     root_button_link.next = NULL;
+
+    if ( exbtn_d_button_link.exbtn_ctl ) delete[] exbtn_d_button_link.exbtn_ctl;
+    exbtn_d_button_link.exbtn_ctl = NULL;
 }
 
 void ONScripterLabel::refreshMouseOverButton()
@@ -1062,16 +1076,16 @@ void ONScripterLabel::newPage( bool next_flag )
 {
     /* ---------------------------------------- */
     /* Set forward the text buffer */
-    if ( next_flag ){
-        if ( current_text_buffer->buffer2_count != 0 ){
-            current_text_buffer = current_text_buffer->next;
-            if ( start_text_buffer == current_text_buffer )
-                start_text_buffer = start_text_buffer->next;
-        }
+    if ( current_text_buffer->buffer2_count != 0 ){
+        current_text_buffer = current_text_buffer->next;
+        if ( start_text_buffer == current_text_buffer )
+            start_text_buffer = start_text_buffer->next;
     }
 
-    indent_offset = 0;
-    line_enter_flag = false;
+    if ( next_flag ){
+        indent_offset = 0;
+        line_enter_flag = false;
+    }
     
     clearCurrentTextBuffer();
     if ( need_refresh_flag ){
@@ -1130,7 +1144,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
     int sprite_no, cell_no;
 
     while( char com = *ctl_str++ ){
-        if ( com == 'C' ){
+        if (com == 'C' || com == 'c'){
             sprite_no = getNumberFromBuffer( &ctl_str );
             if ( *ctl_str == ',' ){
                 ctl_str++;
@@ -1140,7 +1154,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
                 cell_no = -1;
             refreshSprite( surface, sprite_no, false, cell_no, NULL, NULL );
         }
-        else if ( com == 'P' ){
+        else if (com == 'P' || com == 'p'){
             sprite_no = getNumberFromBuffer( &ctl_str );
             if ( *ctl_str == ',' ){
                 ctl_str++;
@@ -1150,7 +1164,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
                 cell_no = -1;
             refreshSprite( surface, sprite_no, true, cell_no, check_src_rect, check_dst_rect );
         }
-        else if ( com == 'S' ){
+        else if (com == 'S' || com == 's'){
             sprite_no = getNumberFromBuffer( &ctl_str );
             if      (sprite_no < 0) sprite_no = 0;
             else if (sprite_no >= ONS_MIX_CHANNELS) sprite_no = ONS_MIX_CHANNELS-1;
@@ -1164,7 +1178,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             playWave( sound_name, false, sprite_no );
             if ( *ctl_str == ')' ) ctl_str++;
         }
-        else if ( com == 'M' ){
+        else if (com == 'M' || com == 'm'){
             sprite_no = getNumberFromBuffer( &ctl_str );
             SDL_Rect rect = sprite_info[ sprite_no ].pos;
             if ( *ctl_str != ',' ) continue;
@@ -1209,7 +1223,6 @@ void ONScripterLabel::saveAll()
 
 void ONScripterLabel::loadEnvData()
 {
-    fullscreen_mode = false;
     volume_on_flag = true;
     text_speed_no = 1;
     draw_one_page_flag = false;

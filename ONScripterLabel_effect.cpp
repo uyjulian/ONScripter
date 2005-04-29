@@ -54,9 +54,15 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     if ( effect_counter == 0 ){
         blitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
 #ifdef USE_OPENGL
+#ifdef USE_GL_TEXTURE_RECTANGLE
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, effect_src_id);
+        glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
+                         GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
+#else
         glBindTexture(GL_TEXTURE_2D, effect_src_id);
         glCopyTexImage2D(GL_TEXTURE_2D, 0,
                          GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
+#endif
 #endif        
         
         if ( need_refresh_flag ) refreshSurfaceParameters();

@@ -179,6 +179,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
 
 void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
 {
+    if (anim->image_name == NULL) return;
     anim->removeTag();
     
     int i;
