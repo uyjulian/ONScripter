@@ -664,6 +664,9 @@ private:
     
     /* ---------------------------------------- */
     /* Image processing */
+    unsigned char *resize_buffer;
+    int resize_buffer_size;
+
     void blitSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     int  resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Surface *dst, SDL_Rect *dst_rect );
     void shiftCursorOnButton( int diff );

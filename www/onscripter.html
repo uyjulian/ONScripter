@@ -18,7 +18,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Apr. 28, 2005 [ソース更新]<br>
+Last updated: May 2, 2005 [ソース更新]<br>
 <!--Last updated: Apr. 1, 2005 [Experimentalソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
@@ -97,8 +97,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-beta-20050429.tar.gz">onscripter-beta-20050429.tar.gz</a>
-  <li> <a href="onscripter-beta-20050308.tar.gz">onscripter-beta-20050308.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-beta-20050502.tar.gz">onscripter-beta-20050502.tar.gz</a>
+  <li> <a href="onscripter-beta-20050429.tar.gz">onscripter-beta-20050429.tar.gz</a>>(１つ前のバージョン)
 </ul>
 <!--(テスト版<a href="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</a>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </div> <!-- sub-content -->
@@ -109,13 +109,13 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <ul>
   <li> <a href="zaurus/index.html#package-onscripter">Zaurus(SL-5500, SL-A300, SL-B500, SL-C700, SL-C750, SL-C760)用</a>
        （<a href="http://sourceforge.jp/projects/zaurus-ja/">zaurus-ja</a>でも公開中）
-  <li> <a href="http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody/onscripter/">Debian Woody 用</a>（古賀さん）
+  <li> <a href="http://detroit.ddo.jp/">Debian Woody, Sarge 用</a>（みーさん）
        <ul>
          <li> ;*** apt line ***
-<!--	 <li> deb http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./
-	 <li> deb-src http://www.parl.tutkie.tut.ac.jp/~koga/debian/woody ./-->
 	 <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
 	 <li> deb-src http://detroit.ddo.jp/debian/woody/ ./ 
+	 <li> deb http://detroit.ddo.jp/debian/sarge/ ./ 
+	 <li> deb-src http://detroit.ddo.jp/debian/sarge/ ./ 
 
        </ul>
   <li> <a href="http://abe.nwr.jp/onscripter/rpms/">Red Hat 系(RPM) 用</a>（αβεさん）
@@ -249,7 +249,8 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 <p>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</p>
 
 <OL>
-  <li> (<FONT color="#ff0000">高</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
+  <li> (<FONT color="#ff0000">高</FONT>)スプライト・ボタンの表示・非表示がおかしい場合がある問題に対処。
+  <li> (<FONT color="#ff0000">中</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
   <li> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
   <li> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
   <li> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。

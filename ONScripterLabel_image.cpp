@@ -87,11 +87,14 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Su
 
     /* size of tmp_buffer must be larger than 16 bytes */
     size_t len = src_rect2.w * (src_rect2.h+1) * 4 + 4;
-    unsigned char *tmp_buffer = new unsigned char[ (len<16)?16:len ];
+    if (resize_buffer_size < len){
+        delete[] resize_buffer;
+        resize_buffer = new unsigned char[len];
+        resize_buffer_size = len;
+    }
     resizeImage( (unsigned char*)dst_buffer, dst_rect2.w, dst_rect2.h, dst->w * 4,
                  (unsigned char*)src_buffer, src_rect2.w, src_rect2.h, src->w * 4,
-                 4, tmp_buffer, src_rect2.w * 4 );
-    delete[] tmp_buffer;
+                 4, resize_buffer, src_rect2.w * 4 );
 
     SDL_UnlockSurface( src );
     SDL_UnlockSurface( dst );

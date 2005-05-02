@@ -1653,6 +1653,7 @@ int ONScripterLabel::gettagCommand()
     if (zenkakko_flag && buf[0] == "z"[0] && buf[1] == "z"[1]) buf += 2;
     else if (!zenkakko_flag && *buf == ']') buf++;
     last_nest_info->next_script = buf;
+    if (*buf == 0x0a) line_enter_flag = false;
 
     return RET_CONTINUE;
 }

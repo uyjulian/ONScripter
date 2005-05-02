@@ -481,6 +481,9 @@ int ONScripterLabel::init()
     internal_timer = SDL_GetTicks();
 
     trap_dist = NULL;
+    resize_buffer = new unsigned char[16];
+    resize_buffer_size = 16;
+
     texture_buffer = NULL;
     texture_buffer_size = 0;
 
@@ -523,11 +526,17 @@ void ONScripterLabel::reset()
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
 
+    if (resize_buffer_size != 16){
+        delete[] resize_buffer;
+        resize_buffer = new unsigned char[16];
+        resize_buffer_size = 16;
+    }
+
     if (texture_buffer){
         delete[] texture_buffer;
         texture_buffer = NULL;
+        texture_buffer_size = 0;
     }
-    texture_buffer_size = 0;
 
     current_over_button = 0;
     variable_edit_mode = NOT_EDIT_MODE;
@@ -897,6 +906,7 @@ int ONScripterLabel::parseLine( )
             }
         }
         //event_mode = IDLE_EVENT_MODE;
+        line_enter_flag = false;
     }
 
     return ret;
