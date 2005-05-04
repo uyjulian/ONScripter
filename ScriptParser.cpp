@@ -613,7 +613,7 @@ void ScriptParser::setCurrentLabel( const char *label )
 void ScriptParser::readToken()
 {
     script_h.readToken();
-    string_buffer_offset = 0;
+    if (script_h.isText()) string_buffer_offset = 0;
 
     if (script_h.isText() && linepage_line >= 0){
         char ch = '@'; // click wait

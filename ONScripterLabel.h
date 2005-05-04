@@ -516,7 +516,7 @@ private:
     bool draw_cursor_flag;
     int  textgosub_clickstr_state;
     int  indent_offset;
-    int  line_enter_flag;
+    int  line_enter_status; // 0 ... no enter, 1 ... pretext, 2 ... body
 
     int  refreshMode();
     
@@ -533,6 +533,7 @@ private:
     void startRuby(char *buf, FontInfo &info);
     void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface);
     int  textCommand();
+    int  processText();
     
     /* ---------------------------------------- */
     /* Effect related variables */

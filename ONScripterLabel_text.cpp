@@ -332,7 +332,7 @@ void ONScripterLabel::restoreTextBuffer()
 
 int ONScripterLabel::enterTextDisplayMode()
 {
-    if (!line_enter_flag && saveon_flag && internal_saveon_flag) saveSaveFile( -1 );
+    if (line_enter_status == 0 && saveon_flag && internal_saveon_flag) saveSaveFile( -1 );
     internal_saveon_flag = false;
     
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
@@ -395,9 +395,6 @@ int ONScripterLabel::clickWait( char *out_text )
             string_buffer_offset++;
         }
         num_chars_in_sentence = 0;
-        // ... below is ugly work-around ...
-        if ( script_h.getStringBuffer()[string_buffer_offset] == '\0' )
-            return RET_CONTINUE;
 
         return RET_CONTINUE | RET_NOREAD;
     }
@@ -410,15 +407,14 @@ int ONScripterLabel::clickWait( char *out_text )
         }
         if ( textgosub_label ){
             saveoffCommand();
-            if ( out_text && out_text[1] ) string_buffer_offset++;
-            string_buffer_offset++;
 
             textgosub_clickstr_state = CLICK_WAIT;
             if (script_h.getNext()[0] == 0x0a)
                 textgosub_clickstr_state |= CLICK_EOL;
             gosubReal( textgosub_label, script_h.getNext() );
             indent_offset = 0;
-            line_enter_flag = false;
+            line_enter_status = 0;
+            string_buffer_offset = 0;
             return RET_CONTINUE;
         }
         if ( automode_flag ){
@@ -460,13 +456,12 @@ int ONScripterLabel::clickNewPage( char *out_text )
         key_pressed_flag = false;
         if ( textgosub_label ){
             saveoffCommand();
-            if ( out_text && out_text[1] ) string_buffer_offset++;
-            string_buffer_offset++;
 
             textgosub_clickstr_state = CLICK_NEWPAGE;
             gosubReal( textgosub_label, script_h.getNext() );
             indent_offset = 0;
-            line_enter_flag = false;
+            line_enter_status = 0;
+            string_buffer_offset = 0;
             return RET_CONTINUE;
         }
         if ( automode_flag ){
@@ -562,17 +557,28 @@ int ONScripterLabel::textCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     if (pretextgosub_label && 
-        (line_enter_flag == false /*||
-         (string_buffer_offset == 0 &&
-          (!zenkakko_flag && script_h.getStringBuffer()[string_buffer_offset] == '[' ||
+        (line_enter_status == 0 ||
+         (line_enter_status == 1 &&
+          (script_h.getStringBuffer()[string_buffer_offset] == '[' ||
            zenkakko_flag && script_h.getStringBuffer()[string_buffer_offset] == "Åy"[0] &&
-           script_h.getStringBuffer()[string_buffer_offset+1] == "Åy"[1])) */)){
-        line_enter_flag = true;
+           script_h.getStringBuffer()[string_buffer_offset+1] == "Åy"[1]))) ){
         gosubReal( pretextgosub_label, script_h.getCurrent() );
+        line_enter_status = 1;
         return RET_CONTINUE;
     }
 
-    //printf("textCommand %c %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode);
+    line_enter_status = 2;
+    ret = processText();
+    if (ret == RET_CONTINUE){
+        indent_offset = 0;
+    }
+    
+    return ret;
+}
+
+int ONScripterLabel::processText()
+{
+    //printf("textCommand %c %d %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode, line_enter_status);
     char out_text[3]= {'\0', '\0', '\0'};
 
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_SLEEP_MODE) ){
@@ -615,10 +621,8 @@ int ONScripterLabel::textCommand()
     }
 
     
-    if (script_h.getStringBuffer()[string_buffer_offset] == '\0' ||
-        script_h.getStringBuffer()[string_buffer_offset] == 0x0a ){
-        indent_offset = 0;
-        line_enter_flag = false;
+    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+        indent_offset = 0; // redundant
         return RET_CONTINUE;
     }
 

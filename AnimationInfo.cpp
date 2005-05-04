@@ -444,29 +444,27 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
         }
     }
     else if ( trans_mode == TRANS_MASK ){
-        int mw=0, mh=0;
-        Uint32 *buffer_m = NULL;
         if (surface_m){
             SDL_LockSurface( surface_m );
-            buffer_m  = (Uint32 *)surface_m->pixels;
-            mw = surface->w;
-            mh = surface->h;
-        }
+            int mw = surface->w;
+            int mh = surface->h;
 
-        for (i=0 ; i<h ; i++){
-            for (c=0 ; c<num_of_cells ; c++){
-                for (j=0 ; j<w2 ; j++, buffer++){
-                    *buffer_dst = *buffer & rgbmask;
-                    if (surface_m){
-                        mask = ((*(buffer_m + mw * (i%mh) + j%mw) & rmask) >> surface->format->Rshift) ^ 0xff;
-                        *buffer_dst++ |= mask << surface->format->Ashift;
+            for (i=0 ; i<h ; i++){
+                Uint32 *buffer_m = (Uint32 *)surface_m->pixels + mw*(i%mh);
+                for (c=0 ; c<num_of_cells ; c++){
+                    for (j=0 ; j<w2 ; j++, buffer++){
+                        *buffer_dst = *buffer & rgbmask;
+                        if (surface_m){
+                            mask = ((*(buffer_m + j%mw) & rmask) >> surface->format->Rshift) ^ 0xff;
+                            *buffer_dst++ |= mask << surface->format->Ashift;
+                        }
+                        else
+                            *buffer_dst++ |= amask;
                     }
-                    else
-                        *buffer_dst++ |= amask;
                 }
             }
+            SDL_UnlockSurface( surface_m );
         }
-        if (surface_m) SDL_UnlockSurface( surface_m );
     }
     else if ( trans_mode == TRANS_TOPLEFT ||
               trans_mode == TRANS_TOPRIGHT ||

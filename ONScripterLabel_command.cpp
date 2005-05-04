@@ -197,7 +197,7 @@ int ONScripterLabel::texecCommand()
         if ( !sentence_font.isLineEmpty() &&
              !new_line_skip_flag ){
             indent_offset = 0;
-            line_enter_flag = false;
+            line_enter_status = 0;
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
         }
@@ -534,7 +534,7 @@ int ONScripterLabel::setwindowCommand()
     dirty_rect.add( sentence_font_info.pos );
     lookbackflushCommand();
     indent_offset = 0;
-    line_enter_flag = false;
+    line_enter_status = 0;
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
@@ -927,12 +927,30 @@ int ONScripterLabel::puttextCommand()
 
     script_h.readStr();
     script_h.addStringBuffer(0x0a);
-    string_buffer_offset = 0;
-    if ( script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR )
+    if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
+        string_buffer_offset == 0)
         string_buffer_offset = 1; // skip the heading `
-    script_h.setText( true );
 
-    return RET_CONTINUE | RET_NOREAD;
+    ret = processText();
+    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+        if (!sentence_font.isLineEmpty()){
+            current_text_buffer->addBuffer( 0x0a );
+            sentence_font.newLine();
+            for (int i=0 ; i<indent_offset ; i++){
+                current_text_buffer->addBuffer(((char*)"@")[0]);
+                current_text_buffer->addBuffer(((char*)"@")[1]);
+                sentence_font.advanceCharInHankaku(2);
+            }
+        }
+    }
+    if (ret != RET_CONTINUE){
+        ret &= ~RET_NOREAD;
+        return ret | RET_REREAD;
+    }
+
+    string_buffer_offset = 0;
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::prnumclearCommand()
@@ -1335,6 +1353,7 @@ int ONScripterLabel::logspCommand()
         }
     }
 
+    si.is_single_line = false;
     setupAnimationInfo( &si );
     si.visible = true;
     dirty_rect.add( si.pos );
@@ -1369,7 +1388,8 @@ int ONScripterLabel::loadgameCommand()
         key_pressed_flag = false;
         text_on_flag = false;
         indent_offset = 0;
-        line_enter_flag = false;
+        line_enter_status = 0;
+        string_buffer_offset = 0;
 
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
@@ -1608,21 +1628,22 @@ int ONScripterLabel::gettagCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    char *buf = last_nest_info->next_script;
     bool end_flag = false;
+    char *buf = last_nest_info->next_script;
+    while(*buf == ' ' || *buf == '\t') buf++;
+    if (zenkakko_flag && buf[0] == "y"[0] && buf[1] == "y"[1])
+        buf += 2;
+    else if (*buf == '[')
+        buf++;
+    else
+        end_flag = true;
+    
     int end_status;
     do{
         script_h.readVariable();
         end_status = script_h.getEndStatus();
         script_h.pushVariable();
 
-        if (zenkakko_flag && buf[0] == "y"[0] && buf[1] == "y"[1])
-            buf += 2;
-        else if (!zenkakko_flag && *buf == '[' || *buf == '/')
-            buf++;
-        else
-            end_flag = true;
-    
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
              script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
             if (end_flag)
@@ -1638,7 +1659,7 @@ int ONScripterLabel::gettagCommand()
                 const char *buf_start = buf;
                 while(*buf != '/' &&
                       (!zenkakko_flag || (buf[0] != "z"[0] || buf[1] != "z"[1])) &&
-                      (zenkakko_flag || *buf != ']')){
+                      *buf != ']'){
                     if (IS_TWO_BYTE(*buf))
                         buf += 2;
                     else
@@ -1647,13 +1668,18 @@ int ONScripterLabel::gettagCommand()
                 setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf_start, buf-buf_start );
             }
         }
+
+        if (*buf == '/')
+            buf++;
+        else
+            end_flag = true;
     }
     while(end_status & ScriptHandler::END_COMMA);
 
     if (zenkakko_flag && buf[0] == "z"[0] && buf[1] == "z"[1]) buf += 2;
-    else if (!zenkakko_flag && *buf == ']') buf++;
+    else if (*buf == ']') buf++;
+    while(*buf == ' ' || *buf == '\t') buf++;
     last_nest_info->next_script = buf;
-    if (*buf == 0x0a) line_enter_flag = false;
 
     return RET_CONTINUE;
 }

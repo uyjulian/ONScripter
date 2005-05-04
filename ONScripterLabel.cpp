@@ -596,7 +596,7 @@ void ONScripterLabel::resetSub()
 
     textgosub_clickstr_state = CLICK_NONE;
     indent_offset = 0;
-    line_enter_flag = false;
+    line_enter_status = 0;
 
     resetSentenceFont();
 
@@ -825,9 +825,8 @@ void ONScripterLabel::executeLabel()
         
         if ( ret & RET_REREAD ) script_h.setCurrent( current );
         
-        
         if (!(ret & RET_NOREAD)){
-            if ( script_h.getStringBuffer()[ string_buffer_offset ] == 0x0a ){
+            if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
                 if (++current_line >= current_label_info.num_of_lines) break;
             }
             readToken();
@@ -894,7 +893,7 @@ int ONScripterLabel::parseLine( )
         }
     }
 #endif    
-    if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a ){
+    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
         if (!sentence_font.isLineEmpty()){
             current_text_buffer->addBuffer( 0x0a );
@@ -906,7 +905,8 @@ int ONScripterLabel::parseLine( )
             }
         }
         //event_mode = IDLE_EVENT_MODE;
-        line_enter_flag = false;
+        line_enter_status = 0;
+        string_buffer_offset = 0;
     }
 
     return ret;
@@ -1094,7 +1094,7 @@ void ONScripterLabel::newPage( bool next_flag )
 
     if ( next_flag ){
         indent_offset = 0;
-        line_enter_flag = false;
+        //line_enter_status = 0;
     }
     
     clearCurrentTextBuffer();

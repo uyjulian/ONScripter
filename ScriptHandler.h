@@ -130,7 +130,6 @@ public:
     bool isName( const char *name );
     bool isText();
     bool compareString( const char *buf );
-    void setText( bool val ); // exception: for select command to handle string variables in the second line or below
     inline int getEndStatus(){ return end_status; };
     void skipLine( int no=1 );
     void setLinepage( bool val );

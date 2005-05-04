@@ -443,7 +443,8 @@ void ONScripterLabel::executeSystemYesNo()
                 internal_saveon_flag = true;
                 text_on_flag = false;
                 indent_offset = 0;
-                line_enter_flag = false;
+                line_enter_status = 0;
+                string_buffer_offset = 0;
 
                 if (loadgosub_label)
                     gosubReal( loadgosub_label, script_h.getCurrent() );

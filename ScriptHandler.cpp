@@ -470,11 +470,6 @@ bool ScriptHandler::compareString(const char *buf)
     return (i==num)?true:false;
 }
 
-void ScriptHandler::setText( bool val )
-{
-    text_flag = val;
-}
-
 void ScriptHandler::skipLine( int no )
 {
     for ( int i=0 ; i<no ; i++ ){
