@@ -215,6 +215,7 @@ void ScriptParser::reset()
     mode_ext_flag = false;
     rubyon_flag = false;
     zenkakko_flag = false;
+    string_buffer_offset = 0;
 
     break_flag = false;
     trans_mode = AnimationInfo::TRANS_TOPLEFT;

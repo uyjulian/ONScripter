@@ -585,7 +585,7 @@ int ONScripterLabel::selectCommand()
         select_mode = SELECT_CSEL_MODE;
     }
 
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
         
         if ( current_button_state.button == 0 ) return RET_WAIT | RET_REREAD;
         
@@ -726,7 +726,7 @@ int ONScripterLabel::selectCommand()
         flush( refreshMode() );
         
         flushEvent();
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
+        event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
         advancePhase();
         refreshMouseOverButton();
 

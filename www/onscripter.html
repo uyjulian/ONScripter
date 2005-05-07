@@ -18,7 +18,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: May 4, 2005 [ソース更新]<br>
+Last updated: May 7, 2005 [ソース更新]<br>
 <!--Last updated: Apr. 1, 2005 [Experimentalソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
@@ -45,7 +45,7 @@ Last updated: May 4, 2005 [ソース更新]<br>
   <li> <a href="#feature">特徴</a>
        <ul>
 	 <li> <a href="#feature-comparison">NScripter と比較した特徴</a>
-	 <li> <a href="#feature-engine">実行環境としての特徴</a>
+	 <li> <a href="#feature-engine">その他の特徴</a>
        </ul>
   <li> <a href="#howto">実行方法</a>
        <ul>
@@ -69,6 +69,7 @@ Last updated: May 4, 2005 [ソース更新]<br>
 	 <li> <a href="#archive-compression">アーカイブ圧縮</a>
 	 <li> <a href="#mp3-on-windows">Windows 上で MP3 の音がぶつぶつとぎれる問題</a>
 	 <li> <a href="#enable-1byte">英語ノベル作成</a>
+	 <li> <a href="#memo">開発メモ</a>
        </ul>
   <li> <a href="index.html">戻る</a>
 </ul>
@@ -97,8 +98,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-beta-20050504.tar.gz">onscripter-beta-20050504.tar.gz</a>
-  <li> <a href="onscripter-beta-20050502.tar.gz">onscripter-beta-20050502.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-beta-20050507.tar.gz">onscripter-beta-20050507.tar.gz</a>
+  <li> <a href="onscripter-beta-20050504.tar.gz">onscripter-beta-20050504.tar.gz</a>(１つ前のバージョン)
 </ul>
 <!--(テスト版<a href="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</a>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </div> <!-- sub-content -->
@@ -154,24 +155,19 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 <h3><a name="feature-comparison">NScripter と比較した特徴</a></h3>
 <div class="sub-content">
 <ol>
+  <li> 現時点(2004.09.11)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
   <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
   <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
+  <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
 </div> <!-- sub-content -->
 
-<h3><a name="feature-engine">実行環境としての特徴</a></h3>
+<h3><a name="feature-engine">その他の特徴</a></h3>
 <div class="sub-content">
 <OL>
-  <li> セーブ・ロードができます。現時点(2004.09.11)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
-  <li> sar, nsa (nbz lzss を含む) アーカイブのデコードを実装しています。<br>
-  <li> 全ての画面効果（quake 系, 効果番号 1 - 18）を実装しています。<br>
-  <li> wav ファイル・MP3 ファイル・CD Audio・MIDI 演奏を実装しています。<br>
-  <li> 右クリックメニュー（セーブ・ロード・回想・ウィンドウを消す・リセット・スキップ）を実装しています。<br>
-  <li> カーソル・立ち絵・スプライトのアニメーションを実装しています。<br>
   <li> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<br>
-  <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
 </OL>
 </div> <!-- sub-content -->
 
@@ -183,35 +179,42 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <h3><a name="environment">動作環境</a></h3>
 <div class="sub-content">
-<p>下記のライブラリと処理系が必要です。バージョンは最新である必要はないかもしれませんが、他のバージョンでは確認していません。</p>
+<p>下記の処理系とライブラリ等が必要です。記載のバージョンは作者の開発環境のものですが、このバージョンに合わせる必要はないと思います。</p>
 
-<DL>
-  <DT> ・<a href="http://www.ijg.org/">Independent JPEG Group</a>
-  <DD> libjpeg-6b
-  <DT> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
-  <DD> bzip2-1.0.2
-  <DT> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
-  <DD> SDL-1.2.4, SDL_image-1.2.2, SDL_mixer-1.2.3, SDL_ttf-2.0.5
-  <DT> ・<a href="http://www.lokigames.com/development/smpeg.php3">SMPEG (SDL Mpeg Player Library)</a>
-  <DD> SMPEG-0.4.4
-  <DT> ・<a href="http://www.freetype.org/"> FreeType </a>
-  <DD> FreeType 2.1.3
-  <DT> ・<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>
-  <DD> mad-0.14.2b
-  <DD> これは必要ではありませんが、Zaurus で MP3 を聞きたい方はほぼ必須。
-  <DD> コンパイル時に MP3_MAD を定義することで、SMPEG に差し換えて使用されます。
-  <DT> ・<a href="http://www.xiph.org/ogg/vorbis/">The Ogg Vorbis CODEC Project</a>
-  <DD> ogg-1.0, vorbis-1.0 (or Tremor vorbis)
-  <DD> これは必要ではありませんが、Ogg Vorbis 形式で圧縮された音声を聞きたい場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。
-  <DT> ・<a href="http://avifile.sourceforge.net/">avifile</a>
-  <DD> avifile-0.7-0.7.38
-  <DD> これは必要ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
-  <DD> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
-  <DT> ・Unicode で指定された日本語 TTF フォント
-  <DT> ・C++ 処理系
-  <DD> Linux g++ 2.95.4
-  <DD> Windows Visual C++ 6.0
-</DL>
+<h4>必須</h4>
+<dl>
+  <dt> ・C++ 処理系
+  <dd> g++ 3.3.5 (Linux)
+  <dd> Visual C++ 6.0 (Windows)
+  <dt> ・Unicode で指定された日本語 TTF フォント(ファイル名は default.ttf に)
+  <dt> ・<a href="http://www.ijg.org/">Independent JPEG Group</a>
+  <dd> libjpeg-6b
+  <dt> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
+  <dd> bzip2-1.0.2
+  <dt> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
+  <dd> SDL-1.2.5, SDL_image-1.2.3, SDL_mixer-1.2.5, SDL_ttf-2.0.6, SMPEG-0.4.4
+  <dt> ・<a href="http://www.freetype.org/"> FreeType </a>
+  <dd> FreeType 2.1.4
+</dl>
+
+<h4>推奨</h4>
+<dl>
+  <dt> ・<a href="http://www.xiph.org/ogg/vorbis/">The Ogg Vorbis CODEC Project</a>
+  <dd> ogg-1.0, vorbis-1.0 (or Tremor vorbis)
+  <dd> これは必須ではありませんが、最近多くのゲームで使われている Ogg Vorbis 形式で圧縮された音声を聞きたい場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。
+</dl>
+
+<h4>必要に応じて導入</h4>
+<dl>
+  <dt> ・<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>
+  <dd> mad-0.14.2b
+  <dd> これは必要ではありませんが、Zaurus で MP3 を聞きたい方はほぼ必須。
+  <dd> コンパイル時に MP3_MAD を定義することで、SMPEG に差し換えて使用されます。
+  <dt> ・<a href="http://avifile.sourceforge.net/">avifile</a>
+  <dd> avifile-0.7-0.7.38
+  <dd> これは必要ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
+  <dd> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
+</dl>
 
 <p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
 また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), Dreamcast での動作報告をいただいております。<br>
@@ -234,9 +237,9 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <p><FONT color="#ff0000">[必須]</FONT>まずゲームのアーカイブを一カ所にまとめます。通常は、スクリプト(0.txt もしくは nscript.dat)とアーカイブ(arc.sar もしくは arc.nsa)の２つのファイルがあれば十分なはずです。arc1.nsa 〜 arc9.nsa がある場合は、それも置いてください。またゲームによっては、アーカイブの外に一部の画像ファイルを置いていたりします。その場合は、それらのファイルも元と同じように置いてください。一番確実なのは、ディレクトリ毎全てのファイルをコピーしてくることです。</p>
 
-<p><FONT color="#ff0000">[必須]</FONT>下記の&quot;TrueType font による漢字表示について&quot;を参考に、日本語 TrueType font を用意し、&quot;default.ttf&quot; という名前で置いてください。</p>
+<p><FONT color="#ff0000">[必須]</FONT>下記の<a href="#truetype-font">TrueType font による漢字表示</a>を参考に、日本語 TrueType font を用意し、&quot;default.ttf&quot; という名前で置いてください。</p>
 
-<p>[任意] CD audio の振り替え演奏をしたい場合は、下記の&quot;CD audio 演奏の振り替えについて&quot;に従って MP3 ファイルを用意してください。</p>
+<p>[任意] CD audio の振り替え演奏をしたい場合は、下記の<a href="#cd-audio-mapping">CD audio 演奏の振り替え</a>に従って MP3 ファイルを用意してください。</p>
 
 <p><FONT color="#ff0000">[必須]</FONT>最後に、ONScripter を実行してください。同じディレクトリにある nscript.dat とアーカイブを自動的に探し、ゲームが開始されます。なお ONScripter は、同じディレクトリにセーブデータやファイルログ等の状態ファイルを保存するため、このディレクトリには write permission を出しておいてください。</p>
 
@@ -250,9 +253,8 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <OL>
   <li> (<FONT color="#ff0000">高</FONT>)スプライト・ボタンの表示・非表示がおかしい場合がある問題に対処。
-  <li> (<FONT color="#ff0000">中</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
+  <li> (<FONT color="#ff8800">中</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
   <li> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
-  <li> (<FONT color="#00ff00">低</FONT>)スクリプトを全部キャッシュしておくのをやめる。ただし、index だけは付けておく。
   <li> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
   <li> (<FONT color="#00ff00">低</FONT>)コードの clean up。
 </OL>       
@@ -265,20 +267,20 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <p>お世話になっているページ、よく利用させていただいているページへのリンクです。</p>
 
-<DL>
-  <DT> ○<a href="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</a>
-  <DD> 千熊屋さんによる様々なゲーム互換エンジンへのリンク集です。ONScripter も紹介していただいてます。
-  <DT> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
-  <DD> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
+<dl>
+  <dt> ○<a href="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</a>
+  <dd> 千熊屋さんによる様々なゲーム互換エンジンへのリンク集です。ONScripter も紹介していただいてます。
+  <dt> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
+  <dd> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
        ONScripter を開発する上でたいへんお世話になっております。<br>
        <a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。<br>
        ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
-  <DT> ○<a href="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</a>
-  <DD> Mac OS X で検証していただいている adas さんページです。<br>
+  <dt> ○<a href="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</a>
+  <dd> Mac OS X で検証していただいている adas さんページです。<br>
        MacOS X 等に SDL をインストールする方法なども書かれています。
-  <DT> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
-  <DD> αβεさんよる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。
-</DL>
+  <dt> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
+  <dd> αβεさんによる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。
+</dl>
 
 </div> <!-- content -->
 
@@ -309,8 +311,6 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <p>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画している最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任意のタイミングで s キーにより通常の状態に戻すことができます。</p>
 
-<p>また、コンソール画面で Ctl-c することで ONScripter を終了できます。その場合、グローバル変数等は保存されるので、終了する場合はゲームのメニューから終了するか、これで強制終了するかしてください。</p>
-
 </div> <!-- sub-content -->
 
 
@@ -331,6 +331,7 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
 <tr><td>--fullscreen</td><td>フルスクリーンモードで起動します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
+<tr><td>--enable-wheeldown-advance</td><td>テキスト終端でのクリック待ちの際に、マウスのホイールダウン操作をクリック操作として扱います。textgosub でクリック待ちをカスタマイズしているときには効果はありません。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
 <tr><td>--edit</td><td>z キーを押したときに、音量及び変数の編集モードに入れるようになります。</td></tr>
 </table>
@@ -524,18 +525,18 @@ ret = 2
 
 ここで注意しなければいけないのは、TrueType font によっては正常に漢字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</p>
 
-<DL>
-  <DT> ＭＳゴシック (msgothic.ttc)
-  <DD> embedded bitmap を使っており、ゲームで 22pt 以下のフォントを要求すると正常に表示できません。
-  <DT> 東風ゴシックフォント (kochi-gothic.ttf)
-  <DD> embedded bitmap を使っており、ゲームで 17pt 以下のフォントを要求すると正常に表示できません。
-  <DT> 和田研ゴシック (wadalab-gothic.ttf)
-  <DD> embedded bitmap は使っていませんが、UNICODE で記述されていないため使えません。
-  <DT> HG ゴシック (hgrsmp.ttf)
-  <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
-  <DT> <a href="http://mikachan-font.com/">みかちゃんフォント</a>(みかちゃん-pb.ttf)
-  <DD> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
-</DL>
+<dl>
+  <dt> ＭＳゴシック (msgothic.ttc)
+  <dd> embedded bitmap を使っており、ゲームで 22pt 以下のフォントを要求すると正常に表示できません。
+  <dt> 東風ゴシックフォント (kochi-gothic.ttf)
+  <dd> embedded bitmap を使っており、ゲームで 17pt 以下のフォントを要求すると正常に表示できません。
+  <dt> 和田研ゴシック (wadalab-gothic.ttf)
+  <dd> embedded bitmap は使っていませんが、UNICODE で記述されていないため使えません。
+  <dt> HG ゴシック (hgrsmp.ttf)
+  <dd> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
+  <dt> <a href="http://mikachan-font.com/">みかちゃんフォント</a>(みかちゃん-pb.ttf)
+  <dd> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
+</dl>
 
 <p> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</p>
 
@@ -569,20 +570,20 @@ cd/track14.mp3<br>
 <p>MIDI は SDL_mixer の機能を使って演奏します。<br>
 この時、現在のディレクトリに tmp.mid という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</p>
 
-<DL>
-  <DT> Unix系(動作確認は Linux と Zaurus)でソフトウェア音源で演奏する場合（デフォルト）。
-  <DD> SDL_mixer に取り込まれている timidity を使用してソフトウェア音源で演奏します。この場合、MIDIの音色データ<a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして /usr/local/lib/ 以下に展開してください。
-  <DT> Windows の場合。
-  <DD> <a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして c:\ 以下に展開してください。
+<dl>
+  <dt> Unix系(動作確認は Linux と Zaurus)でソフトウェア音源で演奏する場合（デフォルト）。
+  <dd> SDL_mixer に取り込まれている timidity を使用してソフトウェア音源で演奏します。この場合、MIDIの音色データ<a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして /usr/local/lib/ 以下に展開してください。
+  <dt> Windows の場合。
+  <dd> <a href="http://www.libsdl.org/projects/SDL_mixer/timidity/timidity.tar.gz">timidity.tar.gz</a>をダウンロードして c:\ 以下に展開してください。
        これをしなくても MIDI が鳴ったと思っていたのですが、こうしないと落ちるようです。
-  <DT> Mac OS X の場合。
-  <DD> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）のバイナリに添付されている外部プログラムを利用して演奏が可能です。（当方未確認）
-  <DT> Unix系(動作確認は Linux)で外部 MIDI 音源を利用して演奏する場合。
-  <DD> playmidi 等の外部音源を使用できる MIDI player をインストールし、環境変数 MUSIC_CMD を設定してください。（例 MUSIC_CMD=/usr/bin/playmidi）<br>
+  <dt> Mac OS X の場合。
+  <dd> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）のバイナリに添付されている外部プログラムを利用して演奏が可能です。（当方未確認）
+  <dt> Unix系(動作確認は Linux)で外部 MIDI 音源を利用して演奏する場合。
+  <dd> playmidi 等の外部音源を使用できる MIDI player をインストールし、環境変数 MUSIC_CMD を設定してください。（例 MUSIC_CMD=/usr/bin/playmidi）<br>
        当方では、シリアル接続で外部音源を繋ぎ、MUSIC_CMD に '/usr/bin/midiplay -q -o /dev/ttyS0' を設定して動作確認をしています。<br>
        <a href="http://sourceforge.net/projects/playmidi/">playmidi</a>は、カーネルで認識される MIDI ポートに対してしか演奏できませんが、<a href="http://member.nifty.ne.jp/Breeze/softwares/unix/midiplay+.html">midiplay</a>はシリアルに直接出せます。<br>
        <a href="http://crystal.apana.org.au/ghansper/MidiAxis.html">シリアルポートをMIDIポートにする patch</a>を使えば、playmidi でもシリアル接続音源を使えそうですが、未確認です。       
-</DL>
+</dl>
 
 </div> <!-- sub-content -->
 
@@ -718,6 +719,32 @@ return
 
 </div> <!-- sub-content -->
 
+<h3><a name="memo">開発メモ</a></h3>
+<div class="sub-content">
+
+<p>開発に関する覚え書きです。</p>
+
+<h4>event_mode</h4>
+<table>
+<tr><th>値</th><th>説明</th><th>例</th></tr>
+<tr><td>IDLE_EVENT_MODE</td><td>待ち状態ではない</td>
+<tr><td>EFFECT_EVENT_MODE</td><td>画面効果実行中</td><td>print, bg</td>
+<tr><td>WAIT_BUTTON_MODE</td><td>ButtonLink(画像)を使用した選択待ち</td><td>btnwait, select, 右クリックメニュー</td>
+<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, clickWait, clickNewPage</td>
+<tr><td>WAIT_SLEEP_MODE</td><td>クリックで飛ばせない待ち</td><td>テキスト文字描画</td>
+<tr><td>WAIT_TIMER_MODE</td><td>時間を指定した待ち、アニメーションを実行</td><td>テキスト文字描画以外のほぼ全ての場合</td>
+</table>
+
+<p class="noindent">WAIT_BUTTON_MODE もしくは WAIT_INPUT_MODE と組み合わせて使用。</p>
+<table>
+<tr><th>値</th><th>説明</th><th>例</th></tr>
+<tr><td>WAIT_TEXTBTN_MODE</td><td>textbtnwait での待ち</td><td>textbtnwait 使用時のみ</td>
+<tr><td>WAIT_VOICE_MODE</td><td>ボイスの発声終了を待つ</td><td>automode 使用時のみ</td>
+<tr><td>WAIT_TEXT_MODE</td><td>テキスト終端での待ち</td><td>clickWait, clickNewPage, select</td>
+</table>
+
+</div> <!-- sub-content -->
+
 </div> <!-- content -->
 
 </div> <!-- main -->
@@ -734,4 +761,3 @@ Copyright (c) 1998-2005 Studio O.G.A. All rights reserved.
 
 </body>
 </html>
-

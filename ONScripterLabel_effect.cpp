@@ -452,7 +452,7 @@ void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Sur
 void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
 {
     int i, j, ii, jj;
-    int width = 160 * screen_ratio1 / screen_ratio2;
+    int width = screen_height/3 * screen_ratio1 / screen_ratio2;
 
     for ( i=0 ; i<level ; i++ ) width >>= 1;
 

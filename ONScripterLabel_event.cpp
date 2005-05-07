@@ -247,42 +247,52 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 
     if ( event->button == SDL_BUTTON_RIGHT &&
          event->type == SDL_MOUSEBUTTONUP &&
-         ( rmode_flag || (event_mode & WAIT_BUTTON_MODE) ) ) {
+         (rmode_flag && event_mode & WAIT_TEXT_MODE ||
+          event_mode & WAIT_BUTTON_MODE) ){
         current_button_state.button = -1;
         volatile_button_state.button = -1;
+        if (event_mode & WAIT_TEXT_MODE){
+            if (root_rmenu_link.next)
+                system_menu_mode = SYSTEM_MENU;
+            else
+                system_menu_mode = SYSTEM_WINDOWERASE;
+        }
     }
     else if ( event->button == SDL_BUTTON_LEFT &&
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
         current_button_state.button = current_over_button;
         volatile_button_state.button = current_over_button;
         if ( event->type == SDL_MOUSEBUTTONDOWN )
-                current_button_state.down_flag = true;
+            current_button_state.down_flag = true;
     }
 #if SDL_VERSION_ATLEAST(1, 2, 5)
-    else if ( event->button == SDL_BUTTON_WHEELUP &&
-              ( usewheel_flag || system_menu_mode == SYSTEM_LOOKBACK ) ){
+    else if (event->button == SDL_BUTTON_WHEELUP &&
+             (event_mode & WAIT_TEXT_MODE ||
+              event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+              system_menu_mode == SYSTEM_LOOKBACK)){
         current_button_state.button = -2;
         volatile_button_state.button = -2;
+        if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
     }
     else if ( event->button == SDL_BUTTON_WHEELDOWN &&
-              ( usewheel_flag || system_menu_mode == SYSTEM_LOOKBACK ) ){
-        current_button_state.button = -3;
-        volatile_button_state.button = -3;
+              (enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE ||
+               usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
+               system_menu_mode == SYSTEM_LOOKBACK ) ){
+        if (event_mode & WAIT_TEXT_MODE){
+            current_button_state.button = 0;
+            volatile_button_state.button = 0;
+        }
+        else{
+            current_button_state.button = -3;
+            volatile_button_state.button = -3;
+        }
     }
 #endif
     else return;
     
-    if ( skip_flag ) skip_flag = false;
+    skip_flag = false;
 
-    if ( ( event_mode & WAIT_INPUT_MODE ) &&
-         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE) ) &&
-         volatile_button_state.button == -1 && 
-         root_rmenu_link.next ){
-        system_menu_mode = SYSTEM_MENU;
-    }
-    
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) &&
-         ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
+    if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)){
         playClickVoice();
         stopAnimation( clickstr_state );
         advancePhase();
@@ -594,11 +604,13 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     
     if ( ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ) &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
-        if ( !useescspc_flag && event->keysym.sym == SDLK_ESCAPE && rmode_flag ){
+        if ( !useescspc_flag && event->keysym.sym == SDLK_ESCAPE){
             current_button_state.button  = -1;
-            if ( event_mode & WAIT_INPUT_MODE &&
-                 root_rmenu_link.next ){
-                system_menu_mode = SYSTEM_MENU;
+            if (rmode_flag && event_mode & WAIT_TEXT_MODE){
+                if (root_rmenu_link.next)
+                    system_menu_mode = SYSTEM_MENU;
+                else
+                    system_menu_mode = SYSTEM_WINDOWERASE;
             }
         }
         else if ( useescspc_flag && event->keysym.sym == SDLK_ESCAPE ){
@@ -689,7 +701,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
     }
     
-    if ( event_mode & ( WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE ) && 
+    if ( event_mode & (WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE) && 
          !key_pressed_flag ){
         if ( (event->keysym.sym == SDLK_LEFT || event->keysym.sym == SDLK_s) &&
              !automode_flag ){
@@ -697,16 +709,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             printf("toggle skip to true\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
-            if ( (event_mode & (WAIT_BUTTON_MODE | WAIT_TEXTBTN_MODE)) != WAIT_BUTTON_MODE )
-                advancePhase();
+            advancePhase();
         }
         else if ( event->keysym.sym == SDLK_RIGHT || event->keysym.sym == SDLK_o ){
             draw_one_page_flag = !draw_one_page_flag;
             printf("toggle draw one page flag to %s\n", (draw_one_page_flag?"true":"false") );
             if ( draw_one_page_flag ){
                 stopAnimation( clickstr_state );
-                if ( (event_mode & (WAIT_BUTTON_MODE | WAIT_TEXTBTN_MODE)) != WAIT_BUTTON_MODE )
-                    advancePhase();
+                advancePhase();
             }
         }
         else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
@@ -715,8 +725,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             printf("change to automode\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
-            if ( (event_mode & (WAIT_BUTTON_MODE | WAIT_TEXTBTN_MODE)) != WAIT_BUTTON_MODE )
-                advancePhase();
+            advancePhase();
         }
         else if ( event->keysym.sym == SDLK_1 ){
             text_speed_no = 0;

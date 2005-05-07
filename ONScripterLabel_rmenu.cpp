@@ -143,7 +143,7 @@ void ONScripterLabel::executeSystemMenu()
     int counter = 1;
 
     current_font = &menu_font;
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
 
         if ( current_button_state.button == 0 ) return;
         event_mode = IDLE_EVENT_MODE;
@@ -197,7 +197,7 @@ void ONScripterLabel::executeSystemMenu()
         }
 
         flushEvent();
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
         system_menu_mode = SYSTEM_MENU;
         yesno_caller = SYSTEM_MENU;
@@ -246,7 +246,7 @@ void ONScripterLabel::executeSystemEnd()
 
 void ONScripterLabel::executeWindowErase()
 {
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
         event_mode = IDLE_EVENT_MODE;
 
         leaveSystemCall();
@@ -254,7 +254,7 @@ void ONScripterLabel::executeWindowErase()
     else{
         flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
 
-        event_mode = WAIT_INPUT_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_WINDOWERASE;
     }
 }
@@ -264,7 +264,7 @@ void ONScripterLabel::executeSystemLoad()
     SaveFileInfo save_file_info;
     
     current_font = &menu_font;
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
 
         if ( current_button_state.button == 0 ) return;
         event_mode = IDLE_EVENT_MODE;
@@ -272,7 +272,7 @@ void ONScripterLabel::executeSystemLoad()
         if ( current_button_state.button > 0 ){
             searchSaveFile( save_file_info, current_button_state.button );
             if ( !save_file_info.valid ){
-                event_mode  = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+                event_mode  = WAIT_BUTTON_MODE;
                 refreshMouseOverButton();
                 return;
             }
@@ -333,7 +333,7 @@ void ONScripterLabel::executeSystemLoad()
         }
         delete[] buffer;
 
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
         system_menu_mode = SYSTEM_LOAD;
     }
@@ -342,7 +342,7 @@ void ONScripterLabel::executeSystemLoad()
 void ONScripterLabel::executeSystemSave()
 {
     current_font = &menu_font;
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
 
         if ( current_button_state.button == 0 ) return;
         event_mode = IDLE_EVENT_MODE;
@@ -405,7 +405,7 @@ void ONScripterLabel::executeSystemSave()
         }
         delete[] buffer;
 
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
         system_menu_mode = SYSTEM_SAVE;
     }
@@ -416,7 +416,7 @@ void ONScripterLabel::executeSystemYesNo()
     char name[64] = {'\0'};
 	
     current_font = &menu_font;
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
 
         if ( current_button_state.button == 0 ) return;
         event_mode = IDLE_EVENT_MODE;
@@ -453,7 +453,6 @@ void ONScripterLabel::executeSystemYesNo()
             else if ( yesno_caller & SYSTEM_RESET ){
                 resetCommand();
                 readToken();
-                //event_mode = WAIT_SLEEP_MODE;
                 event_mode = IDLE_EVENT_MODE;
                 leaveSystemCall( false );
             }
@@ -519,7 +518,7 @@ void ONScripterLabel::executeSystemYesNo()
         
         flush( refresh_shadow_text_mode );
         
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
     }
 }
@@ -606,7 +605,7 @@ void ONScripterLabel::executeSystemLookback()
     uchar3 color;
     
     current_font = &sentence_font;
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+    if ( event_mode & WAIT_BUTTON_MODE ){
         if ( current_button_state.button == 0 ||
              ( current_text_buffer == start_text_buffer &&
                current_button_state.button == -2 ) )
@@ -644,7 +643,7 @@ void ONScripterLabel::executeSystemLookback()
             return;
         }
 
-        event_mode = WAIT_INPUT_MODE | WAIT_BUTTON_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_LOOKBACK;
     }
 

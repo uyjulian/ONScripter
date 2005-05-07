@@ -88,6 +88,7 @@ public:
     void setArchivePath(const char *path);
     void setFullscreenMode();
     void enableButtonShortCut();
+    void enableWheelDownAdvance();
     void disableRescale();
     void enableEdit();
     void setKeyEXE(const char *path);
@@ -289,12 +290,13 @@ private:
     enum { NORMAL_DISPLAY_MODE = 0, TEXT_DISPLAY_MODE = 1 };
     enum { IDLE_EVENT_MODE      = 0,
            EFFECT_EVENT_MODE    = 1,
-           WAIT_BUTTON_MODE     = 2, // For select and btnwait.
-           WAIT_INPUT_MODE      = (4|8),  // For select and text wait. It allows the right click menu.
-           WAIT_SLEEP_MODE      = 16,
+           WAIT_BUTTON_MODE     = 2, // For select, btnwait and rmenu.
+           WAIT_INPUT_MODE      = (4|8),  // can be skipped by a click
+           WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
            WAIT_TIMER_MODE      = 32,
            WAIT_TEXTBTN_MODE    = 64,
-           WAIT_VOICE_MODE      = 128
+           WAIT_VOICE_MODE      = 128,
+           WAIT_TEXT_MODE       = 256 // clickwait, newpage, select
     };
     typedef enum { COLOR_EFFECT_IMAGE  = 0,
                    DIRECT_EFFECT_IMAGE = 1,
@@ -317,6 +319,7 @@ private:
     char *getret_str;
     int  getret_int;
     bool force_button_shortcut_flag;
+    bool enable_wheeldown_advance_flag;
     bool disable_rescale_flag;
     bool edit_flag;
     char *key_exe_file;
@@ -528,6 +531,7 @@ private:
     void restoreTextBuffer();
     int  enterTextDisplayMode();
     int  leaveTextDisplayMode();
+    void doClickEnd();
     int  clickWait( char *out_text );
     int  clickNewPage( char *out_text );
     void startRuby(char *buf, FontInfo &info);

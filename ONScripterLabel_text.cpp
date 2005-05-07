@@ -381,6 +381,27 @@ int ONScripterLabel::leaveTextDisplayMode()
     return RET_NOMATCH;
 }
 
+void ONScripterLabel::doClickEnd()
+{
+    if ( automode_flag ){
+        event_mode =  WAIT_TEXT_MODE | WAIT_INPUT_MODE | WAIT_VOICE_MODE;
+        if ( automode_time < 0 )
+            startTimer( -automode_time * num_chars_in_sentence );
+        else
+            startTimer( automode_time );
+    }
+    else if ( autoclick_time > 0 ){
+        event_mode = WAIT_SLEEP_MODE;
+        startTimer( autoclick_time );
+    }
+    else{
+        event_mode = WAIT_TEXT_MODE | WAIT_INPUT_MODE | WAIT_TIMER_MODE;
+        advancePhase();
+    }
+    draw_cursor_flag = true;
+    num_chars_in_sentence = 0;
+}
+
 int ONScripterLabel::clickWait( char *out_text )
 {
     if ( (skip_flag || draw_one_page_flag || ctrl_pressed_status) && !textgosub_label ){
@@ -417,23 +438,9 @@ int ONScripterLabel::clickWait( char *out_text )
             string_buffer_offset = 0;
             return RET_CONTINUE;
         }
-        if ( automode_flag ){
-            event_mode = WAIT_INPUT_MODE | WAIT_VOICE_MODE;
-            if ( automode_time < 0 )
-                startTimer( -automode_time * num_chars_in_sentence );
-            else
-                startTimer( automode_time );
-        }
-        else if ( autoclick_time > 0 ){
-            event_mode = WAIT_SLEEP_MODE;
-            startTimer( autoclick_time );
-        }
-        else{
-            event_mode = WAIT_INPUT_MODE | WAIT_TIMER_MODE;
-            advancePhase();
-        }
-        draw_cursor_flag = true;
-        num_chars_in_sentence = 0;
+
+        doClickEnd();
+
         return RET_WAIT | RET_NOREAD;
     }
 }
@@ -464,23 +471,8 @@ int ONScripterLabel::clickNewPage( char *out_text )
             string_buffer_offset = 0;
             return RET_CONTINUE;
         }
-        if ( automode_flag ){
-            event_mode = WAIT_INPUT_MODE | WAIT_VOICE_MODE;
-            if ( automode_time < 0 )
-                startTimer( -automode_time * num_chars_in_sentence );
-            else
-                startTimer( automode_time );
-        }
-        else if ( autoclick_time > 0 ){
-            event_mode = WAIT_SLEEP_MODE;
-            startTimer( autoclick_time );
-        }
-        else /*if ( cursor_info[ CURSOR_NEWPAGE_NO ].num_of_cells > 0 )*/{
-            event_mode = WAIT_INPUT_MODE | WAIT_TIMER_MODE;
-            advancePhase();
-        }
-        draw_cursor_flag = true;
-        num_chars_in_sentence = 0;
+
+        doClickEnd();
     }
     return RET_WAIT | RET_NOREAD;
 }
@@ -584,11 +576,9 @@ int ONScripterLabel::processText()
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_SLEEP_MODE) ){
         draw_cursor_flag = false;
         if ( clickstr_state == CLICK_WAIT ){
-            event_mode = IDLE_EVENT_MODE;
             if (script_h.checkClickstr(script_h.getStringBuffer() + string_buffer_offset) != 1) string_buffer_offset++;
             string_buffer_offset++;
             clickstr_state = CLICK_NONE;
-            //return RET_CONTINUE;
         }
         else if ( clickstr_state == CLICK_NEWPAGE ){
             event_mode = IDLE_EVENT_MODE;

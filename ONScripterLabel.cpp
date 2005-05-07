@@ -322,8 +322,6 @@ void ONScripterLabel::openAudio()
 
 ONScripterLabel::ONScripterLabel()
 {
-    printf("ONScripter\n");
-
     cdrom_drive_number = 0;
     cdaudio_flag = false;
     default_font = NULL;
@@ -333,6 +331,7 @@ ONScripterLabel::ONScripterLabel()
     setStr( &dll_file, DLL_FILE );
     getret_str = NULL;
     force_button_shortcut_flag = false;
+    enable_wheeldown_advance_flag = false;
     disable_rescale_flag = false;
     edit_flag = false;
     key_exe_file = NULL;
@@ -383,6 +382,11 @@ void ONScripterLabel::setFullscreenMode()
 void ONScripterLabel::enableButtonShortCut()
 {
     force_button_shortcut_flag = true;
+}
+
+void ONScripterLabel::enableWheelDownAdvance()
+{
+    enable_wheeldown_advance_flag = true;
 }
 
 void ONScripterLabel::disableRescale()
@@ -714,7 +718,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
 
         SDL_Rect check_src_rect = {0, 0, 0, 0};
         SDL_Rect check_dst_rect = {0, 0, 0, 0};
-        if ( event_mode & WAIT_BUTTON_MODE && current_over_button != 0 ){
+        if ( current_over_button != 0 ){
             current_button_link->show_flag = 0;
             check_src_rect = current_button_link->image_rect;
             if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
@@ -734,35 +738,33 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         }
 
         if ( p_button_link ){
-            if ( event_mode & WAIT_BUTTON_MODE ){
-                if ( system_menu_mode != SYSTEM_NULL ){
-                    if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
-                        playWave( menuselectvoice_file_name[MENUSELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
-                }
-                else{
-                    if ( selectvoice_file_name[SELECTVOICE_OVER] )
-                        playWave( selectvoice_file_name[SELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
-                }
-                check_dst_rect = p_button_link->image_rect;
-                if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
-                     p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                    sprite_info[ p_button_link->sprite_no ].setCell(1);
-                    if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                        decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
-                    }
-                    sprite_info[ p_button_link->sprite_no ].visible = true;
-                }
-                else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
-                    p_button_link->show_flag = 1;
-                    p_button_link->anim[0]->visible = true;
-                    p_button_link->anim[0]->setCell(1);
-                }
-                else if ( p_button_link->button_type == ButtonLink::NORMAL_BUTTON ||
-                          p_button_link->button_type == ButtonLink::LOOKBACK_BUTTON ){
-                    p_button_link->show_flag = 1;
-                }
-                dirty_rect.add( p_button_link->image_rect );
+            if ( system_menu_mode != SYSTEM_NULL ){
+                if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
+                    playWave( menuselectvoice_file_name[MENUSELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
             }
+            else{
+                if ( selectvoice_file_name[SELECTVOICE_OVER] )
+                    playWave( selectvoice_file_name[SELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
+            }
+            check_dst_rect = p_button_link->image_rect;
+            if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
+                 p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                sprite_info[ p_button_link->sprite_no ].setCell(1);
+                if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                    decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
+                }
+                sprite_info[ p_button_link->sprite_no ].visible = true;
+            }
+            else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
+                p_button_link->show_flag = 1;
+                p_button_link->anim[0]->visible = true;
+                p_button_link->anim[0]->setCell(1);
+            }
+            else if ( p_button_link->button_type == ButtonLink::NORMAL_BUTTON ||
+                      p_button_link->button_type == ButtonLink::LOOKBACK_BUTTON ){
+                p_button_link->show_flag = 1;
+            }
+            dirty_rect.add( p_button_link->image_rect );
             current_button_link = p_button_link;
             shortcut_mouse_line = c;
         }
@@ -827,6 +829,7 @@ void ONScripterLabel::executeLabel()
         
         if (!(ret & RET_NOREAD)){
             if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+                string_buffer_offset = 0;
                 if (++current_line >= current_label_info.num_of_lines) break;
             }
             readToken();
@@ -906,7 +909,6 @@ int ONScripterLabel::parseLine( )
         }
         //event_mode = IDLE_EVENT_MODE;
         line_enter_status = 0;
-        string_buffer_offset = 0;
     }
 
     return ret;

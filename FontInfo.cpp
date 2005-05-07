@@ -46,6 +46,7 @@ FontInfo::FontInfo()
 
 void FontInfo::reset()
 {
+    tateyoko_mode = YOKO_MODE;
     clear();
 
     color[0]        = color[1]        = color[2]        = 0xff;

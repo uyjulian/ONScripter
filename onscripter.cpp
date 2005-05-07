@@ -35,6 +35,7 @@ void optionHelp()
     printf( "  -r, --root path\tuse path as a root path to the archives\n");
     printf( "      --fullcsreen\t\tstart in fullscreen mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
+    printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheeldown event\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
     printf( "      --key-exe file\tset file (*.EXE) which contains a key table\n");
@@ -45,7 +46,6 @@ void optionHelp()
 
 void optionVersion()
 {
-    printf("ONScripter version %s\n", ONS_VERSION );
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
     printf("Copyright (c) 2001-2005 Ogapee.\n");
     printf("This is free software; see the source for copying conditions.\n");
@@ -57,6 +57,8 @@ int SDL_main( int argc, char **argv )
 int main( int argc, char **argv )
 #endif
 {
+    printf("ONScripter version %s\n", ONS_VERSION );
+
     ONScripterLabel ons;
 
     // ----------------------------------------
@@ -105,6 +107,9 @@ int main( int argc, char **argv )
             }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
                 ons.enableButtonShortCut();
+            }
+            else if ( !strcmp( argv[0]+1, "-enable-wheeldown-advance" ) ){
+                ons.enableWheelDownAdvance();
             }
             else if ( !strcmp( argv[0]+1, "-disable-rescale" ) ){
                 ons.disableRescale();

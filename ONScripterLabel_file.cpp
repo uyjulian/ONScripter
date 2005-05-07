@@ -520,6 +520,8 @@ int ONScripterLabel::loadSaveFile( int no )
         event_mode &= ~WAIT_SLEEP_MODE;
     else
         event_mode |= WAIT_TIMER_MODE;
+    if (event_mode & WAIT_INPUT_MODE) event_mode |= WAIT_TEXT_MODE;
+    
     draw_cursor_flag = (clickstr_state == CLICK_NONE)?false:true;
     
     return 0;
