@@ -34,6 +34,7 @@ void optionHelp()
     printf( "      --dll file\tuse file as a default dll file\n");
     printf( "  -r, --root path\tuse path as a root path to the archives\n");
     printf( "      --fullcsreen\t\tstart in fullscreen mode\n");
+    printf( "      --window\t\tstart in window mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheeldown event\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
@@ -101,9 +102,10 @@ int main( int argc, char **argv )
                 ons.setArchivePath(argv[0]);
             }
             else if ( !strcmp( argv[0]+1, "-fullscreen" ) ){
-                argc--;
-                argv++;
                 ons.setFullscreenMode();
+            }
+            else if ( !strcmp( argv[0]+1, "-window" ) ){
+                ons.setWindowMode();
             }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
                 ons.enableButtonShortCut();

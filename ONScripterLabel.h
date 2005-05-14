@@ -87,6 +87,7 @@ public:
     void setDLLFile(const char *filename);
     void setArchivePath(const char *path);
     void setFullscreenMode();
+    void setWindowMode();
     void enableButtonShortCut();
     void enableWheelDownAdvance();
     void disableRescale();
@@ -356,6 +357,7 @@ private:
     char *wm_icon_string;
     char wm_edit_string[256];
     bool fullscreen_mode;
+    bool window_mode;
 
     Uint32 rmask, gmask, bmask, amask;
 

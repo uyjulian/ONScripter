@@ -256,7 +256,7 @@ void ONScripterLabel::initSDL()
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 #endif    
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -264,7 +264,7 @@ void ONScripterLabel::initSDL()
     if ( screen_surface == NULL ){
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
     else{
         screen_ratio1 *= 2;
@@ -336,6 +336,7 @@ ONScripterLabel::ONScripterLabel()
     edit_flag = false;
     key_exe_file = NULL;
     fullscreen_mode = false;
+    window_mode = false;
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -377,6 +378,11 @@ void ONScripterLabel::setArchivePath(const char *path)
 void ONScripterLabel::setFullscreenMode()
 {
     fullscreen_mode = true;
+}
+
+void ONScripterLabel::setWindowMode()
+{
+    window_mode = true;
 }
 
 void ONScripterLabel::enableButtonShortCut()
@@ -503,7 +509,6 @@ int ONScripterLabel::init()
         return -1;
     }
 
-    if (fullscreen_mode) SDL_WM_ToggleFullScreen( screen_surface );
     loadEnvData();
     
     return 0;
@@ -1248,7 +1253,7 @@ void ONScripterLabel::loadEnvData()
     
     if ( (fp = fopen( "envdata", "rb" )) != NULL ){
         loadInt( fp, &i );
-        if (i == 1) menu_fullCommand();
+        if (i == 1 && window_mode == false) menu_fullCommand();
         loadInt( fp, &i );
         if (i == 0) volume_on_flag = false;
         loadInt( fp, &text_speed_no );

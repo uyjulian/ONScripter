@@ -18,8 +18,8 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: May 7, 2005 [ソース更新]<br>
-<!--Last updated: Apr. 1, 2005 [Experimentalソース更新]<br>-->
+<!--Last updated: May 7, 2005 [ソース更新]<br>-->
+Last updated: May. 14, 2005 [Experimental ソース更新]<br>
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
 ミラーサイト</a><br>
@@ -100,6 +100,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <ul>
   <li> <a href="onscripter-beta-20050507.tar.gz">onscripter-beta-20050507.tar.gz</a>
   <li> <a href="onscripter-beta-20050504.tar.gz">onscripter-beta-20050504.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-exp-20050514.tar.gz">onscripter-exp-20050514.tar.gz</a>(実験版： --fullscreen オプションの挙動変更 --window オプションの追加)
 </ul>
 <!--(テスト版<a href="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</a>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
 </div> <!-- sub-content -->
@@ -330,6 +331,7 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 <tr><td>--dll file</td><td>使用する dll file を指定します。</td></tr>
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
 <tr><td>--fullscreen</td><td>フルスクリーンモードで起動します。</td></tr>
+<tr><td>--window</td><td>ウィンドウモードで起動します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
 <tr><td>--enable-wheeldown-advance</td><td>テキスト終端でのクリック待ちの際に、マウスのホイールダウン操作をクリック操作として扱います。textgosub でクリック待ちをカスタマイズしているときには効果はありません。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
@@ -725,22 +727,23 @@ return
 <p>開発に関する覚え書きです。</p>
 
 <h4>event_mode</h4>
+<p>下の表の値は排他的に用いられます。</p>
 <table>
 <tr><th>値</th><th>説明</th><th>例</th></tr>
 <tr><td>IDLE_EVENT_MODE</td><td>待ち状態ではない</td>
 <tr><td>EFFECT_EVENT_MODE</td><td>画面効果実行中</td><td>print, bg</td>
 <tr><td>WAIT_BUTTON_MODE</td><td>ButtonLink(画像)を使用した選択待ち</td><td>btnwait, select, 右クリックメニュー</td>
-<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, clickWait, clickNewPage</td>
+<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, @, \</td>
 <tr><td>WAIT_SLEEP_MODE</td><td>クリックで飛ばせない待ち</td><td>テキスト文字描画</td>
-<tr><td>WAIT_TIMER_MODE</td><td>時間を指定した待ち、アニメーションを実行</td><td>テキスト文字描画以外のほぼ全ての場合</td>
 </table>
 
-<p class="noindent">WAIT_BUTTON_MODE もしくは WAIT_INPUT_MODE と組み合わせて使用。</p>
+<p>下の表の値は、上の表の値と組み合わせて使用されます。</p>
 <table>
 <tr><th>値</th><th>説明</th><th>例</th></tr>
+<tr><td>WAIT_TIMER_MODE</td><td>時間を指定した待ち、待ち中にアニメーションを実行</td><td>画面効果、テキスト文字描画以外のほぼ全ての場合</td>
 <tr><td>WAIT_TEXTBTN_MODE</td><td>textbtnwait での待ち</td><td>textbtnwait 使用時のみ</td>
-<tr><td>WAIT_VOICE_MODE</td><td>ボイスの発声終了を待つ</td><td>automode 使用時のみ</td>
-<tr><td>WAIT_TEXT_MODE</td><td>テキスト終端での待ち</td><td>clickWait, clickNewPage, select</td>
+<tr><td>WAIT_VOICE_MODE</td><td>ボイスの発声終了を待つ</td><td>automode, btntime2 使用時のみ</td>
+<tr><td>WAIT_TEXT_MODE</td><td>テキスト終端での待ち</td><td>@, \, select</td>
 </table>
 
 </div> <!-- sub-content -->
