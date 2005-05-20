@@ -587,7 +587,7 @@ int ONScripterLabel::selectCommand()
 
     if ( event_mode & WAIT_BUTTON_MODE ){
         
-        if ( current_button_state.button == 0 ) return RET_WAIT | RET_REREAD;
+        if ( current_button_state.button <= 0 ) return RET_WAIT | RET_REREAD;
         
         if ( selectvoice_file_name[SELECTVOICE_SELECT] )
             playWave( selectvoice_file_name[SELECTVOICE_SELECT], false, MIX_WAVE_CHANNEL );

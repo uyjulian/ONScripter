@@ -64,7 +64,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
     current_font = &sentence_font;
     next_display_mode = display_mode;
-    current_button_state.button = 0;
     if ( restore_flag ){
         
         current_text_buffer = cached_text_buffer;
