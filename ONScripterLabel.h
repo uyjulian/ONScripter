@@ -391,6 +391,7 @@ private:
     SDL_Surface *screenshot_surface; // Screenshot
     unsigned int effect_src_id;
     unsigned int effect_dst_id;
+    unsigned int accumulation_id;
     unsigned int text_id;
     
     /* ---------------------------------------- */
@@ -720,7 +721,7 @@ private:
     int texture_buffer_size;
 
     void initOpenGL();
-    void refreshOpenGL( int refresh_mode );
+    void refreshOpenGL( int refresh_mode, SDL_Rect *rect );
     void loadTexture( SDL_Surface *surface, unsigned int tex_id );
     void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL );
     void drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );

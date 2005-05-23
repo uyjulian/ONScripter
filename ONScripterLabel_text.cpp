@@ -69,9 +69,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
                       &minx, &maxx, &miny, &maxy, &advanced );
     //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
     
-    SDL_Surface *tmp_surface0 = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
-    SDL_Surface *tmp_surface = SDL_ConvertSurface(tmp_surface0, text_surface->format, DEFAULT_SURFACE_FLAG);
-    SDL_FreeSurface( tmp_surface0 );
+    SDL_Surface *tmp_surface = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
 
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ){
         tmp_surface = rotateSurface90CW(tmp_surface);
@@ -166,7 +164,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
     else if ( flush_flag ){
         info->addShadeArea(dst_rect, shade_distance);
-        flushDirect( dst_rect, refresh_shadow_text_mode );
+        flushDirect( dst_rect, REFRESH_NONE_MODE );
     }
 
     /* ---------------------------------------- */

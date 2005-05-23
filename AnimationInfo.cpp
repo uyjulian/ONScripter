@@ -31,9 +31,10 @@
 
 AnimationInfo::AnimationInfo()
 {
-    rmask = 0x000000ff;
+    // the mask is the same as the one used in TTF_RenderGlyph_Blended
+    rmask = 0x00ff0000;
     gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
+    bmask = 0x000000ff;
     amask = 0xff000000;
     rgbmask = (rmask | gmask | bmask);
 
@@ -237,10 +238,11 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
     Uint32 *dst_buffer = (Uint32 *)dst_surface->pixels  + dst_surface->w * dst_rect.y + dst_rect.x;
     Uint32 mask1, mask2, mask_rb, mask_g;
     
+    Uint32 a_shift = image_surface->format->Ashift;
     for (int i=0 ; i<dst_rect.h ; i++){
         for (int j=0 ; j<dst_rect.w ; j++, src_buffer++, dst_buffer++){
 
-            mask2 = (((*src_buffer & amask) >> image_surface->format->Ashift) * alpha) >> 8;
+            mask2 = (((*src_buffer & amask) >> a_shift) * alpha) >> 8;
             mask1 = 256 - mask2;
             
             mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +
@@ -319,6 +321,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( image_surface );
 
+    Uint32 a_shift = image_surface->format->Ashift;
     // set pixel by inverse-projection with raster scanning
     for (y=min_xy[1] ; y<= max_xy[1] ; y++){
         // calculate start and end point for each raster scanning
@@ -383,7 +386,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
                 pixel = *sp_buffer;
             }
 
-            Uint32 mask2 = (((pixel & amask) >> image_surface->format->Ashift) * alpha) >> 8;
+            Uint32 mask2 = (((pixel & amask) >> a_shift) * alpha) >> 8;
             Uint32 mask1 = 256 - mask2;
             
             mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +

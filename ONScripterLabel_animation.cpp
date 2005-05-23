@@ -154,7 +154,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
         
         surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h,
                                         32, rmask, gmask, bmask, amask );
-        SDL_FillRect( surface, NULL, SDL_MapRGBA( surface->format, 0, 0, 0, 0 ) );
+        //SDL_FillRect( surface, NULL, SDL_MapRGBA( surface->format, 0, 0, 0, 0 ) );
         
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
@@ -319,6 +319,15 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
         SDL_Rect tex_rect = anim->pos;
         tex_rect.x = anim->pos.w*anim->current_cell;
         tex_rect.y = 0;
+        if ( clip ){
+            SDL_Rect clipped_rect;
+            if ( anim->doClipping( &poly_rect, clip, &clipped_rect ) ) return;
+
+            tex_rect.x += clipped_rect.x;
+            tex_rect.y += clipped_rect.y;
+            tex_rect.w = poly_rect.w;
+            tex_rect.h = poly_rect.h;
+        }
         drawTexture( anim->tex_id, (Rect&)poly_rect, (Rect&)tex_rect, anim->trans, anim );
     }
     else{
@@ -340,6 +349,8 @@ void ONScripterLabel::stopAnimation( int click )
     if      ( click == CLICK_WAIT )    no = CURSOR_WAIT_NO;
     else if ( click == CLICK_NEWPAGE ) no = CURSOR_NEWPAGE_NO;
     else return;
+
+    if (cursor_info[no].image_surface == NULL) return;
     
     SDL_Rect dst_rect = cursor_info[ no ].pos;
 

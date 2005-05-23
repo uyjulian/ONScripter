@@ -1068,7 +1068,7 @@ int ONScripterLabel::ofscpyCommand()
         texture_buffer_size = screen_width*screen_height*4;
         texture_buffer = new unsigned char[texture_buffer_size];
     }
-    glReadPixels(0, 0, screen_width, screen_height, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+    glReadPixels(0, 0, screen_width, screen_height, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
     
     SDL_LockSurface(accumulation_surface);
     for (int i=0 ; i<screen_height ; i++)
@@ -1714,7 +1714,7 @@ int ONScripterLabel::getscreenshotCommand()
         texture_buffer_size = screen_width*screen_height*4;
         texture_buffer = new unsigned char[texture_buffer_size];
     }
-    glReadPixels(0, 0, screen_width, screen_height, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+    glReadPixels(0, 0, screen_width, screen_height, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
     
     SDL_LockSurface(effect_dst_surface);
     for (int i=0 ; i<screen_height ; i++)

@@ -227,7 +227,7 @@ void ScriptParser::reset()
                            strlen("\n")+
                            +1];
     sprintf( version_str, "%s\n%s\n", VERSION_STR1, VERSION_STR2 );
-    z_order = 25;
+    z_order = 499;
 
     textgosub_label = NULL;
     pretextgosub_label = NULL;

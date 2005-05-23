@@ -424,9 +424,10 @@ int ONScripterLabel::init()
 
     initSDL();
 
-    rmask = 0x000000ff;
+    // the mask is the same as the one used in TTF_RenderGlyph_Blended
+    rmask = 0x00ff0000;
     gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
+    bmask = 0x000000ff;
     amask = 0xff000000;
 
     text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
@@ -437,6 +438,7 @@ int ONScripterLabel::init()
     screenshot_surface = NULL;
     effect_src_id = 0;
     effect_dst_id = 0;
+    accumulation_id = 0;
     text_id = 0;
 
     tmp_save_fp = NULL;
@@ -649,14 +651,15 @@ void ONScripterLabel::resetSentenceFont()
     sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0x99;
     sentence_font_info.pos.x = 0;
     sentence_font_info.pos.y = 0;
-    sentence_font_info.pos.w = screen_width+1;
-    sentence_font_info.pos.h = screen_height+1;
+    sentence_font_info.pos.w = screen_width;
+    sentence_font_info.pos.h = screen_height;
 }
 
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
+
 #ifdef USE_OPENGL
-    refreshOpenGL(refresh_mode);
+    refreshOpenGL(refresh_mode, rect);
     return;
 #endif    
 
@@ -684,12 +687,13 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
 
 void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
 {
+    //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
+    
 #ifdef USE_OPENGL
-    refreshOpenGL(refresh_mode);
+    refreshOpenGL(refresh_mode, &rect);
     return;
 #endif
     
-    //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     refreshSurface( accumulation_surface, &rect, refresh_mode );
 
     SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );

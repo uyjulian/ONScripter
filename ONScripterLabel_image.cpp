@@ -112,6 +112,14 @@ int ONScripterLabel::shiftRect( SDL_Rect &dst, SDL_Rect &clip )
     return 0;
 }
 
+#define blend_pixel(){\
+    maskrb =  (((*src1_buffer & 0xff00ff) * mask1 + \
+                (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;\
+    mask |= (((*src1_buffer++ & 0x00ff00) * mask1 +\
+              (*src2_buffer++ & 0x00ff00) * mask2) >> 8) & 0x00ff00;\
+    *dst_buffer++ = maskrb | mask;\
+}
+
 void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                                   SDL_Surface *src1_surface,
                                   SDL_Surface *src2_surface, int x2, int y2,
@@ -164,26 +172,36 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     mask2 = mask_value;
     mask1 = 256 - mask2;
 
+    Uint32 a_shift1 = src1_surface->format->Ashift;
+    Uint32 a_shift2 = src2_surface->format->Ashift;
+    Uint32 a_shiftd = dst_surface->format->Ashift;
     for ( i=0; i<dst_rect.h ; i++ ) {
         if (mask_surface) mask_buffer = (Uint32 *)mask_surface->pixels + mask_surface->w * ((y2+i)%mask_surface->h);
-        for ( j=0 ; j<dst_rect.w ; j++, src1_buffer++, src2_buffer++, dst_buffer++ ){
-            if ( trans_mode == ALPHA_BLEND_NORMAL ){
-                mask2 = (*src2_buffer & amask) >> src2_surface->format->Ashift;
+
+        if ( trans_mode == ALPHA_BLEND_NORMAL ){
+            for ( j=0 ; j<dst_rect.w ; j++ ){
+                mask2 = (*src2_buffer & amask) >> a_shift2;
                 mask1 = mask2 ^ 0xff;
                 mask = amask;
+                blend_pixel();
             }
-            else if ( trans_mode == ALPHA_BLEND_MULTIPLE ){
-                mask2 = (*src2_buffer & amask) >> src2_surface->format->Ashift;
+        }
+        else if ( trans_mode == ALPHA_BLEND_MULTIPLE ){
+            for ( j=0 ; j<dst_rect.w ; j++ ){
+                mask2 = (*src2_buffer & amask) >> a_shift2;
                 mask1 = mask2 ^ 0xff;
 
-                Uint32 an_1 = (*src1_buffer & amask) >> src1_surface->format->Ashift;
+                Uint32 an_1 = (*src1_buffer & amask) >> a_shift1;
                 Uint32 an = 0xff-((0xff-an_1)*(0xff-mask2) >> 8);
-                mask = an << dst_surface->format->Ashift;
+                mask = an << a_shiftd;
                 mask1 = an_1 * mask1 / an;
                 mask2 = (mask2 << 8) / an;
+                blend_pixel();
             }
-            else if ( trans_mode == ALPHA_BLEND_FADE_MASK ||
-                      trans_mode == ALPHA_BLEND_CROSSFADE_MASK ){
+        }
+        else if ( trans_mode == ALPHA_BLEND_FADE_MASK ||
+                  trans_mode == ALPHA_BLEND_CROSSFADE_MASK ){
+            for ( j=0 ; j<dst_rect.w ; j++ ){
                 mask = *(mask_buffer + (x2+j)%mask_surface->w) & 0xff;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
@@ -194,16 +212,14 @@ void ONScripterLabel::alphaBlend( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                 }
                 mask = amask;
                 mask1 = mask2 ^ 0xff;
+                blend_pixel();
             }
-            else{ // ALPHA_BLEND_CONST
+        }
+        else{ // ALPHA_BLEND_CONST
+            for ( j=0 ; j<dst_rect.w ; j++ ){
                 mask = amask;
+                blend_pixel();
             }
-            
-            maskrb = (((*src1_buffer & 0xff00ff) * mask1 + 
-                       (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
-            mask |= (((*src1_buffer & 0x00ff00) * mask1 +
-                      (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
-            *dst_buffer = maskrb | mask;
         }
         src1_buffer += src1_surface->w - dst_rect.w;
         src2_buffer += src2_surface->w - dst_rect.w;
@@ -331,6 +347,9 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
     }
 
     if ( windowback_flag ){
+        if ( nega_mode == 1 ) makeNegaSurface( surface, clip, refresh_mode );
+        if ( monocro_flag ) makeMonochromeSurface( surface, clip, refresh_mode );
+        if ( nega_mode == 2 ) makeNegaSurface( surface, clip, refresh_mode );
         shadowTextDisplay( surface, clip, refresh_mode );
         refreshText( surface, clip, refresh_mode );
     }
@@ -347,6 +366,12 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         }
     }
 
+    if ( !windowback_flag ){
+        if ( nega_mode == 1 ) makeNegaSurface( surface, clip, refresh_mode );
+        if ( monocro_flag ) makeMonochromeSurface( surface, clip, refresh_mode );
+        if ( nega_mode == 2 ) makeNegaSurface( surface, clip, refresh_mode );
+    }
+    
     if ( !( refresh_mode & REFRESH_SAYA_MODE ) ){
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
             if ( bar_info[i] ) {
@@ -365,9 +390,12 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
         refreshText( surface, clip, refresh_mode );
     }
 
-    if ( nega_mode == 1 ) makeNegaSurface( surface, clip, refresh_mode );
-    if ( monocro_flag ) makeMonochromeSurface( surface, clip, refresh_mode );
-    if ( nega_mode == 2 ) makeNegaSurface( surface, clip, refresh_mode );
+    if ( refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label ){
+        if ( clickstr_state == CLICK_WAIT )
+            drawTaggedSurface( surface, &cursor_info[CURSOR_WAIT_NO], clip, refresh_mode );
+        else if ( clickstr_state == CLICK_NEWPAGE )
+            drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip, refresh_mode );
+    }
 
     ButtonLink *p_button_link = root_button_link.next;
     while( p_button_link ){
@@ -375,13 +403,6 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
             drawTaggedSurface( surface, p_button_link->anim[p_button_link->show_flag-1], clip, refresh_mode );
         }
         p_button_link = p_button_link->next;
-    }
-    
-    if ( refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label ){
-        if ( clickstr_state == CLICK_WAIT )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_WAIT_NO], clip, refresh_mode );
-        else if ( clickstr_state == CLICK_NEWPAGE )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip, refresh_mode );
     }
 }
 
@@ -522,7 +543,7 @@ void ONScripterLabel::initOpenGL()
 #endif    
 }
 
-void ONScripterLabel::refreshOpenGL(int refresh_mode)
+void ONScripterLabel::refreshOpenGL(int refresh_mode, SDL_Rect *rect)
 {
 #ifdef USE_OPENGL
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -532,8 +553,20 @@ void ONScripterLabel::refreshOpenGL(int refresh_mode)
 	glLoadIdentity() ;
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    refreshSurface( accumulation_surface, NULL, refresh_mode | REFRESH_OPENGL_MODE );
+
+    if (refresh_mode == REFRESH_NONE_MODE){
+        loadSubTexture( accumulation_surface, accumulation_id, rect );
+        if (rect){
+            drawTexture(accumulation_id, (Rect&)*rect, (Rect&)*rect);
+        }
+        else{
+            Rect rect2 = {0, 0, screen_width, screen_height};
+            drawTexture(accumulation_id, rect2, rect2);
+        }
+    }
+    else{
+        refreshSurface( accumulation_surface, rect, refresh_mode | REFRESH_OPENGL_MODE );
+    }
 
     glPopMatrix();
     SDL_GL_SwapBuffers();
@@ -589,12 +622,12 @@ void ONScripterLabel::loadTexture( SDL_Surface *surface, unsigned int tex_id )
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
     glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA,
                  texture_width, texture_height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+                 0, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
 #else
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  texture_width, texture_height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+                 0, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
 #endif
 #endif    
 }
@@ -633,12 +666,12 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
     glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, rect2.x, surface->h-rect2.y-rect2.h,
                     rect2.w, rect2.h,
-                    GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+                    GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
 #else
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glTexSubImage2D(GL_TEXTURE_2D, 0, rect2.x, surface->h-rect2.y-rect2.h,
                     rect2.w, rect2.h,
-                    GL_RGBA, GL_UNSIGNED_BYTE, texture_buffer);
+                    GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
 #endif
 #endif    
 }
@@ -727,6 +760,13 @@ void ONScripterLabel::refreshTexture()
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     loadTexture(text_surface, effect_dst_id);
 
+    if (accumulation_id > 0) glDeleteTextures(1, (const GLuint*)&accumulation_id);
+    glGenTextures(1, (GLuint*)&accumulation_id);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, accumulation_id);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    loadTexture(accumulation_surface, accumulation_id);
+    
     if (text_id > 0) glDeleteTextures(1, (const GLuint*)&text_id);
     glGenTextures(1, (GLuint*)&text_id);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, text_id);
@@ -747,6 +787,13 @@ void ONScripterLabel::refreshTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     loadTexture(text_surface, effect_dst_id);
+
+    if (accumulation_id > 0) glDeleteTextures(1, (const GLuint*)&accumulation_id);
+    glGenTextures(1, (GLuint*)&accumulation_id);
+    glBindTexture(GL_TEXTURE_2D, accumulation_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    loadTexture(accumulation_surface, accumulation_id);
 
     if (text_id > 0) glDeleteTextures(1, (const GLuint*)&text_id);
     glGenTextures(1, (GLuint*)&text_id);
