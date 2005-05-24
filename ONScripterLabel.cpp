@@ -330,7 +330,6 @@ ONScripterLabel::ONScripterLabel()
     dll_file = NULL;
     setStr( &dll_file, DLL_FILE );
     getret_str = NULL;
-    force_button_shortcut_flag = false;
     enable_wheeldown_advance_flag = false;
     disable_rescale_flag = false;
     edit_flag = false;

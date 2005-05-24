@@ -319,7 +319,6 @@ private:
     char *dll_file;
     char *getret_str;
     int  getret_int;
-    bool force_button_shortcut_flag;
     bool enable_wheeldown_advance_flag;
     bool disable_rescale_flag;
     bool edit_flag;

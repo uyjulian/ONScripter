@@ -154,6 +154,7 @@ ScriptParser::ScriptParser()
     version_str = NULL;
     nsa_path = "";
     key_table = NULL;
+    force_button_shortcut_flag = false;
     
     save_menu_name = NULL;
     load_menu_name = NULL;
