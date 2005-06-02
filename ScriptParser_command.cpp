@@ -728,9 +728,9 @@ int ScriptParser::ifCommand()
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
-            buf = script_h.readStr();
+            buf = script_h.readLabel();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ) != NULL);
-            //printf("lchk %s(%d,%d) ", tmp_string_buffer, script_h.fineAndAddLabelLog( tmp_string_buffer+1, false ), condition_flag );
+            //printf("lchk %s (%d,%d)\n", buf, f, condition_flag );
         }
         else{
             int no = script_h.readInt();
