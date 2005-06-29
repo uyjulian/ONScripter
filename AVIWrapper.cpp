@@ -310,7 +310,7 @@ int AVIWrapper::play( bool click_flag )
                 break;
             }
         }
-        SDL_Delay( 100 );
+        SDL_Delay( 10 );
     }
 
     status = AVI_STOP;

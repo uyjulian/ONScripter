@@ -1194,7 +1194,19 @@ int ONScripterLabel::monocroCommand()
 int ONScripterLabel::menu_windowCommand()
 {
     if ( fullscreen_mode ){
-        if ( SDL_WM_ToggleFullScreen( screen_surface ) ) fullscreen_mode = false;
+        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+            SDL_FreeSurface(screen_surface);
+            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+#ifdef USE_OPENGL
+            initOpenGL();
+#endif
+            SDL_Rect rect = {0, 0, screen_width, screen_height};
+            flushDirect( rect, refreshMode() );
+#ifdef USE_OPENGL
+            SDL_GL_SwapBuffers();
+#endif
+        }
+        fullscreen_mode = false;
     }
 
     return RET_CONTINUE;
@@ -1203,7 +1215,19 @@ int ONScripterLabel::menu_windowCommand()
 int ONScripterLabel::menu_fullCommand()
 {
     if ( !fullscreen_mode ){
-        if ( SDL_WM_ToggleFullScreen( screen_surface ) ) fullscreen_mode = true;
+        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+            SDL_FreeSurface(screen_surface);
+            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+#ifdef USE_OPENGL
+            initOpenGL();
+#endif
+            SDL_Rect rect = {0, 0, screen_width, screen_height};
+            flushDirect( rect, refreshMode() );
+#ifdef USE_OPENGL
+            SDL_GL_SwapBuffers();
+#endif
+        }
+        fullscreen_mode = true;
     }
 
     return RET_CONTINUE;

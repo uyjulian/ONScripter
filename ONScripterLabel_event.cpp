@@ -918,6 +918,10 @@ int ONScripterLabel::eventLoop()
 #endif              
           }
           break;
+
+          case SDL_QUIT:
+            endCommand();
+            break;
             
           default:
             break;

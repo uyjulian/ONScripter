@@ -41,6 +41,9 @@
 #ifndef APIENTRY
 #define APIENTRY
 #endif
+#ifndef GL_BGRA
+#define GL_BGRA 0x80E1
+#endif
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_OPENGL|SDL_DOUBLEBUF)
 #ifndef PFNGLBLENDCOLORPROC
 typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);

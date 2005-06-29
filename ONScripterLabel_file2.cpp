@@ -91,7 +91,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &i );
     sentence_font_info.pos.h = (i + 1 - sentence_font_info.pos.y * screen_ratio1 / screen_ratio2) * screen_ratio1 / screen_ratio2;
     loadStr( fp, &sentence_font_info.image_name );
-    if ( sentence_font_info.image_name ){
+    if ( !sentence_font.is_transparent && sentence_font_info.image_name ){
         parseTaggedString( &sentence_font_info );
         setupAnimationInfo( &sentence_font_info );
     }
