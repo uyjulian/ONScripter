@@ -104,7 +104,7 @@ static void calcWeightedSum(unsigned char **dst, unsigned char **src, int x,
 
 void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int dst_total_width,
                   unsigned char *src_buffer, int src_width, int src_height, int src_total_width,
-                  int byte_per_pixel, unsigned char *tmp_buffer, int tmp_total_width )
+                  int byte_per_pixel, unsigned char *tmp_buffer, int tmp_total_width, bool palette_flag )
 {
     if (dst_width == 0 || dst_height == 0) return;
     
@@ -174,13 +174,18 @@ void resizeImage( unsigned char *dst_buffer, int dst_width, int dst_height, int 
 
             int k = tmp_total_width * y + x * byte_per_pixel;
             
-            for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
-                unsigned int p;
-                p =  (8-dx)*(8-dy)*tmp_buffer[ k ];
-                p +=    dx *(8-dy)*tmp_buffer[ k+mx*byte_per_pixel ];
-                p += (8-dx)*   dy *tmp_buffer[ k+my*tmp_total_width ];
-                p +=    dx *   dy *tmp_buffer[ k+mx*byte_per_pixel+my*tmp_total_width ];
-                *dst_buf++ = (unsigned char)(p>>6);
+            if (palette_flag){ //assuming byte_per_pixel=1
+                *dst_buf++ = tmp_buffer[k];
+            }
+            else{
+                for ( s=0 ; s<byte_per_pixel ; s++, k++ ){
+                    unsigned int p;
+                    p =  (8-dx)*(8-dy)*tmp_buffer[ k ];
+                    p +=    dx *(8-dy)*tmp_buffer[ k+mx*byte_per_pixel ];
+                    p += (8-dx)*   dy *tmp_buffer[ k+my*tmp_total_width ];
+                    p +=    dx *   dy *tmp_buffer[ k+mx*byte_per_pixel+my*tmp_total_width ];
+                    *dst_buf++ = (unsigned char)(p>>6);
+                }
             }
         }
         for ( j=0 ; j<dst_total_width - dst_width*byte_per_pixel ; j++ )

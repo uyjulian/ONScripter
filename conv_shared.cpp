@@ -57,7 +57,7 @@ typedef struct {
 } my_destination_mgr;
 
 
-void rescaleImage( unsigned char *original_buffer, int width, int height, int byte_per_pixel, bool pad_flag )
+void rescaleImage( unsigned char *original_buffer, int width, int height, int byte_per_pixel, bool pad_flag, bool palette_flag )
 {
     size_t width_pad = 0;
     if ( pad_flag ) width_pad = (4 - width * byte_per_pixel % 4) % 4;
@@ -86,7 +86,7 @@ void rescaleImage( unsigned char *original_buffer, int width, int height, int by
 
     resizeImage( rescaled_tmp_buffer, w, h, w*byte_per_pixel+w_pad,
                  original_buffer, width, height, width*byte_per_pixel+width_pad,
-                 byte_per_pixel, rescaled_tmp2_buffer, width*byte_per_pixel+width_pad );
+                 byte_per_pixel, rescaled_tmp2_buffer, width*byte_per_pixel+width_pad, palette_flag );
 }
 
 
@@ -185,7 +185,7 @@ size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char
         buf_p += cinfo.output_width * cinfo.output_components;
     }
 
-    rescaleImage( restored_buffer, cinfo.output_width, cinfo.output_height, cinfo.output_components, false );
+    rescaleImage( restored_buffer, cinfo.output_width, cinfo.output_height, cinfo.output_components, false, false );
     
     /* ---------------------------------------- */
     /* Write */
@@ -239,18 +239,29 @@ size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char
 
 size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer )
 {
-    if ( original_buffer[10] != 54 || original_buffer[14] != 40 ){
-        fprintf( stderr, " this bitmap can't be handled.");
+    if (original_buffer[14] != 40){
+        if (original_buffer[14] == 12)
+            fprintf( stderr, " OS/2 format is not supported.\n");
+        else
+            fprintf( stderr, " this bitmap can't be handled.\n");
         exit(-1);
     }
 
+    int buffer_offset = original_buffer[10] + (original_buffer[11] << 8);
     int width  = original_buffer[18] + (original_buffer[19] << 8);
     int height = original_buffer[22] + (original_buffer[23] << 8);
 
     int bit_per_pixel = original_buffer[28];
+    if (bit_per_pixel == 1 || bit_per_pixel == 4){
+        fprintf( stderr, " bit_per_pixel %d is not supported.\n", bit_per_pixel);
+        exit(-1);
+    }
     int byte_per_pixel = bit_per_pixel / 8;
     int color_num = original_buffer[46] + ((int)original_buffer[47] << 8) + (original_buffer[48] << 16) + (original_buffer[49] << 24);
-    if ( bit_per_pixel == 8 && color_num == 0 ) color_num = 256;
+    if (bit_per_pixel == 8 && color_num == 0) color_num = 256;
+
+    bool palette_flag = false;
+    if (bit_per_pixel == 8) palette_flag = true;
 
     size_t width2  = (int)(width * scale_ratio_upper / scale_ratio_lower);
     if ( width2 == 0 ) width2 = 1;
@@ -259,9 +270,9 @@ size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char 
     size_t height2 = (int)(height * scale_ratio_upper / scale_ratio_lower);
     if ( height2 == 0 ) height2 = 1;
 
-    rescaleImage( original_buffer+54+color_num*4, width, height, byte_per_pixel, true );
+    rescaleImage( original_buffer+buffer_offset, width, height, byte_per_pixel, true, palette_flag );
 
-    size_t total_size = (width2 * byte_per_pixel + width2_pad) * height2 + 54 + color_num*4;
+    size_t total_size = (width2 * byte_per_pixel + width2_pad) * height2 + buffer_offset;
     if ( total_size > restored_length ){
         restored_length = total_size;
         if ( restored_buffer ) delete[] restored_buffer;
@@ -270,8 +281,8 @@ size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char 
         *rescaled_buffer = new unsigned char[ restored_length ];
     }
 
-    memcpy( *rescaled_buffer, original_buffer, 54 + color_num*4 );
-    memcpy( *rescaled_buffer + 54 + color_num*4, rescaled_tmp_buffer, total_size - 54 - color_num*4 );
+    memcpy( *rescaled_buffer, original_buffer, buffer_offset );
+    memcpy( *rescaled_buffer + buffer_offset, rescaled_tmp_buffer, total_size - buffer_offset );
 
     *(*rescaled_buffer + 2) = total_size & 0xff;
     *(*rescaled_buffer + 3) = (total_size >>  8) & 0xff;
@@ -285,10 +296,10 @@ size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char 
     *(*rescaled_buffer + 23) = (height2 >>  8) & 0xff;
     *(*rescaled_buffer + 24) = (height2 >> 16) & 0xff;
     *(*rescaled_buffer + 25) = (height2 >> 24) & 0xff;
-    *(*rescaled_buffer + 34) = (total_size-54) & 0xff;
-    *(*rescaled_buffer + 35) = ((total_size-54) >>  8) & 0xff;
-    *(*rescaled_buffer + 36) = ((total_size-54) >> 16) & 0xff;
-    *(*rescaled_buffer + 37) = ((total_size-54) >> 24) & 0xff;
+    *(*rescaled_buffer + 34) = 0;
+    *(*rescaled_buffer + 35) = 0;
+    *(*rescaled_buffer + 36) = 0;
+    *(*rescaled_buffer + 37) = 0;
 
 #if 0
     FILE *fp = fopen( "test.bmp", "wb" );

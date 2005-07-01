@@ -94,7 +94,7 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Rect *src_rect, SDL_Su
     }
     resizeImage( (unsigned char*)dst_buffer, dst_rect2.w, dst_rect2.h, dst->w * 4,
                  (unsigned char*)src_buffer, src_rect2.w, src_rect2.h, src->w * 4,
-                 4, resize_buffer, src_rect2.w * 4 );
+                 4, resize_buffer, src_rect2.w * 4, false );
 
     SDL_UnlockSurface( src );
     SDL_UnlockSurface( dst );
