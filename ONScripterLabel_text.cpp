@@ -330,8 +330,10 @@ void ONScripterLabel::restoreTextBuffer()
 
 int ONScripterLabel::enterTextDisplayMode()
 {
-    if (line_enter_status == 0 && saveon_flag && internal_saveon_flag) saveSaveFile( -1 );
-    internal_saveon_flag = false;
+    if (line_enter_status <= 1 && saveon_flag && internal_saveon_flag){
+        saveSaveFile( -1 );
+        internal_saveon_flag = false;
+    }
     
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         if ( event_mode & EFFECT_EVENT_MODE ){
@@ -543,9 +545,6 @@ void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *
 
 int ONScripterLabel::textCommand()
 {
-    int ret = enterTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
-
     if (pretextgosub_label && 
         (line_enter_status == 0 ||
          (line_enter_status == 1 &&
@@ -556,6 +555,9 @@ int ONScripterLabel::textCommand()
         line_enter_status = 1;
         return RET_CONTINUE;
     }
+
+    int ret = enterTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
 
     line_enter_status = 2;
     ret = processText();

@@ -1207,10 +1207,9 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             if ( *ctl_str != ',' ) continue;
             ctl_str++; // skip ','
             sprite_info[ sprite_no ].pos.y = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
-            if ( surface ){
-                refreshSurface( surface, &rect );
-                refreshSurface( surface, &sprite_info[ sprite_no ].pos );
-            }
+            dirty_rect.add( rect );
+            sprite_info[ sprite_no ].visible = true;
+            dirty_rect.add( sprite_info[ sprite_no ].pos );
         }
     }
 }

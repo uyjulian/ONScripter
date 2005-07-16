@@ -554,19 +554,9 @@ void ONScripterLabel::refreshOpenGL(int refresh_mode, SDL_Rect *rect)
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (refresh_mode == REFRESH_NONE_MODE){
-        loadSubTexture( accumulation_surface, accumulation_id, rect );
-        if (rect){
-            drawTexture(accumulation_id, (Rect&)*rect, (Rect&)*rect);
-        }
-        else{
-            Rect rect2 = {0, 0, screen_width, screen_height};
-            drawTexture(accumulation_id, rect2, rect2);
-        }
-    }
-    else{
-        refreshSurface( accumulation_surface, rect, refresh_mode | REFRESH_OPENGL_MODE );
-    }
+    if (refresh_mode == REFRESH_NONE_MODE) // only called from drawChar
+        refresh_mode = refreshMode();
+    refreshSurface( accumulation_surface, NULL, refresh_mode|REFRESH_OPENGL_MODE);
 
     glPopMatrix();
     SDL_GL_SwapBuffers();

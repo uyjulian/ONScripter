@@ -564,25 +564,26 @@ int ONScripterLabel::setcursorCommand()
 
 int ONScripterLabel::selectCommand()
 {
-    int ret = enterTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
-
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
 
-    if ( script_h.isName( "selnum" ) ){
+    if ( script_h.isName( "selnum" ) )
         select_mode = SELECT_NUM_MODE;
+    else if ( script_h.isName( "selgosub" ) )
+        select_mode = SELECT_GOSUB_MODE;
+    else if ( script_h.isName( "select" ) )
+        select_mode = SELECT_GOTO_MODE;
+    else if ( script_h.isName( "csel" ) )
+        select_mode = SELECT_CSEL_MODE;
+
+    if (select_mode != SELECT_CSEL_MODE){
+        int ret = enterTextDisplayMode();
+        if ( ret != RET_NOMATCH ) return ret;
+    }
+
+    if ( select_mode == SELECT_NUM_MODE ){
         script_h.readVariable();
         script_h.pushVariable();
-    }
-    else if ( script_h.isName( "selgosub" ) ){
-        select_mode = SELECT_GOSUB_MODE;
-    }
-    else if ( script_h.isName( "select" ) ){
-        select_mode = SELECT_GOTO_MODE;
-    }
-    else if ( script_h.isName( "csel" ) ){
-        select_mode = SELECT_CSEL_MODE;
     }
 
     if ( event_mode & WAIT_BUTTON_MODE ){
@@ -605,23 +606,19 @@ int ONScripterLabel::selectCommand()
 
         if ( select_mode  == SELECT_GOTO_MODE ){
             setCurrentLabel( last_select_link->label );
-            ret = RET_CONTINUE;
         }
         else if ( select_mode == SELECT_GOSUB_MODE ){
             gosubReal( last_select_link->label, select_label_info.next_script );
-
-            ret = RET_CONTINUE;
         }
         else{ // selnum
             script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
             script_h.setCurrent( select_label_info.next_script );
-            ret = RET_CONTINUE;
         }
         deleteSelectLink();
 
         newPage( true );
 
-        return ret;
+        return RET_CONTINUE;
     }
     else{
         bool comma_flag = true;
@@ -793,7 +790,6 @@ int ONScripterLabel::saveonCommand()
 
 int ONScripterLabel::saveoffCommand()
 {
-    if (saveon_flag && internal_saveon_flag) saveSaveFile( -1 ); 
     saveon_flag = false;
 
     return RET_CONTINUE;
