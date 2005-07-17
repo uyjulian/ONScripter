@@ -650,8 +650,8 @@ void ONScripterLabel::resetSentenceFont()
     sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0x99;
     sentence_font_info.pos.x = 0;
     sentence_font_info.pos.y = 0;
-    sentence_font_info.pos.w = screen_width;
-    sentence_font_info.pos.h = screen_height;
+    sentence_font_info.pos.w = screen_width+1;
+    sentence_font_info.pos.h = screen_height+1;
 }
 
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
@@ -758,10 +758,10 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                  p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                 sprite_info[ p_button_link->sprite_no ].setCell(1);
+                sprite_info[ p_button_link->sprite_no ].visible = true;
                 if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
                     decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
                 }
-                sprite_info[ p_button_link->sprite_no ].visible = true;
             }
             else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
                 p_button_link->show_flag = 1;
@@ -805,8 +805,6 @@ void ONScripterLabel::executeLabel()
         if ( script_h.getStringBuffer()[0] == '~' ){
             last_tilde.next_script = script_h.getNext();
             readToken();
-            if ( script_h.getStringBuffer()[string_buffer_offset] == 0x0a )
-                current_line++;
             continue;
         }
         if ( break_flag && !script_h.isName("next") ){

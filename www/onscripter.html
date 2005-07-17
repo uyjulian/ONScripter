@@ -18,7 +18,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Jul. 16, 2005 [ソース更新]<br>-->
+Last updated: Jul. 17, 2005 [ソース更新]<br>-->
 <!--Last updated: Jun. 29, 2005 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
@@ -98,8 +98,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20050716.tar.gz">onscripter-20050716.tar.gz</a>
-  <li> <a href="onscripter-20050701.tar.gz">onscripter-20050701.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20050717.tar.gz">onscripter-20050717.tar.gz</a>
+  <li> <a href="onscripter-20050716.tar.gz">onscripter-20050716.tar.gz</a>(１つ前のバージョン)
   <!--<li> <a href="onscripter-exp-20050629.tar.gz">onscripter-exp-20050629.tar.gz</a>(実験版)-->
 </ul>
 <!--(テスト版<a href="onscripter-beta-exp20030810a.tar.gz">onscripter-beta-exp20030810a.tar.gz</a>。内部的にかなり修正を入れたので、壊れたセーブファイルを生成する可能性があります。必要ならバックアップを取ってください。問題がなければベータ版になります)<br>-->
@@ -172,7 +172,7 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 <h3><a name="feature-engine">その他の特徴</a></h3>
 <div class="sub-content">
 <OL>
-  <li> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることですが、この命令はほとんど使われていないのでさほど問題にならないと思います。<br>
+  <li> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることと、最大テクスチャサイズを越えた画像を読み込むことができず結果としてその画像が表示されないことです。
 </OL>
 </div> <!-- sub-content -->
 
@@ -258,7 +258,6 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 
 <OL>
   <li> (<FONT color="#ff0000">高</FONT>)スプライト・ボタンの表示・非表示がおかしい場合がある問題に対処。
-  <li> (<FONT color="#ff8800">中</FONT>)右クリックメニューなどで一時的に消えた直近のテキスト画面が正しく復帰しない場合に対処。OpenGL 対応の時に関連コードが消えてました。
   <li> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
   <li> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
   <li> (<FONT color="#00ff00">低</FONT>)コードの clean up。

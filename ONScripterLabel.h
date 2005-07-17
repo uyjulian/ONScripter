@@ -305,7 +305,8 @@ private:
     typedef enum { COLOR_EFFECT_IMAGE  = 0,
                    DIRECT_EFFECT_IMAGE = 1,
                    BG_EFFECT_IMAGE     = 2,
-                   TACHI_EFFECT_IMAGE  = 3
+                   TACHI_EFFECT_IMAGE  = 3,
+                   COPY_EFFECT_IMAGE  = 4
     } EFFECT_IMAGE;
     enum { ALPHA_BLEND_NORMAL         = 0,
            ALPHA_BLEND_CONST          = 1,
@@ -534,7 +535,7 @@ private:
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, SDL_Surface *cache_surface=NULL );
     void refreshText( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode=0 );
     void restoreTextBuffer();
-    int  enterTextDisplayMode();
+    int  enterTextDisplayMode(bool text_flag = true);
     int  leaveTextDisplayMode();
     void doClickEnd();
     int  clickWait( char *out_text );
@@ -554,6 +555,7 @@ private:
     
     int  setEffect( int effect_no );
     int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
+    void copyTexture(unsigned int tex_id);
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     

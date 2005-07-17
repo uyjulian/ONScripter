@@ -53,31 +53,32 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     
     if ( effect_counter == 0 ){
         blitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
-#ifdef USE_OPENGL
-#ifdef USE_GL_TEXTURE_RECTANGLE
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, effect_src_id);
-        glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
-                         GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
-#else
-        glBindTexture(GL_TEXTURE_2D, effect_src_id);
-        glCopyTexImage2D(GL_TEXTURE_2D, 0,
-                         GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
-#endif
-#endif        
+        copyTexture(effect_src_id);
         
         if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
           case DIRECT_EFFECT_IMAGE:
+            loadSubTexture( effect_dst_surface, effect_dst_id );
+            break;
+            
+          case COPY_EFFECT_IMAGE:
+            copyTexture(effect_dst_id);
             break;
             
           case COLOR_EFFECT_IMAGE:
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
-            refreshSurface( effect_dst_surface, NULL, refreshMode() );
+            if (effect_no == 1){
+                copyTexture(effect_dst_id);
+                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() );
+                loadSubTexture( effect_dst_surface, effect_dst_id, &dirty_rect.bounding_box );
+            }
+            else{
+                refreshSurface( effect_dst_surface, NULL, refreshMode() );
+                loadSubTexture( effect_dst_surface, effect_dst_id );
+            }
             break;
         }
-
-        loadSubTexture( effect_dst_surface, effect_dst_id );
 
         /* Load mask image */
         if ( effect_no == 15 || effect_no == 18 ){
@@ -423,6 +424,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             drawTexture( effect_dst_id, (Rect&)src_rect, (Rect&)src_rect );
             glPopMatrix();
             SDL_GL_SwapBuffers();
+            dirty_rect.clear();
 #else            
             flush(REFRESH_NONE_MODE);
 #endif
@@ -431,6 +433,21 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         event_mode = IDLE_EVENT_MODE;
         return RET_CONTINUE;
     }
+}
+
+void ONScripterLabel::copyTexture(unsigned int tex_id)
+{
+#ifdef USE_OPENGL
+#ifdef USE_GL_TEXTURE_RECTANGLE
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
+    glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
+                     GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
+#else
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    glCopyTexImage2D(GL_TEXTURE_2D, 0,
+                     GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
+#endif
+#endif        
 }
 
 void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)

@@ -166,10 +166,18 @@ int ScriptParser::soundpressplginCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "soundpressplgin: not in the define section" );
 
     const char *buf = script_h.readStr();
+    char buf2[12];
+    memcpy(buf2, buf, 12);
+    // only nbzplgin.dll is supported
+    for (int i=0 ; i<strlen(buf) ; i++)
+        if (buf2[i] >= 'A' && buf2[i] <= 'Z') buf2[i] += 'a' - 'A';
+    if (strncmp(buf2, "nbzplgin.dll", 12)){
+        fprintf( stderr, " *** plugin %s is not available, continuing ... ***\n", buf);
+        return RET_CONTINUE;
+    }
     while( *buf != '|' ) buf++;
     buf++;
 
-    // We assume NZB compression here.
     script_h.cBR->registerCompressionType( buf, BaseReader::NBZ_COMPRESSION );
 
     return RET_CONTINUE;
@@ -722,13 +730,19 @@ int ScriptParser::ifCommand()
     while(1){
         if (script_h.compareString("fchk")){
             script_h.readLabel();
-            buf = script_h.readStr();
+            if (script_h.getNext()[0] == '*')
+                buf = script_h.readLabel();
+            else
+                buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ) != NULL);
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
-            buf = script_h.readLabel();
+            if (script_h.getNext()[0] == '*')
+                buf = script_h.readLabel();
+            else
+                buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ) != NULL);
             //printf("lchk %s (%d,%d)\n", buf, f, condition_flag );
         }

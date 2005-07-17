@@ -265,7 +265,9 @@ int ONScripterLabel::loadSaveFile( int no )
     sentence_font.is_transparent = (j==1)?true:false;
 
     for (j=0, k=0, i=0 ; i<current_text_buffer->buffer2_count ; i++){
-        if (k == sentence_font.xy[0] && j == sentence_font.xy[1]) break;
+        if (j == sentence_font.xy[1] &&
+            (k > sentence_font.xy[0] ||
+             current_text_buffer->buffer2[i] == 0x0a)) break;
 
         if (current_text_buffer->buffer2[i] == 0x0a){
             j+=2;

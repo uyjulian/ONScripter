@@ -870,6 +870,7 @@ int ONScripterLabel::resetCommand()
     clearCurrentTextBuffer();
     
     setCurrentLabel( "start" );
+    saveSaveFile(-1);
     
     return RET_CONTINUE;
 }
@@ -901,24 +902,20 @@ int ONScripterLabel::quakeCommand()
     if ( tmp_effect.duration < tmp_effect.num * 4 ) tmp_effect.duration = tmp_effect.num * 4;
     
     if ( event_mode & EFFECT_EVENT_MODE ){
-        if ( effect_counter == 0 ){
-            //SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
-            blitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
-        }
         tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
-        return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
+        return doEffect( TMP_EFFECT, NULL, COPY_EFFECT_IMAGE );
     }
     else{
         dirty_rect.fill( screen_width, screen_height );
-        setEffect( 2 ); // 2 is dummy value
-        return RET_WAIT | RET_REREAD; // RET_WAIT de yoi?
-        //return RET_WAIT_NEXT;
+        blitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
+
+        return setEffect( 2 ); // 2 is dummy value
     }
 }
 
 int ONScripterLabel::puttextCommand()
 {
-    int ret = enterTextDisplayMode();
+    int ret = enterTextDisplayMode(false);
     if ( ret != RET_NOMATCH ) return ret;
 
     script_h.readStr();
@@ -1956,7 +1953,6 @@ int ONScripterLabel::gameCommand()
 {
     int i;
 
-    setCurrentLabel( "start" );
     current_mode = NORMAL_MODE;
 
     //text_speed_no = 1;
@@ -2008,6 +2004,9 @@ int ONScripterLabel::gameCommand()
     /* Initialize local variables */
     for ( i=0 ; i<script_h.global_variable_border ; i++ )
         script_h.variable_data[i].reset(false);
+
+    setCurrentLabel( "start" );
+    saveSaveFile(-1);
 
     return RET_CONTINUE;
 }

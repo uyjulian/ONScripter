@@ -626,7 +626,12 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
 {
 #ifdef USE_OPENGL
     SDL_Rect rect2 = {0, 0, surface->w, surface->h};
-    if (rect) rect2 = *rect;
+    if (rect){
+        rect2 = *rect;
+        // Since the initial setwindow parameters are out of range
+        if (rect2.x+rect2.w > surface->w) rect2.w = surface->w - rect2.x;
+        if (rect2.y+rect2.h > surface->h) rect2.h = surface->h - rect2.y;
+    }
     
     if (texture_buffer_size < rect2.w*rect2.h*4){
         if (texture_buffer) delete[] texture_buffer;
