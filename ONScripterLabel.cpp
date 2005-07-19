@@ -745,6 +745,10 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             dirty_rect.add( current_button_link->image_rect );
         }
 
+        if ( exbtn_d_button_link.exbtn_ctl ){
+            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
+        }
+        
         if ( p_button_link ){
             if ( system_menu_mode != SYSTEM_NULL ){
                 if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
@@ -776,11 +780,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             current_button_link = p_button_link;
             shortcut_mouse_line = c;
         }
-        else{
-            if ( exbtn_d_button_link.exbtn_ctl ){
-                decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
-            }
-        }
+        
         flush( refreshMode() );
         dirty_rect = dirty;
         
@@ -1179,7 +1179,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
                 cell_no = getNumberFromBuffer( &ctl_str );
             }
             else
-                cell_no = -1;
+                cell_no = 0;
             refreshSprite( surface, sprite_no, true, cell_no, check_src_rect, check_dst_rect );
         }
         else if (com == 'S' || com == 's'){
