@@ -162,7 +162,7 @@ public:
     int playstopCommand();
     int playonceCommand();
     int playCommand();
-    int ofscpyCommand();
+    int ofscopyCommand();
     int negaCommand();
     int mspCommand();
     int mpegplayCommand();
@@ -197,6 +197,7 @@ public:
     int gettextCommand();
     int gettagCommand();
     int gettabCommand();
+    int getspsizeCommand();
     int getscreenshotCommand();
     int getretCommand();
     int getregCommand();
@@ -248,6 +249,7 @@ public:
     int btnCommand();
     int brCommand();
     int bltCommand();
+    int bgcopyCommand();
     int bgCommand();
     int barclearCommand();
     int barCommand();
@@ -305,8 +307,7 @@ private:
     typedef enum { COLOR_EFFECT_IMAGE  = 0,
                    DIRECT_EFFECT_IMAGE = 1,
                    BG_EFFECT_IMAGE     = 2,
-                   TACHI_EFFECT_IMAGE  = 3,
-                   COPY_EFFECT_IMAGE  = 4
+                   TACHI_EFFECT_IMAGE  = 3
     } EFFECT_IMAGE;
     enum { ALPHA_BLEND_NORMAL         = 0,
            ALPHA_BLEND_CONST          = 1,
@@ -658,7 +659,7 @@ private:
     int  proceedAnimation();
     int  estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
     void resetRemainingTime( int t );
-    void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL, SDL_Surface *surface=NULL );
+    void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL, SDL_Surface *surface_org=NULL );
     void parseTaggedString( AnimationInfo *anim );
     void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip, int refresh_mode );
     void stopAnimation( int click );
@@ -728,6 +729,7 @@ private:
     void refreshOpenGL( int refresh_mode, SDL_Rect *rect );
     void loadTexture( SDL_Surface *surface, unsigned int tex_id );
     void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL );
+    void saveTexture( SDL_Surface *surface );
     void drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );
     void refreshTexture();
 #ifdef USE_OPENGL

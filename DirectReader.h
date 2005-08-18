@@ -2,7 +2,7 @@
 /*
  *  DirectReader.h - Reader from independent files
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -45,6 +45,8 @@ public:
     struct FileInfo getFileByIndex( int index );
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL );
+
+    static void convertFromSJISToEUC( char *buf );
 
 protected:
     char *file_full_path;

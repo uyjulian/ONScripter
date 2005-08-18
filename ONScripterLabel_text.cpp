@@ -164,7 +164,11 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
     else if ( flush_flag ){
         info->addShadeArea(dst_rect, shade_distance);
+#ifdef USE_OPENGL
+        flushDirect( dst_rect, REFRESH_OPENGL_MODE );
+#else
         flushDirect( dst_rect, REFRESH_NONE_MODE );
+#endif
     }
 
     /* ---------------------------------------- */
@@ -257,7 +261,12 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     SDL_Rect clipped_rect = info->calcUpdatedArea(start_xy, screen_ratio1, screen_ratio2);
     info->addShadeArea(clipped_rect, shade_distance);
     
-    if ( flush_flag ) flush( refresh_shadow_text_mode, &clipped_rect );
+    if ( flush_flag )
+#ifdef USE_OPENGL
+        flush( refresh_shadow_text_mode | REFRESH_OPENGL_MODE, &clipped_rect );
+#else
+        flush( refresh_shadow_text_mode, &clipped_rect );
+#endif    
     
     if ( rect ) *rect = clipped_rect;
 }
@@ -346,7 +355,7 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
         }
         else{
             next_display_mode = TEXT_DISPLAY_MODE;
-            refreshSurface( effect_dst_surface, NULL, refresh_shadow_text_mode );
+            refreshSurface( effect_dst_surface, NULL, refreshMode() );
             dirty_rect.clear();
             dirty_rect.add( sentence_font_info.pos );
 
@@ -371,7 +380,7 @@ int ONScripterLabel::leaveTextDisplayMode()
         }
         else{
             next_display_mode = NORMAL_DISPLAY_MODE;
-            refreshSurface( effect_dst_surface, NULL, REFRESH_NORMAL_MODE );
+            refreshSurface( effect_dst_surface, NULL, refreshMode() );
             dirty_rect.add( sentence_font_info.pos );
             
             return setEffect( window_effect.effect );
@@ -412,7 +421,7 @@ int ONScripterLabel::clickWait( char *out_text )
             string_buffer_offset++;
         }
         else{ // called on '@'
-            flush(refresh_shadow_text_mode);
+            flush(refreshMode());
             string_buffer_offset++;
         }
         num_chars_in_sentence = 0;
@@ -452,7 +461,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
         num_chars_in_sentence++;
     }
-    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( refresh_shadow_text_mode );
+    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( refreshMode() );
     
     if ( (skip_flag || ctrl_pressed_status) && !textgosub_label  ){
         event_mode = WAIT_SLEEP_MODE;

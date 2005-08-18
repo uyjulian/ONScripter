@@ -554,9 +554,9 @@ void ONScripterLabel::refreshOpenGL(int refresh_mode, SDL_Rect *rect)
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (refresh_mode == REFRESH_NONE_MODE) // only called from drawChar
+    if (refresh_mode == REFRESH_OPENGL_MODE) // only called from drawChar
         refresh_mode = refreshMode();
-    refreshSurface( accumulation_surface, NULL, refresh_mode|REFRESH_OPENGL_MODE);
+    refreshSurface( accumulation_surface, NULL, refresh_mode );
 
     glPopMatrix();
     SDL_GL_SwapBuffers();
@@ -668,6 +668,37 @@ void ONScripterLabel::loadSubTexture(SDL_Surface *surface, unsigned int tex_id, 
                     rect2.w, rect2.h,
                     GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
 #endif
+#endif    
+}
+
+void ONScripterLabel::saveTexture( SDL_Surface *surface )
+{
+#ifdef USE_OPENGL
+    if (texture_buffer_size < screen_width*screen_height*4){
+        if (texture_buffer) delete[] texture_buffer;
+        texture_buffer_size = screen_width*screen_height*4;
+        texture_buffer = new unsigned char[texture_buffer_size];
+    }
+    glReadPixels(0, 0, screen_width, screen_height, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
+    
+    SDL_LockSurface(surface);
+    for (int i=0 ; i<screen_height ; i++){
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        memcpy( (Uint32*)surface->pixels + i*screen_width,
+                texture_buffer + (screen_height - 1 - i)*screen_width*4,
+                screen_width * 4);
+#else
+        unsigned char *dst_buf = (unsigned char *)surface->pixels + surface->w * i * 4;
+        unsigned char *src_buf = texture_buffer+(screen_height-i-1)*screen_width*4;
+        for (int j=0 ; j<surface->w ; j++, src_buf+=4){
+            *dst_buf++ = src_buf[3];
+            *dst_buf++ = src_buf[2];
+            *dst_buf++ = src_buf[1];
+            *dst_buf++ = src_buf[0];
+        }
+#endif
+    }
+    SDL_UnlockSurface(surface);
 #endif    
 }
 

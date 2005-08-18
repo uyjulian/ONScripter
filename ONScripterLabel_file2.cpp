@@ -264,6 +264,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     loadInt( fp, &erase_text_window_mode );
     loadInt( fp, &i ); // 1
 
+    barclearCommand();
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         loadInt( fp, &j );
         if ( j != 0 ){
@@ -293,6 +294,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
         }
     }
 
+    prnumclearCommand();
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         loadInt( fp, &j );
         if ( prnum_info[i] ){
@@ -382,8 +384,8 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     fclose(fp);
 
     dirty_rect.fill( screen_width, screen_height );
-    flush( REFRESH_NORMAL_MODE );
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+    flush( refreshMode() );
 
     clickstr_state = CLICK_NONE;
     event_mode = 0;//WAIT_SLEEP_MODE;

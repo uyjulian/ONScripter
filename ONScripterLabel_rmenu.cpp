@@ -177,7 +177,7 @@ void ONScripterLabel::executeSystemMenu()
 
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
         loadSubTexture( text_surface, text_id );
-        flush( refresh_shadow_text_mode );
+        flush( refreshMode() );
 
         menu_font.num_xy[0] = rmenu_link_width;
         menu_font.num_xy[1] = rmenu_link_num;
@@ -193,7 +193,7 @@ void ONScripterLabel::executeSystemMenu()
             button->no = counter++;
 
             link = link->next;
-            flush( refresh_shadow_text_mode );
+            flush( refreshMode() );
         }
 
         flushEvent();
@@ -252,7 +252,11 @@ void ONScripterLabel::executeWindowErase()
         leaveSystemCall();
     }
     else{
+#ifdef USE_OPENGL        
+        flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE | REFRESH_OPENGL_MODE);
+#else
         flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
+#endif        
 
         event_mode = WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_WINDOWERASE;
@@ -301,7 +305,7 @@ void ONScripterLabel::executeSystemLoad()
         menu_font.newLine();
         menu_font.newLine();
         
-        flush( refresh_shadow_text_mode );
+        flush( refreshMode() );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -329,7 +333,7 @@ void ONScripterLabel::executeSystemLoad()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( refresh_shadow_text_mode );
+            flush( refreshMode() );
         }
         delete[] buffer;
 
@@ -372,7 +376,7 @@ void ONScripterLabel::executeSystemSave()
         menu_font.newLine();
         menu_font.newLine();
         
-        flush( refresh_shadow_text_mode );
+        flush( refreshMode() );
         
         bool nofile_flag;
         char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
@@ -401,7 +405,7 @@ void ONScripterLabel::executeSystemSave()
             ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
             root_button_link.insert( button );
             button->no = i;
-            flush( refresh_shadow_text_mode );
+            flush( refreshMode() );
         }
         delete[] buffer;
 
@@ -500,7 +504,7 @@ void ONScripterLabel::executeSystemYesNo()
         uchar3 color = {0xff, 0xff, 0xff};
         drawString( name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
 
-        flush( refresh_shadow_text_mode );
+        flush( refreshMode() );
         
         int offset1 = strlen(name)/5;
         int offset2 = strlen(name)/2 - offset1;
@@ -516,7 +520,7 @@ void ONScripterLabel::executeSystemYesNo()
         root_button_link.insert( button );
         button->no = 2;
         
-        flush( refresh_shadow_text_mode );
+        flush( refreshMode() );
         
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
@@ -658,5 +662,5 @@ void ONScripterLabel::executeSystemLookback()
     for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
     
     dirty_rect.fill( screen_width, screen_height );
-    flush( refresh_shadow_text_mode );
+    flush( refreshMode() );
 }

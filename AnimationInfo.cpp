@@ -47,6 +47,8 @@ AnimationInfo::AnimationInfo()
     file_name = NULL;
     mask_file_name = NULL;
 
+    trans_mode = TRANS_TOPLEFT;
+
     reset();
 }
 

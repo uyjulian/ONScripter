@@ -54,14 +54,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     if ( effect_counter == 0 ){
         blitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
         copyTexture(effect_src_id);
+        if ( effect_no == 15 || effect_no == 18 ){
+            saveTexture( effect_src_surface );
+        }
         
         if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
           case DIRECT_EFFECT_IMAGE:
-            loadSubTexture( effect_dst_surface, effect_dst_id );
-            break;
-            
-          case COPY_EFFECT_IMAGE:
             copyTexture(effect_dst_id);
             break;
             
@@ -69,13 +68,15 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
             if (effect_no == 1){
-                copyTexture(effect_dst_id);
                 refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() );
-                loadSubTexture( effect_dst_surface, effect_dst_id, &dirty_rect.bounding_box );
+                copyTexture(effect_dst_id);
             }
             else{
                 refreshSurface( effect_dst_surface, NULL, refreshMode() );
-                loadSubTexture( effect_dst_surface, effect_dst_id );
+                copyTexture(effect_dst_id);
+                if ( effect_no == 15 || effect_no == 18 ){
+                    saveTexture( effect_dst_surface );
+                }
             }
             break;
         }
@@ -359,7 +360,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
                     effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
-#ifdef USE_OPENGL        
+#ifdef USE_OPENGL
         loadSubTexture(accumulation_surface, effect_dst_id );
         drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
 #endif    

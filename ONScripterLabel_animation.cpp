@@ -119,8 +119,9 @@ void ONScripterLabel::resetRemainingTime( int t )
     }
 }
 
-void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, SDL_Surface *surface )
+void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, SDL_Surface *surface_org )
 {
+    SDL_Surface *surface = NULL;
     SDL_Surface *surface_m = NULL;
     
     anim->deleteSurface();
@@ -164,16 +165,19 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
         }
     }
     else{
-        if (surface == NULL) surface = loadImage( anim->file_name );
+        if (surface_org == NULL) surface = loadImage( anim->file_name );
         if (anim->trans_mode == AnimationInfo::TRANS_MASK)
             surface_m = loadImage( anim->mask_file_name );
     }
-    
-    anim->setupImage(surface, surface_m);
+
+    if (surface_org)
+        anim->setupImage(surface_org, surface_m);
+    else
+        anim->setupImage(surface, surface_m);
     if (anim->image_surface)
         loadTexture(anim->image_surface, anim->tex_id);
-    
-    SDL_FreeSurface(surface);
+
+    if ( surface ) SDL_FreeSurface(surface);
     if ( surface_m ) SDL_FreeSurface(surface_m);
 }
 
@@ -359,5 +363,5 @@ void ONScripterLabel::stopAnimation( int click )
         dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
 
-    flushDirect( dst_rect, refresh_shadow_text_mode );
+    flushDirect( dst_rect, refreshMode() );
 }

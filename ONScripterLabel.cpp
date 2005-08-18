@@ -99,7 +99,8 @@ static struct FuncLUT{
     {"playstop",   &ONScripterLabel::playstopCommand},
     {"playonce",   &ONScripterLabel::playCommand},
     {"play",   &ONScripterLabel::playCommand},
-    {"ofscpy", &ONScripterLabel::ofscpyCommand},
+    {"ofscpy", &ONScripterLabel::ofscopyCommand},
+    {"ofscopy", &ONScripterLabel::ofscopyCommand},
     {"nega", &ONScripterLabel::negaCommand},
     {"msp", &ONScripterLabel::mspCommand},
     {"mpegplay", &ONScripterLabel::mpegplayCommand},
@@ -137,6 +138,7 @@ static struct FuncLUT{
     {"getzxc", &ONScripterLabel::getzxcCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
+    {"getspsize", &ONScripterLabel::getspsizeCommand},
     {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
     {"gettag", &ONScripterLabel::gettagCommand},
@@ -204,6 +206,8 @@ static struct FuncLUT{
     {"bgmstop", &ONScripterLabel::playstopCommand},
     {"bgmonce", &ONScripterLabel::mp3Command}, 
     {"bgm", &ONScripterLabel::mp3Command}, 
+    {"bgcpy",      &ONScripterLabel::bgcopyCommand},
+    {"bgcopy",      &ONScripterLabel::bgcopyCommand},
     {"bg",      &ONScripterLabel::bgCommand},
     {"barclear",      &ONScripterLabel::barclearCommand},
     {"bar",      &ONScripterLabel::barCommand},
@@ -657,10 +661,10 @@ void ONScripterLabel::resetSentenceFont()
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
 
-#ifdef USE_OPENGL
-    refreshOpenGL(refresh_mode, rect);
-    return;
-#endif    
+    if (refresh_mode & REFRESH_OPENGL_MODE){
+        refreshOpenGL(refresh_mode, rect);
+        return;
+    }
 
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );
@@ -688,10 +692,10 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
 {
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
-#ifdef USE_OPENGL
-    refreshOpenGL(refresh_mode, &rect);
-    return;
-#endif
+    if (refresh_mode & REFRESH_OPENGL_MODE){
+        refreshOpenGL(refresh_mode, &rect);
+        return;
+    }
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
 
@@ -1304,13 +1308,23 @@ void ONScripterLabel::saveEnvData()
 
 int ONScripterLabel::refreshMode()
 {
+    int ret=0;
+
     //printf("refreshMode %d %d %d\n", next_display_mode== TEXT_DISPLAY_MODE,
     //erase_text_window_mode == 0, text_on_flag );
     if ( next_display_mode == TEXT_DISPLAY_MODE ||
          erase_text_window_mode == 0 && text_on_flag ){
-        return refresh_shadow_text_mode;
+        ret = refresh_shadow_text_mode;
     }
-    return REFRESH_NORMAL_MODE;
+    else{
+        ret = REFRESH_NORMAL_MODE;
+    }
+
+#ifdef USE_OPENGL
+    ret |= REFRESH_OPENGL_MODE;
+#endif    
+
+    return ret;
 }
 
 void ONScripterLabel::quit()

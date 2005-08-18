@@ -143,7 +143,7 @@ int ONScripterLabel::textshowCommand()
 {
     dirty_rect.fill( screen_width, screen_height );
     refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE | REFRESH_TEXT_MODE;
-    flush(refresh_shadow_text_mode);
+    flush(refreshMode());
 
     return RET_CONTINUE;
 }
@@ -153,8 +153,8 @@ int ONScripterLabel::textonCommand()
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         dirty_rect.fill( screen_width, screen_height );
-        flush(refresh_shadow_text_mode);
         display_mode = next_display_mode = TEXT_DISPLAY_MODE;
+        flush(refreshMode());
     }
 
     return RET_CONTINUE;
@@ -165,8 +165,8 @@ int ONScripterLabel::textoffCommand()
     text_on_flag = false;
     if ( display_mode & TEXT_DISPLAY_MODE ){
         dirty_rect.fill( screen_width, screen_height );
-        flush(REFRESH_NORMAL_MODE);
         display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        flush(refreshMode());
     }
 
     return RET_CONTINUE;
@@ -176,7 +176,7 @@ int ONScripterLabel::texthideCommand()
 {
     dirty_rect.fill( screen_width, screen_height );
     refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE;
-    flush(refresh_shadow_text_mode);
+    flush(refreshMode());
 
     return RET_CONTINUE;
 }
@@ -903,7 +903,7 @@ int ONScripterLabel::quakeCommand()
     
     if ( event_mode & EFFECT_EVENT_MODE ){
         tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
-        return doEffect( TMP_EFFECT, NULL, COPY_EFFECT_IMAGE );
+        return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
     }
     else{
         dirty_rect.fill( screen_width, screen_height );
@@ -926,6 +926,7 @@ int ONScripterLabel::puttextCommand()
 
     ret = processText();
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+        ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
         if (!sentence_font.isLineEmpty()){
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
@@ -1053,22 +1054,10 @@ int ONScripterLabel::playCommand()
     return RET_CONTINUE;
 }
 
-int ONScripterLabel::ofscpyCommand()
+int ONScripterLabel::ofscopyCommand()
 {
 #ifdef USE_OPENGL
-    if (texture_buffer_size < screen_width*screen_height*4){
-        if (texture_buffer) delete[] texture_buffer;
-        texture_buffer_size = screen_width*screen_height*4;
-        texture_buffer = new unsigned char[texture_buffer_size];
-    }
-    glReadPixels(0, 0, screen_width, screen_height, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
-    
-    SDL_LockSurface(accumulation_surface);
-    for (int i=0 ; i<screen_height ; i++)
-        memcpy( (Uint32*)accumulation_surface->pixels + i*screen_width,
-                texture_buffer + (screen_height - 1 - i)*screen_width*4,
-                screen_width * 4);
-    SDL_UnlockSurface(accumulation_surface);
+    copyTexture(accumulation_id);
 #else    
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
 #endif    
@@ -1708,6 +1697,22 @@ int ONScripterLabel::gettabCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::getspsizeCommand()
+{
+    int no = script_h.readInt();
+
+    script_h.readVariable();
+    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.w );
+    script_h.readVariable();
+    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.h );
+    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+        script_h.readVariable();
+        script_h.setInt( &script_h.current_variable, sprite_info[no].num_of_cells );
+    }
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::getscreenshotCommand()
 {
     int w = script_h.readInt();
@@ -1726,19 +1731,7 @@ int ONScripterLabel::getscreenshotCommand()
         screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
 
 #ifdef USE_OPENGL
-    if (texture_buffer_size < screen_width*screen_height*4){
-        if (texture_buffer) delete[] texture_buffer;
-        texture_buffer_size = screen_width*screen_height*4;
-        texture_buffer = new unsigned char[texture_buffer_size];
-    }
-    glReadPixels(0, 0, screen_width, screen_height, GL_BGRA, GL_UNSIGNED_BYTE, texture_buffer);
-    
-    SDL_LockSurface(effect_dst_surface);
-    for (int i=0 ; i<screen_height ; i++)
-        memcpy( (Uint32*)effect_dst_surface->pixels + i*screen_width,
-                texture_buffer + (screen_height - 1 - i)*screen_width*4,
-                screen_width * 4);
-    SDL_UnlockSurface(effect_dst_surface);
+    saveTexture( effect_dst_surface );
 #else
     SDL_BlitSurface( screen_surface, NULL, effect_dst_surface, NULL ); // Bucause screen_surface may be in 16bit depth
 #endif    
@@ -2589,32 +2582,7 @@ int ONScripterLabel::captionCommand()
     strcpy( buf2, buf );
     
 #if defined(LINUX) /* convert sjis to euc */
-    int i = 0;
-    while ( buf2[i] ) {
-        if ( (unsigned char)buf2[i] > 0x80 ) {
-            unsigned char c1, c2;
-            c1 = buf2[i];
-            c2 = buf2[i+1];
-
-            c1 -= (c1 <= 0x9f) ? 0x71 : 0xb1;
-            c1 = c1 * 2 + 1;
-            if (c2 > 0x9e) {
-                c2 -= 0x7e;
-                c1++;
-            }
-            else if (c2 >= 0x80) {
-                c2 -= 0x20;
-            }
-            else {
-                c2 -= 0x1f;
-            }
-
-            buf2[i]   = c1 | 0x80;
-            buf2[i+1] = c2 | 0x80;
-            i++;
-        }
-        i++;
-    }
+    DirectReader::convertFromSJISToEUC(buf2);
 #elif defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
     iconv_t cd = iconv_open("UTF-8", "SJIS");
     delete[] buf2;
@@ -2722,7 +2690,7 @@ int ONScripterLabel::btnwaitCommand()
         flush( refreshMode() );
 
         flushEvent();
-        event_mode = WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
+        event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
 
         if ( btntime_value > 0 ){
@@ -2745,12 +2713,14 @@ int ONScripterLabel::btnwaitCommand()
                         startTimer( automode_time );
                     //current_button_state.button = 0;
                 }
-                else{
-                    event_mode |= WAIT_TIMER_MODE;
-                    advancePhase();
-                }
             }
         }
+        
+        if ((event_mode & WAIT_TIMER_MODE) == 0){
+            event_mode |= WAIT_TIMER_MODE;
+            advancePhase();
+        }
+        
         return RET_WAIT | RET_REREAD;
     }
 }
@@ -2966,6 +2936,35 @@ int ONScripterLabel::bltCommand()
         flushDirect( (SDL_Rect&)dst_rect, REFRESH_NONE_MODE );
     }
 #endif    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::bgcopyCommand()
+{
+#ifdef USE_OPENGL
+    if (bg_info.image_surface == NULL ||
+        bg_info.pos.w != screen_width || 
+        bg_info.pos.h != screen_height){
+        bg_effect_image = BG_EFFECT_IMAGE;
+
+        bg_info.pos.x = 0;
+        bg_info.pos.y = 0;
+        bg_info.num_of_cells = 1;
+        bg_info.trans_mode = AnimationInfo::TRANS_COPY;
+        setupAnimationInfo(&bg_info, NULL, accumulation_surface);
+    }
+    copyTexture(bg_info.tex_id);
+#else    
+    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    bg_effect_image = BG_EFFECT_IMAGE;
+
+    bg_info.pos.x = 0;
+    bg_info.pos.y = 0;
+    bg_info.num_of_cells = 1;
+    bg_info.trans_mode = AnimationInfo::TRANS_COPY;
+    setupAnimationInfo(&bg_info, NULL, accumulation_surface);
+#endif    
+
     return RET_CONTINUE;
 }
 

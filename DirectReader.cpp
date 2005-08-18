@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -270,6 +270,9 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     for ( i=0 ; i<len ; i++ ){
         if ( capital_name[i] == '/' || capital_name[i] == '\\' ) capital_name[i] = (char)DELIMITER;
     }
+#if defined(LINUX)
+    convertFromSJISToEUC(capital_name);
+#endif    
 
     *length = 0;
     if ( (fp = fopen( capital_name, "rb" )) != NULL && len >= 3 ){
@@ -321,6 +324,36 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int 
     }
 
     return total;
+}
+
+void DirectReader::convertFromSJISToEUC( char *buf )
+{
+    int i = 0;
+    while ( buf[i] ) {
+        if ( (unsigned char)buf[i] > 0x80 ) {
+            unsigned char c1, c2;
+            c1 = buf[i];
+            c2 = buf[i+1];
+
+            c1 -= (c1 <= 0x9f) ? 0x71 : 0xb1;
+            c1 = c1 * 2 + 1;
+            if (c2 > 0x9e) {
+                c2 -= 0x7e;
+                c1++;
+            }
+            else if (c2 >= 0x80) {
+                c2 -= 0x20;
+            }
+            else {
+                c2 -= 0x1f;
+            }
+
+            buf[i]   = c1 | 0x80;
+            buf[i+1] = c2 | 0x80;
+            i++;
+        }
+        i++;
+    }
 }
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
