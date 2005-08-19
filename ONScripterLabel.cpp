@@ -340,6 +340,14 @@ ONScripterLabel::ONScripterLabel()
     key_exe_file = NULL;
     fullscreen_mode = false;
     window_mode = false;
+
+    for (int i=0 ; i<NUM_GLYPH_CACHE ; i++){
+        if (i != NUM_GLYPH_CACHE-1) glyph_cache[i].next = &glyph_cache[i+1];
+        glyph_cache[i].font = NULL;
+        glyph_cache[i].surface = NULL;
+    }
+    glyph_cache[NUM_GLYPH_CACHE-1].next = NULL;
+    root_glyph_cache = &glyph_cache[0];
 }
 
 ONScripterLabel::~ONScripterLabel()

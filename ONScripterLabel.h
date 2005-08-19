@@ -71,6 +71,8 @@ typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLc
 #define DEFAULT_WM_TITLE "ONScripter"
 #define DEFAULT_WM_ICON  "ONScripter"
 
+#define NUM_GLYPH_CACHE 30
+
 class ONScripterLabel : public ScriptParser
 {
 public:
@@ -527,9 +529,17 @@ private:
     int  textgosub_clickstr_state;
     int  indent_offset;
     int  line_enter_status; // 0 ... no enter, 1 ... pretext, 2 ... body
+    struct GlyphCache{
+        GlyphCache *next;
+        Uint16 text;
+        SDL_Color fg;
+        TTF_Font *font;
+        SDL_Surface *surface;
+    } *root_glyph_cache, glyph_cache[NUM_GLYPH_CACHE];
 
     int  refreshMode();
     
+    SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text, SDL_Color fg);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip=NULL );
     void drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip=NULL );

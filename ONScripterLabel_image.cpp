@@ -489,7 +489,7 @@ SDL_Surface *ONScripterLabel::rotateSurface90CW(SDL_Surface *surface)
     SDL_UnlockSurface( tmp );
     SDL_UnlockSurface( surface );
         
-    SDL_FreeSurface( surface );
+    //SDL_FreeSurface( surface );
     return tmp;
 }
 

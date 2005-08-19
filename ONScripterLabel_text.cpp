@@ -46,6 +46,41 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
 #define IS_TRANSLATION_REQUIRED(x)	\
         ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
 
+SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text, SDL_Color fg)
+{
+    GlyphCache *gc = root_glyph_cache;
+    GlyphCache *pre_gc = gc;
+    while(1){
+        if (gc->text == text && 
+            gc->fg.r == fg.r && 
+            gc->fg.g == fg.g && 
+            gc->fg.b == fg.b && 
+            gc->font == font){
+            if (gc != pre_gc){
+                pre_gc->next = gc->next;
+                gc->next = root_glyph_cache;
+                root_glyph_cache = gc;
+            }
+            return gc->surface;
+        }
+        if (gc->next == NULL) break;
+        pre_gc = gc;
+        gc = gc->next;
+    }
+
+    pre_gc->next = NULL;
+    gc->next = root_glyph_cache;
+    root_glyph_cache = gc;
+
+    gc->text = text;
+    gc->fg = fg;
+    gc->font = font;
+    if (gc->surface) SDL_FreeSurface(gc->surface);
+    gc->surface = TTF_RenderGlyph_Blended( font, text, fg );
+
+    return gc->surface;
+}
+
 void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
@@ -69,7 +104,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
                       &minx, &maxx, &miny, &maxy, &advanced );
     //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
     
-    SDL_Surface *tmp_surface = TTF_RenderGlyph_Blended( (TTF_Font*)info->ttf_font, unicode, color );
+    SDL_Surface *tmp_surface = renderGlyph( (TTF_Font*)info->ttf_font, unicode, color );
 
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ){
         tmp_surface = rotateSurface90CW(tmp_surface);
@@ -112,7 +147,8 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
                         tmp2_surface, src_rect.x, src_rect.y,
                         NULL, ALPHA_BLEND_NORMAL, 256, clip );
         
-        SDL_FreeSurface( tmp_surface );
+        if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) )
+            SDL_FreeSurface( tmp_surface );
     }
 }
 

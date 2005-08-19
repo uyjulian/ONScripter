@@ -2237,8 +2237,8 @@ int ONScripterLabel::drawsp2Command()
 
     glPopMatrix();
 #else    
-    si.blendOnSurface2( accumulation_surface, x-si.pos.w/2, y-si.pos.h/2,
-                        NULL, alpha, scale_x, scale_y, rot );
+    si.blendOnSurface2( accumulation_surface, x, y,
+                        alpha, scale_x, scale_y, rot );
 #endif    
     si.setCell(old_cell_no);
 
@@ -2360,8 +2360,8 @@ int ONScripterLabel::drawbg2Command()
 
     glPopMatrix();
 #else    
-    bg_info.blendOnSurface2( accumulation_surface, x-bg_info.pos.w/2, y-bg_info.pos.h/2,
-                             NULL, 256, scale_x, scale_y, rot );
+    bg_info.blendOnSurface2( accumulation_surface, x, y,
+                             256, scale_x, scale_y, rot );
 #endif    
 
     return RET_CONTINUE;

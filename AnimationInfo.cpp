@@ -27,8 +27,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-//#define ENABLE_BILINEAR
-
 AnimationInfo::AnimationInfo()
 {
     // the mask is the same as the one used in TTF_RenderGlyph_Blended
@@ -264,32 +262,28 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
 }
 
 void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                                     SDL_Rect *clip, int alpha, 
-                                     int scale_x, int scale_y, int rot,
-                                     bool do_interpolation )
+                                     int alpha, int scale_x, int scale_y, int rot )
 {
     if ( image_surface == NULL ) return;
     if ( scale_x == 0 || scale_y == 0 ) return;
     
     int i, x, y;
-    SDL_Rect dst_rect = {dst_x, dst_y, pos.w, pos.h};
 
     // for integer arithmetic operation
-    int cos_i = 256, sin_i = 0;
+    int cos_i = 1000, sin_i = 0;
     if (rot != 0){
-        cos_i = (int)(256.0 * cos(-M_PI*rot/180));
-        sin_i = (int)(256.0 * sin(-M_PI*rot/180));
+        cos_i = (int)(1000.0 * cos(-M_PI*rot/180));
+        sin_i = (int)(1000.0 * sin(-M_PI*rot/180));
     }
 
     // project corner point and calculate bounding box
     int dst_corner_xy[4][2];
-    int dst_center_xy[2] = {dst_rect.x + dst_rect.w/2, dst_rect.y + dst_rect.h/2};
     int min_xy[2]={dst_surface->w-1, dst_surface->h-1}, max_xy[2]={0,0};
     for (i=0 ; i<4 ; i++){
-        int c_x = ((((i+1)%4)/2)*2-1)*dst_rect.w/2 - (((i+1)%4)/2) * (1-dst_rect.w%2);
-        int c_y = ((i/2)*2-1)*dst_rect.h/2 - (i/2) * (1-dst_rect.h%2);
-        dst_corner_xy[i][0] = (cos_i * scale_x * c_x - sin_i * scale_y * c_y) / (100*256) + dst_center_xy[0];
-        dst_corner_xy[i][1] = (sin_i * scale_x * c_x + cos_i * scale_y * c_y) / (100*256) + dst_center_xy[1];
+        int c_x = (i<2)?(-pos.w/2):(pos.w/2);
+        int c_y = ((i+1)&2)?(pos.h/2):(-pos.h/2);
+        dst_corner_xy[i][0] = (cos_i * scale_x * c_x - sin_i * scale_y * c_y) / (100000) + dst_x;
+        dst_corner_xy[i][1] = (sin_i * scale_x * c_x + cos_i * scale_y * c_y) / (100000) + dst_y;
 
         if (min_xy[0] > dst_corner_xy[i][0]) min_xy[0] = dst_corner_xy[i][0];
         if (max_xy[0] < dst_corner_xy[i][0]) max_xy[0] = dst_corner_xy[i][0];
@@ -307,36 +301,25 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     if (min_xy[1] >= dst_surface->h) return;
     if (min_xy[1] < 0) min_xy[1] = 0;
 
-    // extra clipping
-    if ( clip ){
-        if (max_xy[0] < clip->x) return;
-        else if (max_xy[0] >= clip->x + clip->w) max_xy[0] = clip->x + clip->w - 1;
-        if (min_xy[0] >= clip->x + clip->w) return;
-        else if (min_xy[0] < clip->x) min_xy[0] = clip->x;
-        if (max_xy[1] < clip->y) return;
-        else if (max_xy[1] >= clip->y + clip->h) max_xy[1] = clip->y + clip->h - 1;
-        if (min_xy[1] >= clip->y + clip->h) return;
-        else if (min_xy[1] < clip->y) min_xy[1] = clip->y;
-    }
-
     // lock surface
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( image_surface );
-
+    Uint32 mask1, mask2, mask_rb, mask_g;
+    
     Uint32 a_shift = image_surface->format->Ashift;
-    // set pixel by inverse-projection with raster scanning
+    // set pixel by inverse-projection with raster scan
     for (y=min_xy[1] ; y<= max_xy[1] ; y++){
-        // calculate start and end point for each raster scanning
+        // calculate the start and end point for each raster scan
         int raster_min = min_xy[0], raster_max = max_xy[0];
         if (rot != 0){
             for (i=0 ; i<4 ; i++){
                 if (dst_corner_xy[i][1] == dst_corner_xy[(i+1)%4][1]) continue;
                 x = (dst_corner_xy[(i+1)%4][0] - dst_corner_xy[i][0])*(y-dst_corner_xy[i][1])/(dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1]) + dst_corner_xy[i][0];
                 if (dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1] > 0){
-                    if (raster_max > x) raster_max = x;
+                    if (raster_min < x) raster_min = x;
                 }
                 else{
-                    if (raster_min < x) raster_min = x;
+                    if (raster_max > x) raster_max = x;
                 }
             }
         }
@@ -344,57 +327,24 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
         Uint32 *dst_buffer = (Uint32 *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
         // inverse-projection
-        for (x=raster_min ; x<=raster_max ; x++, dst_buffer++){
-#ifdef ENABLE_BILINEAR            
-            int x2 = ( cos_i * (x-dst_center_xy[0]) + sin_i * (y-dst_center_xy[1])) * 100 / scale_x + (dst_rect.w/2)*256;
-            int y2 = (-sin_i * (x-dst_center_xy[0]) + cos_i * (y-dst_center_xy[1])) * 100 / scale_y + (dst_rect.h/2)*256;
-            int dx = x2 % 256;
-            int dy = y2 % 256;
-            
-            x2 = x2 / 256;
-            y2 = y2 / 256;
-            
-#else
-            int x2 = ( cos_i * (x-dst_center_xy[0]) + sin_i * (y-dst_center_xy[1])) * 100 / (scale_x*256) + dst_rect.w/2;
-            int y2 = (-sin_i * (x-dst_center_xy[0]) + cos_i * (y-dst_center_xy[1])) * 100 / (scale_y*256) + dst_rect.h/2;
-#endif            
-            if (x2 < 0) x2 = 0;
-            else if (x2 >= image_surface->w) x2 = image_surface->w-1;
-            x2 += image_surface->w*current_cell/num_of_cells;
-            
-            // one last line is omitted to accelerate the interpolation code
-            if (y2 < 0) y2 = 0;
-            else if (y2 >= image_surface->h-1) y2 = image_surface->h-2;
-            
-            Uint32 *sp_buffer  = (Uint32 *)image_surface->pixels + image_surface->w * y2 + x2;
-            Uint32 pixel, mask_rb, mask_g;
-#ifdef ENABLE_BILINEAR            
-            Uint32 mask_rb2, mask_g2;
-            if (do_interpolation){
-                // bi-linear interpolation
-                mask_rb = (((*sp_buffer & 0xff00ff) * (256-dx) + (*(sp_buffer+1) & 0xff00ff) * dx) >> 8) & 0xff00ff;
-                mask_g  = (((*sp_buffer & 0x00ff00) * (256-dx) + (*(sp_buffer+1) & 0x00ff00) * dx) >> 8) & 0x00ff00;
+        int x1 = sin_i * (y-dst_y) / (scale_x*10) + pos.w/2;
+        int y1 = cos_i * (y-dst_y) / (scale_y*10) + pos.h/2;
+        for (x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
+            int x2 = x1 + cos_i * x / (scale_x*10);
+            int y2 = y1 - sin_i * x / (scale_y*10);
 
-                sp_buffer += image_surface->w;
-                mask_rb2 = (((*sp_buffer & 0xff00ff) * (256-dx) + (*(sp_buffer+1) & 0xff00ff) * dx) >> 8) & 0xff00ff;
-                mask_g2  = (((*sp_buffer & 0x00ff00) * (256-dx) + (*(sp_buffer+1) & 0x00ff00) * dx) >> 8) & 0x00ff00;
+            if (x2 < 0 || x2 >= pos.w ||
+                y2 < 0 || y2 >= pos.h) continue;
 
-                pixel = (((mask_rb * (256-dy) + mask_rb2 * dy) >> 8) & 0xff00ff) |
-                    (((mask_g  * (256-dy) + mask_g2  * dy) >> 8) & 0x00ff00) | (*sp_buffer & amask);
-            }
-            else
-#endif                
-            {
-                pixel = *sp_buffer;
-            }
+            Uint32 *src_buffer = (Uint32 *)image_surface->pixels + image_surface->w * y2 + x2 + pos.w*current_cell;
 
-            Uint32 mask2 = (((pixel & amask) >> a_shift) * alpha) >> 8;
-            Uint32 mask1 = 256 - mask2;
+            mask2 = (((*src_buffer & amask) >> a_shift) * alpha) >> 8;
+            mask1 = 256 - mask2;
             
             mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +
-                        (pixel & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
+                        (*src_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; // red and blue pixel
             mask_g = (((*dst_buffer & 0x00ff00) * mask1 +
-                       (pixel & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
+                       (*src_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; // green pixel
 
             *dst_buffer = mask_rb | mask_g | amask;
         }

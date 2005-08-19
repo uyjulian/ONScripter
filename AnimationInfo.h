@@ -108,9 +108,7 @@ public:
     void blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
                          SDL_Rect *clip=NULL, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                          SDL_Rect *clip=NULL, int alpha=256,
-                          int scale_x=100, int scale_y=100, int rot=0,
-                          bool do_interpolation=false );
+                          int alpha=256, int scale_x=100, int scale_y=100, int rot=0 );
     void setupImage( SDL_Surface *surface, SDL_Surface *surface_m );
     void bindTexture();
 };
