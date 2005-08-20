@@ -1,22 +1,18 @@
 # -*- Makefile -*-
 #
 # Makefile.MacOSX - Makefile rules for MacOS X
-#   Thanks adas-san and Takano-san
+#   Thanks adas-san, Takano-san and tmkk-san
 #
 
 INCS = `sdl-config --cflags` `smpeg-config --cflags`
 
 # without OpenGL
-LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime
-# SDL >= 1.2.8 without OpenGL 
-#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -liconv -framework QuickTime
-DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM
+LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime -framework CoreFoundation
+DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM -DUTF8_FILESYSTEM
 
 # with OpenGL
-#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime
-# SDL >= 1.2.8 with OpenGL 
-#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -liconv -framework QuickTime
-#DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM -DUSE_OPENGL -DUSE_GL_TEXTURE_RECTANGLE
+#LIBS = `sdl-config --libs` `smpeg-config --libs` `freetype-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -lm -ljpeg -framework QuickTime -framework CoreFoundation
+#DEFS = -DMACOSX -DEXTERNAL_MIDI_PROGRAM -DUSE_OPENGL -DUSE_GL_TEXTURE_RECTANGLE -DUTF8_FILESYSTEM
 
 EXESUFFIX =
 OBJSUFFIX = .o
@@ -27,8 +23,8 @@ OBJSUFFIX = .o
 CC = c++ 
 LD = c++ -o 
 
-CFLAGS = -g -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
-#CFLAGS = -O3 -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
+#CFLAGS = -g -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
+CFLAGS = -O3 -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
 RM = rm -f
 
 TARGET = onscripter$(EXESUFFIX) sardec$(EXESUFFIX) nsadec$(EXESUFFIX) sarconv$(EXESUFFIX) nsaconv$(EXESUFFIX)

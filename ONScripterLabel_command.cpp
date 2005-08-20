@@ -24,7 +24,7 @@
 #include "ONScripterLabel.h"
 
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208)
-#include <iconv.h>
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #define ONSCRIPTER_VERSION 200
@@ -2578,24 +2578,20 @@ int ONScripterLabel::cellCommand()
 int ONScripterLabel::captionCommand()
 {
     const char* buf = script_h.readStr();
-    char *buf2 = new char[ strlen( buf ) + 1 ];
-    strcpy( buf2, buf );
+    size_t len = strlen(buf);
     
+#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
+    char *buf2 = new char[len*2+1];
+    CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)buf, len, kCFStringEncodingShiftJIS, false);
+    Boolean ret = CFStringGetCString(unicodeStrRef, buf2, len*2+1, kCFStringEncodingUTF8);
+    CFRelease(unicodeStrRef);
+    if (!ret) strcpy(buf2,buf);
+#else
+    char *buf2 = new char[len+1];
+    strcpy( buf2, buf );
 #if defined(LINUX) /* convert sjis to euc */
     DirectReader::convertFromSJISToEUC(buf2);
-#elif defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    iconv_t cd = iconv_open("UTF-8", "SJIS");
-    delete[] buf2;
-    size_t len = strlen(buf)+1;
-    size_t left = len * 2;
-    buf2 = new char[left];
-    const char *buf_p = buf;
-    char *buf2_p = buf2;
-     
-    int ret = iconv(cd, &buf_p, &len, &buf2_p, &left);
-    if(ret == -1) strcpy(buf2,buf);
-     
-    iconv_close(cd);
+#endif    
 #endif
 
     setStr( &wm_title_string, buf2 );

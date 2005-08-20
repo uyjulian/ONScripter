@@ -27,6 +27,10 @@
 #include "BaseReader.h"
 #include <string.h>
 
+#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+#include <iconv.h>
+#endif
+
 #define MAX_FILE_NAME_LENGTH 512
 
 class DirectReader : public BaseReader
@@ -52,6 +56,12 @@ protected:
     char *file_full_path;
     char *file_sub_path;
     size_t file_path_len;
+    char *capital_name;
+    char *capital_name_tmp;
+#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+    iconv_t iconv_cd;
+#endif
+
     char *archive_path;
     unsigned char key_table[256];
     bool key_table_flag;
@@ -86,7 +96,6 @@ protected:
     void writeChar( FILE *fp, unsigned char ch );
     void writeShort( FILE *fp, unsigned short ch );
     void writeLong( FILE *fp, unsigned long ch );
-    char capital_name[ MAX_FILE_NAME_LENGTH + 1 ];
     size_t decodeNBZ( FILE *fp, size_t offset, unsigned char *buf );
     size_t encodeNBZ( FILE *fp, size_t length, unsigned char *buf );
     int getbit( FILE *fp, int n );

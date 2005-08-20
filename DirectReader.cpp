@@ -27,6 +27,10 @@
 #include <dirent.h>
 #endif
 
+#if defined(UTF8_FILESYSTEM) && defined(MACOSX)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #ifndef SEEK_END
 #define SEEK_END 2
 #endif
@@ -45,6 +49,12 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
     file_full_path = NULL;
     file_sub_path = NULL;
     file_path_len = 0;
+
+    capital_name = new char[MAX_FILE_NAME_LENGTH*2+1];
+    capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*2+1];
+#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+    iconv_cd = iconv_open("UTF-8", "SJIS");
+#endif
 
     if ( path ){
         archive_path = new char[ strlen(path) + 1 ];
@@ -74,6 +84,13 @@ DirectReader::~DirectReader()
 {
     if (file_full_path) delete[] file_full_path;
     if (file_sub_path)  delete[] file_sub_path;
+
+    delete[] capital_name;
+    delete[] capital_name_tmp;
+#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+    iconv_close(iconv_cd);
+#endif
+    
     last_registered_compression_type = root_registered_compression_type.next;
     while ( last_registered_compression_type ){
         RegisteredCompressionType *cur = last_registered_compression_type;
@@ -259,10 +276,9 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
 {
     FILE *fp;
     unsigned int i;
-    size_t len;
 
     compression_type = NO_COMPRESSION;
-    len = strlen( file_name );
+    size_t len = strlen( file_name );
     if ( len > MAX_FILE_NAME_LENGTH ) len = MAX_FILE_NAME_LENGTH;
     memcpy( capital_name, file_name, len );
     capital_name[ len ] = '\0';
@@ -270,7 +286,23 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     for ( i=0 ; i<len ; i++ ){
         if ( capital_name[i] == '/' || capital_name[i] == '\\' ) capital_name[i] = (char)DELIMITER;
     }
-#if defined(LINUX)
+
+#if defined(UTF8_FILESYSTEM)
+#if defined(MACOSX)
+    CFStringRef unicodeFileNameRef = CFStringCreateWithBytes(nil, (const UInt8*)capital_name, len, kCFStringEncodingShiftJIS, false);
+    Boolean ret = CFStringGetCString(unicodeFileNameRef, capital_name_tmp, MAX_FILE_NAME_LENGTH*2+1, kCFStringEncodingUTF8);
+    CFRelease(unicodeFileNameRef);
+    if (ret) strcpy(capital_name, capital_name_tmp);
+#else
+    char *buf_src = capital_name;
+    len++;
+    char *buf_dst = capital_name_tmp;
+    size_t left = MAX_FILE_NAME_LENGTH*2+1;
+    int ret = iconv(iconv_cd, &buf_src, &len, &buf_dst, &left);
+    if (ret != -1) strcpy(capital_name, capital_name_tmp);
+#endif
+    len = strlen(capital_name);
+#elif defined(LINUX)
     convertFromSJISToEUC(capital_name);
 #endif    
 
