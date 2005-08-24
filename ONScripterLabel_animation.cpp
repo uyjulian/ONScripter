@@ -174,8 +174,6 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
         anim->setupImage(surface_org, surface_m);
     else
         anim->setupImage(surface, surface_m);
-    if (anim->image_surface)
-        loadTexture(anim->image_surface, anim->tex_id);
 
     if ( surface ) SDL_FreeSurface(surface);
     if ( surface_m ) SDL_FreeSurface(surface_m);
@@ -319,25 +317,8 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
         poly_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
     }
 
-    if (refresh_mode & REFRESH_OPENGL_MODE){
-        SDL_Rect tex_rect = anim->pos;
-        tex_rect.x = anim->pos.w*anim->current_cell;
-        tex_rect.y = 0;
-        if ( clip ){
-            SDL_Rect clipped_rect;
-            if ( anim->doClipping( &poly_rect, clip, &clipped_rect ) ) return;
-
-            tex_rect.x += clipped_rect.x;
-            tex_rect.y += clipped_rect.y;
-            tex_rect.w = poly_rect.w;
-            tex_rect.h = poly_rect.h;
-        }
-        drawTexture( anim->tex_id, (Rect&)poly_rect, (Rect&)tex_rect, anim->trans, anim );
-    }
-    else{
-        anim->blendOnSurface( dst_surface, poly_rect.x, poly_rect.y,
-                              clip, anim->trans );
-    }
+    anim->blendOnSurface( dst_surface, poly_rect.x, poly_rect.y,
+                          clip, anim->trans );
 }
 
 void ONScripterLabel::stopAnimation( int click )

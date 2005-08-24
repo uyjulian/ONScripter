@@ -254,12 +254,6 @@ void ONScripterLabel::initSDL()
     screen_bpp = 32;
 #endif
 
-#ifdef USE_OPENGL
-    SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
-    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
-    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
-    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-#endif    
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     
     /* ---------------------------------------- */
@@ -507,12 +501,7 @@ int ONScripterLabel::init()
     resize_buffer = new unsigned char[16];
     resize_buffer_size = 16;
 
-    texture_buffer = NULL;
-    texture_buffer_size = 0;
-
     for (i=0 ; i<MAX_PARAM_NUM ; i++) bar_info[i] = prnum_info[i] = NULL;
-
-    initOpenGL();
 
     defineresetCommand();
     readToken();
@@ -552,12 +541,6 @@ void ONScripterLabel::reset()
         delete[] resize_buffer;
         resize_buffer = new unsigned char[16];
         resize_buffer_size = 16;
-    }
-
-    if (texture_buffer){
-        delete[] texture_buffer;
-        texture_buffer = NULL;
-        texture_buffer_size = 0;
     }
 
     current_over_button = 0;
@@ -669,11 +652,6 @@ void ONScripterLabel::resetSentenceFont()
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
 
-    if (refresh_mode & REFRESH_OPENGL_MODE){
-        refreshOpenGL(refresh_mode, rect);
-        return;
-    }
-
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );
     }
@@ -699,11 +677,6 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
 void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
 {
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
-    
-    if (refresh_mode & REFRESH_OPENGL_MODE){
-        refreshOpenGL(refresh_mode, &rect);
-        return;
-    }
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
 
@@ -1049,7 +1022,6 @@ void ONScripterLabel::clearCurrentTextBuffer()
     internal_saveon_flag = true;
 
     SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-    loadSubTexture( text_surface, text_id );
     cached_text_buffer = current_text_buffer;
 }
 
@@ -1069,33 +1041,20 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
         if ( rect.x + rect.w > surface->w ) rect.w = surface->w - rect.x;
         if ( rect.y + rect.h > surface->h ) rect.h = surface->h - rect.y;
 
-        if (refresh_mode & REFRESH_OPENGL_MODE){
-#ifdef USE_OPENGL
-            glBlendColor_ptr(current_font->window_color[0]/256.0f,
-                             current_font->window_color[1]/256.0f,
-                             current_font->window_color[2]/256.0f,
-                             0.0);
-            glBlendFunc(GL_ZERO, GL_CONSTANT_COLOR);
-            drawTexture(effect_src_id, (Rect&)rect, (Rect&)rect);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#endif            
-        }
-        else{
-            SDL_LockSurface( surface );
-            Uint32 *buf = (Uint32 *)surface->pixels + rect.y * surface->w + rect.x;
+        SDL_LockSurface( surface );
+        Uint32 *buf = (Uint32 *)surface->pixels + rect.y * surface->w + rect.x;
     
-            for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
-                for ( int j=rect.x ; j<rect.x + rect.w ; j++, buf++ ){
-                    *buf = (((*buf >> surface->format->Rshift) & 0xff) * current_font->window_color[0] >> 8) << surface->format->Rshift |
-                        (((*buf >> surface->format->Gshift) & 0xff) * current_font->window_color[1] >> 8) << surface->format->Gshift |
-                        (((*buf >> surface->format->Bshift) & 0xff) * current_font->window_color[2] >> 8) << surface->format->Bshift |
-                        (*buf & amask);
-                }
-                buf += surface->w - rect.w;
+        for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
+            for ( int j=rect.x ; j<rect.x + rect.w ; j++, buf++ ){
+                *buf = (((*buf >> surface->format->Rshift) & 0xff) * current_font->window_color[0] >> 8) << surface->format->Rshift |
+                    (((*buf >> surface->format->Gshift) & 0xff) * current_font->window_color[1] >> 8) << surface->format->Gshift |
+                    (((*buf >> surface->format->Bshift) & 0xff) * current_font->window_color[2] >> 8) << surface->format->Bshift |
+                    (*buf & amask);
             }
-
-            SDL_UnlockSurface( surface );
+            buf += surface->w - rect.w;
         }
+
+        SDL_UnlockSurface( surface );
     }
     else if ( sentence_font_info.image_surface ){
         drawTaggedSurface( surface, &sentence_font_info, clip, refresh_mode );
@@ -1327,10 +1286,6 @@ int ONScripterLabel::refreshMode()
     else{
         ret = REFRESH_NORMAL_MODE;
     }
-
-#ifdef USE_OPENGL
-    ret |= REFRESH_OPENGL_MODE;
-#endif    
 
     return ret;
 }

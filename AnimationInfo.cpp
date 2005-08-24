@@ -38,7 +38,6 @@ AnimationInfo::AnimationInfo()
 
     image_name = NULL;
     image_surface = NULL;
-    tex_id = 0;
 
     duration_list = NULL;
     color_list = NULL;
@@ -80,10 +79,6 @@ void AnimationInfo::setImageName( const char *name ){
 void AnimationInfo::deleteSurface(){
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;
-#ifdef USE_OPENGL
-    if (tex_id != 0) glDeleteTextures(1, (const GLuint*)&tex_id);
-    tex_id = 0;
-#endif    
 }
 
 void AnimationInfo::remove(){
@@ -444,31 +439,5 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
 
     pos.w = w / num_of_cells;
     pos.h = h;
-
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    texture_width  = image_surface->w;
-    texture_height = image_surface->h;
-#else
-    texture_width = 1;
-    while (texture_width  < image_surface->w) texture_width <<= 1;
-    texture_height = 1;
-    while (texture_height < image_surface->h) texture_height <<= 1;
-#endif
-    bindTexture();
 }
 
-void AnimationInfo::bindTexture()
-{
-#ifdef USE_OPENGL
-    if (tex_id == 0) glGenTextures(1, (GLuint*)&tex_id);
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#else
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#endif
-#endif    
-}

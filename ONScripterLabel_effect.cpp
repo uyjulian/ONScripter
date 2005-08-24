@@ -53,15 +53,10 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     
     if ( effect_counter == 0 ){
         blitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
-        copyTexture(effect_src_id);
-        if ( effect_no == 15 || effect_no == 18 ){
-            saveTexture( effect_src_surface );
-        }
         
         if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
           case DIRECT_EFFECT_IMAGE:
-            copyTexture(effect_dst_id);
             break;
             
           case COLOR_EFFECT_IMAGE:
@@ -69,14 +64,9 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
           case TACHI_EFFECT_IMAGE:
             if (effect_no == 1){
                 refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() );
-                copyTexture(effect_dst_id);
             }
             else{
                 refreshSurface( effect_dst_surface, NULL, refreshMode() );
-                copyTexture(effect_dst_id);
-                if ( effect_no == 15 || effect_no == 18 ){
-                    saveTexture( effect_dst_surface );
-                }
             }
             break;
         }
@@ -93,12 +83,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
             dirty_rect.fill( screen_width, screen_height );
     }
 
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-	glLoadIdentity() ;
-#endif
-    
     int i;
     int width, width2;
     int height, height2;
@@ -116,9 +100,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 2: // Left shutter
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = i * EFFECT_STRIPE_WIDTH;
@@ -130,9 +111,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 3: // Right shutter
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = i * EFFECT_STRIPE_WIDTH - width - 1;
@@ -144,9 +122,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 4: // Top shutter
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=0 ; i<screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = 0;
@@ -158,9 +133,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 5: // Bottom shutter
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
         for ( i=1 ; i<=screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = 0;
@@ -172,9 +144,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 6: // Left curtain
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
@@ -189,9 +158,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 7: // Right curtain
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
@@ -207,9 +173,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 8: // Top curtain
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
@@ -224,9 +187,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 9: // Bottom curtain
-#ifdef USE_OPENGL        
-        drawEffect(&src_rect, &src_rect, effect_src_surface);
-#endif        
         height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
@@ -244,20 +204,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         printf("effect No. %d is not implemented. Crossfade is substituted for that.\n",effect_no);
         
       case 10: // Cross fade
-#ifdef USE_OPENGL
-        drawTexture( effect_src_id, (Rect&)src_rect, (Rect&)src_rect );
-        
-        glBlendColor_ptr(0.0, 0.0, 0.0, (float)effect_counter / effect->duration);
-        glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-        drawTexture( effect_dst_id, (Rect&)src_rect, (Rect&)src_rect );
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#else        
         height = 256 * effect_counter / effect->duration;
         alphaBlend( accumulation_surface, dst_rect,
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
                     NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
-#endif        
         break;
         
       case 11: // Left scroll
@@ -333,26 +284,14 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
                     effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
-#ifdef USE_OPENGL        
-        loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
-#endif    
         break;
 
       case 16: // Mosaic out
         generateMosaic( effect_src_surface, 5 - 6 * effect_counter / effect->duration );
-#ifdef USE_OPENGL        
-        loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
-#endif    
         break;
         
       case 17: // Mosaic in
         generateMosaic( effect_dst_surface, 6 * effect_counter / effect->duration );
-#ifdef USE_OPENGL        
-        loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
-#endif    
         break;
         
       case 18: // Cross fade with mask
@@ -360,10 +299,6 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
                     effect_src_surface,
                     effect_dst_surface, 0, 0,
                     effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
-#ifdef USE_OPENGL
-        loadSubTexture(accumulation_surface, effect_dst_id );
-        drawTexture( effect_dst_id, (Rect&)dst_rect, (Rect&)dst_rect );
-#endif    
         break;
 
       case (CUSTOM_EFFECT_NO + 0 ): // quakey
@@ -394,22 +329,11 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     }
 
     //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
-#ifdef USE_OPENGL
-    int err;
-    if ((err = glGetError()) != GL_NO_ERROR){
-        fprintf(stderr, "effect err: %s\n", gluErrorString(err));
-    }
-#endif
     
     effect_counter += effect_timer_resolution;
     if ( effect_counter < effect->duration && effect_no != 1 ){
         if ( effect_no != 0 ){
-#ifdef USE_OPENGL            
-            glPopMatrix();
-            SDL_GL_SwapBuffers();
-#else
             flush( REFRESH_NONE_MODE, NULL, false );
-#endif            
         }
         return RET_WAIT | RET_REREAD;
     }
@@ -418,17 +342,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         blitSurface( effect_dst_surface, &dirty_rect.bounding_box, accumulation_surface, &dirty_rect.bounding_box );
 
         if ( effect_no != 0 ){
-#ifdef USE_OPENGL            
-            src_rect.x = src_rect.y = 0;
-            src_rect.w = screen_width;
-            src_rect.h = screen_height;
-            drawTexture( effect_dst_id, (Rect&)src_rect, (Rect&)src_rect );
-            glPopMatrix();
-            SDL_GL_SwapBuffers();
-            dirty_rect.clear();
-#else            
             flush(REFRESH_NONE_MODE);
-#endif
         }
         if ( effect_no == 1 ) effect_counter = 0;
         event_mode = IDLE_EVENT_MODE;
@@ -436,35 +350,13 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     }
 }
 
-void ONScripterLabel::copyTexture(unsigned int tex_id)
-{
-#ifdef USE_OPENGL
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tex_id);
-    glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0,
-                     GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
-#else
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0,
-                     GL_RGBA, 0, 0, screen_texture_width, screen_texture_height, 0);
-#endif
-#endif        
-}
-
 void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)
 {
-#ifdef USE_OPENGL
-    if (surface == effect_dst_surface)
-        drawTexture( effect_dst_id, (Rect&)*dst_rect, (Rect&)*src_rect );
-    else
-        drawTexture( effect_src_id, (Rect&)*dst_rect, (Rect&)*src_rect );
-#else
     SDL_Rect clipped_rect;
     if (AnimationInfo::doClipping(dst_rect, &dirty_rect.bounding_box, &clipped_rect)) return;
     if (src_rect != dst_rect)
         shiftRect(*src_rect, clipped_rect);
     blitSurface(surface, src_rect, accumulation_surface, dst_rect);
-#endif    
 }
 
 void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )

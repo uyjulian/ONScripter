@@ -37,20 +37,7 @@
 #include <smpeg.h>
 #endif
 
-#ifdef USE_OPENGL
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-#ifndef GL_BGRA
-#define GL_BGRA 0x80E1
-#endif
-#define DEFAULT_VIDEO_SURFACE_FLAG (SDL_OPENGL|SDL_DOUBLEBUF)
-#ifndef PFNGLBLENDCOLORPROC
-typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-#endif
-#else
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
-#endif
 #define DEFAULT_SURFACE_FLAG (SDL_SWSURFACE)
 //#define DEFAULT_SURFACE_FLAG (SDL_HWSURFACE)
 
@@ -382,8 +369,7 @@ private:
            REFRESH_SAYA_MODE        = 2,
            REFRESH_SHADOW_MODE      = 4,
            REFRESH_TEXT_MODE        = 8,
-           REFRESH_CURSOR_MODE      = 16,
-           REFRESH_OPENGL_MODE      = 32
+           REFRESH_CURSOR_MODE      = 16
     };
     
     int refresh_shadow_text_mode;
@@ -729,22 +715,6 @@ private:
     void executeSystemYesNo();
     void setupLookbackButton();
     void executeSystemLookback();
-
-    /* ---------------------------------------- */
-    /* OpenGL */
-    unsigned char *texture_buffer;
-    int texture_buffer_size;
-
-    void initOpenGL();
-    void refreshOpenGL( int refresh_mode, SDL_Rect *rect );
-    void loadTexture( SDL_Surface *surface, unsigned int tex_id );
-    void loadSubTexture( SDL_Surface *surface, unsigned int tex_id, SDL_Rect *rect=NULL );
-    void saveTexture( SDL_Surface *surface );
-    void drawTexture( unsigned int tex_id, Rect &draw_rect, Rect &tex_rect, int alpha=256, AnimationInfo *anim=NULL );
-    void refreshTexture();
-#ifdef USE_OPENGL
-    PFNGLBLENDCOLORPROC glBlendColor_ptr;
-#endif
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

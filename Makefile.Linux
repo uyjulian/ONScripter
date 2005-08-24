@@ -13,10 +13,6 @@ INCS = `sdl-config --cflags` `smpeg-config --cflags` `avifile-config --cflags`
 LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis
 DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
 
-# with OggVorbis and AVI and OpenGL
-#LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis -lGL -lGLU
-#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DUSE_OPENGL -DUSE_GL_TEXTURE_RECTANGLE
-
 # with Integer OggVorbis and AVI in PDA size
 #LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbisidec
 #DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS -DPDA -DPDA_VGA

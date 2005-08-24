@@ -27,16 +27,6 @@
 #include <SDL.h>
 #include <string.h>
 
-#ifdef USE_OPENGL
-#include <SDL_opengl.h>
-
-#ifdef USE_GL_TEXTURE_RECTANGLE
-#ifndef GL_TEXTURE_RECTANGLE_ARB
-#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
-#endif
-#endif
-#endif
-
 typedef unsigned char uchar3[3];
 
 class AnimationInfo{
@@ -87,10 +77,6 @@ public:
     
     Uint32 rmask, gmask, bmask, amask, rgbmask;
 
-    int texture_width;
-    int texture_height;
-    unsigned int tex_id;
-    
     AnimationInfo();
     ~AnimationInfo();
     void reset();
@@ -110,7 +96,6 @@ public:
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           int alpha=256, int scale_x=100, int scale_y=100, int rot=0 );
     void setupImage( SDL_Surface *surface, SDL_Surface *surface_m );
-    void bindTexture();
 };
 
 #endif // __ANIMATION_INFO_H__

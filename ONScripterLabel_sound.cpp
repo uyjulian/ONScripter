@@ -263,70 +263,6 @@ int ONScripterLabel::playMP3( int cd_no )
 #define ONS_SMPEG_DRAW_EVENT   (SDL_USEREVENT+6)
 static unsigned int movie_id;
 
-void updateMPEGFrameGL(SDL_Surface* dst, int x, int y,
-                        unsigned int w, unsigned int h)
-{
-    SDL_Event event;
-    event.type = ONS_SMPEG_DRAW_EVENT;
-    SDL_PushEvent(&event);
-}
-
-void drawMPEGFrameGL(SDL_Surface* dst, int x, int y,
-                     unsigned int w, unsigned int h,
-                     unsigned int sw, unsigned int sh)
-{
-#ifdef USE_OPENGL
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity( );
-
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    glBindTexture( GL_TEXTURE_RECTANGLE_ARB, movie_id );
-    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0,
-                     0, 0, w, h,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     dst->pixels );
-#else
-    glBindTexture( GL_TEXTURE_2D, movie_id );
-    glTexSubImage2D( GL_TEXTURE_2D, 0,
-                     0, 0, w, h,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     dst->pixels );
-#endif
-
-    glBegin(GL_QUADS);
-
-    float u[2], v[2];
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    u[0] = 0.0;
-    u[1] = w;
-    v[0] = 0.0;
-    v[1] = h;
-#else    
-    u[0] = 0.0;
-    u[1] = (float)w/texture_width;
-    v[0] = 0.0;
-    v[1] = (float)h/texture_height;
-#endif
-    glTexCoord2f(u[0], v[0]);
-    glVertex3i(0, sh, 0);
-        
-    glTexCoord2f(u[0], v[1]);
-    glVertex3i(0, 0, 0);
-        
-    glTexCoord2f(u[1], v[1]);
-    glVertex3i(sw, 0, 0);
-        
-    glTexCoord2f(u[1], v[0]);
-    glVertex3i(sw, sh, 0);
-
-    glEnd();
-
-    SDL_GL_SwapBuffers();
-#endif
-}
-
 void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
 {
 #ifndef MP3_MAD        
@@ -343,34 +279,7 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
             SMPEG_enableaudio( mpeg_sample, 1 );
         }
         SMPEG_enablevideo( mpeg_sample, 1 );
-#ifdef USE_OPENGL
-        glDisable(GL_BLEND);
-        SMPEG_Info mpeg_info;
-        SMPEG_getinfo( mpeg_sample, &mpeg_info );
-        SDL_Surface *surface = SDL_AllocSurface( SDL_SWSURFACE,
-                                                 mpeg_info.width,
-                                                 mpeg_info.height,
-                                                 32,
-                                                 0x000000FF,
-                                                 0x0000FF00,
-                                                 0x00FF0000,
-                                                 0xFF000000 );
-        glGenTextures(1, (GLuint*)&movie_id);
-#ifdef USE_GL_TEXTURE_RECTANGLE
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, movie_id);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#else
-        glBindTexture(GL_TEXTURE_2D, movie_id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#endif
-        loadTexture(surface, movie_id);
-
-        SMPEG_setdisplay( mpeg_sample, surface, NULL, updateMPEGFrameGL );
-#else
         SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
-#endif
         SMPEG_setvolume( mpeg_sample, mp3_volume );
 
         Mix_HookMusic( mp3callback, mpeg_sample );
@@ -391,11 +300,6 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
                   case SDL_MOUSEBUTTONDOWN:
                     done_flag = true;
                     break;
-#ifdef USE_OPENGL
-                  case ONS_SMPEG_DRAW_EVENT:
-                    drawMPEGFrameGL(surface, 0, 0, mpeg_info.width, mpeg_info.height, screen_width, screen_height);
-                    break;
-#endif
                   default:
                     break;
                 }
@@ -407,11 +311,6 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
         Mix_HookMusic( NULL, NULL );
         SMPEG_delete( mpeg_sample );
 
-#ifdef USE_OPENGL        
-        SDL_FreeSurface(surface);
-        glDeleteTextures(1, (const GLuint*)&movie_id);
-        glEnable(GL_BLEND);
-#endif        
     }
     delete[] mpeg_buffer;
 #else
@@ -431,9 +330,6 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 
     if ( audio_open_flag ) Mix_CloseAudio();
 
-#ifdef USE_OPENGL
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, SDL_SWSURFACE|(fullscreen_mode?SDL_FULLSCREEN:0) );
-#endif        
     AVIWrapper *avi = new AVIWrapper();
     if ( avi->init( absolute_filename, false ) == 0 &&
          avi->initAV( screen_surface, audio_open_flag ) == 0 ){
@@ -441,10 +337,6 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
     }
     delete avi;
     delete[] absolute_filename;
-#ifdef USE_OPENGL        
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-    initOpenGL();
-#endif        
 
     if ( audio_open_flag ){
         Mix_CloseAudio();

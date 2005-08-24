@@ -139,8 +139,6 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
             src_rect.x = dst_rect.x;
             src_rect.y = dst_rect.y;
             tmp2_surface = cache_surface;
-            if (cache_surface == text_surface)
-                loadSubTexture(cache_surface, text_id, &dst_rect);
         }
         if (dst_surface)
             alphaBlend( dst_surface, dst_rect, dst_surface,
@@ -200,11 +198,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
     else if ( flush_flag ){
         info->addShadeArea(dst_rect, shade_distance);
-#ifdef USE_OPENGL
-        flushDirect( dst_rect, REFRESH_OPENGL_MODE );
-#else
         flushDirect( dst_rect, REFRESH_NONE_MODE );
-#endif
     }
 
     /* ---------------------------------------- */
@@ -298,11 +292,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     info->addShadeArea(clipped_rect, shade_distance);
     
     if ( flush_flag )
-#ifdef USE_OPENGL
-        flush( refresh_shadow_text_mode | REFRESH_OPENGL_MODE, &clipped_rect );
-#else
         flush( refresh_shadow_text_mode, &clipped_rect );
-#endif    
     
     if ( rect ) *rect = clipped_rect;
 }
@@ -314,20 +304,14 @@ void ONScripterLabel::refreshText( SDL_Surface *surface, SDL_Rect *clip, int ref
     SDL_Rect rect = {0, 0, screen_width, screen_height};
     if ( clip ) rect = *clip;
     
-    if (refresh_mode & REFRESH_OPENGL_MODE){
-        drawTexture( text_id, (Rect&)rect, (Rect&)rect );
-    }
-    else{
-        alphaBlend( surface, rect, surface,
-                    text_surface, rect.x, rect.y,
-                    NULL, ALPHA_BLEND_NORMAL );
-    }
+    alphaBlend( surface, rect, surface,
+                text_surface, rect.x, rect.y,
+                NULL, ALPHA_BLEND_NORMAL );
 }
 
 void ONScripterLabel::restoreTextBuffer()
 {
     SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-    loadSubTexture( text_surface, text_id );
 
     char out_text[3] = { '\0','\0','\0' };
     FontInfo f_info = sentence_font;
@@ -370,7 +354,6 @@ void ONScripterLabel::restoreTextBuffer()
     }
 
     Rect rect = {0, 0, screen_width, screen_height};
-    drawTexture( text_id, rect, rect );
 }
 
 int ONScripterLabel::enterTextDisplayMode(bool text_flag)

@@ -176,7 +176,6 @@ void ONScripterLabel::executeSystemMenu()
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
 
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-        loadSubTexture( text_surface, text_id );
         flush( refreshMode() );
 
         menu_font.num_xy[0] = rmenu_link_width;
@@ -252,11 +251,7 @@ void ONScripterLabel::executeWindowErase()
         leaveSystemCall();
     }
     else{
-#ifdef USE_OPENGL        
-        flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE | REFRESH_OPENGL_MODE);
-#else
         flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
-#endif        
 
         event_mode = WAIT_BUTTON_MODE;
         system_menu_mode = SYSTEM_WINDOWERASE;
@@ -293,7 +288,6 @@ void ONScripterLabel::executeSystemLoad()
     }
     else{
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-        loadSubTexture( text_surface, text_id );
         
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -364,7 +358,6 @@ void ONScripterLabel::executeSystemSave()
     }
     else{
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-        loadSubTexture( text_surface, text_id );
 
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -474,7 +467,6 @@ void ONScripterLabel::executeSystemYesNo()
     }
     else{
         SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
-        loadSubTexture( text_surface, text_id );
 
         if ( yesno_caller == SYSTEM_SAVE ){
             SaveFileInfo save_file_info;

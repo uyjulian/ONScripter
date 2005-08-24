@@ -347,8 +347,6 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     }
     
     SDL_UnlockSurface(surface);
-    if (si->image_surface)
-        loadTexture(si->image_surface, si->tex_id);
     
     if ( si->visible )
         dirty_rect.add( si->pos );
@@ -1056,11 +1054,7 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscopyCommand()
 {
-#ifdef USE_OPENGL
-    copyTexture(accumulation_id);
-#else    
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
-#endif    
 
     return RET_CONTINUE;
 }
@@ -1179,14 +1173,8 @@ int ONScripterLabel::menu_windowCommand()
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
-#ifdef USE_OPENGL
-            initOpenGL();
-#endif
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
-#ifdef USE_OPENGL
-            SDL_GL_SwapBuffers();
-#endif
         }
         fullscreen_mode = false;
     }
@@ -1200,14 +1188,8 @@ int ONScripterLabel::menu_fullCommand()
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
-#ifdef USE_OPENGL
-            initOpenGL();
-#endif
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
-#ifdef USE_OPENGL
-            SDL_GL_SwapBuffers();
-#endif
         }
         fullscreen_mode = true;
     }
@@ -1730,11 +1712,7 @@ int ONScripterLabel::getscreenshotCommand()
     if ( screenshot_surface == NULL )
         screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
 
-#ifdef USE_OPENGL
-    saveTexture( effect_dst_surface );
-#else
     SDL_BlitSurface( screen_surface, NULL, effect_dst_surface, NULL ); // Bucause screen_surface may be in 16bit depth
-#endif    
     resizeSurface( effect_dst_surface, NULL, screenshot_surface, NULL );
 
     return RET_CONTINUE;
@@ -2195,11 +2173,7 @@ int ONScripterLabel::dvCommand()
 
 int ONScripterLabel::drawtextCommand()
 {
-#ifdef USE_OPENGL
-    refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE | REFRESH_OPENGL_MODE);
-#else    
     refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE );
-#endif    
     
     return RET_CONTINUE;
 }
@@ -2218,28 +2192,8 @@ int ONScripterLabel::drawsp2Command()
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-    glLoadIdentity() ;
-
-    glTranslatef( (float)x, (float)(screen_height-y), 0.0 );
-    glRotatef( (float)rot, 0.0, 0.0, 1.0 );
-    glScalef( scale_x * 0.01f, scale_y * 0.01f, 1.0 );
-
-    SDL_Rect poly_rect = si.pos;
-    poly_rect.x = -si.pos.w/2;
-    poly_rect.y = screen_height-si.pos.h/2;
-    SDL_Rect tex_rect = si.pos;
-    tex_rect.x = si.pos.w*si.current_cell;
-    tex_rect.y = 0;
-    drawTexture( si.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, alpha, &si );
-
-    glPopMatrix();
-#else    
     si.blendOnSurface2( accumulation_surface, x, y,
                         alpha, scale_x, scale_y, rot );
-#endif    
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -2256,23 +2210,7 @@ int ONScripterLabel::drawspCommand()
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-    glLoadIdentity() ;
-
-    SDL_Rect poly_rect = si.pos;
-    poly_rect.x = x;
-    poly_rect.y = y;
-    SDL_Rect tex_rect = si.pos;
-    tex_rect.x = si.pos.w*si.current_cell;
-    tex_rect.y = 0;
-    drawTexture( si.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, alpha, &si );
-
-    glPopMatrix();
-#else    
     si.blendOnSurface( accumulation_surface, x, y, NULL, alpha );
-#endif    
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -2284,51 +2222,21 @@ int ONScripterLabel::drawfillCommand()
     int g = script_h.readInt();
     int b = script_h.readInt();
 
-#ifdef USE_OPENGL
-    glColor4f(r/256.0f, g/256.0f, b/256.0f, 1.0);
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    glDisable(GL_TEXTURE_RECTANGLE_ARB);
-#else
-    glDisable(GL_TEXTURE_2D);
-#endif
-    Rect rect = {0, 0, screen_width, screen_height};
-    drawTexture( effect_src_id, rect, rect, -1 );
-#ifdef USE_GL_TEXTURE_RECTANGLE
-    glEnable(GL_TEXTURE_RECTANGLE_ARB);
-#else
-    glEnable(GL_TEXTURE_2D);
-#endif
-#else    
     SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, r, g, b, 0xff) );
-#endif    
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawclearCommand()
 {
-#ifdef USE_OPENGL
-    glClear(GL_COLOR_BUFFER_BIT);
-#else    
     SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff) );
-#endif    
     
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawbgCommand()
 {
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-    glLoadIdentity() ;
-
-    drawTexture( bg_info.tex_id, (Rect&)bg_info.pos, (Rect&)bg_info.pos, 256, &bg_info );
-
-    glPopMatrix();
-#else    
     bg_info.blendOnSurface( accumulation_surface, bg_info.pos.x, bg_info.pos.y );
-#endif    
     
     return RET_CONTINUE;
 }
@@ -2341,41 +2249,17 @@ int ONScripterLabel::drawbg2Command()
     int scale_y = script_h.readInt();
     int rot = script_h.readInt();
 
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-    glLoadIdentity() ;
-
-    glTranslatef( (float)x, (float)(screen_height-y), 0.0 );
-    glRotatef( (float)rot, 0.0, 0.0, 1.0 );
-    glScalef( scale_x * 0.01f, scale_y * 0.01f, 1.0 );
-    
-    SDL_Rect poly_rect = bg_info.pos;
-    poly_rect.x = -bg_info.pos.w/2;
-    poly_rect.y = screen_height-bg_info.pos.h/2;
-    SDL_Rect tex_rect = bg_info.pos;
-    tex_rect.x = 0;
-    tex_rect.y = 0;
-    drawTexture( bg_info.tex_id, (Rect&)poly_rect, (Rect&)tex_rect, 256, &bg_info );
-
-    glPopMatrix();
-#else    
     bg_info.blendOnSurface2( accumulation_surface, x, y,
                              256, scale_x, scale_y, rot );
-#endif    
 
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::drawCommand()
 {
-#ifdef USE_OPENGL
-    SDL_GL_SwapBuffers();
-#else    
     SDL_Rect rect = {0, 0, screen_width, screen_height};
     flushDirect( rect, REFRESH_NONE_MODE );
     dirty_rect.clear();
-#endif
     
     return RET_CONTINUE;
 }
@@ -2890,16 +2774,6 @@ int ONScripterLabel::bltCommand()
     //printf("dst %d %d %d %d\n", dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h);
     //printf("src %d %d %d %d\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
     
-#ifdef USE_OPENGL
-    glMatrixMode(GL_MODELVIEW) ;
-    glPushMatrix();
-    glLoadIdentity() ;
-
-    drawTexture( btndef_info.tex_id, dst_rect, src_rect, 256, &btndef_info );
-        
-    glPopMatrix();
-    SDL_GL_SwapBuffers();
-#else        
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 
         SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
@@ -2931,26 +2805,12 @@ int ONScripterLabel::bltCommand()
     
         flushDirect( (SDL_Rect&)dst_rect, REFRESH_NONE_MODE );
     }
-#endif    
+
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::bgcopyCommand()
 {
-#ifdef USE_OPENGL
-    if (bg_info.image_surface == NULL ||
-        bg_info.pos.w != screen_width || 
-        bg_info.pos.h != screen_height){
-        bg_effect_image = BG_EFFECT_IMAGE;
-
-        bg_info.pos.x = 0;
-        bg_info.pos.y = 0;
-        bg_info.num_of_cells = 1;
-        bg_info.trans_mode = AnimationInfo::TRANS_COPY;
-        setupAnimationInfo(&bg_info, NULL, accumulation_surface);
-    }
-    copyTexture(bg_info.tex_id);
-#else    
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
     bg_effect_image = BG_EFFECT_IMAGE;
 
@@ -2959,7 +2819,6 @@ int ONScripterLabel::bgcopyCommand()
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
     setupAnimationInfo(&bg_info, NULL, accumulation_surface);
-#endif    
 
     return RET_CONTINUE;
 }

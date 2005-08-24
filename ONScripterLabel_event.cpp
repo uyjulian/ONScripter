@@ -910,12 +910,8 @@ int ONScripterLabel::eventLoop()
             if ( !event.active.gain ) break;
           case SDL_VIDEOEXPOSE:
           {
-#ifdef USE_OPENGL
-              SDL_GL_SwapBuffers();
-#else              
               SDL_Rect rect = {0, 0, screen_width, screen_height};
               flushDirect( rect, refreshMode() );
-#endif              
           }
           break;
 
