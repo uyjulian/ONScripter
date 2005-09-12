@@ -52,9 +52,8 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     if ( effect_cut_flag && skip_flag ) effect_no = 1;
     
     if ( effect_counter == 0 ){
-        blitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
+        SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
         
-        if ( need_refresh_flag ) refreshSurfaceParameters();
         switch( effect_image ){
           case DIRECT_EFFECT_IMAGE:
             break;
@@ -205,10 +204,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         
       case 10: // Cross fade
         height = 256 * effect_counter / effect->duration;
-        alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface,
-                    effect_dst_surface, 0, 0,
-                    NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
+        alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
         break;
         
       case 11: // Left scroll
@@ -280,10 +276,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case 15: // Fade with mask
-        alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface,
-                    effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
+        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
         break;
 
       case 16: // Mosaic out
@@ -295,10 +288,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
         
       case 18: // Cross fade with mask
-        alphaBlend( accumulation_surface, dst_rect,
-                    effect_src_surface,
-                    effect_dst_surface, 0, 0,
-                    effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
+        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
         break;
 
       case (CUSTOM_EFFECT_NO + 0 ): // quakey
@@ -332,20 +322,17 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     
     effect_counter += effect_timer_resolution;
     if ( effect_counter < effect->duration && effect_no != 1 ){
-        if ( effect_no != 0 ){
-            flush( REFRESH_NONE_MODE, NULL, false );
-        }
+        if ( effect_no != 0 ) flush( REFRESH_NONE_MODE, NULL, false );
+        
         return RET_WAIT | RET_REREAD;
     }
     else{
-        //monocro_flag = false;
-        blitSurface( effect_dst_surface, &dirty_rect.bounding_box, accumulation_surface, &dirty_rect.bounding_box );
+        SDL_BlitSurface( effect_dst_surface, &dirty_rect.bounding_box, accumulation_surface, &dirty_rect.bounding_box );
 
-        if ( effect_no != 0 ){
-            flush(REFRESH_NONE_MODE);
-        }
+        if ( effect_no != 0 ) flush(REFRESH_NONE_MODE);
         if ( effect_no == 1 ) effect_counter = 0;
         event_mode = IDLE_EVENT_MODE;
+        
         return RET_CONTINUE;
     }
 }
@@ -354,9 +341,14 @@ void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Sur
 {
     SDL_Rect clipped_rect;
     if (AnimationInfo::doClipping(dst_rect, &dirty_rect.bounding_box, &clipped_rect)) return;
-    if (src_rect != dst_rect)
-        shiftRect(*src_rect, clipped_rect);
-    blitSurface(surface, src_rect, accumulation_surface, dst_rect);
+    if (src_rect != dst_rect){
+        src_rect->x += clipped_rect.x;
+        src_rect->y += clipped_rect.y;
+        src_rect->w = clipped_rect.w;
+        src_rect->h = clipped_rect.h;
+    }
+    
+    SDL_BlitSurface(surface, src_rect, accumulation_surface, dst_rect);
 }
 
 void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )

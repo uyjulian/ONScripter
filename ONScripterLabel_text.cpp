@@ -81,7 +81,7 @@ SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text, SDL_Color
     return gc->surface;
 }
 
-void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, SDL_Surface *cache_surface, SDL_Rect *clip, SDL_Rect &dst_rect )
+void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
     if (IS_TWO_BYTE(text[0])){
@@ -106,15 +106,13 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
     
     SDL_Surface *tmp_surface = renderGlyph( (TTF_Font*)info->ttf_font, unicode, color );
 
-    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ){
-        tmp_surface = rotateSurface90CW(tmp_surface);
-        int t;
-        t = miny; miny = minx; minx = t;
-        t = maxy; maxy = maxx; maxx = t;
-    }
-
+    bool rotate_flag = false;
+    if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;
+    
     dst_rect.x = xy[0] + minx;
     dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+    if ( rotate_flag ) dst_rect.x += miny - minx;
+        
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_TRANSLATION_REQUIRED(text) ){
         dst_rect.x += info->font_size_xy[0]/2;
         dst_rect.y -= info->font_size_xy[0]/2;
@@ -126,31 +124,24 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
     }
 
     if ( tmp_surface ){
-        dst_rect.w = tmp_surface->w;
-        dst_rect.h = tmp_surface->h;
-
-        SDL_Rect src_rect;
-        src_rect.x = src_rect.y = 0;
-        SDL_Surface *tmp2_surface = tmp_surface;
-        if ( cache_surface ){
-            alphaBlend( cache_surface, dst_rect, cache_surface,
-                        tmp_surface, 0, 0,
-                        NULL, ALPHA_BLEND_MULTIPLE, 256, clip );
-            src_rect.x = dst_rect.x;
-            src_rect.y = dst_rect.y;
-            tmp2_surface = cache_surface;
+        if (rotate_flag){
+            dst_rect.w = tmp_surface->h;
+            dst_rect.h = tmp_surface->w;
         }
-        if (dst_surface)
-            alphaBlend( dst_surface, dst_rect, dst_surface,
-                        tmp2_surface, src_rect.x, src_rect.y,
-                        NULL, ALPHA_BLEND_NORMAL, 256, clip );
+        else{
+            dst_rect.w = tmp_surface->w;
+            dst_rect.h = tmp_surface->h;
+        }
+
+        if (cache_info)
+            cache_info->blendBySurface( tmp_surface, dst_rect.x, dst_rect.y, clip, rotate_flag );
         
-        if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) )
-            SDL_FreeSurface( tmp_surface );
+        if (dst_surface)
+            alphaBlend32( dst_surface, dst_rect, tmp_surface, clip, rotate_flag );
     }
 }
 
-void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip )
+void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
 {
     //printf("draw %x-%x[%s] %d, %d\n", text[0], text[1], text, info->xy[0], info->xy[1] );
     
@@ -184,12 +175,12 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     SDL_Rect dst_rect;
     if ( info->is_shadow ){
         color.r = color.g = color.b = 0;
-        drawGlyph(surface, info, color, text, xy, true, cache_surface, clip, dst_rect);
+        drawGlyph(surface, info, color, text, xy, true, cache_info, clip, dst_rect);
     }
     color.r = info->color[0];
     color.g = info->color[1];
     color.b = info->color[2];
-    drawGlyph( surface, info, color, text, xy, false, cache_surface, clip, dst_rect );
+    drawGlyph( surface, info, color, text, xy, false, cache_info, clip, dst_rect );
 
     if ( surface == accumulation_surface &&
          !flush_flag &&
@@ -215,24 +206,24 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
 }
 
-void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, SDL_Surface *cache_surface, SDL_Rect *clip )
+void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
 {
     char text2[3]= {text[0], '\0', '\0'};
     
     if ( IS_TWO_BYTE(text[0]) ){
-        drawChar( text, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        drawChar( text, info, flush_flag, lookback_flag, surface, cache_info, clip );
     }
     else if (text[1]){
-        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_info, clip );
         text2[0] = text[1];
-        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_info, clip );
     }
     else{
-        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_surface, clip );
+        drawChar( text2, info, flush_flag, lookback_flag, surface, cache_info, clip );
     }
 }
 
-void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, SDL_Surface *cache_surface )
+void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info )
 {
     int i;
 
@@ -268,19 +259,20 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             }
             text[0] = *str++;
             text[1] = *str++;
-            drawChar( text, info, false, false, surface, cache_surface );
+            drawChar( text, info, false, false, surface, cache_info );
         }
         else if (*str == 0x0a){
+            printf("newline\n");
             info->newLine();
             str++;
         }
         else{
             text[0] = *str++;
             text[1] = '\0';
-            drawChar( text, info, false, false, surface, cache_surface );
+            drawChar( text, info, false, false, surface, cache_info );
             if (*str && *str != 0x0a){
                 text[0] = *str++;
-                drawChar( text, info, false, false, surface, cache_surface );
+                drawChar( text, info, false, false, surface, cache_info );
             }
         }
     }
@@ -297,21 +289,9 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     if ( rect ) *rect = clipped_rect;
 }
 
-void ONScripterLabel::refreshText( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode )
-{
-    if (!(refresh_mode & REFRESH_TEXT_MODE)) return;
-    
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
-    if ( clip ) rect = *clip;
-    
-    alphaBlend( surface, rect, surface,
-                text_surface, rect.x, rect.y,
-                NULL, ALPHA_BLEND_NORMAL );
-}
-
 void ONScripterLabel::restoreTextBuffer()
 {
-    SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+    text_info.fill( 0, 0, 0, 0 );
 
     char out_text[3] = { '\0','\0','\0' };
     FontInfo f_info = sentence_font;
@@ -342,18 +322,16 @@ void ONScripterLabel::restoreTextBuffer()
             }
             else{
                 out_text[1] = '\0';
-                drawChar( out_text, &f_info, false, false, NULL, text_surface );
+                drawChar( out_text, &f_info, false, false, NULL, &text_info );
                 
                 if (i+1 == current_text_buffer->buffer2_count) break;
                 out_text[0] = current_text_buffer->buffer2[i+1];
                 if (out_text[0] == 0x0a) continue;
             }
             i++;
-            drawChar( out_text, &f_info, false, false, NULL, text_surface );
+            drawChar( out_text, &f_info, false, false, NULL, &text_info );
         }
     }
-
-    Rect rect = {0, 0, screen_width, screen_height};
 }
 
 int ONScripterLabel::enterTextDisplayMode(bool text_flag)
@@ -435,7 +413,7 @@ int ONScripterLabel::clickWait( char *out_text )
     if ( (skip_flag || draw_one_page_flag || ctrl_pressed_status) && !textgosub_label ){
         clickstr_state = CLICK_NONE;
         if ( out_text ){
-            drawDoubleChars( out_text, &sentence_font, false, true, accumulation_surface, text_surface );
+            drawDoubleChars( out_text, &sentence_font, false, true, accumulation_surface, &text_info );
             if (out_text[1]) string_buffer_offset++;
             string_buffer_offset++;
         }
@@ -451,7 +429,7 @@ int ONScripterLabel::clickWait( char *out_text )
         clickstr_state = CLICK_WAIT;
         key_pressed_flag = false;
         if ( out_text ){
-            drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
+            drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
         }
         if ( textgosub_label ){
@@ -477,7 +455,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
 {
     clickstr_state = CLICK_NEWPAGE;
     if ( out_text ){
-        drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
+        drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
         num_chars_in_sentence++;
     }
     if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( refreshMode() );
@@ -553,15 +531,15 @@ void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *
             out_text[0] = *buf;
             if ( IS_TWO_BYTE(*buf) ){
                 out_text[1] = *(buf+1);
-                drawChar( out_text, &ruby_font, flush_flag, lookback_flag, surface, text_surface );
+                drawChar( out_text, &ruby_font, flush_flag, lookback_flag, surface, &text_info );
                 buf++;
             }
             else{
                 out_text[1] = '\0';
-                drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, text_surface );
+                drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, &text_info );
                 if ( *(buf+1) ){
                     out_text[1] = *(buf+1);
-                    drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, text_surface );
+                    drawChar( out_text, &ruby_font, flush_flag,  lookback_flag, surface, &text_info );
                     buf++;
                 }
             }
@@ -692,14 +670,14 @@ int ONScripterLabel::processText()
         }
         
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
-            drawChar( out_text, &sentence_font, false, true, accumulation_surface, text_surface );
+            drawChar( out_text, &sentence_font, false, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
                 
             string_buffer_offset += 2;
             return RET_CONTINUE | RET_NOREAD;
         }
         else{
-            drawChar( out_text, &sentence_font, true, true, accumulation_surface, text_surface );
+            drawChar( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
             event_mode = WAIT_SLEEP_MODE;
             if ( sentence_font.wait_time == -1 )
@@ -795,7 +773,9 @@ int ONScripterLabel::processText()
         }
         else{ // skip new line
             new_line_skip_flag = true;
-            //string_buffer_offset++;
+            string_buffer_offset++;
+            if (script_h.getStringBuffer()[string_buffer_offset] != 0x0a)
+                errorAndExit( "'new line' must succeed '/'." );
             return RET_CONTINUE; // skip the following eol
         }
     }
@@ -847,7 +827,7 @@ int ONScripterLabel::processText()
              !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
             out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
 
-        drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, text_surface );
+        drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, &text_info );
         num_chars_in_sentence++;
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&

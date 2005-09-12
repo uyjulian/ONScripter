@@ -175,7 +175,7 @@ void ONScripterLabel::executeSystemMenu()
         if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
 
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        text_info.fill( 0, 0, 0, 0 );
         flush( refreshMode() );
 
         menu_font.num_xy[0] = rmenu_link_width;
@@ -287,7 +287,7 @@ void ONScripterLabel::executeSystemLoad()
         }
     }
     else{
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        text_info.fill( 0, 0, 0, 0 );
         
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -295,7 +295,7 @@ void ONScripterLabel::executeSystemLoad()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
         uchar3 color = {0xff, 0xff, 0xff};
-        drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
+        drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
         menu_font.newLine();
         menu_font.newLine();
         
@@ -357,7 +357,7 @@ void ONScripterLabel::executeSystemSave()
         leaveSystemCall();
     }
     else{
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        text_info.fill( 0, 0, 0, 0 );
 
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
         menu_font.num_xy[1] = num_save_file+2;
@@ -365,7 +365,7 @@ void ONScripterLabel::executeSystemSave()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
         uchar3 color = {0xff, 0xff, 0xff};
-        drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
+        drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
         menu_font.newLine();
         menu_font.newLine();
         
@@ -466,7 +466,7 @@ void ONScripterLabel::executeSystemYesNo()
         }
     }
     else{
-        SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+        text_info.fill( 0, 0, 0, 0 );
 
         if ( yesno_caller == SYSTEM_SAVE ){
             SaveFileInfo save_file_info;
@@ -494,7 +494,7 @@ void ONScripterLabel::executeSystemYesNo()
         menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
         menu_font.setXY(0, 0);
         uchar3 color = {0xff, 0xff, 0xff};
-        drawString( name, color, &menu_font, true, accumulation_surface, NULL, text_surface );
+        drawString( name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
 
         flush( refreshMode() );
         

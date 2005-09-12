@@ -909,11 +909,8 @@ int ONScripterLabel::eventLoop()
           case SDL_ACTIVEEVENT:
             if ( !event.active.gain ) break;
           case SDL_VIDEOEXPOSE:
-          {
-              SDL_Rect rect = {0, 0, screen_width, screen_height};
-              flushDirect( rect, refreshMode() );
-          }
-          break;
+              SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
+              break;
 
           case SDL_QUIT:
             endCommand();

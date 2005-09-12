@@ -260,9 +260,6 @@ int ONScripterLabel::playMP3( int cd_no )
     return 0;
 }
 
-#define ONS_SMPEG_DRAW_EVENT   (SDL_USEREVENT+6)
-static unsigned int movie_id;
-
 void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
 {
 #ifndef MP3_MAD        
@@ -452,8 +449,11 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_FreeMusic( midi_info );
         midi_info = NULL;
     }
-    if ( !continue_flag )
+    if ( !continue_flag ){
         setStr( &midi_file_name, NULL );
+        midi_play_loop_flag = false;
+        internal_midi_play_loop_flag = false;
+    }
 
 #if defined(EXTERNAL_MUSIC_PLAYER)
     if ( music_info ){

@@ -257,7 +257,7 @@ int main(void)
         int channels;
 
         Mix_QuerySpec( &freq, &format, &channels);
-        printf("Opened audio at %d Hz %d bit %s\n", freq,
+        printf("Audio: %d Hz %d bit %s\n", freq,
                (format&0xFF),
                (channels > 1) ? "stereo" : "mono");
         audio_format.format = format;

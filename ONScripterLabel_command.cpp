@@ -194,8 +194,7 @@ int ONScripterLabel::texecCommand()
         clickstr_state = CLICK_NONE;
     }
     else if ( textgosub_clickstr_state == (CLICK_WAIT | CLICK_EOL) ){
-        if ( !sentence_font.isLineEmpty() &&
-             !new_line_skip_flag ){
+        if ( !sentence_font.isLineEmpty() && !new_line_skip_flag ){
             indent_offset = 0;
             line_enter_status = 0;
             current_text_buffer->addBuffer( 0x0a );
@@ -288,9 +287,9 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     int lower_r = script_h.readInt();
     int lower_g = script_h.readInt();
     int lower_b = script_h.readInt();
-    Uint32 key_r = script_h.readInt();
-    Uint32 key_g = script_h.readInt();
-    Uint32 key_b = script_h.readInt();
+    ONSBuf key_r = script_h.readInt();
+    ONSBuf key_g = script_h.readInt();
+    ONSBuf key_b = script_h.readInt();
     Uint32 alpha = script_h.readInt();
 
     AnimationInfo *si;
@@ -298,13 +297,13 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     else          si = &sprite_info[no];
     SDL_Surface *surface = si->image_surface;
     if (surface == NULL) return RET_CONTINUE;
+
+    SDL_PixelFormat *fmt = surface->format;
     
-    Uint32 key_mask = key_r << surface->format->Rshift;
-    key_mask |= key_g << surface->format->Gshift;
-    key_mask |= key_b << surface->format->Bshift;
-    Uint32 rgb_mask = 0xff << surface->format->Rshift;
-    rgb_mask |= 0xff << surface->format->Gshift;
-    rgb_mask |= 0xff << surface->format->Bshift;
+    ONSBuf key_mask = (key_r >> fmt->Rloss) << fmt->Rshift |
+        (key_g >> fmt->Gloss) << fmt->Gshift |
+        (key_b >> fmt->Bloss) << fmt->Bshift;
+    ONSBuf rgb_mask = fmt->Rmask | fmt->Gmask | fmt->Bmask;
 
     SDL_LockSurface(surface);
     // check upper and lower bound
@@ -312,7 +311,7 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     int upper_bound=0, lower_bound=0;
     bool is_key_found = false;
     for (i=0 ; i<surface->h ; i++){
-        Uint32 *buf = (Uint32 *)surface->pixels + surface->w * i;
+        ONSBuf *buf = (ONSBuf *)surface->pixels + surface->w * i;
         for (j=0 ; j<surface->w ; j++, buf++){
             if ((*buf & rgb_mask) == key_mask){
                 if (is_key_found == false){
@@ -329,21 +328,39 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     
     // replace pixels of the key-color with the specified color in gradation
     for (i=upper_bound ; i<=lower_bound ; i++){
-        Uint32 *buf = (Uint32 *)surface->pixels + surface->w * i;
+        ONSBuf *buf = (ONSBuf *)surface->pixels + surface->w * i;
+#if defined(BPP16)    
+        unsigned char *alphap = si->alpha_buf + surface->w * i;
+#else
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        unsigned char *alphap = (unsigned char *)buf + 3;
+#else
+        unsigned char *alphap = (unsigned char *)buf;
+#endif
+#endif
         Uint32 color = alpha << surface->format->Ashift;
         if (upper_bound != lower_bound){
-            color |= ((lower_r - upper_r) * (i-upper_bound) / (lower_bound - upper_bound) + upper_r) << surface->format->Rshift;
-            color |= ((lower_g - upper_g) * (i-upper_bound) / (lower_bound - upper_bound) + upper_g) << surface->format->Gshift;
-            color |= ((lower_b - upper_b) * (i-upper_bound) / (lower_bound - upper_bound) + upper_b) << surface->format->Bshift;
+            color |= (((lower_r - upper_r) * (i-upper_bound) / (lower_bound - upper_bound) + upper_r) >> fmt->Rloss) << fmt->Rshift;
+            color |= (((lower_g - upper_g) * (i-upper_bound) / (lower_bound - upper_bound) + upper_g) >> fmt->Gloss) << fmt->Gshift;
+            color |= (((lower_b - upper_b) * (i-upper_bound) / (lower_bound - upper_bound) + upper_b) >> fmt->Bloss) << fmt->Bshift;
         }
         else{
-            color |= upper_r << surface->format->Rshift;
-            color |= upper_g << surface->format->Gshift;
-            color |= upper_b << surface->format->Bshift;
+            color |= (upper_r >> fmt->Rloss) << fmt->Rshift;
+            color |= (upper_g >> fmt->Gloss) << fmt->Gshift;
+            color |= (upper_b >> fmt->Bloss) << fmt->Bshift;
         }
         
-        for (j=0 ; j<surface->w ; j++, buf++)
-            if ((*buf & rgb_mask) == key_mask) *buf = color;
+        for (j=0 ; j<surface->w ; j++, buf++){
+            if ((*buf & rgb_mask) == key_mask){
+                *buf = color;
+                *alphap = alpha;
+            }
+#if defined(BPP16)                
+            alphap++;
+#else
+            alphap += 4;
+#endif                
+        }
     }
     
     SDL_UnlockSurface(surface);
@@ -905,7 +922,7 @@ int ONScripterLabel::quakeCommand()
     }
     else{
         dirty_rect.fill( screen_width, screen_height );
-        blitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
+        SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
 
         return setEffect( 2 ); // 2 is dummy value
     }
@@ -966,7 +983,6 @@ int ONScripterLabel::prnumCommand()
     }
     prnum_info[no] = new AnimationInfo();
     prnum_info[no]->trans_mode = AnimationInfo::TRANS_STRING;
-    prnum_info[no]->abs_flag = true;
     prnum_info[no]->num_of_cells = 1;
     prnum_info[no]->setCell(0);
     prnum_info[no]->color_list = new uchar3[ prnum_info[no]->num_of_cells ];
@@ -1062,7 +1078,9 @@ int ONScripterLabel::ofscopyCommand()
 int ONScripterLabel::negaCommand()
 {
     nega_mode = script_h.readInt();
-    need_refresh_flag = true;
+
+    dirty_rect.fill( screen_width, screen_height );
+    flush( refreshMode() );
 
     return RET_CONTINUE;
 }
@@ -1156,13 +1174,21 @@ int ONScripterLabel::monocroCommand()
 {
     if ( script_h.compareString( "off" ) ){
         script_h.readLabel();
-        monocro_flag_new = false;
+        monocro_flag = false;
     }
     else{
-        monocro_flag_new = true;
-        readColor( &monocro_color_new, script_h.readStr() );
+        monocro_flag = true;
+        readColor( &monocro_color, script_h.readStr() );
+        
+        for (int i=0 ; i<256 ; i++){
+            monocro_color_lut[i][0] = (monocro_color[0] * i) >> 8;
+            monocro_color_lut[i][1] = (monocro_color[1] * i) >> 8;
+            monocro_color_lut[i][2] = (monocro_color[2] * i) >> 8;
+        }
     }
-    need_refresh_flag = true;
+    
+    dirty_rect.fill( screen_width, screen_height );
+    flush( refreshMode() );
 
     return RET_CONTINUE;
 }
@@ -1710,10 +1736,11 @@ int ONScripterLabel::getscreenshotCommand()
     }
 
     if ( screenshot_surface == NULL )
-        screenshot_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, w, h, 32, rmask, gmask, bmask, amask );
+        screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
 
-    SDL_BlitSurface( screen_surface, NULL, effect_dst_surface, NULL ); // Bucause screen_surface may be in 16bit depth
-    resizeSurface( effect_dst_surface, NULL, screenshot_surface, NULL );
+    SDL_Surface *surface = SDL_ConvertSurface( screen_surface, image_surface->format, SDL_SWSURFACE );
+    resizeSurface( surface, screenshot_surface );
+    SDL_FreeSurface( surface );
 
     return RET_CONTINUE;
 }
@@ -2173,7 +2200,7 @@ int ONScripterLabel::dvCommand()
 
 int ONScripterLabel::drawtextCommand()
 {
-    refreshText( accumulation_surface, NULL, REFRESH_TEXT_MODE );
+    text_info.blendOnSurface( accumulation_surface, 0, 0, NULL );
     
     return RET_CONTINUE;
 }
@@ -2663,10 +2690,6 @@ int ONScripterLabel::btnCommand()
     button->image_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
     button->select_rect = button->image_rect;
 
-    button->anim[0] = new AnimationInfo();
-    button->anim[0]->num_of_cells = 1;
-    button->anim[0]->trans_mode = AnimationInfo::TRANS_COPY;
-
     src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     if (btndef_info.image_surface &&
@@ -2680,18 +2703,16 @@ int ONScripterLabel::btnCommand()
     src_rect.w = button->image_rect.w;
     src_rect.h = button->image_rect.h;
 
-    button->anim[0]->pos = button->image_rect;
-
-    SDL_Surface *surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG,
-                                                 button->image_rect.w,
-                                                 button->image_rect.h,
-                                                 32, rmask, gmask, bmask, amask );
-    blitSurface( btndef_info.image_surface, &src_rect, surface, NULL );
+    button->anim[0] = new AnimationInfo();
+    button->anim[0]->num_of_cells = 1;
     button->anim[0]->trans_mode = AnimationInfo::TRANS_COPY;
-    setupAnimationInfo( button->anim[0], NULL, surface );
-
-    root_button_link.insert( button );
+    button->anim[0]->pos.x = button->image_rect.x;
+    button->anim[0]->pos.y = button->image_rect.y;
+    button->anim[0]->allocImage( button->image_rect.w, button->image_rect.h );
+    button->anim[0]->copySurface( btndef_info.image_surface, &src_rect );
     
+    root_button_link.insert( button );
+
     return RET_CONTINUE;
 }
 
@@ -2778,7 +2799,10 @@ int ONScripterLabel::bltCommand()
 
         SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
         AnimationInfo::doClipping( (SDL_Rect*)&dst_rect, &clip, &clipped );
-        shiftRect( (SDL_Rect&)src_rect, clipped );
+        src_rect.x += clipped.x;
+        src_rect.y += clipped.y;
+        src_rect.w = clipped.w;
+        src_rect.h = clipped.h;
 
         SDL_BlitSurface( btndef_info.image_surface, (SDL_Rect*)&src_rect, screen_surface, (SDL_Rect*)&dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
@@ -2797,7 +2821,7 @@ int ONScripterLabel::bltCommand()
 
                 int x = src_rect.x+src_rect.w*(j-dst_rect.x)/dst_rect.w;
                 int y = src_rect.y+src_rect.h*(i-dst_rect.y)/dst_rect.h;
-                *(dst_buf+i*screen_width+j) = *(src_buf+y*src_w+x)|amask;
+                *(dst_buf+i*screen_width+j) = *(src_buf+y*src_w+x);
             }
         }
         SDL_UnlockSurface(btndef_info.image_surface);
@@ -2814,11 +2838,11 @@ int ONScripterLabel::bgcopyCommand()
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
     bg_effect_image = BG_EFFECT_IMAGE;
 
-    bg_info.pos.x = 0;
-    bg_info.pos.y = 0;
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
-    setupAnimationInfo(&bg_info, NULL, accumulation_surface);
+    bg_info.pos.x = 0;
+    bg_info.pos.y = 0;
+    bg_info.copySurface( accumulation_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -2885,7 +2909,6 @@ int ONScripterLabel::barCommand()
         bar_info[no] = new AnimationInfo();
     }
     bar_info[no]->trans_mode = AnimationInfo::TRANS_COPY;
-    bar_info[no]->abs_flag = true;
     bar_info[no]->num_of_cells = 1;
     bar_info[no]->setCell(0);
 
@@ -2906,9 +2929,8 @@ int ONScripterLabel::barCommand()
     bar_info[no]->max_width = bar_info[no]->pos.w;
     bar_info[no]->pos.w = bar_info[no]->pos.w * bar_info[no]->param / bar_info[no]->max_param;
     if ( bar_info[no]->pos.w > 0 ){
-        bar_info[no]->image_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, bar_info[no]->pos.w, bar_info[no]->pos.h, 32, rmask, gmask, bmask, amask );
-        SDL_SetAlpha( bar_info[no]->image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-        SDL_FillRect( bar_info[no]->image_surface, NULL, SDL_MapRGBA( bar_info[no]->image_surface->format, bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff ) );
+        bar_info[no]->allocImage( bar_info[no]->pos.w, bar_info[no]->pos.h );
+        bar_info[no]->fill( bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff );
     }
 
     return RET_CONTINUE;

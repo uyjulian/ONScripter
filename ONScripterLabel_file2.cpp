@@ -195,14 +195,18 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
     }
 
     loadInt( fp, &i );
-    if (i == 1) monocro_flag_new = true;
-    else        monocro_flag_new = false;
+    if (i == 1) monocro_flag = true;
+    else        monocro_flag = false;
     for ( i=0 ; i<3 ; i++ ){
         loadInt( fp, &j );
-        monocro_color_new[2-i] = j;
+        monocro_color[2-i] = j;
+    }
+    for ( i=0 ; i<256 ; i++ ){
+        monocro_color_lut[i][0] = (monocro_color[0] * i) >> 8;
+        monocro_color_lut[i][1] = (monocro_color[1] * i) >> 8;
+        monocro_color_lut[i][2] = (monocro_color[2] * i) >> 8;
     }
     loadInt( fp, &nega_mode );
-    refreshSurfaceParameters();
     
     // ----------------------------------------
     // Sound
@@ -486,9 +490,9 @@ void ONScripterLabel::saveSaveFile2( FILE *fp )
         info = info->next;
     }
     
-    saveInt( fp, (monocro_flag_new)?1:0 );
+    saveInt( fp, (monocro_flag)?1:0 );
     for ( i=0 ; i<3 ; i++ )
-        saveInt( fp, monocro_color_new[2-i] );
+        saveInt( fp, monocro_color[2-i] );
     saveInt( fp, nega_mode );
 
     // sound

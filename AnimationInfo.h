@@ -31,6 +31,11 @@ typedef unsigned char uchar3[3];
 
 class AnimationInfo{
 public:
+#if defined(BPP16)
+    typedef Uint16 ONSBuf;
+#else
+    typedef Uint32 ONSBuf;
+#endif    
     enum { TRANS_ALPHA          = 1,
            TRANS_TOPLEFT        = 2,
            TRANS_COPY           = 3,
@@ -66,6 +71,7 @@ public:
     int trans;
     char *image_name;
     SDL_Surface *image_surface;
+    unsigned char *alpha_buf;
 
     int font_size_xy[2]; // used by prnum and lsp string
     int font_pitch; // used by lsp string
@@ -75,8 +81,6 @@ public:
     int max_param; // used by bar
     int max_width; // used by bar
     
-    Uint32 rmask, gmask, bmask, amask, rgbmask;
-
     AnimationInfo();
     ~AnimationInfo();
     void reset();
@@ -95,6 +99,13 @@ public:
                          SDL_Rect *clip=NULL, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           int alpha=256, int scale_x=100, int scale_y=100, int rot=0 );
+    void blendBySurface( SDL_Surface *surface, int dst_x, int dst_y,
+                         SDL_Rect *clip, bool rotate_flag );
+    
+    static SDL_Surface *allocSurface( int w, int h );
+    void allocImage( int w, int h );
+    void copySurface( SDL_Surface *surface, SDL_Rect *rect );
+    void fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a );
     void setupImage( SDL_Surface *surface, SDL_Surface *surface_m );
 };
 

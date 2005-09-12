@@ -119,11 +119,8 @@ void ONScripterLabel::resetRemainingTime( int t )
     }
 }
 
-void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, SDL_Surface *surface_org )
+void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 {
-    SDL_Surface *surface = NULL;
-    SDL_Surface *surface_m = NULL;
-    
     anim->deleteSurface();
     anim->abs_flag = true;
 
@@ -147,36 +144,36 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info, S
             f_info.ttf_font = NULL;
         }
 
-        drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &anim->pos );
+        SDL_Rect pos;
+        drawString( anim->file_name, anim->color_list[ anim->current_cell ], &f_info, false, NULL, &pos );
         if (info != NULL){
             info->xy[0] = f_info.xy[0];
             info->xy[1] = f_info.xy[1];
         }
         
-        surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, anim->pos.w*anim->num_of_cells, anim->pos.h,
-                                        32, rmask, gmask, bmask, amask );
-        //SDL_FillRect( surface, NULL, SDL_MapRGBA( surface->format, 0, 0, 0, 0 ) );
+        anim->allocImage( pos.w*anim->num_of_cells, pos.h );
+        anim->fill( 0, 0, 0, 0 );
         
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
             f_info.clear();
-            drawString( anim->file_name, anim->color_list[ i ], &f_info, false, NULL, NULL, surface );
+            drawString( anim->file_name, anim->color_list[i], &f_info, false, NULL, NULL, anim );
             f_info.top_xy[0] += anim->pos.w * screen_ratio2 / screen_ratio1;
         }
     }
     else{
-        if (surface_org == NULL) surface = loadImage( anim->file_name );
+        SDL_Surface *surface = loadImage( anim->file_name );
+
+        SDL_Surface *surface_m = NULL;
         if (anim->trans_mode == AnimationInfo::TRANS_MASK)
             surface_m = loadImage( anim->mask_file_name );
-    }
-
-    if (surface_org)
-        anim->setupImage(surface_org, surface_m);
-    else
+        
         anim->setupImage(surface, surface_m);
 
-    if ( surface ) SDL_FreeSurface(surface);
-    if ( surface_m ) SDL_FreeSurface(surface_m);
+        if ( surface ) SDL_FreeSurface(surface);
+        if ( surface_m ) SDL_FreeSurface(surface_m);
+    }
+
 }
 
 void ONScripterLabel::parseTaggedString( AnimationInfo *anim )

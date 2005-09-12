@@ -244,14 +244,15 @@ void ONScripterLabel::initSDL()
         exit(-1);
     }
 
-#if defined(PDA)
+#if defined(BPP16)
     screen_bpp = 16;
-#if defined(PDA_VGA)
-    screen_width  *= 2; // for checking VGA screen
-    screen_height *= 2;
-#endif
 #else
     screen_bpp = 32;
+#endif
+    
+#if defined(PDA) && defined(PDA_VGA)
+    screen_width  *= 2; // for checking VGA screen
+    screen_height *= 2;
 #endif
 
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
@@ -275,7 +276,8 @@ void ONScripterLabel::initSDL()
                  screen_width, screen_height, screen_bpp, SDL_GetError() );
         exit(-1);
     }
-
+    printf("Display: %d x %d (%d bpp)\n", screen_width, screen_height, screen_bpp);
+    
     initSJIS2UTF16();
     
     wm_title_string = new char[ strlen(DEFAULT_WM_TITLE) + 1 ];
@@ -304,7 +306,7 @@ void ONScripterLabel::openAudio()
         int channels;
 
         Mix_QuerySpec( &freq, &format, &channels);
-        printf("Opened audio at %d Hz %d bit %s\n", freq,
+        printf("Audio: %d Hz %d bit %s\n", freq,
                (format&0xFF),
                (channels > 1) ? "stereo" : "mono");
         audio_format.format = format;
@@ -429,22 +431,18 @@ int ONScripterLabel::init()
 
     initSDL();
 
-    // the mask is the same as the one used in TTF_RenderGlyph_Blended
-    rmask = 0x00ff0000;
-    gmask = 0x0000ff00;
-    bmask = 0x000000ff;
-    amask = 0xff000000;
-
-    text_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    accumulation_surface = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    SDL_SetAlpha( accumulation_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
-    effect_src_surface   = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    effect_dst_surface   = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, screen_width, screen_height, 32, rmask, gmask, bmask, amask );
-    screenshot_surface = NULL;
-    effect_src_id = 0;
-    effect_dst_id = 0;
-    accumulation_id = 0;
-    text_id = 0;
+    image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+    
+    accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height );
+    effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
+    effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
+    SDL_SetAlpha( accumulation_surface, 0, SDL_ALPHA_OPAQUE );
+    SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
+    SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
+    screenshot_surface   = NULL;
+    text_info.num_of_cells = 1;
+    text_info.allocImage( screen_width, screen_height );
+    text_info.fill(0, 0, 0, 0);
 
     tmp_save_fp = NULL;
 
@@ -590,7 +588,7 @@ void ONScripterLabel::resetSub()
 
     erase_text_window_mode = 1;
     skip_flag = false;
-    monocro_flag = monocro_flag_new = false;
+    monocro_flag = false;
     nega_mode = 0;
     clickstr_state = CLICK_NONE;
     trap_mode = TRAP_NONE;
@@ -810,7 +808,7 @@ void ONScripterLabel::executeLabel()
         char *current = script_h.getCurrent();
         int ret = ScriptParser::parseLine();
         if ( ret == RET_NOMATCH ) ret = this->parseLine();
-        
+
         if ( ret & RET_SKIP_LINE ){
             script_h.skipLine();
             if (++current_line >= current_label_info.num_of_lines) break;
@@ -889,7 +887,7 @@ int ONScripterLabel::parseLine( )
 #endif    
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
-        if (!sentence_font.isLineEmpty()){
+        if (!sentence_font.isLineEmpty() && !new_line_skip_flag){
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
             for (int i=0 ; i<indent_offset ; i++){
@@ -907,12 +905,8 @@ int ONScripterLabel::parseLine( )
 
 SDL_Surface *ONScripterLabel::loadImage( char *file_name )
 {
-    unsigned long length;
-    unsigned char *buffer;
-    SDL_Surface *ret = NULL, *tmp;
-
     if ( !file_name ) return NULL;
-    length = script_h.cBR->getFileLength( file_name );
+    unsigned long length = script_h.cBR->getFileLength( file_name );
     if ( length == 0 ){
         fprintf( stderr, " *** can't find file [%s] ***\n", file_name );
         return NULL;
@@ -920,10 +914,10 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
     if ( filelog_flag )
         script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], file_name, true );
     //printf(" ... loading %s length %ld\n", file_name, length );
-    buffer = new unsigned char[length];
+    unsigned char *buffer = new unsigned char[length];
     int location;
     script_h.cBR->getFile( file_name, buffer, &location );
-    tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ),1);
+    SDL_Surface *tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ), 1);
 
     char *ext = strrchr(file_name, '.');
     if ( !tmp && ext && (!strcmp( ext+1, "JPG" ) || !strcmp( ext+1, "jpg" ) ) ){
@@ -939,23 +933,22 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         return NULL;
     }
 
-    ret = SDL_ConvertSurface( tmp, accumulation_surface->format, DEFAULT_SURFACE_FLAG );
+    SDL_Surface *ret = SDL_ConvertSurface( tmp, image_surface->format, SDL_SWSURFACE );
     if ( ret &&
          screen_ratio2 != screen_ratio1 &&
          (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE) )
     {
-        SDL_Surface *ret2 = ret;
+        SDL_Surface *src_s = ret;
 
-        SDL_Rect src_rect, dst_rect;
-        src_rect.x = src_rect.y = dst_rect.x = dst_rect.y = 0;
-        src_rect.w = ret2->w;
-        src_rect.h = ret2->h;
-        if ( (dst_rect.w = ret2->w * screen_ratio1 / screen_ratio2) == 0 ) dst_rect.w = 1;
-        if ( (dst_rect.h = ret2->h * screen_ratio1 / screen_ratio2) == 0 ) dst_rect.h = 1;
-        ret = SDL_CreateRGBSurface( DEFAULT_SURFACE_FLAG, dst_rect.w, dst_rect.h, 32, rmask, gmask, bmask, amask );
+        int w, h;
+        if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
+        if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
+        SDL_PixelFormat *fmt = image_surface->format;
+        ret = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
+                                    fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
         
-        resizeSurface( ret2, &src_rect, ret, &dst_rect );
-        SDL_FreeSurface( ret2 );
+        resizeSurface( src_s, ret );
+        SDL_FreeSurface( src_s );
     }
     SDL_FreeSurface( tmp );
 
@@ -1021,7 +1014,7 @@ void ONScripterLabel::clearCurrentTextBuffer()
     num_chars_in_sentence = 0;
     internal_saveon_flag = true;
 
-    SDL_FillRect( text_surface, NULL, SDL_MapRGBA( text_surface->format, 0, 0, 0, 0 ) );
+    text_info.fill( 0, 0, 0, 0 );
     cached_text_buffer = current_text_buffer;
 }
 
@@ -1042,14 +1035,19 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
         if ( rect.y + rect.h > surface->h ) rect.h = surface->h - rect.y;
 
         SDL_LockSurface( surface );
-        Uint32 *buf = (Uint32 *)surface->pixels + rect.y * surface->w + rect.x;
-    
+        ONSBuf *buf = (ONSBuf *)surface->pixels + rect.y * surface->w + rect.x;
+
+        SDL_PixelFormat *fmt = surface->format;
+        uchar3 color;
+        color[0] = current_font->window_color[0] >> fmt->Rloss;
+        color[1] = current_font->window_color[1] >> fmt->Gloss;
+        color[2] = current_font->window_color[2] >> fmt->Bloss;
+        
         for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
             for ( int j=rect.x ; j<rect.x + rect.w ; j++, buf++ ){
-                *buf = (((*buf >> surface->format->Rshift) & 0xff) * current_font->window_color[0] >> 8) << surface->format->Rshift |
-                    (((*buf >> surface->format->Gshift) & 0xff) * current_font->window_color[1] >> 8) << surface->format->Gshift |
-                    (((*buf >> surface->format->Bshift) & 0xff) * current_font->window_color[2] >> 8) << surface->format->Bshift |
-                    (*buf & amask);
+                *buf = (((*buf & fmt->Rmask) >> fmt->Rshift) * color[0] >> (8-fmt->Rloss)) << fmt->Rshift |
+                    (((*buf & fmt->Gmask) >> fmt->Gshift) * color[1] >> (8-fmt->Gloss)) << fmt->Gshift |
+                    (((*buf & fmt->Bmask) >> fmt->Bshift) * color[2] >> (8-fmt->Bloss)) << fmt->Bshift;
             }
             buf += surface->w - rect.w;
         }
@@ -1077,9 +1075,6 @@ void ONScripterLabel::newPage( bool next_flag )
     }
     
     clearCurrentTextBuffer();
-    if ( need_refresh_flag ){
-        refreshSurfaceParameters();
-    }
 
     flush( refreshMode(), &sentence_font_info.pos );
 }
