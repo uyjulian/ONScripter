@@ -360,12 +360,12 @@ void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
 
     SDL_LockSurface( src_surface );
     SDL_LockSurface( accumulation_surface );
-    Uint32 *src_buffer = (Uint32 *)src_surface->pixels;
+    ONSBuf *src_buffer = (ONSBuf *)src_surface->pixels;
 
     for ( i=0 ; i<screen_height ; i+=width ){
         for ( j=0 ; j<screen_width ; j+=width ){
-            Uint32 p = src_buffer[ (i+width-1)*screen_width+j ];
-            Uint32 *dst_buffer = (Uint32 *)accumulation_surface->pixels + i*screen_width + j;
+            ONSBuf p = src_buffer[ (i+width-1)*screen_width+j ];
+            ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + i*screen_width + j;
 
             for ( ii=0 ; ii<width ; ii++ ){
                 for ( jj=0 ; jj<width ; jj++ ){

@@ -2811,8 +2811,8 @@ int ONScripterLabel::bltCommand()
     else{
         SDL_LockSurface(accumulation_surface);
         SDL_LockSurface(btndef_info.image_surface);
-        Uint32 *dst_buf = (Uint32*)accumulation_surface->pixels;
-        Uint32 *src_buf = (Uint32*)btndef_info.image_surface->pixels;
+        ONSBuf *dst_buf = (ONSBuf*)accumulation_surface->pixels;
+        ONSBuf *src_buf = (ONSBuf*)btndef_info.image_surface->pixels;
         int src_w = btndef_info.image_surface->w;
         for (int i=dst_rect.y ; i<dst_rect.y+dst_rect.h ; i++){
             if (i<0 || i>=screen_height) continue;
