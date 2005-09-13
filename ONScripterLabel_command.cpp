@@ -2379,7 +2379,7 @@ int ONScripterLabel::cselbtnCommand()
         link = link->next;
     }
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
-        errorAndExit( "cselbtn: no select text" );
+        return RET_CONTINUE;
 
     csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
