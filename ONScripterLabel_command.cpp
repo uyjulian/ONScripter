@@ -942,7 +942,7 @@ int ONScripterLabel::puttextCommand()
     ret = processText();
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
-        if (!sentence_font.isLineEmpty()){
+        if (!sentence_font.isLineEmpty() && !new_line_skip_flag){
             current_text_buffer->addBuffer( 0x0a );
             sentence_font.newLine();
             for (int i=0 ; i<indent_offset ; i++){

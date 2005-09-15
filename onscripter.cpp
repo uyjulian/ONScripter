@@ -28,18 +28,18 @@ void optionHelp()
 {
     printf( "Usage: onscripter [option ...]\n" );
     printf( "      --cdaudio\t\tuse CD audio if available\n");
-    printf( "      --cdnumber cd_number\tchoose the CD-ROM drive number\n");
-    printf( "  -f, --font file\tuse file as a default font\n");
-    printf( "      --registry file\tuse file as a default registry file\n");
-    printf( "      --dll file\tuse file as a default dll file\n");
-    printf( "  -r, --root path\tuse path as a root path to the archives\n");
-    printf( "      --fullcsreen\t\tstart in fullscreen mode\n");
+    printf( "      --cdnumber no\tchoose the CD-ROM drive number\n");
+    printf( "  -f, --font file\tset a TTF font file\n");
+    printf( "      --registry file\tset a registry file\n");
+    printf( "      --dll file\tset a dll file\n");
+    printf( "  -r, --root path\tset the root path to the archives\n");
+    printf( "      --fullcsreen\tstart in fullscreen mode\n");
     printf( "      --window\t\tstart in window mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheeldown event\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
-    printf( "      --key-exe file\tset file (*.EXE) which contains a key table\n");
+    printf( "      --key-exe file\tset a file (*.EXE) which contains a key table\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);
