@@ -279,7 +279,7 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
             loadInt( fp, &j );
             bar_info[i]->pos.y = j * screen_ratio1 / screen_ratio2;
             loadInt( fp, &j );
-            bar_info[i]->pos.w = j * screen_ratio1 / screen_ratio2;
+            bar_info[i]->max_width = j * screen_ratio1 / screen_ratio2;
             loadInt( fp, &j );
             bar_info[i]->pos.h = j * screen_ratio1 / screen_ratio2;
             loadInt( fp, &j );
@@ -287,6 +287,13 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
             for ( j=0 ; j<3 ; j++ )
                 bar_info[i]->color[2-j] = fgetc( fp );
             fgetc( fp ); // 0x00
+
+            int w = bar_info[i]->max_width * bar_info[i]->param / bar_info[i]->max_param;
+            if ( bar_info[i]->max_width > 0 && w > 0 ){
+                bar_info[i]->pos.w = w;
+                bar_info[i]->allocImage( bar_info[i]->pos.w, bar_info[i]->pos.h );
+                bar_info[i]->fill( bar_info[i]->color[0], bar_info[i]->color[1], bar_info[i]->color[2], 0xff );
+            }
         }
         else{
             loadInt( fp, &j ); // -1
@@ -313,6 +320,12 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
             for ( j=0 ; j<3 ; j++ )
                 prnum_info[i]->color_list[0][2-j] = fgetc( fp );
             fgetc( fp ); // 0x00
+
+            char num_buf[7];
+            script_h.getStringFromInteger( num_buf, prnum_info[i]->param, 3 );
+            setStr( &prnum_info[i]->file_name, num_buf );
+
+            setupAnimationInfo( prnum_info[i] );
         }
         else{
             loadInt( fp, &j ); // -1

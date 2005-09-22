@@ -2916,19 +2916,18 @@ int ONScripterLabel::barCommand()
     bar_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     bar_info[no]->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
                           
-    bar_info[no]->pos.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    bar_info[no]->max_width = script_h.readInt() * screen_ratio1 / screen_ratio2;
     bar_info[no]->pos.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
     bar_info[no]->max_param = script_h.readInt();
-    if ( bar_info[no]->max_param == 0 ) errorAndExit( "bar: max = 0." );
 
     const char *buf = script_h.readStr();
     readColor( &bar_info[no]->color, buf );
 
     dirty_rect.add( bar_info[no]->pos );
 
-    bar_info[no]->max_width = bar_info[no]->pos.w;
-    bar_info[no]->pos.w = bar_info[no]->pos.w * bar_info[no]->param / bar_info[no]->max_param;
-    if ( bar_info[no]->pos.w > 0 ){
+    int w = bar_info[no]->max_width * bar_info[no]->param / bar_info[no]->max_param;
+    if ( bar_info[no]->max_width > 0 && w > 0 ){
+        bar_info[no]->pos.w = w;
         bar_info[no]->allocImage( bar_info[no]->pos.w, bar_info[no]->pos.h );
         bar_info[no]->fill( bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff );
     }
