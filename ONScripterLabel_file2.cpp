@@ -273,6 +273,9 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
         loadInt( fp, &j );
         if ( j != 0 ){
             bar_info[i] = new AnimationInfo();
+            bar_info[i]->trans_mode = AnimationInfo::TRANS_COPY;
+            bar_info[i]->num_of_cells = 1;
+
             bar_info[i]->param = j;
             loadInt( fp, &j );
             bar_info[i]->pos.x = j * screen_ratio1 / screen_ratio2;
@@ -310,6 +313,10 @@ int ONScripterLabel::loadSaveFile2( FILE *fp, int file_version )
         loadInt( fp, &j );
         if ( prnum_info[i] ){
             prnum_info[i] = new AnimationInfo();
+            prnum_info[i]->trans_mode = AnimationInfo::TRANS_STRING;
+            prnum_info[i]->num_of_cells = 1;
+            prnum_info[i]->color_list = new uchar3[1];
+
             prnum_info[i]->param = j;
             loadInt( fp, &j );
             prnum_info[i]->pos.x = j * screen_ratio1 / screen_ratio2;
