@@ -262,7 +262,6 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             drawChar( text, info, false, false, surface, cache_info );
         }
         else if (*str == 0x0a){
-            printf("newline\n");
             info->newLine();
             str++;
         }
@@ -314,6 +313,10 @@ void ONScripterLabel::restoreTextBuffer()
                     endRuby(false, false, NULL);
                     i++;
                 }
+                continue;
+            }
+            else if (out_text[0] == ')' && ruby_struct.stage == RubyStruct::BODY ){
+                ruby_struct.stage = RubyStruct::NONE;
                 continue;
             }
 #endif
@@ -775,9 +778,16 @@ int ONScripterLabel::processText()
             new_line_skip_flag = true;
             string_buffer_offset++;
             if (script_h.getStringBuffer()[string_buffer_offset] != 0x0a)
-                errorAndExit( "'new line' must succeed '/'." );
+                errorAndExit( "'new line' must follow '/'." );
             return RET_CONTINUE; // skip the following eol
         }
+    }
+    else if ( ch == ')' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) &&
+              ruby_struct.stage == RubyStruct::BODY ){
+        current_text_buffer->addBuffer(')');
+        string_buffer_offset++;
+        ruby_struct.stage = RubyStruct::NONE;
+        return RET_CONTINUE | RET_NOREAD;
     }
     else{
         out_text[0] = ch;

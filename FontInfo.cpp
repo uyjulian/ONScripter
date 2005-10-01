@@ -254,7 +254,9 @@ int FontInfo::initRuby(FontInfo &body_info, int body_count, int ruby_count)
         margin = (ruby_count*font_size_xy[tateyoko_mode] - body_count*body_info.pitch_xy[tateyoko_mode] + 1)/2;
     }
     else{
-        int offset = (body_count*body_info.pitch_xy[tateyoko_mode] - ruby_count*font_size_xy[tateyoko_mode] + ruby_count) / (ruby_count*2);
+        int offset = 0;
+        if (ruby_count > 0) 
+            offset = (body_count*body_info.pitch_xy[tateyoko_mode] - ruby_count*font_size_xy[tateyoko_mode] + ruby_count) / (ruby_count*2);
         top_xy[tateyoko_mode] += offset;
         pitch_xy[tateyoko_mode] += offset*2;
     }
