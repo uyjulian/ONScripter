@@ -538,9 +538,9 @@ void ScriptParser::loadStr( FILE *fp, char **str )
         if (ch == 0) break;
     }
 
-    if (ch == EOF || counter == 1)
-        *str = NULL;
-    else
+    if (*str) delete[] *str;
+    *str = NULL;
+    if (ch != EOF && counter != 1)
         setStr(str, load_str_buffer);
 }
 
@@ -590,6 +590,8 @@ void ScriptParser::deleteNestInfo()
 void ScriptParser::setStr( char **dst, const char *src, int num )
 {
     if ( *dst ) delete[] *dst;
+    *dst = NULL;
+    
     if ( src ){
         if (num >= 0){
             *dst = new char[ num + 1 ];
@@ -597,12 +599,10 @@ void ScriptParser::setStr( char **dst, const char *src, int num )
             (*dst)[num] = '\0';
         }
         else{
-            *dst = new char[ strlen( src ) + 1 ];
+            *dst = new char[ strlen( src ) + 1];
             strcpy( *dst, src );
         }
     }
-    else
-        *dst = NULL;
 }
 
 void ScriptParser::setCurrentLabel( const char *label )

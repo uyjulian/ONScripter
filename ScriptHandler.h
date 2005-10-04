@@ -67,13 +67,19 @@ public:
         ArrayVariable& operator=(const ArrayVariable& av){
             no = av.no;
             num_dim = av.num_dim;
+
             int total_dim = 1;
             for (int i=0 ; i<20 ; i++){
                 dim[i] = av.dim[i];
                 total_dim *= dim[i];
             }
-            data = new int[total_dim];
-            memcpy(data, av.data, sizeof(int)*total_dim);
+
+            if (data) delete[] data;
+            data = NULL;
+            if (av.data){
+                data = new int[total_dim];
+                memcpy(data, av.data, sizeof(int)*total_dim);
+            }
 
             return *this;
         };
@@ -292,6 +298,7 @@ private:
     char *archive_path;
     int  script_buffer_length;
     char *script_buffer;
+    char *tmp_script_buf;
     
     int  string_buffer_length;
     char *string_buffer; // update only be readToken

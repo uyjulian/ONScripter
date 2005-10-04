@@ -74,6 +74,10 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
         for (i=0 ; i<256 ; i++) this->key_table[i] = i;
     }
 
+    read_buf = new unsigned char[READ_LENGTH];
+    decomp_buffer = new unsigned char[N*2];
+    decomp_buffer_len = N*2;
+
     last_registered_compression_type = &root_registered_compression_type;
     registerCompressionType( "SPB", SPB_COMPRESSION );
     registerCompressionType( "JPG", NO_COMPRESSION );
@@ -90,6 +94,8 @@ DirectReader::~DirectReader()
 #if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
     iconv_close(iconv_cd);
 #endif
+    delete[] read_buf;
+    delete[] decomp_buffer;
     
     last_registered_compression_type = root_registered_compression_type.next;
     while ( last_registered_compression_type ){
@@ -451,8 +457,13 @@ int DirectReader::getbit( FILE *fp, int n )
     
     for ( i=0 ; i<n ; i++ ){
         if ( getbit_mask == 0 ){
-            if ( (getbit_buf = fgetc( fp )) == EOF ) return EOF;
-            getbit_buf = key_table[getbit_buf];
+            if (getbit_len == getbit_count){
+                getbit_len = fread(read_buf, 1, READ_LENGTH, fp);
+                if (getbit_len == 0) return EOF;
+                getbit_count = 0;
+            }
+
+            getbit_buf = key_table[read_buf[getbit_count++]];
             getbit_mask = 128;
         }
         x <<= 1;
@@ -470,6 +481,7 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
     int c, n, m;
 
     getbit_mask = 0;
+    getbit_len = getbit_count = 0;
     
     fseek( fp, offset, SEEK_SET );
     size_t width  = readShort( fp );
@@ -499,18 +511,22 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
 
     buf += 54;
 
-    unsigned char *spb_buffer = new unsigned char[ width * height + 4 ];
+    if (decomp_buffer_len < width*height+4){
+        if (decomp_buffer) delete[] decomp_buffer;
+        decomp_buffer_len = width*height+4;
+        decomp_buffer = new unsigned char[decomp_buffer_len];
+    }
     
     for ( i=0 ; i<3 ; i++ ){
         count = 0;
-        spb_buffer[ count++ ] = c = getbit( fp, 8 );
+        decomp_buffer[count++] = c = getbit( fp, 8 );
         while ( count < (unsigned)(width * height) ){
             n = getbit( fp, 3 );
             if ( n == 0 ){
-                spb_buffer[ count++ ] = c;
-                spb_buffer[ count++ ] = c;
-                spb_buffer[ count++ ] = c;
-                spb_buffer[ count++ ] = c;
+                decomp_buffer[count++] = c;
+                decomp_buffer[count++] = c;
+                decomp_buffer[count++] = c;
+                decomp_buffer[count++] = c;
                 continue;
             }
             else if ( n == 7 ){
@@ -529,12 +545,12 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
                     if ( k & 1 ) c += (k>>1) + 1;
                     else         c -= (k>>1);
                 }
-                spb_buffer[ count++ ] = c;
+                decomp_buffer[count++] = c;
             }
         }
 
         pbuf  = buf + (width * 3 + width_pad)*(height-1) + i;
-        psbuf = spb_buffer;
+        psbuf = decomp_buffer;
 
         for ( j=0 ; j<height ; j++ ){
             if ( j & 1 ){
@@ -548,8 +564,6 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
         }
     }
     
-    delete[] spb_buffer;
-    
     return total_size;
 }
 
@@ -557,31 +571,30 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
 {
     unsigned int count = 0;
     int i, j, k, r, c;
-    unsigned char *lzss_buffer = new unsigned char[ N * 2 ];
 
     getbit_mask = 0;
+    getbit_len = getbit_count = 0;
 
     fseek( ai->file_handle, ai->fi_list[no].offset, SEEK_SET );
-    memset( lzss_buffer, 0, N-F );
+    memset( decomp_buffer, 0, N-F );
     r = N - F;
 
     while ( count < ai->fi_list[no].original_length ){
         if ( getbit( ai->file_handle, 1 ) ) {
             if ((c = getbit( ai->file_handle, 8 )) == EOF) break;
             buf[ count++ ] = c;
-            lzss_buffer[ r++ ] = c;  r &= (N - 1);
+            decomp_buffer[r++] = c;  r &= (N - 1);
         } else {
             if ((i = getbit( ai->file_handle, EI )) == EOF) break;
             if ((j = getbit( ai->file_handle, EJ )) == EOF) break;
             for (k = 0; k <= j + 1  ; k++) {
-                c = lzss_buffer[(i + k) & (N - 1)];
+                c = decomp_buffer[(i + k) & (N - 1)];
                 buf[ count++ ] = c;
-                lzss_buffer[ r++ ] = c;  r &= (N - 1);
+                decomp_buffer[r++] = c;  r &= (N - 1);
             }
         }
     }
 
-    delete[] lzss_buffer;
     return count;
 }
 

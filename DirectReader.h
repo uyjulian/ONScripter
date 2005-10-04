@@ -66,6 +66,11 @@ protected:
     unsigned char key_table[256];
     bool key_table_flag;
     int  getbit_mask;
+    size_t getbit_len, getbit_count;
+    unsigned char *read_buf;
+    unsigned char *decomp_buffer;
+    size_t decomp_buffer_len;
+    
     struct RegisteredCompressionType{
         RegisteredCompressionType *next;
         char *ext;

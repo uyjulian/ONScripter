@@ -23,6 +23,8 @@
 
 #include "ScriptHandler.h"
 
+#define TMP_SCRIPT_BUF_LEN 4096
+
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
 ScriptHandler::ScriptHandler()
@@ -746,18 +748,24 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
     if (encrypt_mode == 3 && !key_table_flag)
         errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.\n");
 
-    while(1)
-    {
-        int ch = fgetc( fp );
-        if ( ch != EOF ){
-            if      ( encrypt_mode == 1 ) ch ^= 0x84;
-            else if ( encrypt_mode == 2 ){
-                ch = (ch ^ magic[magic_counter++]) & 0xff;
-                if ( magic_counter == 5 ) magic_counter = 0;
+    size_t len=0, count=0;
+    while(1){
+        if (len == count){
+            len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
+            if (len == 0){
+                if (cr_flag) *(*buf)++ = 0x0a;
+                break;
             }
-            else if ( encrypt_mode == 3){
-                ch = key_table[ch] ^ 0x84;
-            }
+            count = 0;
+        }
+        char ch = tmp_script_buf[count++];
+        if      ( encrypt_mode == 1 ) ch ^= 0x84;
+        else if ( encrypt_mode == 2 ){
+            ch = (ch ^ magic[magic_counter++]) & 0xff;
+            if ( magic_counter == 5 ) magic_counter = 0;
+        }
+        else if ( encrypt_mode == 3){
+            ch = key_table[(unsigned char)ch] ^ 0x84;
         }
 
         if ( cr_flag && ch != 0x0a ){
@@ -765,7 +773,6 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
             newline_flag = true;
             cr_flag = false;
         }
-        if ( ch == EOF ) break;
     
         if ( ch == '*' && newline_flag ) num_of_labels++;
         if ( ch == 0x0d ){
@@ -842,6 +849,7 @@ int ScriptHandler::readScript( char *path )
     char *p_script_buffer;
     current_script = p_script_buffer = script_buffer;
     
+    tmp_script_buf = new char[TMP_SCRIPT_BUF_LEN];
     if (encrypt_mode > 0){
         fseek( fp, 0, SEEK_SET );
         readScriptSub( fp, &p_script_buffer, encrypt_mode );
@@ -860,6 +868,7 @@ int ScriptHandler::readScript( char *path )
             }
         }
     }
+    delete[] tmp_script_buf;
 
     script_buffer_length = p_script_buffer - script_buffer;
     
