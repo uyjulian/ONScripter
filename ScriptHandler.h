@@ -170,7 +170,7 @@ public:
     LabelInfo lookupLabelNext( const char* label );
     void errorAndExit( char *str );
 
-    void saveArrayVariable( FILE *fp );
+    ArrayVariable *getRootArrayVariable();
     void loadArrayVariable( FILE *fp );
     
     void addNumAlias( const char *str, int no );
@@ -199,8 +199,6 @@ public:
     } log_info[2];
     LogLink *findAndAddLog( LogInfo &info, const char *name, bool add_flag );
     void resetLog( LogInfo &info );
-    void loadLog( LogInfo &info );
-    void saveLog( LogInfo &info );
     
     /* ---------------------------------------- */
     /* Variable */

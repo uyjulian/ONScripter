@@ -299,6 +299,12 @@ protected:
     char *load_menu_name;
     char *save_item_name;
 
+    unsigned char *save_data_buf;
+    unsigned char *file_io_buf;
+    size_t file_io_buf_ptr;
+    size_t file_io_buf_len;
+    size_t save_data_len;
+    
     /* ---------------------------------------- */
     /* Text related variables */
     char *default_env_font;
@@ -403,8 +409,6 @@ protected:
         };
     } root_rmenu_link;
     unsigned int rmenu_link_num, rmenu_link_width;
-    int  load_str_size;
-    char *load_str_buffer;
 
     void deleteRMenuLink();
     int getSystemCallNo( const char *buffer );
@@ -413,12 +417,22 @@ protected:
     
     void errorAndExit( const char *str, const char *reason=NULL );
 
-    void saveInt( FILE *fp, int var );
-    void loadInt( FILE *fp, int *var );
-    void saveStr( FILE *fp, char *str );
-    void loadStr( FILE *fp, char **str );
-    void saveVariables( FILE *fp, int from, int to );
-    void loadVariables( FILE *fp, int from, int to );
+    void allocFileIOBuf();
+    int saveFileIOBuf( const char *filename, int offset=0 );
+    int loadFileIOBuf( const char *filename );
+
+    void writeChar( char c, bool output_flag );
+    char readChar();
+    void writeInt( int i, bool output_flag );
+    int readInt();
+    void writeStr( char *s, bool output_flag );
+    void readStr( char **s );
+    void writeVariables( int from, int to, bool output_flag );
+    void readVariables( int from, int to );
+    void writeArrayVariable( bool output_flag );
+    void readArrayVariable();
+    void writeLog( ScriptHandler::LogInfo &info );
+    void readLog( ScriptHandler::LogInfo &info );
 
     /* ---------------------------------------- */
     /* System customize related variables */

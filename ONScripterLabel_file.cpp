@@ -131,48 +131,44 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
 
 int ONScripterLabel::loadSaveFile( int no )
 {
-    FILE *fp;
-    char file_name[256], *str = NULL;
-    int  i, j, k, address;
-    int  file_version;
-    
-    sprintf( file_name, "save%d.dat", no );
-    if ( ( fp = fopen( file_name, "rb" ) ) == NULL ){
-        fprintf( stderr, "can't open save file %s\n", file_name );
+    char filename[16];
+    sprintf( filename, "save%d.dat", no );
+    if (loadFileIOBuf( filename )){
+        fprintf( stderr, "can't open save file %s\n", filename );
         return -1;
     }
 
+    char *str = NULL;
+    int  i, j, k, address;
+    int  file_version;
+    
     /* ---------------------------------------- */
     /* Load magic number */
     for ( i=0 ; i<(int)strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
-        if ( fgetc( fp ) != SAVEFILE_MAGIC_NUMBER[i] ) break;
+        if ( readChar() != SAVEFILE_MAGIC_NUMBER[i] ) break;
     if ( i != (int)strlen( SAVEFILE_MAGIC_NUMBER ) ){ // if not ONS save file
-        fseek( fp, 0, SEEK_SET );
+        file_io_buf_ptr = 0;
         // check for ONS version 0
         bool ons_ver0_flag = false;
-        loadInt( fp, &j );
-        if ( j != 1 ) ons_ver0_flag = true;
-        loadInt( fp, &j );
-        loadInt( fp, &j );
-        loadInt( fp, &j );
-        if ( j != 0 ) ons_ver0_flag = true;
-        loadInt( fp, &j );
-        loadInt( fp, &j );
-        if ( j != 0xff ) ons_ver0_flag = true;
-        loadInt( fp, &j );
-        if ( j != 0xff ) ons_ver0_flag = true;
-        loadInt( fp, &j );
-        if ( j != 0xff ) ons_ver0_flag = true;
+        if ( readInt() != 1 ) ons_ver0_flag = true;
+        readInt();
+        readInt();
+        if ( readInt() != 0 ) ons_ver0_flag = true;
+        readInt();
+        if ( readInt() != 0xff ) ons_ver0_flag = true;
+        if ( readInt() != 0xff ) ons_ver0_flag = true;
+        if ( readInt() != 0xff ) ons_ver0_flag = true;
         
-        fseek( fp, 0, SEEK_SET );
+        file_io_buf_ptr = 0;
         if ( !ons_ver0_flag ){
             printf("Save file version is unknown\n" );
-            return loadSaveFile2( fp, SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR );
+            return loadSaveFile2( SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR );
         }
         file_version = 0;
     }
     else{
-        file_version = (fgetc( fp ) * 100) + fgetc( fp );
+        file_version = readChar() * 100;
+        file_version += readChar();
     }
     printf("Save file version is %d.%d\n", file_version/100, file_version%100 );
     if ( file_version > SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR ){
@@ -181,33 +177,32 @@ int ONScripterLabel::loadSaveFile( int no )
     }
 
     if ( file_version >= 200 )
-        return loadSaveFile2( fp, file_version );
+        return loadSaveFile2( file_version );
     
     deleteNestInfo();
 
     /* ---------------------------------------- */
     /* Load text history */
     if ( file_version >= 107 )
-        loadInt( fp, &i );
+        i = readInt();
     else
         i = 0;
     sentence_font.setTateyokoMode( i );
-    int text_history_num;
-    loadInt( fp, &text_history_num );
+    int text_history_num = readInt();
     for ( i=0 ; i<text_history_num ; i++ ){
-        loadInt( fp, &current_text_buffer->num_xy[0] );
-        loadInt( fp, &current_text_buffer->num_xy[1] );
+        current_text_buffer->num_xy[0] = readInt();
+        current_text_buffer->num_xy[1] = readInt();
         int xy[2];
-        loadInt( fp, &xy[0] );
-        loadInt( fp, &xy[1] );
+        xy[0] = readInt();
+        xy[1] = readInt();
         if ( current_text_buffer->buffer2 ) delete[] current_text_buffer->buffer2;
         current_text_buffer->buffer2 = new char[ (current_text_buffer->num_xy[0]*2+1) * current_text_buffer->num_xy[1] + 1 ];
         current_text_buffer->buffer2_count = 0;
 
         char ch1, ch2;
         for ( j=0, k=0 ; j<current_text_buffer->num_xy[0] * current_text_buffer->num_xy[1] ; j++ ){
-            ch1 = fgetc( fp );
-            ch2 = fgetc( fp );
+            ch1 = readChar();
+            ch2 = readChar();
             if ( ch1 == ((char*)"@")[0] &&
                  ch2 == ((char*)"@")[1] ){
                 k += 2;
@@ -237,32 +232,27 @@ int ONScripterLabel::loadSaveFile( int no )
 
     /* ---------------------------------------- */
     /* Load sentence font */
-    loadInt( fp, &j );
+    j = readInt();
     //sentence_font.is_valid = (j==1)?true:false;
-    loadInt( fp, &sentence_font.font_size_xy[0] );
+    sentence_font.font_size_xy[0] = readInt();
     if ( file_version >= 100 ){
-        loadInt( fp, &sentence_font.font_size_xy[1] );
+        sentence_font.font_size_xy[1] = readInt();
     }
     else{
         sentence_font.font_size_xy[1] = sentence_font.font_size_xy[0];
     }
-    loadInt( fp, &sentence_font.top_xy[0] );
-    loadInt( fp, &sentence_font.top_xy[1] );
-    loadInt( fp, &sentence_font.num_xy[0] );
-    loadInt( fp, &sentence_font.num_xy[1] );
-    loadInt( fp, &i );
-    sentence_font.xy[0] = i*2;
-    loadInt( fp, &i );
-    sentence_font.xy[1] = i*2;
-    loadInt( fp, &sentence_font.pitch_xy[0] );
-    loadInt( fp, &sentence_font.pitch_xy[1] );
-    loadInt( fp, &sentence_font.wait_time );
-    loadInt( fp, &j );
-    sentence_font.is_bold = (j==1)?true:false;
-    loadInt( fp, &j );
-    sentence_font.is_shadow = (j==1)?true:false;
-    loadInt( fp, &j );
-    sentence_font.is_transparent = (j==1)?true:false;
+    sentence_font.top_xy[0] = readInt();
+    sentence_font.top_xy[1] = readInt();
+    sentence_font.num_xy[0] = readInt();
+    sentence_font.num_xy[1] = readInt();
+    sentence_font.xy[0] = readInt()*2;
+    sentence_font.xy[1] = readInt()*2;
+    sentence_font.pitch_xy[0] = readInt();
+    sentence_font.pitch_xy[1] = readInt();
+    sentence_font.wait_time = readInt();
+    sentence_font.is_bold = (readInt()==1)?true:false;
+    sentence_font.is_shadow = (readInt()==1)?true:false;
+    sentence_font.is_transparent = (readInt()==1)?true:false;
 
     for (j=0, k=0, i=0 ; i<current_text_buffer->buffer2_count ; i++){
         if (j == sentence_font.xy[1] &&
@@ -280,20 +270,18 @@ int ONScripterLabel::loadSaveFile( int no )
 
     /* Dummy, must be removed later !! */
     for ( i=0 ; i<8 ; i++ ){
-        loadInt( fp, &j );
+        j = readInt();
         //sentence_font.window_color[i] = j;
     }
     /* Should be char, not integer !! */
-    for ( i=0 ; i<3 ; i++ ){
-        loadInt( fp, &j );
-        sentence_font.window_color[i] = j;
-    }
-    loadStr( fp, &sentence_font_info.image_name );
+    for ( i=0 ; i<3 ; i++ )
+        sentence_font.window_color[i] = readInt();
+    readStr( &sentence_font_info.image_name );
 
-    loadInt( fp, &j ); sentence_font_info.pos.x = j * screen_ratio1 / screen_ratio2; 
-    loadInt( fp, &j ); sentence_font_info.pos.y = j * screen_ratio1 / screen_ratio2;
-    loadInt( fp, &j ); sentence_font_info.pos.w = j * screen_ratio1 / screen_ratio2;
-    loadInt( fp, &j ); sentence_font_info.pos.h = j * screen_ratio1 / screen_ratio2;
+    sentence_font_info.pos.x = readInt() * screen_ratio1 / screen_ratio2; 
+    sentence_font_info.pos.y = readInt() * screen_ratio1 / screen_ratio2;
+    sentence_font_info.pos.w = readInt() * screen_ratio1 / screen_ratio2;
+    sentence_font_info.pos.h = readInt() * screen_ratio1 / screen_ratio2;
 
     if ( !sentence_font.is_transparent ){
         parseTaggedString( &sentence_font_info );
@@ -302,11 +290,10 @@ int ONScripterLabel::loadSaveFile( int no )
 
     sentence_font.ttf_font = NULL;
 
-    loadInt( fp, &clickstr_state );
-    loadInt( fp, &j );
-    new_line_skip_flag = (j==1)?true:false;
+    clickstr_state = readInt();
+    new_line_skip_flag = (readInt()==1)?true:false;
     if ( file_version >= 103 ){
-        loadInt( fp, &erase_text_window_mode );
+        erase_text_window_mode = readInt();
     }
 
     /* ---------------------------------------- */
@@ -314,18 +301,17 @@ int ONScripterLabel::loadSaveFile( int no )
 
     int offset = 0;
     while( 1 ){
-        loadStr( fp, &str );
+        readStr( &str );
         current_label_info = script_h.lookupLabel( str );
         
-        loadInt( fp, &current_line );
-        current_line += 2;
+        current_line = readInt() + 2;
         char *buf = current_label_info.label_header;
         while( buf < current_label_info.start_address ){
             if ( *buf == 0x0a ) current_line--;
             buf++;
         }
 
-        loadInt( fp, &offset );
+        offset = readInt();
             
         script_h.setCurrent( current_label_info.label_header );
         script_h.skipLine( current_line );
@@ -333,16 +319,15 @@ int ONScripterLabel::loadSaveFile( int no )
         if ( file_version <= 104 )
         {
             if ( file_version >= 102 )
-                loadInt( fp, &j );
+                readInt();
 
-            loadInt( fp, &address );
+            address = readInt();
         }
         else{
-            loadInt( fp, &i );
-            offset += i;
+            offset += readInt();
         }
         
-        if ( fgetc( fp ) == 0 ) break;
+        if ( readChar() == 0 ) break;
 
         last_nest_info->next = new NestInfo();
         last_nest_info->next->previous = last_nest_info;
@@ -351,23 +336,23 @@ int ONScripterLabel::loadSaveFile( int no )
     }
     script_h.setCurrent( script_h.getCurrent() + offset );
     
-    int tmp_event_mode = fgetc( fp );
+    int tmp_event_mode = readChar();
 
     /* ---------------------------------------- */
     /* Load variables */
-    loadVariables( fp, 0, 200 );
+    readVariables( 0, 200 );
 
     /* ---------------------------------------- */
     /* Load monocro flag */
-    monocro_flag = (fgetc( fp )==1)?true:false;
+    monocro_flag = (readChar()==1)?true:false;
     if ( file_version >= 101 ){
-        monocro_flag = (fgetc( fp )==1)?true:false;
+        monocro_flag = (readChar()==1)?true:false;
     }
-    for ( i=0 ; i<3 ; i++ ) monocro_color[i] = fgetc( fp );
+    for ( i=0 ; i<3 ; i++ ) monocro_color[i] = readChar();
 
     if ( file_version >= 101 ){
-        for ( i=0 ; i<3 ; i++ ) monocro_color[i] = fgetc( fp );
-        fgetc( fp ); // obsolete, need_refresh_flag
+        for ( i=0 ; i<3 ; i++ ) monocro_color[i] = readChar();
+        readChar(); // obsolete, need_refresh_flag
     }
     for ( i=0 ; i<256 ; i++ ){
         monocro_color_lut[i][0] = (monocro_color[0] * i) >> 8;
@@ -377,19 +362,19 @@ int ONScripterLabel::loadSaveFile( int no )
     
     /* Load nega flag */
     if ( file_version >= 104 ){
-        nega_mode = (unsigned char)fgetc( fp );
+        nega_mode = (unsigned char)readChar();
     }
 
     /* ---------------------------------------- */
     /* Load current images */
     bg_info.remove();
-    bg_info.color[0] = (unsigned char)fgetc( fp );
-    bg_info.color[1] = (unsigned char)fgetc( fp );
-    bg_info.color[2] = (unsigned char)fgetc( fp );
+    bg_info.color[0] = (unsigned char)readChar();
+    bg_info.color[1] = (unsigned char)readChar();
+    bg_info.color[2] = (unsigned char)readChar();
     bg_info.num_of_cells = 1;
-    loadStr( fp, &bg_info.file_name );
+    readStr( &bg_info.file_name );
     setupAnimationInfo( &bg_info );
-    bg_effect_image = (EFFECT_IMAGE)fgetc( fp );
+    bg_effect_image = (EFFECT_IMAGE)readChar();
     
     if (bg_effect_image == COLOR_EFFECT_IMAGE){
         bg_info.allocImage( screen_width, screen_height );
@@ -408,7 +393,7 @@ int ONScripterLabel::loadSaveFile( int no )
     /* ---------------------------------------- */
     /* Load Tachi image and Sprite */
     for ( i=0 ; i<3 ; i++ ){
-        loadStr( fp, &tachi_info[i].image_name );
+        readStr( &tachi_info[i].image_name );
         if ( tachi_info[i].image_name ){
             parseTaggedString( &tachi_info[i] );
             setupAnimationInfo( &tachi_info[ i ] );
@@ -420,12 +405,11 @@ int ONScripterLabel::loadSaveFile( int no )
     /* ---------------------------------------- */
     /* Load current sprites */
     for ( i=0 ; i<256 ; i++ ){
-        loadInt( fp, &j );
-        sprite_info[i].visible = (j==1)?true:false;
-        loadInt( fp, &j ); sprite_info[i].pos.x = j * screen_ratio1 / screen_ratio2;
-        loadInt( fp, &j ); sprite_info[i].pos.y = j * screen_ratio1 / screen_ratio2;
-        loadInt( fp, &sprite_info[i].trans );
-        loadStr( fp, &sprite_info[i].image_name );
+        sprite_info[i].visible = (readInt()==1)?true:false;
+        sprite_info[i].pos.x = readInt() * screen_ratio1 / screen_ratio2;
+        sprite_info[i].pos.y = readInt() * screen_ratio1 / screen_ratio2;
+        sprite_info[i].trans = readInt();
+        readStr( &sprite_info[i].image_name );
         if ( sprite_info[i].image_name ){
             parseTaggedString( &sprite_info[i] );
             setupAnimationInfo( &sprite_info[i] );
@@ -437,16 +421,16 @@ int ONScripterLabel::loadSaveFile( int no )
     stopCommand();
     loopbgmstopCommand();
 
-    current_cd_track = (Sint8)fgetc( fp );
-    bool play_once_flag = (fgetc( fp )==1)?true:false;
+    current_cd_track = (Sint8)readChar();
+    bool play_once_flag = (readChar()==1)?true:false;
     if ( current_cd_track == -2 ){
-        loadStr( fp, &midi_file_name );
+        readStr( &midi_file_name );
         midi_play_loop_flag = !play_once_flag;
         setStr( &music_file_name, NULL );
         music_play_loop_flag = false;
     }
     else{
-        loadStr( fp, &music_file_name );
+        readStr( &music_file_name );
         if ( music_file_name ){
             music_play_loop_flag = !play_once_flag;
             cd_play_loop_flag = false;
@@ -487,13 +471,12 @@ int ONScripterLabel::loadSaveFile( int no )
 
     /* ---------------------------------------- */
     /* Load rmode flag */
-    rmode_flag = (fgetc( fp )==1)?true:false;
+    rmode_flag = (readChar()==1)?true:false;
     
     /* ---------------------------------------- */
     /* Load text on flag */
-    text_on_flag = (fgetc( fp )==1)?true:false;
+    text_on_flag = (readChar()==1)?true:false;
 
-    fclose( fp );
 
     restoreTextBuffer();
     num_chars_in_sentence = 0;
@@ -517,74 +500,45 @@ int ONScripterLabel::loadSaveFile( int no )
     return 0;
 }
 
-void ONScripterLabel::saveMagicNumber( FILE *fp )
+void ONScripterLabel::saveMagicNumber( bool output_flag )
 {
     for ( unsigned int i=0 ; i<strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
-        fputc( SAVEFILE_MAGIC_NUMBER[i], fp );
-    fputc( SAVEFILE_VERSION_MAJOR, fp );
-    fputc( SAVEFILE_VERSION_MINOR, fp );
-}
-
-void ONScripterLabel::saveSaveFileFromTmpFile( FILE *fp )
-{
-    int c;
-    long len;
-    char *buf = new char[ READ_LENGTH ];
-        
-    fseek( tmp_save_fp, 0, SEEK_END );
-    len = ftell( tmp_save_fp );
-    fseek( tmp_save_fp, 0, SEEK_SET );
-    while( len > 0 ){
-        if ( len > READ_LENGTH ) c = READ_LENGTH;
-        else                     c = len;
-        len -= c;
-        fread( buf, 1, c, tmp_save_fp );
-        fwrite( buf, 1, c, fp );
-    }
-
-    delete[] buf;
+        writeChar( SAVEFILE_MAGIC_NUMBER[i], output_flag );
+    writeChar( SAVEFILE_VERSION_MAJOR, output_flag );
+    writeChar( SAVEFILE_VERSION_MINOR, output_flag );
 }
 
 int ONScripterLabel::saveSaveFile( int no )
 {
-    if ( no >= 0 )
-    {
-        FILE *fp;
-        char file_name[256];
-
+    // make save data structure on memory
+    if (no < 0 || saveon_flag && internal_saveon_flag){
+        file_io_buf_ptr = 0;
+        saveMagicNumber( false );
+        saveSaveFile2( false );
+        allocFileIOBuf();
+        saveMagicNumber( true );
+        saveSaveFile2( true );
+        save_data_len = file_io_buf_ptr;
+        memcpy(save_data_buf, file_io_buf, save_data_len);
+    }
+    
+    if ( no >= 0 ){
         saveAll();
 
-        sprintf( file_name, "save%d.dat", no );
-        if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
-            fprintf( stderr, "can't open save file %s for writing\n", file_name );
+        char filename[16];
+        sprintf( filename, "save%d.dat", no );
+        
+        memcpy(file_io_buf, save_data_buf, save_data_len);
+        file_io_buf_ptr = save_data_len;
+        if (saveFileIOBuf( filename )){
+            fprintf( stderr, "can't open save file %s for writing\n", filename );
             return -1;
         }
 
-        saveMagicNumber( fp );
-        if (saveon_flag && internal_saveon_flag)
-            saveSaveFile2( fp );
-        else
-            saveSaveFileFromTmpFile( fp );
-        fclose(fp);
-
-        sprintf( file_name, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
-        if ( ( fp = fopen( file_name, "wb" ) ) == NULL ){
-            fprintf( stderr, "can't open save file %s for writing (not an error)\n", file_name );
-            return 0;
-        }
-        if (saveon_flag && internal_saveon_flag)
-            saveSaveFile2( fp );
-        else
-            saveSaveFileFromTmpFile( fp );
-        fclose(fp);
-    }
-    else{
-        if ( tmp_save_fp ) fclose( tmp_save_fp );
-        if ( (tmp_save_fp = tmpfile()) == NULL ){
-            fprintf( stderr, "can't open tmp_file\n");
-            return -1;
-        }
-        saveSaveFile2( tmp_save_fp );
+        size_t magic_len = strlen(SAVEFILE_MAGIC_NUMBER)+2;
+        sprintf( filename, RELATIVEPATH "sav%csave%d.dat", DELIMITER, no );
+        if (saveFileIOBuf( filename, magic_len ))
+            fprintf( stderr, "can't open save file %s for writing (not an error)\n", filename );
     }
 
     return 0;

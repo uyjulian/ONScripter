@@ -324,7 +324,6 @@ private:
     long autoclick_time;
     long remaining_time;
 
-    FILE *tmp_save_fp;
     bool saveon_flag;
     bool internal_saveon_flag; // to saveoff at the head of text
     int yesno_caller;
@@ -651,12 +650,11 @@ private:
     /* File I/O */
     void searchSaveFile( SaveFileInfo &info, int no );
     int  loadSaveFile( int no );
-    void saveMagicNumber( FILE *fp );
-    void saveSaveFileFromTmpFile( FILE *fp );
+    void saveMagicNumber( bool output_flag );
     int  saveSaveFile( int no );
 
-    int  loadSaveFile2( FILE *fp, int file_version );
-    void saveSaveFile2( FILE *fp );
+    int  loadSaveFile2( int file_version );
+    void saveSaveFile2( bool output_flag );
     
     /* ---------------------------------------- */
     /* Image processing */

@@ -949,7 +949,7 @@ int ScriptParser::filelogCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "filelog: not in the define section" );
 
     filelog_flag = true;
-    script_h.loadLog( script_h.log_info[ScriptHandler::FILE_LOG] );
+    readLog( script_h.log_info[ScriptHandler::FILE_LOG] );
     
     return RET_CONTINUE;
 }

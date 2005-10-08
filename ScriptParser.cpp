@@ -160,8 +160,12 @@ ScriptParser::ScriptParser()
     load_menu_name = NULL;
     save_item_name = NULL;
 
-    load_str_size = 128;
-    load_str_buffer = new char[load_str_size];
+    file_io_buf = NULL;
+    save_data_buf = NULL;
+    file_io_buf_ptr = 0;
+    file_io_buf_len = 0;
+    //save_data_len = 0;
+
     text_buffer = NULL;
     
     /* ---------------------------------------- */
@@ -183,7 +187,9 @@ ScriptParser::~ScriptParser()
     if (save_menu_name) delete[] save_menu_name;
     if (load_menu_name) delete[] load_menu_name;
     if (save_item_name) delete[] save_item_name;
-    delete[] load_str_buffer;
+
+    if (file_io_buf) delete[] file_io_buf;
+    if (save_data_buf) delete[] save_data_buf;
 }
 
 void ScriptParser::reset()
@@ -317,7 +323,7 @@ void ScriptParser::reset()
     last_effect_link = &root_effect_link;
     last_effect_link->next = NULL;
 
-    script_h.loadLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
+    readLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
     
     current_mode = DEFINE_MODE;
 
@@ -481,82 +487,251 @@ void ScriptParser::saveGlovalData()
 {
     if ( !globalon_flag ) return;
 
-    FILE *fp;
+    file_io_buf_ptr = 0;
+    writeVariables( script_h.global_variable_border, VARIABLE_RANGE, false );
+    allocFileIOBuf();
+    writeVariables( script_h.global_variable_border, VARIABLE_RANGE, true );
 
-    if ( ( fp = fopen( "gloval.sav", "wb" ) ) == NULL ){
-        fprintf( stderr, "can't write gloval.sav\n" );
+    if (saveFileIOBuf( "gloval.sav" )){
+        fprintf( stderr, "can't open gloval.sav for writing\n");
+        exit(-1);
+    }
+}
+
+void ScriptParser::allocFileIOBuf()
+{
+    if (file_io_buf_ptr > file_io_buf_len){
+        file_io_buf_len = file_io_buf_ptr;
+        if (file_io_buf) delete[] file_io_buf;
+        file_io_buf = new unsigned char[file_io_buf_len];
+
+        if (save_data_buf){
+            memcpy(file_io_buf, save_data_buf, save_data_len);
+            delete[] save_data_buf;
+        }
+        save_data_buf = new unsigned char[file_io_buf_len];
+        memcpy(save_data_buf, file_io_buf, save_data_len);
+    }
+    file_io_buf_ptr = 0;
+}
+
+int ScriptParser::saveFileIOBuf( const char *filename, int offset )
+{
+    FILE *fp;
+    if ( (fp = fopen( filename, "wb" )) == NULL ) return -1;
+    
+    size_t ret = fwrite(file_io_buf+offset, 1, file_io_buf_ptr-offset, fp);
+    fclose(fp);
+
+    if (ret != file_io_buf_ptr) return -2;
+
+    return 0;
+}
+
+int ScriptParser::loadFileIOBuf( const char *filename )
+{
+    FILE *fp;
+    if ( (fp = fopen( filename, "rb" )) == NULL )
+        return -1;
+    
+    fseek(fp, 0, SEEK_END);
+    size_t len = ftell(fp);
+    file_io_buf_ptr = len;
+    allocFileIOBuf();
+
+    fseek(fp, 0, SEEK_SET);
+    size_t ret = fread(file_io_buf, 1, len, fp);
+    fclose(fp);
+
+    if (ret != len) return -2;
+    
+    return 0;
+}
+
+void ScriptParser::writeChar(char c, bool output_flag)
+{
+    if (output_flag)
+        file_io_buf[file_io_buf_ptr] = (unsigned char)c;
+    file_io_buf_ptr++;
+}
+
+char ScriptParser::readChar()
+{
+    if (file_io_buf_ptr >= file_io_buf_len ) return 0;
+    return (char)file_io_buf[file_io_buf_ptr++];
+}
+
+void ScriptParser::writeInt(int i, bool output_flag)
+{
+    if (output_flag){
+        file_io_buf[file_io_buf_ptr++] = i & 0xff;
+        file_io_buf[file_io_buf_ptr++] = (i >> 8) & 0xff;
+        file_io_buf[file_io_buf_ptr++] = (i >> 16) & 0xff;
+        file_io_buf[file_io_buf_ptr++] = (i >> 24) & 0xff;
+    }
+    else{
+        file_io_buf_ptr += 4;
+    }
+}
+
+int ScriptParser::readInt()
+{
+    if (file_io_buf_ptr+3 >= file_io_buf_len ) return 0;
+    
+    int i =
+        (unsigned int)file_io_buf[file_io_buf_ptr+3] << 24 |
+        (unsigned int)file_io_buf[file_io_buf_ptr+2] << 16 |
+        (unsigned int)file_io_buf[file_io_buf_ptr+1] << 8 |
+        (unsigned int)file_io_buf[file_io_buf_ptr];
+    file_io_buf_ptr += 4;
+
+    return i;
+}
+
+void ScriptParser::writeStr(char *s, bool output_flag)
+{
+    if ( s && s[0] ){
+        if (output_flag)
+            memcpy( file_io_buf + file_io_buf_ptr,
+                    s,
+                    strlen(s) );
+        file_io_buf_ptr += strlen(s);
+    }
+    writeChar( 0, output_flag );
+}
+
+void ScriptParser::readStr(char **s)
+{
+    int counter = 0;
+
+    while (file_io_buf_ptr+counter < file_io_buf_len){
+        if (file_io_buf[file_io_buf_ptr+counter++] == 0) break;
+    }
+    
+    if (*s) delete[] *s;
+    *s = NULL;
+    
+    if (counter > 1){
+        *s = new char[counter];
+        memcpy(*s, file_io_buf + file_io_buf_ptr, counter);
+    }
+    file_io_buf_ptr += counter;
+}
+
+void ScriptParser::writeVariables( int from, int to, bool output_flag )
+{
+    for ( int i=from ; i<to ; i++ ){
+        writeInt( script_h.variable_data[i].num, output_flag );
+        writeStr( script_h.variable_data[i].str, output_flag );
+    }
+}
+
+void ScriptParser::readVariables( int from, int to )
+{
+    for ( int i=from ; i<to ; i++ ){
+        script_h.variable_data[i].num = readInt();
+        readStr( &script_h.variable_data[i].str );
+    }
+}
+
+void ScriptParser::writeArrayVariable( bool output_flag )
+{
+    ScriptHandler::ArrayVariable *av = script_h.getRootArrayVariable();
+
+    while(av){
+        int i, dim = 1;
+        for ( i=0 ; i<av->num_dim ; i++ )
+            dim *= av->dim[i];
+        
+        for ( i=0 ; i<dim ; i++ ){
+            unsigned long ch = av->data[i];
+            if (output_flag){
+                file_io_buf[file_io_buf_ptr+3] = (unsigned char)((ch>>24) & 0xff);
+                file_io_buf[file_io_buf_ptr+2] = (unsigned char)((ch>>16) & 0xff);
+                file_io_buf[file_io_buf_ptr+1] = (unsigned char)((ch>>8)  & 0xff);
+                file_io_buf[file_io_buf_ptr]   = (unsigned char)(ch & 0xff);
+            }
+            file_io_buf_ptr += 4;
+        }
+        av = av->next;
+    }
+}
+
+void ScriptParser::readArrayVariable()
+{
+    ScriptHandler::ArrayVariable *av = script_h.getRootArrayVariable();
+
+    while(av){
+        int i, dim = 1;
+        for ( i=0 ; i<av->num_dim ; i++ )
+            dim *= av->dim[i];
+        
+        for ( i=0 ; i<dim ; i++ ){
+            unsigned long ret;
+            if (file_io_buf_ptr+3 >= file_io_buf_len ) return;
+            ret = file_io_buf[file_io_buf_ptr+3];
+            ret = ret << 8 | file_io_buf[file_io_buf_ptr+2];
+            ret = ret << 8 | file_io_buf[file_io_buf_ptr+1];
+            ret = ret << 8 | file_io_buf[file_io_buf_ptr];
+            file_io_buf_ptr += 4;
+            av->data[i] = ret;
+        }
+        av = av->next;
+    }
+}
+
+void ScriptParser::writeLog( ScriptHandler::LogInfo &info )
+{
+    file_io_buf_ptr = 0;
+    bool output_flag = false;
+    for (int n=0 ; n<2 ; n++){
+        int  i,j;
+        char buf[10];
+
+        sprintf( buf, "%d", info.num_logs );
+        for ( i=0 ; i<(int)strlen( buf ) ; i++ ) writeChar( buf[i], output_flag );
+        writeChar( 0x0a, output_flag );
+
+        ScriptHandler::LogLink *cur = info.root_log.next;
+        for ( i=0 ; i<info.num_logs ; i++ ){
+            writeChar( '"', output_flag );
+            for ( j=0 ; j<(int)strlen( cur->name ) ; j++ )
+                writeChar( cur->name[j] ^ 0x84, output_flag );
+            writeChar( '"', output_flag );
+            cur = cur->next;
+        }
+
+        if (n==1) break;
+        allocFileIOBuf();
+        output_flag = true;
+    }
+
+    if (saveFileIOBuf( info.filename )){
+        fprintf( stderr, "can't write %s\n", info.filename );
         exit( -1 );
     }
-
-    saveVariables( fp, script_h.global_variable_border, VARIABLE_RANGE );
-    fclose( fp );
 }
 
-void ScriptParser::saveInt( FILE *fp, int var )
+void ScriptParser::readLog( ScriptHandler::LogInfo &info )
 {
-    char tmp_int[4];
+    script_h.resetLog( info );
     
-    tmp_int[0] = var & 0xff;
-    tmp_int[1] = (var >> 8) & 0xff;
-    tmp_int[2] = (var >> 16) & 0xff;
-    tmp_int[3] = (var >> 24) & 0xff;
-        
-    fwrite( tmp_int, 1, 4, fp );
-}
+    if (loadFileIOBuf( info.filename ) == 0){
+        int i, j, ch, count = 0;
+        char buf[100];
 
-void ScriptParser::loadInt( FILE *fp, int *var )
-{
-    unsigned char tmp_int[4];
-    
-    fread( tmp_int, 1, 4, fp );
-    *var =
-        (unsigned int)tmp_int[3] << 24 |
-        (unsigned int)tmp_int[2] << 16 |
-        (unsigned int)tmp_int[1] << 8 |
-        (unsigned int)tmp_int[0];
-}
-
-void ScriptParser::saveStr( FILE *fp, char *str )
-{
-    if ( str && str[0] ) fprintf( fp, "%s", str );
-    fputc( 0, fp );
-}
-
-void ScriptParser::loadStr( FILE *fp, char **str )
-{
-    int counter = 0, ch;
-
-    while ((ch = fgetc(fp)) != EOF){
-        if (counter >= load_str_size){
-            char *buf = load_str_buffer;
-            load_str_buffer = new char[load_str_size*2];
-            memcpy(load_str_buffer, buf, load_str_size);
-            delete[] buf;
-            load_str_size *= 2;
+        while( (ch = readChar()) != 0x0a ){
+            count = count * 10 + ch - '0';
         }
-        load_str_buffer[counter++] = ch;
-        if (ch == 0) break;
-    }
 
-    if (*str) delete[] *str;
-    *str = NULL;
-    if (ch != EOF && counter != 1)
-        setStr(str, load_str_buffer);
-}
+        for ( i=0 ; i<count ; i++ ){
+            readChar();
+            j = 0; 
+            while( (ch = readChar()) != '"' ) buf[j++] = ch ^ 0x84;
+            buf[j] = '\0';
 
-void ScriptParser::saveVariables( FILE *fp, int from, int to )
-{
-    for ( int i=from ; i<to ; i++ ){
-        saveInt( fp, script_h.variable_data[i].num );
-        saveStr( fp, script_h.variable_data[i].str );
-    }
-}
-
-void ScriptParser::loadVariables( FILE *fp, int from, int to )
-{
-    for ( int i=from ; i<to ; i++ ){
-        loadInt( fp, &script_h.variable_data[i].num );
-        loadStr( fp, &script_h.variable_data[i].str );
+            script_h.findAndAddLog( info, buf, true );
+        }
     }
 }
 
@@ -657,13 +832,10 @@ int ScriptParser::readEffect( EffectLink *effect )
 
 FILE *ScriptParser::fopen(const char *path, const char *mode)
 {
-    char *file_name = new char[strlen(archive_path)+strlen(path)+1];
-    sprintf( file_name, "%s%s", archive_path, path );
+    char filename[256];
+    sprintf( filename, "%s%s", archive_path, path );
 
-    FILE *fp = ::fopen( file_name, mode );
-    delete[] file_name;
-
-    return fp;
+    return ::fopen( filename, mode );
 }
 
 void ScriptParser::createKeyTable( const char *key_exe )

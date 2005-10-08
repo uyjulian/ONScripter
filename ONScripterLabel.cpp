@@ -444,8 +444,6 @@ int ONScripterLabel::init()
     text_info.allocImage( screen_width, screen_height );
     text_info.fill(0, 0, 0, 0);
 
-    tmp_save_fp = NULL;
-
     // ----------------------------------------
     // Initialize font
     if ( default_font ){
@@ -569,12 +567,9 @@ void ONScripterLabel::reset()
 
     /* ---------------------------------------- */
     /* Load global variables if available */
-    FILE *fp;
-    if ( ( fp = fopen( "gloval.sav", "rb" ) ) != NULL ||
-         ( fp = fopen( "global.sav", "rb" ) ) != NULL ){
-        loadVariables( fp, script_h.global_variable_border, VARIABLE_RANGE );
-        fclose( fp );
-    }
+    if ( loadFileIOBuf( "gloval.sav" ) == 0 ||
+         loadFileIOBuf( "global.sav" ) == 0 )
+        readVariables( script_h.global_variable_border, VARIABLE_RANGE );
 }
 
 void ONScripterLabel::resetSub()
@@ -1199,8 +1194,8 @@ void ONScripterLabel::saveAll()
 {
     saveEnvData();
     saveGlovalData();
-    if ( filelog_flag )  script_h.saveLog( script_h.log_info[ScriptHandler::FILE_LOG] );
-    if ( labellog_flag ) script_h.saveLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
+    if ( filelog_flag )  writeLog( script_h.log_info[ScriptHandler::FILE_LOG] );
+    if ( labellog_flag ) writeLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
     if ( kidokuskip_flag ) script_h.saveKidokuData();
 }
 
@@ -1214,32 +1209,20 @@ void ONScripterLabel::loadEnvData()
     default_cdrom_drive = NULL;
     kidokumode_flag = true;
     
-    FILE *fp;
-    int i;
-    
-    if ( (fp = fopen( "envdata", "rb" )) != NULL ){
-        loadInt( fp, &i );
-        if (i == 1 && window_mode == false) menu_fullCommand();
-        loadInt( fp, &i );
-        if (i == 0) volume_on_flag = false;
-        loadInt( fp, &text_speed_no );
-        loadInt( fp, &i );
-        if (i == 1) draw_one_page_flag = true;
-        loadStr( fp, &default_env_font );
+    if (loadFileIOBuf( "envdata" ) == 0){
+        if (readInt() == 1 && window_mode == false) menu_fullCommand();
+        if (readInt() == 0) volume_on_flag = false;
+        text_speed_no = readInt();
+        if (readInt() == 1) draw_one_page_flag = true;
+        readStr( &default_env_font );
         if (default_env_font == NULL)
             setStr(&default_env_font, DEFAULT_ENV_FONT);
-        loadInt( fp, &i );
-        if (i == 0) cdaudio_on_flag = false;
-        loadStr( fp, &default_cdrom_drive );
-        loadInt( fp, &voice_volume );
-        voice_volume = DEFAULT_VOLUME - voice_volume;
-        loadInt( fp, &se_volume );
-        se_volume = DEFAULT_VOLUME - se_volume;
-        loadInt( fp, &mp3_volume );
-        mp3_volume = DEFAULT_VOLUME - mp3_volume;
-        loadInt( fp, &i );
-        if (i == 0) kidokumode_flag = false;
-        fclose( fp );
+        if (readInt() == 0) cdaudio_on_flag = false;
+        readStr( &default_cdrom_drive );
+        voice_volume = DEFAULT_VOLUME - readInt();
+        se_volume = DEFAULT_VOLUME - readInt();
+        mp3_volume = DEFAULT_VOLUME - readInt();
+        if (readInt() == 0) kidokumode_flag = false;
     }
     else{
         setStr( &default_env_font, DEFAULT_ENV_FONT );
@@ -1249,23 +1232,28 @@ void ONScripterLabel::loadEnvData()
 
 void ONScripterLabel::saveEnvData()
 {
-    FILE *fp;
+    file_io_buf_ptr = 0;
+    bool output_flag = false;
+    for (int i=0 ; i<2 ; i++){
+        writeInt( fullscreen_mode?1:0, output_flag );
+        writeInt( volume_on_flag?1:0, output_flag );
+        writeInt( text_speed_no, output_flag );
+        writeInt( draw_one_page_flag?1:0, output_flag );
+        writeStr( default_env_font, output_flag );
+        writeInt( cdaudio_on_flag?1:0, output_flag );
+        writeStr( default_cdrom_drive, output_flag );
+        writeInt( DEFAULT_VOLUME - voice_volume, output_flag );
+        writeInt( DEFAULT_VOLUME - se_volume, output_flag );
+        writeInt( DEFAULT_VOLUME - mp3_volume, output_flag );
+        writeInt( kidokumode_flag?1:0, output_flag );
+        writeInt( 0, output_flag ); // ?
 
-    if ( (fp = fopen( "envdata", "wb" )) != NULL ){
-        saveInt( fp, fullscreen_mode?1:0 );
-        saveInt( fp, volume_on_flag?1:0 );
-        saveInt( fp, text_speed_no );
-        saveInt( fp, draw_one_page_flag?1:0 );
-        saveStr( fp, default_env_font );
-        saveInt( fp, cdaudio_on_flag?1:0 );
-        saveStr( fp, default_cdrom_drive );
-        saveInt( fp, DEFAULT_VOLUME - voice_volume );
-        saveInt( fp, DEFAULT_VOLUME - se_volume );
-        saveInt( fp, DEFAULT_VOLUME - mp3_volume );
-        saveInt( fp, kidokumode_flag?1:0 );
-        saveInt( fp, 0 ); // ?
-        fclose( fp );
+        if (i==1) break;
+        allocFileIOBuf();
+        output_flag = true;
     }
+
+    saveFileIOBuf( "envdata" );
 }
 
 int ONScripterLabel::refreshMode()
