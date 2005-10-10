@@ -164,7 +164,7 @@ ScriptParser::ScriptParser()
     save_data_buf = NULL;
     file_io_buf_ptr = 0;
     file_io_buf_len = 0;
-    //save_data_len = 0;
+    save_data_len = 0;
 
     text_buffer = NULL;
     
