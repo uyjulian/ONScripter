@@ -818,10 +818,7 @@ int ONScripterLabel::savegameCommand()
         errorAndExit("savegame: the specified number is less than 0.");
     else{
         shelter_event_mode = event_mode;
-        //char *p_buf = script_h.getNext();
-        //script_h.readLabel(); // save point is the next token to no
         saveSaveFile( no ); 
-        //script_h.setCurrent( p_buf, false );
     }
 
     return RET_CONTINUE;
@@ -1393,6 +1390,9 @@ int ONScripterLabel::loadgameCommand()
 
     if ( loadSaveFile( no ) ) return RET_CONTINUE;
     else {
+        dirty_rect.fill( screen_width, screen_height );
+        flush( refreshMode() );
+
         saveon_flag = true;
         internal_saveon_flag = true;
         skip_flag = false;
@@ -1404,6 +1404,8 @@ int ONScripterLabel::loadgameCommand()
         indent_offset = 0;
         line_enter_status = 0;
         string_buffer_offset = 0;
+
+        refreshMouseOverButton();
 
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
@@ -1950,11 +1952,7 @@ int ONScripterLabel::getcselnumCommand()
 int ONScripterLabel::gameCommand()
 {
     int i;
-
     current_mode = NORMAL_MODE;
-
-    //text_speed_no = 1;
-    //sentence_font.wait_time = -1;
 
     /* ---------------------------------------- */
     if ( !lookback_info[0].image_surface ){
@@ -1981,9 +1979,7 @@ int ONScripterLabel::gameCommand()
     /* ---------------------------------------- */
     /* Load default cursor */
     loadCursor( CURSOR_WAIT_NO, DEFAULT_CURSOR_WAIT, 0, 0 );
-    //cursor_info[ CURSOR_WAIT_NO ].deleteImageName(); // a trick for save file
     loadCursor( CURSOR_NEWPAGE_NO, DEFAULT_CURSOR_NEWPAGE, 0, 0 );
-    //cursor_info[ CURSOR_NEWPAGE_NO ].deleteImageName(); // a trick for save file
 
     /* ---------------------------------------- */
     /* Initialize text buffer */
@@ -2789,11 +2785,6 @@ int ONScripterLabel::bltCommand()
 
     if (dst_rect.w == 0 || dst_rect.h == 0 ||
         src_rect.w == 0 || src_rect.h == 0) return RET_CONTINUE;
-    
-    //printf("w_margin %d %d %d\n", w_margin[0], w_margin[1], w);
-    //printf("h_margin %d %d %d\n", h_margin[0], h_margin[1], h);
-    //printf("dst %d %d %d %d\n", dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h);
-    //printf("src %d %d %d %d\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
     
     if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
 

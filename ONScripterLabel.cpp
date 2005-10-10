@@ -530,6 +530,7 @@ void ONScripterLabel::reset()
     shift_pressed_status = 0;
     ctrl_pressed_status = 0;
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+    current_refresh_mode = REFRESH_NORMAL_MODE;
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
 
@@ -761,9 +762,6 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         
         flush( refreshMode() );
         dirty_rect = dirty;
-        
-        //event_mode |= WAIT_TIMER_MODE;
-        //advancePhase();
     }
     current_over_button = button;
 }
@@ -1013,10 +1011,8 @@ void ONScripterLabel::clearCurrentTextBuffer()
     cached_text_buffer = current_text_buffer;
 }
 
-void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode )
+void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip )
 {
-    if (!(refresh_mode & REFRESH_SHADOW_MODE)) return;
-
     if ( current_font->is_transparent ){
 
         SDL_Rect rect = {0, 0, screen_width, screen_height};
@@ -1050,7 +1046,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, i
         SDL_UnlockSurface( surface );
     }
     else if ( sentence_font_info.image_surface ){
-        drawTaggedSurface( surface, &sentence_font_info, clip, refresh_mode );
+        drawTaggedSurface( surface, &sentence_font_info, clip );
     }
 }
 
@@ -1258,17 +1254,17 @@ void ONScripterLabel::saveEnvData()
 
 int ONScripterLabel::refreshMode()
 {
-    int ret=0;
+    int ret = REFRESH_NORMAL_MODE;
 
-    //printf("refreshMode %d %d %d\n", next_display_mode== TEXT_DISPLAY_MODE,
-    //erase_text_window_mode == 0, text_on_flag );
     if ( next_display_mode == TEXT_DISPLAY_MODE ||
-         erase_text_window_mode == 0 && text_on_flag ){
+         (system_menu_mode == SYSTEM_NULL) && 
+         erase_text_window_mode == 0 &&
+         (current_refresh_mode & REFRESH_SHADOW_MODE) &&
+         text_on_flag ){
         ret = refresh_shadow_text_mode;
     }
-    else{
-        ret = REFRESH_NORMAL_MODE;
-    }
+
+    if (system_menu_mode == SYSTEM_NULL) current_refresh_mode = ret;
 
     return ret;
 }

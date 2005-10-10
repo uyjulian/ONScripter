@@ -64,6 +64,11 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
     current_font = &sentence_font;
     next_display_mode = display_mode;
+    system_menu_mode = SYSTEM_NULL;
+    system_menu_enter_flag = false;
+    yesno_caller = SYSTEM_NULL;
+    key_pressed_flag = false;
+
     if ( restore_flag ){
         
         current_text_buffer = cached_text_buffer;
@@ -71,20 +76,14 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
 
-        dirty_rect.fill( screen_width, screen_height );
-        flush( refreshMode() );
-        
         event_mode = shelter_event_mode;
         draw_cursor_flag = shelter_draw_cursor_flag;
         if ( event_mode & WAIT_BUTTON_MODE ){
             SDL_WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
         }
     }
-
-    system_menu_mode = SYSTEM_NULL;
-    system_menu_enter_flag = false;
-    yesno_caller = SYSTEM_NULL;
-    key_pressed_flag = false;
+    dirty_rect.fill( screen_width, screen_height );
+    flush( refreshMode() );
 
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
 
@@ -175,6 +174,9 @@ void ONScripterLabel::executeSystemMenu()
         if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
             playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
 
+        system_menu_mode = SYSTEM_MENU;
+        yesno_caller = SYSTEM_MENU;
+
         text_info.fill( 0, 0, 0, 0 );
         flush( refreshMode() );
 
@@ -198,8 +200,6 @@ void ONScripterLabel::executeSystemMenu()
         flushEvent();
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
-        system_menu_mode = SYSTEM_MENU;
-        yesno_caller = SYSTEM_MENU;
     }
 }
 
@@ -287,6 +287,8 @@ void ONScripterLabel::executeSystemLoad()
         }
     }
     else{
+        system_menu_mode = SYSTEM_LOAD;
+
         text_info.fill( 0, 0, 0, 0 );
         
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
@@ -333,7 +335,6 @@ void ONScripterLabel::executeSystemLoad()
 
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
-        system_menu_mode = SYSTEM_LOAD;
     }
 }
 
@@ -357,6 +358,8 @@ void ONScripterLabel::executeSystemSave()
         leaveSystemCall();
     }
     else{
+        system_menu_mode = SYSTEM_SAVE;
+
         text_info.fill( 0, 0, 0, 0 );
 
         menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
@@ -404,7 +407,6 @@ void ONScripterLabel::executeSystemSave()
 
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
-        system_menu_mode = SYSTEM_SAVE;
     }
 }
 

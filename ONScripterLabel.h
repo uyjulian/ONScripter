@@ -367,6 +367,7 @@ private:
     };
     
     int refresh_shadow_text_mode;
+    int current_refresh_mode;
     int display_mode, next_display_mode;
     int event_mode;
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
@@ -512,7 +513,7 @@ private:
         SDL_Surface *surface;
     } *root_glyph_cache, glyph_cache[NUM_GLYPH_CACHE];
 
-    int  refreshMode();
+    int refreshMode();
     
     SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text, SDL_Color fg);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect );
@@ -624,7 +625,7 @@ private:
     bool new_line_skip_flag;
     int text_speed_no;
 
-    void shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode );
+    void shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip );
     void clearCurrentTextBuffer();
     void newPage( bool next_flag );
     
@@ -643,7 +644,7 @@ private:
     void resetRemainingTime( int t );
     void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL );
     void parseTaggedString( AnimationInfo *anim );
-    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip, int refresh_mode );
+    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip );
     void stopAnimation( int click );
     
     /* ---------------------------------------- */
@@ -667,8 +668,8 @@ private:
                      int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL );
     void alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                        SDL_Surface *src_surface, SDL_Rect *clip, bool rotate_flag );
-    void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect, int refresh_mode );
-    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL, int refresh_mode=0 );
+    void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect );
+    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
     void refreshSurface( SDL_Surface *surface, SDL_Rect *clip=NULL, int refresh_mode = REFRESH_NORMAL_MODE );
     void createBackground();
 

@@ -218,7 +218,7 @@ void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_UnlockSurface( dst_surface );
 }
 
-void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect, int refresh_mode )
+void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect )
 {
     SDL_Rect rect = {0, 0, surface->w, surface->h};
 
@@ -241,7 +241,7 @@ void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect,
     SDL_UnlockSurface( surface );
 }
 
-void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect, int refresh_mode )
+void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect )
 {
     SDL_Rect rect = {0, 0, surface->w, surface->h};
 
@@ -278,7 +278,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
 
     SDL_FillRect( surface, clip, SDL_MapRGB( surface->format, 0, 0, 0) );
     
-    drawTaggedSurface( surface, &bg_info, clip, refresh_mode );
+    drawTaggedSurface( surface, &bg_info, clip );
     
     if ( !all_sprite_hide_flag ){
         if ( z_order < 10 && refresh_mode & REFRESH_SAYA_MODE )
@@ -287,22 +287,24 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
             top = z_order;
         for ( i=MAX_SPRITE_NUM-1 ; i>top ; i-- ){
             if ( sprite_info[i].image_surface && sprite_info[i].visible ){
-                drawTaggedSurface( surface, &sprite_info[i], clip, refresh_mode );
+                drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
     }
 
     for ( i=0 ; i<3 ; i++ ){
         if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
-            drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip, refresh_mode );
+            drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
         }
     }
 
     if ( windowback_flag ){
-        if ( nega_mode == 1 ) makeNegaSurface( surface, clip, refresh_mode );
-        if ( monocro_flag )   makeMonochromeSurface( surface, clip, refresh_mode );
-        if ( nega_mode == 2 ) makeNegaSurface( surface, clip, refresh_mode );
-        shadowTextDisplay( surface, clip, refresh_mode );
+        if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
+        if ( monocro_flag )   makeMonochromeSurface( surface, clip );
+        if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
+
+        if (refresh_mode & REFRESH_SHADOW_MODE)
+            shadowTextDisplay( surface, clip );
         if (refresh_mode & REFRESH_TEXT_MODE)
             text_info.blendOnSurface( surface, 0, 0, clip );
     }
@@ -314,47 +316,48 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int 
             top = 0;
         for ( i=z_order ; i>=top ; i-- ){
             if ( sprite_info[i].image_surface && sprite_info[i].visible ){
-                drawTaggedSurface( surface, &sprite_info[i], clip, refresh_mode );
+                drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
     }
 
     if ( !windowback_flag ){
-        if ( nega_mode == 1 ) makeNegaSurface( surface, clip, refresh_mode );
-        if ( monocro_flag )   makeMonochromeSurface( surface, clip, refresh_mode );
-        if ( nega_mode == 2 ) makeNegaSurface( surface, clip, refresh_mode );
+        if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
+        if ( monocro_flag )   makeMonochromeSurface( surface, clip );
+        if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
     }
     
     if ( !( refresh_mode & REFRESH_SAYA_MODE ) ){
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
             if ( bar_info[i] ) {
-                drawTaggedSurface( surface, bar_info[i], clip, refresh_mode );
+                drawTaggedSurface( surface, bar_info[i], clip );
             }
         }
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
             if ( prnum_info[i] ){
-                drawTaggedSurface( surface, prnum_info[i], clip, refresh_mode );
+                drawTaggedSurface( surface, prnum_info[i], clip );
             }
         }
     }
 
     if ( !windowback_flag ){
-        shadowTextDisplay( surface, clip, refresh_mode );
+        if (refresh_mode & REFRESH_SHADOW_MODE)
+            shadowTextDisplay( surface, clip );
         if (refresh_mode & REFRESH_TEXT_MODE)
             text_info.blendOnSurface( surface, 0, 0, clip );
     }
 
     if ( refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label ){
         if ( clickstr_state == CLICK_WAIT )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_WAIT_NO], clip, refresh_mode );
+            drawTaggedSurface( surface, &cursor_info[CURSOR_WAIT_NO], clip );
         else if ( clickstr_state == CLICK_NEWPAGE )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip, refresh_mode );
+            drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip );
     }
 
     ButtonLink *p_button_link = root_button_link.next;
     while( p_button_link ){
         if (p_button_link->show_flag > 0){
-            drawTaggedSurface( surface, p_button_link->anim[p_button_link->show_flag-1], clip, refresh_mode );
+            drawTaggedSurface( surface, p_button_link->anim[p_button_link->show_flag-1], clip );
         }
         p_button_link = p_button_link->next;
     }
