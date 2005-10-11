@@ -627,6 +627,8 @@ int ONScripterLabel::selectCommand()
         }
         else{ // selnum
             script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
+            current_label_info = script_h.getLabelByAddress( select_label_info.next_script );
+            current_line = script_h.getLineByAddress( select_label_info.next_script );
             script_h.setCurrent( select_label_info.next_script );
         }
         deleteSelectLink();

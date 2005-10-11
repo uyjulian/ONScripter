@@ -1,1 +1,1 @@
-#define ONS_VERSION "20051010a(2.54)"
+#define ONS_VERSION "20051011(2.54)"

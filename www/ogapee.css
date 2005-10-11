@@ -144,11 +144,11 @@ padding: 0px;
 
 div.toc-title{
 font-size: medium;
-border-bottom: solid 1px black; 
 text-align: center; 
-color: white;
+border: solid 1px #4444dd;
+border-left: solid 5px #4444dd;
+border-right: solid 5px #4444dd;
 padding: 2px; 
-background-color: #444488;
 }
 
 div.toc-top{
@@ -221,20 +221,17 @@ padding: 5px;
 
 .content h2{
 font-size: large;
-color: white;
-border: solid 1px gray;
+border-bottom: dashed 2px #333399;
 margin: 0px;
 padding-left: 10px;
-background-color: #444488;
 }
 
 .content h3{
 font-size: medium;
-border-bottom: solid 2px gray;
+border-left: solid 5px #4444dd;
+border-bottom: solid 1px #4444dd;
 margin: 5px 5px 0px 5px;
 padding-left: 5px;
-background-image: url(main_bg.gif);
-background-repeat: repeat-y;
 }
 
 .content h4{
