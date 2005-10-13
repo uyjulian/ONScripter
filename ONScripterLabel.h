@@ -660,7 +660,7 @@ private:
     /* ---------------------------------------- */
     /* Image processing */
     unsigned char *resize_buffer;
-    int resize_buffer_size;
+    size_t resize_buffer_size;
 
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );
     void shiftCursorOnButton( int diff );

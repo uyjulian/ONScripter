@@ -2916,13 +2916,12 @@ int ONScripterLabel::barCommand()
     const char *buf = script_h.readStr();
     readColor( &bar_info[no]->color, buf );
 
-    dirty_rect.add( bar_info[no]->pos );
-
     int w = bar_info[no]->max_width * bar_info[no]->param / bar_info[no]->max_param;
     if ( bar_info[no]->max_width > 0 && w > 0 ){
         bar_info[no]->pos.w = w;
         bar_info[no]->allocImage( bar_info[no]->pos.w, bar_info[no]->pos.h );
         bar_info[no]->fill( bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff );
+        dirty_rect.add( bar_info[no]->pos );
     }
 
     return RET_CONTINUE;
