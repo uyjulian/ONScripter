@@ -54,6 +54,8 @@ void optionVersion()
 }
 #if defined(QWS)
 int SDL_main( int argc, char **argv )
+#elif defined(PSP)
+extern "C" int main( int argc, char **argv )
 #else
 int main( int argc, char **argv )
 #endif
@@ -61,6 +63,11 @@ int main( int argc, char **argv )
     printf("ONScripter version %s\n", ONS_VERSION );
 
     ONScripterLabel ons;
+
+#if defined(PSP)
+    ons.disableRescale();
+    ons.enableButtonShortCut();
+#endif
 
     // ----------------------------------------
     // Parse options

@@ -215,27 +215,24 @@ int ONScripterLabel::playMP3( int cd_no )
 {
     if ( !audio_open_flag ) return -1;
 
-    if ( music_file_name == NULL ){
-        char file_name[128];
+    char filename[128];
+    char *tmp_music_file_name = music_file_name;
+    if (tmp_music_file_name == NULL){
+        sprintf( filename, "cd\\track%2.2d.mp3", cd_no );
+        tmp_music_file_name = filename;
+    }
 
-        sprintf( file_name, RELATIVEPATH "%scd%ctrack%2.2d.mp3", archive_path, DELIMITER, cd_no );
-        mp3_sample = SMPEG_new( file_name, NULL, 0 );
+    unsigned long length = script_h.cBR->getFileLength( tmp_music_file_name );
+    mp3_buffer = new unsigned char[length];
+    script_h.cBR->getFile( tmp_music_file_name, mp3_buffer );
+    if ( mp3_buffer[0] == 0x30 && mp3_buffer[1] == 0x26 &&
+         mp3_buffer[2] == 0xb2 && mp3_buffer[3] == 0x75 ){
+        /* WMA */
+        delete [] mp3_buffer;
+        mp3_buffer = NULL;
+        return -1;
     }
-    else{
-        unsigned long length;
-    
-        length = script_h.cBR->getFileLength( music_file_name );
-        mp3_buffer = new unsigned char[length];
-        script_h.cBR->getFile( music_file_name, mp3_buffer );
-        if ( mp3_buffer[0] == 0x30 && mp3_buffer[1] == 0x26 &&
-             mp3_buffer[2] == 0xb2 && mp3_buffer[3] == 0x75 ){
-            /* WMA */
-            delete [] mp3_buffer;
-            mp3_buffer = NULL;
-            return -1;
-        }
-        mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( mp3_buffer, length ), NULL, 0 );
-    }
+    mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( mp3_buffer, length ), NULL, 0 );
 
     if ( SMPEG_error( mp3_sample ) ){
         //printf(" failed. [%s]\n",SMPEG_error( mp3_sample ));

@@ -237,6 +237,14 @@ void ONScripterLabel::initSDL()
         exit(-1);
     }
 
+#if defined(PSP)
+    if( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) < 0 || SDL_JoystickOpen(0) == NULL ){
+        fprintf( stderr, "Couldn't initialize JOYSTICK: %s\n", SDL_GetError() );
+        exit(-1);
+    }
+    SDL_ShowCursor(0);
+#endif
+
     /* ---------------------------------------- */
     /* Initialize SDL */
     if ( TTF_Init() < 0 ){
@@ -253,6 +261,11 @@ void ONScripterLabel::initSDL()
 #if defined(PDA) && defined(PDA_VGA)
     screen_width  *= 2; // for checking VGA screen
     screen_height *= 2;
+#elif defined(PDA) && defined(PDA_PSP)
+    screen_ratio1 *= 9;
+    screen_ratio2 *= 8;
+    screen_width   = screen_width  * 9 / 8;
+    screen_height  = screen_height * 9 / 8;
 #endif
 
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
@@ -291,7 +304,7 @@ void ONScripterLabel::initSDL()
 
 void ONScripterLabel::openAudio()
 {
-#if defined(PDA)    
+#if defined(PDA) && !defined(PSP)
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
     if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){

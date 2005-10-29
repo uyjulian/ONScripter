@@ -23,7 +23,7 @@
 
 #include "DirectReader.h"
 #include <bzlib.h>
-#if !defined(WIN32) && !defined(MACOS9)
+#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP)
 #include <dirent.h>
 #endif
 
@@ -120,7 +120,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
     FILE *fp = ::fopen( file_full_path, mode );
     if (fp) return fp;
 
-#if !defined(WIN32) && !defined(MACOS9)
+#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP)
     char *cur_p = NULL;
     DIR *dp = NULL;
     len = strlen(archive_path);

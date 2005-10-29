@@ -27,6 +27,23 @@
 #include <sys/wait.h>
 #endif
 
+#if defined(PSP)
+SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
+                            SDLK_RETURN, /* CIRCLE   */
+                            SDLK_SPACE,  /* CROSS    */
+                            SDLK_RCTRL,  /* SQUARE   */
+                            SDLK_RETURN, /* LTRIGGER */
+                            SDLK_s,      /* RTRIGGER */
+                            SDLK_DOWN,   /* DOWN     */
+                            SDLK_LEFT,   /* LEFT     */
+                            SDLK_UP,     /* UP       */
+                            SDLK_RIGHT,  /* RIGHT    */
+                            SDLK_TAB,    /* SELECT   */
+                            SDLK_a,      /* START    */
+                            SDLK_UNKNOWN,/* HOME     */ /* kernel mode only */
+                            SDLK_UNKNOWN,/* HOLD     */};
+#endif
+
 #define ONS_TIMER_EVENT   (SDL_USEREVENT)
 #define ONS_SOUND_EVENT   (SDL_USEREVENT+1)
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
@@ -864,11 +881,26 @@ int ONScripterLabel::eventLoop()
             mousePressEvent( (SDL_MouseButtonEvent*)&event );
             break;
 
+#if defined(PSP)
+          case SDL_JOYBUTTONDOWN:
+            ((SDL_KeyboardEvent*)&event)->type = SDL_KEYDOWN;
+            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[(&event.jbutton)->button];
+            if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
+                break;
+#endif
           case SDL_KEYDOWN:
             keyDownEvent( (SDL_KeyboardEvent*)&event );
             if ( btndown_flag )
                 keyPressEvent( (SDL_KeyboardEvent*)&event );
             break;
+
+#if defined(PSP)
+          case SDL_JOYBUTTONUP:
+            ((SDL_KeyboardEvent*)&event)->type = SDL_KEYUP;
+            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[(&event.jbutton)->button];
+            if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
+                break;
+#endif
           case SDL_KEYUP:
             keyUpEvent( (SDL_KeyboardEvent*)&event );
             keyPressEvent( (SDL_KeyboardEvent*)&event );

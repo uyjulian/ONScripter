@@ -49,6 +49,7 @@ int main( int argc, char **argv )
     int archive_type = BaseReader::ARCHIVE_TYPE_NSA;
     bool enhanced_flag = false;
     bool vga_flag = false;
+    bool psp_flag = false;
     FILE *fp;
 
     if ( argc >= 4 ){
@@ -57,6 +58,7 @@ int main( int argc, char **argv )
             else if ( !strcmp( argv[1], "-ns2" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS2;
             else if ( !strcmp( argv[1], "-ns3" ) ) archive_type = BaseReader::ARCHIVE_TYPE_NS3;
             else if ( !strcmp( argv[1], "-vga" ) ) vga_flag = true;
+            else if ( !strcmp( argv[1], "-psp" ) ) psp_flag = true;
             argc--;
             argv++;
         }
@@ -66,11 +68,12 @@ int main( int argc, char **argv )
         else argc = 1;
     }
     if ( argc != 4 ){
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] 640 arc_file rescaled_arc_file\n");
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] 800 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] [-psp] 640 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] [-psp] 800 arc_file rescaled_arc_file\n");
         exit(-1);
     }
     if ( vga_flag ) scale_ratio_upper *= 2;
+    else if( psp_flag ) { scale_ratio_upper *= 9; scale_ratio_lower *= 8; }
     
     if ( (fp = fopen( argv[3], "wb" ) ) == NULL ){
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );

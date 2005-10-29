@@ -46,19 +46,26 @@ int main( int argc, char **argv )
     unsigned long length, offset = 0, buffer_length = 0;
     unsigned char *buffer = NULL, *rescaled_buffer = NULL;
     unsigned int i, count;
+    bool psp_flag = false;
     FILE *fp;
 
-    if ( argc == 4 ){
+    if ( argc >= 4 ){
+        while ( argc > 4 ){
+            if ( !strcmp( argv[1], "-psp" ) ) psp_flag = true;
+            argc--;
+            argv++;
+        }
         int s = atoi( argv[1] );
         if      ( s == 640 ){ scale_ratio_upper = 1; scale_ratio_lower = 2; }
         else if ( s == 800 ){ scale_ratio_upper = 2; scale_ratio_lower = 5; }
         else argc = 1;
     }
     if ( argc != 4 ){
-        fprintf( stderr, "Usage: sarconv 640 arc_file rescaled_arc_file\n");
-        fprintf( stderr, "Usage: sarconv 800 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: sarconv [-psp] 640 arc_file rescaled_arc_file\n");
+        fprintf( stderr, "Usage: sarconv [-psp] 800 arc_file rescaled_arc_file\n");
         exit(-1);
     }
+    if( psp_flag ) { scale_ratio_upper *= 9; scale_ratio_lower *= 8; }
 
     if ( (fp = fopen( argv[3], "wb" ) ) == NULL ){
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );

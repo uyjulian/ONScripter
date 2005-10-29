@@ -34,7 +34,8 @@
 #include <DateTimeUtils.h>
 #include <Files.h>
 extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
-#else
+#elif defined(PSP)
+#include <pspiofilemgr.h>
 #endif
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
@@ -108,6 +109,18 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
 	save_file_info.day    = tm.day;
 	save_file_info.hour   = tm.hour;
 	save_file_info.minute = tm.minute;
+#elif defined(PSP)
+    sprintf( file_name, "%ssave%d.dat", archive_path, no );
+    SceIoStat buf;
+    if ( sceIoGetstat(file_name, &buf)<0 ){
+        save_file_info.valid = false;
+        return;
+    }
+
+    save_file_info.month  = buf.st_mtime.month;
+    save_file_info.day    = buf.st_mtime.day;
+    save_file_info.hour   = buf.st_mtime.hour;
+    save_file_info.minute = buf.st_mtime.minute;
 #else
     sprintf( file_name, "save%d.dat", no );
     FILE *fp;
