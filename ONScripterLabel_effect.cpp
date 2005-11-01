@@ -354,24 +354,32 @@ void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Sur
 void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
 {
     int i, j, ii, jj;
-    int width = screen_height/3 * screen_ratio1 / screen_ratio2;
-
+    int width = 160;
     for ( i=0 ; i<level ; i++ ) width >>= 1;
 
+#if defined(BPP16)
+    int total_width = accumulation_surface->pitch / 2;
+#else
+    int total_width = accumulation_surface->pitch / 4;
+#endif    
     SDL_LockSurface( src_surface );
     SDL_LockSurface( accumulation_surface );
     ONSBuf *src_buffer = (ONSBuf *)src_surface->pixels;
 
-    for ( i=0 ; i<screen_height ; i+=width ){
+    for ( i=screen_height-1 ; i>=0 ; i-=width ){
         for ( j=0 ; j<screen_width ; j+=width ){
-            ONSBuf p = src_buffer[ (i+width-1)*screen_width+j ];
-            ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + i*screen_width + j;
+            ONSBuf p = src_buffer[ i*total_width+j ];
+            ONSBuf *dst_buffer = (ONSBuf *)accumulation_surface->pixels + i*total_width + j;
 
-            for ( ii=0 ; ii<width ; ii++ ){
-                for ( jj=0 ; jj<width ; jj++ ){
+            int height2 = width;
+            if (i+1-width < 0) height2 = i+1;
+            int width2 = width;
+            if (j+width > screen_width) width2 = screen_width - j;
+            for ( ii=0 ; ii<height2 ; ii++ ){
+                for ( jj=0 ; jj<width2 ; jj++ ){
                     *dst_buffer++ = p;
                 }
-                dst_buffer += screen_width - width;
+                dst_buffer -= total_width + width;
             }
         }
     }

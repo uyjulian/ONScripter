@@ -1,6 +1,7 @@
 # -*- Makefile -*-
 #
 # Makefile.PSP - Makefile rules for Sony Play Station Portable Firmware version 1.0
+#   Thanks Shiikuru-san
 #
 
 PSPPRE = $(shell psp-config --psp-prefix)
