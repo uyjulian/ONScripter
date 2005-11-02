@@ -379,7 +379,7 @@ void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
                 for ( jj=0 ; jj<width2 ; jj++ ){
                     *dst_buffer++ = p;
                 }
-                dst_buffer -= total_width + width;
+                dst_buffer -= total_width + width2;
             }
         }
     }

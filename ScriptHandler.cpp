@@ -820,7 +820,7 @@ int ScriptHandler::readScript( char *path )
     }
 
     if (fp == NULL){
-        fprintf( stderr, "can't open any of 0.txt or 00.txt or nscript.dat or nscript.___\n" );
+        fprintf( stderr, "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n" );
         return -1;
     }
     
