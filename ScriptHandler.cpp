@@ -149,6 +149,7 @@ const char *ScriptHandler::readToken()
     SKIP_SPACE( buf );
     markAsKidoku( buf );
 
+  readTokenTop:
     string_counter = 0;
     char ch = *buf;
     if (ch == ';'){ // comment
@@ -256,7 +257,9 @@ const char *ScriptHandler::readToken()
         markAsKidoku( buf++ );
     }
     else if (ch != '\0'){
-        fprintf(stderr, "readToken: unknown heading character %c (%x)\n", ch, ch);
+        fprintf(stderr, "readToken: skip unknown heading character %c (%x)\n", ch, ch);
+        buf++;
+        goto readTokenTop;
     }
 
     next_script = checkComma(buf);
