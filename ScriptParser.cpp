@@ -523,7 +523,7 @@ int ScriptParser::saveFileIOBuf( const char *filename, int offset )
     size_t ret = fwrite(file_io_buf+offset, 1, file_io_buf_ptr-offset, fp);
     fclose(fp);
 
-    if (ret != file_io_buf_ptr) return -2;
+    if (ret != file_io_buf_ptr-offset) return -2;
 
     return 0;
 }
@@ -794,7 +794,7 @@ void ScriptParser::readToken()
 
     if (script_h.isText() && linepage_line >= 0){
         char ch = '@'; // click wait
-        if (sentence_font.getRemainingLine() <= linepage_line)
+        if (sentence_font.getRemainingLine() <= clickstr_line)
             ch = '\\'; // newline
 
         // ugly work around

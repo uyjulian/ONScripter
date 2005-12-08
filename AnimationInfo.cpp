@@ -68,6 +68,7 @@ void AnimationInfo::reset()
 {
     remove();
 
+    trans = 256;
     pos.x = pos.y = 0;
     visible = false;
     abs_flag = true;
@@ -95,7 +96,6 @@ void AnimationInfo::deleteSurface(){
 }
 
 void AnimationInfo::remove(){
-    trans = 256;
     deleteImageName();
     deleteSurface();
     removeTag();

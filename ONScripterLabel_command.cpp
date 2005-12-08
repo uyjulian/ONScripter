@@ -579,6 +579,9 @@ int ONScripterLabel::setcursorCommand()
 
 int ONScripterLabel::selectCommand()
 {
+    int ret = enterTextDisplayMode();
+    if ( ret != RET_NOMATCH ) return ret;
+
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
 
@@ -590,11 +593,6 @@ int ONScripterLabel::selectCommand()
         select_mode = SELECT_GOTO_MODE;
     else if ( script_h.isName( "csel" ) )
         select_mode = SELECT_CSEL_MODE;
-
-    if (select_mode != SELECT_CSEL_MODE){
-        int ret = enterTextDisplayMode();
-        if ( ret != RET_NOMATCH ) return ret;
-    }
 
     if ( select_mode == SELECT_NUM_MODE ){
         script_h.readVariable();
@@ -1901,7 +1899,8 @@ int ONScripterLabel::getenterCommand()
 int ONScripterLabel::getcursorposCommand()
 {
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, sentence_font.x() );
+    //script_h.setInt( &script_h.current_variable, sentence_font.x() );
+    script_h.setInt( &script_h.current_variable, sentence_font.x()-sentence_font.ruby_offset_xy[0] ); // workaround for possibly a bug in the original
     
     script_h.readInt();
     script_h.setInt( &script_h.current_variable, sentence_font.y() );
@@ -2369,6 +2368,7 @@ int ONScripterLabel::cselbtnCommand()
     FontInfo csel_info = sentence_font;
     csel_info.top_xy[0] = script_h.readInt();
     csel_info.top_xy[1] = script_h.readInt();
+    csel_info.num_xy[0] = 1;
 
     int counter = 0;
     SelectLink *link = root_select_link.next;
@@ -2514,7 +2514,7 @@ int ONScripterLabel::captionCommand()
 
 int ONScripterLabel::btnwaitCommand()
 {
-    bool del_flag=false, textbtn_flag=false, selectbtn_flag=false;
+    bool del_flag=false, textbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
         display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
@@ -2525,9 +2525,6 @@ int ONScripterLabel::btnwaitCommand()
     }
     else if ( script_h.isName( "textbtnwait" ) ){
         textbtn_flag = true;
-    }
-    else if ( script_h.isName( "selectbtnwait" ) ){
-        selectbtn_flag = true;
     }
 
     script_h.readInt();

@@ -47,6 +47,8 @@ FontInfo::FontInfo()
 void FontInfo::reset()
 {
     tateyoko_mode = YOKO_MODE;
+    rubyon_flag = false;
+    ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
     clear();
 
     color[0]        = color[1]        = color[2]        = 0xff;
@@ -104,17 +106,17 @@ int FontInfo::getRemainingLine()
     if (tateyoko_mode == YOKO_MODE)
         return num_xy[1] - xy[1]/2;
     else
-        return xy[0]/2 + 1;
+        return num_xy[1] - num_xy[0] + xy[0]/2 + 1;
 }
 
 int FontInfo::x()
 {
-    return xy[0]*pitch_xy[0]/2 + top_xy[0] + offset_xy[0];
+    return xy[0]*pitch_xy[0]/2 + top_xy[0] + line_offset_xy[0] + ruby_offset_xy[0];
 }
 
 int FontInfo::y()
 {
-    return xy[1]*pitch_xy[1]/2 + top_xy[1] + offset_xy[1];
+    return xy[1]*pitch_xy[1]/2 + top_xy[1] + line_offset_xy[1] + ruby_offset_xy[1];
 }
 
 void FontInfo::setXY( int x, int y )
@@ -129,7 +131,8 @@ void FontInfo::clear()
         setXY(0, 0);
     else
         setXY(num_xy[0]-1, 0);
-    offset_xy[0] = offset_xy[1] = 0;
+    line_offset_xy[0] = line_offset_xy[1] = 0;
+    setRubyOnFlag(rubyon_flag);
 }
 
 void FontInfo::newLine()
@@ -142,7 +145,7 @@ void FontInfo::newLine()
         xy[0] -= 2;
         xy[1] = 0;
     }
-    offset_xy[0] = offset_xy[1] = 0;
+    line_offset_xy[0] = line_offset_xy[1] = 0;
 }
 
 void FontInfo::setLineArea(int num)
@@ -170,9 +173,16 @@ void FontInfo::advanceCharInHankaku(int offset)
     xy[tateyoko_mode] += offset;
 }
 
-void FontInfo::addMargin(int offset)
+void FontInfo::addLineOffset(int offset)
 {
-    offset_xy[tateyoko_mode] += offset;
+    line_offset_xy[tateyoko_mode] += offset;
+}
+
+void FontInfo::setRubyOnFlag(bool flag)
+{
+    rubyon_flag = flag;
+    ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
+    if (rubyon_flag && tateyoko_mode == TATE_MODE) ruby_offset_xy[0] = font_size_xy[0]-pitch_xy[0];
 }
 
 SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
@@ -194,7 +204,7 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
     else{
         rect.x = top_xy[0] + pitch_xy[0]*xy[0]/2;
         rect.w = pitch_xy[0]*(start_xy[0]-xy[0]+2)/2;
-        if (start_xy[1] == xy[1]){
+        if (start_xy[0] == xy[0]){
             rect.y = top_xy[1] + pitch_xy[1]*start_xy[1]/2;
             rect.h = pitch_xy[1]*(xy[1]-start_xy[1]+2)/2;
         }
@@ -202,6 +212,7 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
             rect.y = top_xy[1];
             rect.h = pitch_xy[1]*num_xy[1];
         }
+        num_xy[0] = (xy[0]-start_xy[0])/2+1;
     }
 
     rect.x = rect.x * ratio1 / ratio2;
@@ -260,7 +271,7 @@ int FontInfo::initRuby(FontInfo &body_info, int body_count, int ruby_count)
         top_xy[tateyoko_mode] += offset;
         pitch_xy[tateyoko_mode] += offset*2;
     }
-    body_info.offset_xy[tateyoko_mode] += margin;
+    body_info.line_offset_xy[tateyoko_mode] += margin;
     
     clear();
 

@@ -169,9 +169,10 @@ const char *ScriptHandler::readToken()
 #endif             
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
         bool loop_flag = true;
+        bool ignore_click_flag = false;
         do{
             if ( IS_TWO_BYTE(ch) ){
-                if ( textgosub_flag && checkClickstr(buf) > 0) loop_flag = false;
+                if ( textgosub_flag && !ignore_click_flag && checkClickstr(buf) > 0) loop_flag = false;
                 addStringBuffer( ch );
                 ch = *++buf;
                 if (ch == 0x0a || ch == '\0') break;
@@ -188,11 +189,18 @@ const char *ScriptHandler::readToken()
                     addStrVariable(&buf);
                 }
                 else{
-                    if (textgosub_flag && checkClickstr(buf) == 1)
+                    if (textgosub_flag && !ignore_click_flag && checkClickstr(buf) == 1)
                         loop_flag = false;
                     addStringBuffer( ch );
                     buf++;
+                    ignore_click_flag = false;
+                    if (ch == '_') ignore_click_flag = true;
                 }
+                if (ch>='0' && ch<='9' && (*buf == ' ' || *buf == '\t'
+#ifdef ENABLE_1BYTE_CHAR
+                    || *buf == '`'
+#endif
+                     ) && string_counter%2 == 1) addStringBuffer( ' ' );
                 ch = *buf;
                 if (ch == 0x0a || ch == '\0' || !loop_flag
 #ifdef ENABLE_1BYTE_CHAR

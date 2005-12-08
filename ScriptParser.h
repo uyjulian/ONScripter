@@ -312,7 +312,7 @@ protected:
     struct TextBuffer{
         struct TextBuffer *next, *previous;
         char *buffer2;
-        int num_xy[2];
+        int num;
         int buffer2_count;
 
         TextBuffer(){
@@ -323,7 +323,7 @@ protected:
             if (buffer2) delete[] buffer2;
         }
         int addBuffer( char ch ){
-            if ( buffer2_count >= (num_xy[0]*2+1)*(num_xy[1]+1) ) return -1;
+            if ( buffer2_count >= num ) return -1;
             buffer2[buffer2_count++] = ch;
             return 0;
         };

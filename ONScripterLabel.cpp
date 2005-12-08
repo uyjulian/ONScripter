@@ -1004,16 +1004,18 @@ void ONScripterLabel::clearCurrentTextBuffer()
 {
     sentence_font.clear();
 
+    int num = (sentence_font.num_xy[0]*2+1)*sentence_font.num_xy[1];
+    if (sentence_font.getTateyokoMode() == FontInfo::TATE_MODE)
+        num = (sentence_font.num_xy[1]*2+1)*sentence_font.num_xy[1];
+    
     if ( current_text_buffer->buffer2 &&
-         (current_text_buffer->num_xy[0] != sentence_font.num_xy[0] ||
-          current_text_buffer->num_xy[1] != sentence_font.num_xy[1] ) ){
+         current_text_buffer->num != num ){
         delete[] current_text_buffer->buffer2;
         current_text_buffer->buffer2 = NULL;
     }
     if ( !current_text_buffer->buffer2 ){
-        current_text_buffer->buffer2 = new char[ (sentence_font.num_xy[0]*2+1) * sentence_font.num_xy[1] + 1 ];
-        current_text_buffer->num_xy[0] = sentence_font.num_xy[0];
-        current_text_buffer->num_xy[1] = sentence_font.num_xy[1];
+        current_text_buffer->buffer2 = new char[num];
+        current_text_buffer->num = num;
     }
 
     current_text_buffer->buffer2_count = 0;

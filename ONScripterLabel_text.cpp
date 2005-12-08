@@ -307,7 +307,7 @@ void ONScripterLabel::restoreTextBuffer()
                 continue;
             }
             else if (out_text[0] == '/' && ruby_struct.stage == RubyStruct::BODY ){
-                f_info.addMargin(ruby_struct.margin);
+                f_info.addLineOffset(ruby_struct.margin);
                 i = ruby_struct.ruby_end - current_text_buffer->buffer2 - 1;
                 if (*ruby_struct.ruby_end == ')'){
                     endRuby(false, false, NULL);
@@ -607,9 +607,12 @@ int ONScripterLabel::processText()
                 while ( script_h.getStringBuffer()[ string_buffer_offset ] >= '0' &&
                         script_h.getStringBuffer()[ string_buffer_offset ] <= '9' )
                     string_buffer_offset++;
+                while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
+                       script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
             }
         }
         else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
+                  script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
                   !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
             string_buffer_offset += 2;
         }
@@ -717,6 +720,8 @@ int ONScripterLabel::processText()
                     string_buffer_offset++;
                 }
                 sentence_font.wait_time = t;
+                while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
+                       script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
             }
         }
         else if ( script_h.getStringBuffer()[ string_buffer_offset ] == 'w' ||
@@ -731,6 +736,8 @@ int ONScripterLabel::processText()
                 t = t*10 + script_h.getStringBuffer()[ string_buffer_offset ] - '0';
                 string_buffer_offset++;
             }
+            while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
+                   script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
             if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
                 return RET_CONTINUE | RET_NOREAD;
             }
@@ -761,7 +768,7 @@ int ONScripterLabel::processText()
     else if ( ch == '/' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
         if ( ruby_struct.stage == RubyStruct::BODY ){
             current_text_buffer->addBuffer('/');
-            sentence_font.addMargin(ruby_struct.margin);
+            sentence_font.addLineOffset(ruby_struct.margin);
             string_buffer_offset = ruby_struct.ruby_end - script_h.getStringBuffer();
             if (*ruby_struct.ruby_end == ')'){
                 if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
@@ -834,13 +841,15 @@ int ONScripterLabel::processText()
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
             flush_flag = false;
         if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-             !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
+             script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
+             !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)){
             out_text[1] = script_h.getStringBuffer()[ string_buffer_offset + 1 ];
-
-        drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, &text_info );
-        num_chars_in_sentence++;
+            drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, &text_info );
+            num_chars_in_sentence++;
+        }
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
+                 script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
                 string_buffer_offset++;
             string_buffer_offset++;

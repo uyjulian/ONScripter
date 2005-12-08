@@ -340,6 +340,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         ruby_struct.font_size_xy[0] = readInt();
         ruby_struct.font_size_xy[1] = readInt();
         readStr( &ruby_struct.font_name );
+        sentence_font.setRubyOnFlag(rubyon_flag);
     }
     
     int text_num = readInt();

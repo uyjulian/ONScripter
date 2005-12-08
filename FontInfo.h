@@ -47,7 +47,9 @@ public:
     bool is_transparent;
     uchar3  window_color;
 
-    int offset_xy[2]; // used with ruby
+    int line_offset_xy[2]; // ruby offset for each line
+    int ruby_offset_xy[2]; // ruby offset for the whole sentence
+    bool rubyon_flag;
     int tateyoko_mode;
 
     FontInfo();
@@ -67,7 +69,8 @@ public:
     bool isEndOfLine(int margin=0);
     bool isLineEmpty();
     void advanceCharInHankaku(int offest);
-    void addMargin(int margin);
+    void addLineOffset(int margin);
+    void setRubyOnFlag(bool flag);
 
     SDL_Rect calcUpdatedArea(int start_xy[2], int ratio1, int ratio2 );
     void addShadeArea(SDL_Rect &rect, int shade_distance[2] );

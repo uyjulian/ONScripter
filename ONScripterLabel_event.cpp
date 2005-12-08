@@ -570,6 +570,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 
     if ( (trap_mode & TRAP_LEFT_CLICK) && 
          (event->keysym.sym == SDLK_RETURN ||
+          event->keysym.sym == SDLK_KP_ENTER ||
           event->keysym.sym == SDLK_SPACE ) ){
         trapHandler();
         return;
@@ -582,7 +583,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     
     if ( event_mode & WAIT_BUTTON_MODE &&
          ( event->type == SDL_KEYUP ||
-           ( btndown_flag && event->keysym.sym == SDLK_RETURN) ) ){
+           ( btndown_flag && event->keysym.sym == SDLK_RETURN ||
+             btndown_flag && event->keysym.sym == SDLK_KP_ENTER) ) ){
         if ( ( !getcursor_flag && event->keysym.sym == SDLK_UP ) ||
              event->keysym.sym == SDLK_p || event->keysym.sym == SDLK_k ){
 
@@ -596,8 +598,10 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             return;
         }
         else if ( ( !getenter_flag  && event->keysym.sym == SDLK_RETURN ) ||
+                  ( !getenter_flag  && event->keysym.sym == SDLK_KP_ENTER ) ||
                   ( (spclclk_flag || !useescspc_flag) && event->keysym.sym == SDLK_SPACE  ) ){
             if ( event->keysym.sym == SDLK_RETURN ||
+                 event->keysym.sym == SDLK_KP_ENTER ||
                  spclclk_flag && event->keysym.sym == SDLK_SPACE ){
                 current_button_state.button = current_over_button;
                 volatile_button_state.button = current_over_button;
@@ -642,7 +646,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( getpagedown_flag && event->keysym.sym == SDLK_PAGEDOWN ){
             current_button_state.button  = -13;
         }
-        else if ( getenter_flag && event->keysym.sym == SDLK_RETURN ){
+        else if ( getenter_flag && event->keysym.sym == SDLK_RETURN ||
+                  getenter_flag && event->keysym.sym == SDLK_KP_ENTER ){
             current_button_state.button  = -19;
         }
         else if ( gettab_flag && event->keysym.sym == SDLK_TAB ){
@@ -709,6 +714,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     if ( event_mode & WAIT_INPUT_MODE && !key_pressed_flag &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if (event->keysym.sym == SDLK_RETURN || 
+            event->keysym.sym == SDLK_KP_ENTER ||
             event->keysym.sym == SDLK_SPACE ){
             skip_flag = false;
             key_pressed_flag = true;

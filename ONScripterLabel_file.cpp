@@ -203,17 +203,21 @@ int ONScripterLabel::loadSaveFile( int no )
     sentence_font.setTateyokoMode( i );
     int text_history_num = readInt();
     for ( i=0 ; i<text_history_num ; i++ ){
-        current_text_buffer->num_xy[0] = readInt();
-        current_text_buffer->num_xy[1] = readInt();
+        int num_xy[2];
+        num_xy[0] = readInt();
+        num_xy[1] = readInt();
+        current_text_buffer->num = (num_xy[0]*2+1)*num_xy[1];
+        if (sentence_font.getTateyokoMode() == FontInfo::TATE_MODE)
+            current_text_buffer->num = (num_xy[1]*2+1)*num_xy[1];
         int xy[2];
         xy[0] = readInt();
         xy[1] = readInt();
         if ( current_text_buffer->buffer2 ) delete[] current_text_buffer->buffer2;
-        current_text_buffer->buffer2 = new char[ (current_text_buffer->num_xy[0]*2+1) * current_text_buffer->num_xy[1] + 1 ];
+        current_text_buffer->buffer2 = new char[ current_text_buffer->num ];
         current_text_buffer->buffer2_count = 0;
 
         char ch1, ch2;
-        for ( j=0, k=0 ; j<current_text_buffer->num_xy[0] * current_text_buffer->num_xy[1] ; j++ ){
+        for ( j=0, k=0 ; j<num_xy[0] * num_xy[1] ; j++ ){
             ch1 = readChar();
             ch2 = readChar();
             if ( ch1 == ((char*)"@")[0] &&
@@ -230,7 +234,7 @@ int ONScripterLabel::loadSaveFile( int no )
                     k++;
                 }
             }
-            if ( k >= current_text_buffer->num_xy[0] * 2 ){
+            if ( k >= num_xy[0] * 2 ){
                 current_text_buffer->addBuffer( 0x0a );
                 k = 0;
             }
