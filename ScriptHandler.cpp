@@ -41,7 +41,7 @@ ScriptHandler::ScriptHandler()
     str_string_buffer   = new char[ string_buffer_length ];
     saved_string_buffer = new char[ string_buffer_length ];
 
-    variable_data = new VariableData[VARIABLE_RANGE];
+    variable_data = new VariableData[VARIABLE_RANGE+1]; // the last one is a sink
     root_array_variable = NULL;
     
     screen_size = SCREEN_SIZE_640x480;
@@ -648,6 +648,9 @@ void ScriptHandler::readVariable( bool reread_flag )
     if ( *buf == '%' ){
         buf++;
         current_variable.var_no = parseInt(&buf);
+        if (current_variable.var_no < 0 ||
+            current_variable.var_no >= VARIABLE_RANGE)
+            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_INT;
     }
     else if ( *buf == '?' ){
@@ -659,6 +662,9 @@ void ScriptHandler::readVariable( bool reread_flag )
     else if ( *buf == '$' ){
         buf++;
         current_variable.var_no = parseInt(&buf);
+        if (current_variable.var_no < 0 ||
+            current_variable.var_no >= VARIABLE_RANGE)
+            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_STR;
     }
 
@@ -687,7 +693,9 @@ void ScriptHandler::pushVariable()
 
 void ScriptHandler::setNumVariable( int no, int val )
 {
-    if ( no >= VARIABLE_RANGE ) errorAndExit( "setNumVariable: range exceeds." );
+    if ( no < 0 || no >= VARIABLE_RANGE )
+        no = VARIABLE_RANGE;
+
     VariableData &vd = variable_data[no];
     if ( vd.num_limit_flag ){
         if      ( val < vd.num_limit_lower ) val = vd.num;
@@ -1129,6 +1137,9 @@ void ScriptHandler::parseStr( char **buf )
             str_string_buffer[0] = '\0';
         current_variable.type = VAR_STR;
         current_variable.var_no = no;
+        if (current_variable.var_no < 0 ||
+            current_variable.var_no >= VARIABLE_RANGE)
+            current_variable.var_no = VARIABLE_RANGE;
     }
     else if ( **buf == '"' ){
         int c=0;
@@ -1215,6 +1226,9 @@ int ScriptHandler::parseInt( char **buf )
     if ( **buf == '%' ){
         (*buf)++;
         current_variable.var_no = parseInt(buf);
+        if (current_variable.var_no < 0 ||
+            current_variable.var_no >= VARIABLE_RANGE)
+            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_INT;
         return variable_data[ current_variable.var_no ].num;
     }

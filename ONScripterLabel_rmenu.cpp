@@ -251,6 +251,7 @@ void ONScripterLabel::executeWindowErase()
         leaveSystemCall();
     }
     else{
+        next_display_mode = NORMAL_DISPLAY_MODE;
         flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
 
         event_mode = WAIT_BUTTON_MODE;

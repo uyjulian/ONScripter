@@ -172,7 +172,7 @@ int ScriptParser::soundpressplginCommand()
     for (int i=0 ; i<strlen(buf) ; i++)
         if (buf2[i] >= 'A' && buf2[i] <= 'Z') buf2[i] += 'a' - 'A';
     if (strncmp(buf2, "nbzplgin.dll", 12)){
-        fprintf( stderr, " *** plugin %s is not available, continuing ... ***\n", buf);
+        fprintf( stderr, " *** plugin %s is not available, ignored. ***\n", buf);
         return RET_CONTINUE;
     }
     while( *buf != '|' ) buf++;
@@ -392,7 +392,7 @@ int ScriptParser::nsaCommand()
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, key_table );
     if ( script_h.cBR->open( nsa_path, archive_type ) ){
-        fprintf( stderr, " *** failed to open Nsa archive, continuing ...  ***\n");
+        fprintf( stderr, " *** failed to open Nsa archive, ignored.  ***\n");
     }
 
     return RET_CONTINUE;
@@ -916,6 +916,10 @@ int ScriptParser::forCommand()
         errorAndExit( "for: no integer variable." );
     
     last_nest_info->var_no = script_h.current_variable.var_no;
+    if (last_nest_info->var_no < 0 ||
+        last_nest_info->var_no >= VARIABLE_RANGE)
+        last_nest_info->var_no = VARIABLE_RANGE;
+
     script_h.pushVariable();
 
     if ( !script_h.compareString("=") ) 
@@ -1186,12 +1190,12 @@ int ScriptParser::arcCommand()
         delete script_h.cBR;
         script_h.cBR = new SarReader( archive_path, key_table );
         if ( script_h.cBR->open( buf2 ) ){
-            fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
+            fprintf( stderr, " *** failed to open archive %s, ignored.  ***\n", buf2 );
         }
     }
     else if ( strcmp( script_h.cBR->getArchiveName(), "sar" ) == 0 ){
         if ( script_h.cBR->open( buf2 ) ){
-            fprintf( stderr, " *** failed to open archive %s, continuing ...  ***\n", buf2 );
+            fprintf( stderr, " *** failed to open archive %s, ignored.  ***\n", buf2 );
         }
     }
     // skip "arc" commands after "ns?" command
