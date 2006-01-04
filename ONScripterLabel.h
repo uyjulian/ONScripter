@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -508,14 +508,13 @@ private:
     struct GlyphCache{
         GlyphCache *next;
         Uint16 text;
-        SDL_Color fg;
         TTF_Font *font;
         SDL_Surface *surface;
     } *root_glyph_cache, glyph_cache[NUM_GLYPH_CACHE];
 
     int refreshMode();
     
-    SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text, SDL_Color fg);
+    SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
     void drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
@@ -667,7 +666,7 @@ private:
     void alphaBlend( SDL_Surface *mask_surface,
                      int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL );
     void alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
-                       SDL_Surface *src_surface, SDL_Rect *clip, bool rotate_flag );
+                       SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
     void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect );
     void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
     void refreshSurface( SDL_Surface *surface, SDL_Rect *clip=NULL, int refresh_mode = REFRESH_NORMAL_MODE );

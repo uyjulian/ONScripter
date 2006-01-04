@@ -31,8 +31,8 @@ OBJSUFFIX = .o
 CC = g++ 
 LD = g++ -o 
 
-#CFLAGS = -g -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
-CFLAGS = -O3 -Wall -Wpointer-arith -pipe -c $(INCS) $(DEFS)
+#CFLAGS = -g -Wall -pipe -c $(INCS) $(DEFS)
+CFLAGS = -O3 -Wall -fomit-frame-pointer -pipe -c $(INCS) $(DEFS)
 
 # for Intel compiler
 #CC = icc

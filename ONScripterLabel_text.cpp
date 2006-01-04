@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_text.cpp - Text parser of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -46,15 +46,12 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
 #define IS_TRANSLATION_REQUIRED(x)	\
         ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
 
-SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text, SDL_Color fg)
+SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text)
 {
     GlyphCache *gc = root_glyph_cache;
     GlyphCache *pre_gc = gc;
     while(1){
         if (gc->text == text && 
-            gc->fg.r == fg.r && 
-            gc->fg.g == fg.g && 
-            gc->fg.b == fg.b && 
             gc->font == font){
             if (gc != pre_gc){
                 pre_gc->next = gc->next;
@@ -73,10 +70,11 @@ SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text, SDL_Color
     root_glyph_cache = gc;
 
     gc->text = text;
-    gc->fg = fg;
     gc->font = font;
     if (gc->surface) SDL_FreeSurface(gc->surface);
-    gc->surface = TTF_RenderGlyph_Blended( font, text, fg );
+
+    static SDL_Color fcol={0xff, 0xff, 0xff}, bcol={0, 0, 0};
+    gc->surface = TTF_RenderGlyph_Shaded( font, text, fcol, bcol );
 
     return gc->surface;
 }
@@ -104,7 +102,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
                       &minx, &maxx, &miny, &maxy, &advanced );
     //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
     
-    SDL_Surface *tmp_surface = renderGlyph( (TTF_Font*)info->ttf_font, unicode, color );
+    SDL_Surface *tmp_surface = renderGlyph( (TTF_Font*)info->ttf_font, unicode );
 
     bool rotate_flag = false;
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;
@@ -134,10 +132,10 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         }
 
         if (cache_info)
-            cache_info->blendBySurface( tmp_surface, dst_rect.x, dst_rect.y, clip, rotate_flag );
+            cache_info->blendBySurface( tmp_surface, dst_rect.x, dst_rect.y, color, clip, rotate_flag );
         
         if (dst_surface)
-            alphaBlend32( dst_surface, dst_rect, tmp_surface, clip, rotate_flag );
+            alphaBlend32( dst_surface, dst_rect, tmp_surface, color, clip, rotate_flag );
     }
 }
 

@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -144,9 +144,9 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
 
 // alphaBlend32
 // dst: ONSBuf surface (accumulation_surface)
-// src: 32bit surface (TTF_RenderGlyph_Blended())
+// src: 8bit surface (TTF_RenderGlyph_Shaded())
 void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
-                                    SDL_Surface *src_surface, SDL_Rect *clip, bool rotate_flag )
+                                    SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag )
 {
     int i, j;
     int x2=0, y2=0;
@@ -175,42 +175,46 @@ void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( src_surface );
 
-    Uint32 *src_buffer = (Uint32 *)src_surface->pixels + src_surface->w * y2 + x2;
+    unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch * y2 + x2;
     ONSBuf *dst_buffer = (AnimationInfo::ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x;
+#if defined(BPP16)    
+    Uint32 src_color = ((color.r & 0xf8) << 8 |
+                        (color.g & 0xfc) << 3 |
+                        (color.b & 0xf8) >> 3);
+    src_color = (src_color | src_color << 16) & 0x07e0f81f;
+#else
+    Uint32 src_color1 = color.r << 16 | color.b;
+    Uint32 src_color2 = color.g << 8;
+#endif    
 
     SDL_PixelFormat *fmt = dst_surface->format;
     for ( i=0 ; i<dst_rect.h ; i++ ){
         if (rotate_flag)
-            src_buffer = (Uint32 *)src_surface->pixels + src_surface->w * (src_surface->h - x2 - 1) + y2 + i;
+            src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch*(src_surface->h - x2 - 1) + y2 + i;
         for ( j=0 ; j<dst_rect.w ; j++ ){
 
-            mask2 = *src_buffer >> (24+fmt->Bloss);
+            mask2 = *src_buffer >> fmt->Bloss;
             mask1 = mask2 ^ fmt->Bmask;
-
-#if defined(BPP16)
-            Uint32 sp = ((*src_buffer & 0xf80000) >> 8 |
-                         (*src_buffer & 0x00fc00) >> 5 |
-                         (*src_buffer & 0x0000f8) >> 3);
             
-            Uint32 s1 = (sp          | sp << 16         ) & 0x07e0f81f;
+#if defined(BPP16)
             Uint32 d1 = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;
 
-            mask_rb = (d1 + ((s1-d1) * mask2 >> 5)) & 0x07e0f81f; // red, green and blue pixel
+            mask_rb = (d1 + ((src_color-d1) * mask2 >> 5)) & 0x07e0f81f; // red, green and blue pixel
             *dst_buffer++ = mask_rb | mask_rb >> 16;
 #else            
             mask_rb = (((*dst_buffer & 0xff00ff) * mask1 + 
-                        (*src_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
+                        src_color1 * mask2) >> 8) & 0xff00ff;
             mask = (((*dst_buffer & 0x00ff00) * mask1 +
-                     (*src_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
+                     src_color2 * mask2) >> 8) & 0x00ff00;
             *dst_buffer++ = mask_rb | mask;
 #endif            
             if (rotate_flag)
-                src_buffer -= src_surface->w;
+                src_buffer -= src_surface->pitch;
             else
                 src_buffer++;
         }
         if (!rotate_flag)
-            src_buffer += src_surface->w - dst_rect.w;
+            src_buffer += src_surface->pitch - dst_rect.w;
         dst_buffer += dst_surface->w - dst_rect.w;
     }
     

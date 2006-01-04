@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -393,7 +393,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 }
 
 // used to draw characters on text_surface
-void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y,
+void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
                                     SDL_Rect *clip, bool rotate_flag )
 {
     if (image_surface == NULL || surface == NULL) return;
@@ -430,15 +430,21 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y,
     
 #if defined(BPP16)
     int total_width = image_surface->pitch / 2;
+    Uint32 src_color = ((color.r & 0xf8) << 8 |
+                        (color.g & 0xfc) << 3 |
+                        (color.b & 0xf8) >> 3);
+    src_color = (src_color | src_color << 16) & 0x07e0f81f;
 #else
     int total_width = image_surface->pitch / 4;
+    Uint32 src_color1 = color.r << 16 | color.b;
+    Uint32 src_color2 = color.g << 8;
 #endif    
     ONSBuf *dst_buffer = (ONSBuf *)image_surface->pixels + total_width * dst_rect.y + image_surface->w*current_cell/num_of_cells + dst_rect.x;
-    Uint32 *src_buffer = NULL;
+    unsigned char *src_buffer = NULL;
     if (rotate_flag)
-        src_buffer = (Uint32 *)surface->pixels + surface->w*(surface->h - src_rect.x - 1) + src_rect.y;
+        src_buffer = (unsigned char*)surface->pixels + surface->pitch*(surface->h - src_rect.x - 1) + src_rect.y;
     else
-        src_buffer = (Uint32 *)surface->pixels + surface->w * src_rect.y + src_rect.x;
+        src_buffer = (unsigned char*)surface->pixels + surface->pitch*src_rect.y + src_rect.x;
 #if defined(BPP16)
     unsigned char *alphap = alpha_buf + image_surface->w * dst_rect.y + image_surface->w*current_cell/num_of_cells + dst_rect.x;
 #endif
@@ -448,37 +454,32 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y,
     for (int i=0 ; i<dst_rect.h ; i++){
         for (int j=0 ; j<dst_rect.w ; j++, dst_buffer++){
 
-            mask2 = *src_buffer >> 24;
-            mask1 = mask2 ^ 0xff;
+            mask2 = *src_buffer;
 
 #if defined(BPP16)
-            Uint32 sp = ((*src_buffer & 0xf80000) >> 8 |
-                         (*src_buffer & 0x00fc00) >> 5 |
-                         (*src_buffer & 0x0000f8) >> 3);
             Uint32 an_1 = *alphap;
-            *alphap = 0xff-((0xff-an_1)*(0xff-mask2) >> 8);
-            mask1 = (an_1 * mask1 / *alphap) >> 3;
-            mask2 = ((mask2 << 8) / *alphap) >> 3;
+            *alphap = 0xff ^ ((0xff ^ an_1)*(0xff ^ mask2) >> 8);
+            mask1 = ((0xff ^ mask2)*an_1)>>11;
+            mask2 >>= 3;
             
-            Uint32 s1 = (sp          | sp << 16         ) & 0x07e0f81f;
             Uint32 d1 = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;
 
-            mask_rb = (((d1 * mask1) + (s1 * mask2)) >> 5) & 0x07e0f81f;
+            mask_rb = ((d1 + ((src_color - d1) * mask2)) >> 5) & 0x07e0f81f;
             *dst_buffer = mask_rb | mask_rb >> 16;
             alphap++;
 #else
             Uint32 an_1 = *dst_buffer >> 24;
-            Uint32 an = 0xff-((0xff-an_1)*(0xff-mask2) >> 8);
-            mask1 = an_1 * mask1 / an;
-            mask2 = (mask2 << 8) / an;
+            Uint32 an = 0xff ^ ((0xff ^ an_1)*(0xff ^ mask2) >> 8);
+            mask1 = ((0xff ^ mask2)*an_1)>>8;
+
             mask_rb =  (((*dst_buffer & 0xff00ff) * mask1 + 
-                         (*src_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
+                         src_color1 * mask2) >> 8) & 0xff00ff;
             mask = (((*dst_buffer & 0x00ff00) * mask1 +
-                     (*src_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
+                     src_color2 * mask2) >> 8) & 0x00ff00;
             *dst_buffer = mask_rb | mask | (an << 24);
 #endif            
             if (rotate_flag)
-                src_buffer -= surface->w;
+                src_buffer -= surface->pitch;
             else
                 src_buffer++;
         }
@@ -487,9 +488,9 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y,
         alphap += image_surface->w - dst_rect.w;
 #endif        
         if (rotate_flag)
-            src_buffer = (Uint32 *)surface->pixels + surface->w*(surface->h - src_rect.x - 1) + src_rect.y + i + 1;
+            src_buffer = (unsigned char*)surface->pixels + surface->pitch*(surface->h - src_rect.x - 1) + src_rect.y + i + 1;
         else
-            src_buffer += surface->w  - dst_rect.w;
+            src_buffer += surface->pitch  - dst_rect.w;
     }
 
     SDL_UnlockSurface( image_surface );
