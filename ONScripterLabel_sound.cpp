@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -257,8 +257,9 @@ int ONScripterLabel::playMP3( int cd_no )
     return 0;
 }
 
-void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
+int ONScripterLabel::playMPEG( const char *filename, bool click_flag )
 {
+    int ret = 0;
 #ifndef MP3_MAD        
     unsigned long length = script_h.cBR->getFileLength( filename );
     unsigned char *mpeg_buffer = new unsigned char[length];
@@ -291,6 +292,8 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
                         done_flag = true;
                     break;
+                  case SDL_QUIT:
+                    ret = 1;
                   case SDL_MOUSEBUTTONDOWN:
                     done_flag = true;
                     break;
@@ -310,6 +313,8 @@ void ONScripterLabel::playMPEG( const char *filename, bool click_flag )
 #else
     fprintf( stderr, "mpegplay command is disabled.\n" );
 #endif
+
+    return ret;
 }
 
 void ONScripterLabel::playAVI( const char *filename, bool click_flag )
@@ -327,7 +332,7 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
     AVIWrapper *avi = new AVIWrapper();
     if ( avi->init( absolute_filename, false ) == 0 &&
          avi->initAV( screen_surface, audio_open_flag ) == 0 ){
-        avi->play( click_flag );
+        if (avi->play( click_flag )) endCommand();
     }
     delete avi;
     delete[] absolute_filename;

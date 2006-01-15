@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1105,7 +1105,7 @@ int ONScripterLabel::mpegplayCommand()
     bool click_flag = (script_h.readInt()==1)?true:false;
 
     stopBGM( false );
-    playMPEG( save_buf, click_flag );
+    if (playMPEG( save_buf, click_flag )) endCommand();
 
     return RET_CONTINUE;
 }
@@ -1719,6 +1719,17 @@ int ONScripterLabel::getspsizeCommand()
         script_h.readVariable();
         script_h.setInt( &script_h.current_variable, sprite_info[no].num_of_cells );
     }
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getspmodeCommand()
+{
+    script_h.readVariable();
+    script_h.pushVariable();
+
+    int no = script_h.readInt();
+    script_h.setInt( &script_h.pushed_variable, sprite_info[no].visible?1:0 );
 
     return RET_CONTINUE;
 }

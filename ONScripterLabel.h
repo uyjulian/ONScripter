@@ -186,6 +186,7 @@ public:
     int gettagCommand();
     int gettabCommand();
     int getspsizeCommand();
+    int getspmodeCommand();
     int getscreenshotCommand();
     int getretCommand();
     int getregCommand();
@@ -605,7 +606,7 @@ private:
     int playMIDIFile(const char* filename);
     int playMIDI();
     int playMP3( int cd_no );
-    void playMPEG( const char *filename, bool click_flag );
+    int playMPEG( const char *filename, bool click_flag );
     void playAVI( const char *filename, bool click_flag );
     int playCDAudio( int cd_no );
     enum { WAVE_PLAY        = 0,

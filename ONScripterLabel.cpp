@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -139,6 +139,7 @@ static struct FuncLUT{
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
     {"getspsize", &ONScripterLabel::getspsizeCommand},
+    {"getspmode", &ONScripterLabel::getspmodeCommand},
     {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
     {"gettag", &ONScripterLabel::gettagCommand},
@@ -1131,18 +1132,20 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
 void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     char sound_name[256];
-    int sprite_no, cell_no;
+    int i, sprite_no, sprite_no2, cell_no;
 
     while( char com = *ctl_str++ ){
         if (com == 'C' || com == 'c'){
             sprite_no = getNumberFromBuffer( &ctl_str );
-            if ( *ctl_str == ',' ){
+            sprite_no2 = sprite_no;
+            if ( *ctl_str == '-' ){
                 ctl_str++;
-                cell_no = getNumberFromBuffer( &ctl_str );
+                sprite_no2 = getNumberFromBuffer( &ctl_str );
             }
             else
                 cell_no = -1;
-            refreshSprite( surface, sprite_no, false, cell_no, NULL, NULL );
+            for (i=sprite_no ; i<=sprite_no2 ; i++)
+                refreshSprite( surface, i, false, cell_no, NULL, NULL );
         }
         else if (com == 'P' || com == 'p'){
             sprite_no = getNumberFromBuffer( &ctl_str );

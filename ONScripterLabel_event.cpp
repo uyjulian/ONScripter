@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -32,8 +32,8 @@ SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
                             SDLK_RETURN, /* CIRCLE   */
                             SDLK_SPACE,  /* CROSS    */
                             SDLK_RCTRL,  /* SQUARE   */
-                            SDLK_RETURN, /* LTRIGGER */
-                            SDLK_s,      /* RTRIGGER */
+                            SDLK_l,      /* LTRIGGER */
+                            SDLK_RETURN, /* RTRIGGER */
                             SDLK_DOWN,   /* DOWN     */
                             SDLK_LEFT,   /* LEFT     */
                             SDLK_UP,     /* UP       */
@@ -640,6 +640,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( !spclclk_flag && useescspc_flag && event->keysym.sym == SDLK_SPACE ){
             current_button_state.button  = -11;
         }
+        else if ((event_mode & WAIT_TEXT_MODE ||
+                  event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+                  system_menu_mode == SYSTEM_LOOKBACK) &&
+                 event->keysym.sym == SDLK_l){
+            current_button_state.button = -2;
+            volatile_button_state.button = -2;
+            if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
+        }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){
             current_button_state.button  = -12;
         }
@@ -769,6 +777,15 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             if ( fullscreen_mode ) menu_windowCommand();
             else                   menu_fullCommand();
         }
+    }
+
+    if ((event_mode & WAIT_TEXT_MODE ||
+         event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+         system_menu_mode == SYSTEM_LOOKBACK) &&
+        event->keysym.sym == SDLK_l ){
+        current_button_state.button = -2;
+        volatile_button_state.button = -2;
+        if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
     }
 }
 

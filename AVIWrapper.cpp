@@ -2,7 +2,7 @@
  * 
  *  AVIWrapper.cpp - avifile library wrapper class to play AVI video & audio stream
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -284,6 +284,7 @@ int AVIWrapper::playVideo( void *userdata )
 
 int AVIWrapper::play( bool click_flag )
 {
+    int ret = 0;
     time_start = 0;
     status = AVI_PLAYING;
     if ( v_stream )
@@ -304,6 +305,8 @@ int AVIWrapper::play( bool click_flag )
                      ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
                     done_flag = true;
                 break;
+              case SDL_QUIT:
+                ret = 1;
               case SDL_MOUSEBUTTONDOWN:
                 done_flag = true;
                 break;
@@ -320,7 +323,7 @@ int AVIWrapper::play( bool click_flag )
     if ( a_stream )
         Mix_HookMusic( NULL, NULL );
     
-    return 0;
+    return ret;
 }
 
 int AVIWrapper::drawFrame( CImage *image )

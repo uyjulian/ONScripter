@@ -393,6 +393,8 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 }
 
 // used to draw characters on text_surface
+// Alpha = 1 - (1-Da)(1-Sa)
+// Color = (DaSaSc + Da(1-Sa)Dc + Sa(1-Da)Sc)/A
 void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
                                     SDL_Rect *clip, bool rotate_flag )
 {
@@ -459,12 +461,11 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, 
 #if defined(BPP16)
             Uint32 an_1 = *alphap;
             *alphap = 0xff ^ ((0xff ^ an_1)*(0xff ^ mask2) >> 8);
-            mask1 = ((0xff ^ mask2)*an_1)>>11;
-            mask2 >>= 3;
+            mask2 = (mask2 << 5) / *alphap;
             
             Uint32 d1 = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;
 
-            mask_rb = ((d1 + ((src_color - d1) * mask2)) >> 5) & 0x07e0f81f;
+            mask_rb = (d1 + ((src_color - d1) * mask2 >> 5)) & 0x07e0f81f;
             *dst_buffer = mask_rb | mask_rb >> 16;
             alphap++;
 #else
@@ -473,9 +474,9 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, 
             mask1 = ((0xff ^ mask2)*an_1)>>8;
 
             mask_rb =  (((*dst_buffer & 0xff00ff) * mask1 + 
-                         src_color1 * mask2) >> 8) & 0xff00ff;
+                         src_color1 * mask2) / an) & 0xff00ff;
             mask = (((*dst_buffer & 0x00ff00) * mask1 +
-                     src_color2 * mask2) >> 8) & 0x00ff00;
+                     src_color2 * mask2) / an) & 0x00ff00;
             *dst_buffer = mask_rb | mask | (an << 24);
 #endif            
             if (rotate_flag)
