@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -56,7 +56,7 @@ int SarReader::open( char *name, int archive_type )
 
 int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
 {
-    int i=0;
+    unsigned int i=0;
     
     /* Read header */
     if ( archive_type == ARCHIVE_TYPE_NS2 ){
@@ -114,7 +114,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
 
 int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type )
 {
-    int i, j;
+    unsigned int i, j;
 
     fseek( fp, 0L, SEEK_SET );
     if ( archive_type == ARCHIVE_TYPE_NS2 ) fputc( 0, fp );
@@ -261,7 +261,7 @@ size_t SarReader::getFileLength( const char *file_name )
     if ( ( ret = DirectReader::getFileLength( file_name ) ) ) return ret;
 
     ArchiveInfo *info = archive_info.next;
-    int j = 0;
+    unsigned int j = 0;
     for ( int i=0 ; i<num_of_sar_archives ; i++ ){
         j = getIndexFromFile( info, file_name );
         if ( j != info->num_of_files ) break;
@@ -280,7 +280,7 @@ size_t SarReader::getFileLength( const char *file_name )
 
 size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned char *buf )
 {
-    int i = getIndexFromFile( ai, file_name );
+    unsigned int i = getIndexFromFile( ai, file_name );
     if ( i == ai->num_of_files ) return 0;
 
     int type = ai->fi_list[i].compression_type;
@@ -318,7 +318,7 @@ size_t SarReader::getFile( const char *file_name, unsigned char *buf, int *locat
     return j;
 }
 
-struct SarReader::FileInfo SarReader::getFileByIndex( int index )
+struct SarReader::FileInfo SarReader::getFileByIndex( unsigned int index )
 {
     ArchiveInfo *info = archive_info.next;
     for ( int i=0 ; i<num_of_sar_archives ; i++ ){

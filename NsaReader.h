@@ -2,7 +2,7 @@
  *
  *  NsaReader.h - Reader from a NSA archive
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -39,7 +39,7 @@ public:
     
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
-    struct FileInfo getFileByIndex( int index );
+    struct FileInfo getFileByIndex( unsigned int index );
 
     int openForConvert( char *nsa_name, int archive_type=ARCHIVE_TYPE_NSA );
     int writeHeader( FILE *fp, int archive_type=ARCHIVE_TYPE_NSA );

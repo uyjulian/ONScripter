@@ -1914,7 +1914,8 @@ int ONScripterLabel::getcursorposCommand()
     script_h.setInt( &script_h.current_variable, sentence_font.x()-sentence_font.ruby_offset_xy[0] ); // workaround for possibly a bug in the original
     
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, sentence_font.y() );
+    //script_h.setInt( &script_h.current_variable, sentence_font.y() );
+    script_h.setInt( &script_h.current_variable, sentence_font.y()-sentence_font.ruby_offset_xy[1] ); // workaround for possibly a bug in the original
     
     return RET_CONTINUE;
 }
@@ -2377,9 +2378,9 @@ int ONScripterLabel::cselbtnCommand()
     int button_no = script_h.readInt();
 
     FontInfo csel_info = sentence_font;
+    csel_info.setRubyOnFlag(false);
     csel_info.top_xy[0] = script_h.readInt();
     csel_info.top_xy[1] = script_h.readInt();
-    csel_info.num_xy[0] = 1;
 
     int counter = 0;
     SelectLink *link = root_select_link.next;
@@ -2390,6 +2391,7 @@ int ONScripterLabel::cselbtnCommand()
     if ( link == NULL || link->text == NULL || *link->text == '\0' )
         return RET_CONTINUE;
 
+    csel_info.setLineArea( strlen(link->text)/2+1 );
     csel_info.clear();
     ButtonLink *button = getSelectableSentence( link->text, &csel_info );
     root_button_link.insert( button );

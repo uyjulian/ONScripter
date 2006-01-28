@@ -2,7 +2,7 @@
  *
  *  NsaReader.cpp - Reader from a NSA archive
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -113,7 +113,7 @@ int NsaReader::getNumFiles(){
 
 size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
 {
-    int i = getIndexFromFile( ai, file_name );
+    unsigned int i = getIndexFromFile( ai, file_name );
 
     if ( i == ai->num_of_files ) return 0;
 
@@ -167,7 +167,7 @@ size_t NsaReader::getFile( const char *file_name, unsigned char *buffer, int *lo
     return 0;
 }
 
-struct NsaReader::FileInfo NsaReader::getFileByIndex( int index )
+struct NsaReader::FileInfo NsaReader::getFileByIndex( unsigned int index )
 {
     int i;
     

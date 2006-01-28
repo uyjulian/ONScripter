@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -271,7 +271,7 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
     return NO_COMPRESSION;
 }
     
-struct DirectReader::FileInfo DirectReader::getFileByIndex( int index )
+struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
 {
     DirectReader::FileInfo fi;
     

@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -169,7 +169,7 @@ int ScriptParser::soundpressplginCommand()
     char buf2[12];
     memcpy(buf2, buf, 12);
     // only nbzplgin.dll is supported
-    for (int i=0 ; i<strlen(buf) ; i++)
+    for (unsigned int i=0 ; i<strlen(buf) ; i++)
         if (buf2[i] >= 'A' && buf2[i] <= 'Z') buf2[i] += 'a' - 'A';
     if (strncmp(buf2, "nbzplgin.dll", 12)){
         fprintf( stderr, " *** plugin %s is not available, ignored. ***\n", buf);

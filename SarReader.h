@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -39,7 +39,7 @@ public:
     
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
-    struct FileInfo getFileByIndex( int index );
+    struct FileInfo getFileByIndex( unsigned int index );
 
     int writeHeader( FILE *fp );
     size_t putFile( FILE *fp, int no, size_t offset, size_t length, size_t original_length, bool modified_flag, unsigned char *buffer );

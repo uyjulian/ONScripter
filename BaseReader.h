@@ -2,7 +2,7 @@
  *
  *  BaseReader.h - Base class of archive reader
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -75,7 +75,7 @@ struct BaseReader
         struct ArchiveInfo *next;
         FILE *file_handle;
         struct FileInfo *fi_list;
-        int num_of_files;
+        unsigned int num_of_files;
         unsigned long base_offset;
 
         ArchiveInfo(){
@@ -95,7 +95,7 @@ struct BaseReader
     virtual int  getNumFiles() = 0;
     virtual void registerCompressionType( const char *ext, int type ) = 0;
 
-    virtual struct FileInfo getFileByIndex( int index ) = 0;
+    virtual struct FileInfo getFileByIndex( unsigned int index ) = 0;
     virtual size_t getFileLength( const char *file_name ) = 0;
     virtual size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL ) = 0;
 };

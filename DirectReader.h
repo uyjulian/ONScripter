@@ -2,7 +2,7 @@
 /*
  *  DirectReader.h - Reader from independent files
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -46,7 +46,7 @@ public:
     int getNumFiles();
     void registerCompressionType( const char *ext, int type );
 
-    struct FileInfo getFileByIndex( int index );
+    struct FileInfo getFileByIndex( unsigned int index );
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL );
 

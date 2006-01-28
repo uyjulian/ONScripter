@@ -1138,12 +1138,11 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
         if (com == 'C' || com == 'c'){
             sprite_no = getNumberFromBuffer( &ctl_str );
             sprite_no2 = sprite_no;
+            cell_no = -1;
             if ( *ctl_str == '-' ){
                 ctl_str++;
                 sprite_no2 = getNumberFromBuffer( &ctl_str );
             }
-            else
-                cell_no = -1;
             for (i=sprite_no ; i<=sprite_no2 ; i++)
                 refreshSprite( surface, i, false, cell_no, NULL, NULL );
         }

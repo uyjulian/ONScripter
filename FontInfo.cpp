@@ -2,7 +2,7 @@
  * 
  *  FontInfo.cpp - Font information storage class of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -183,6 +183,7 @@ void FontInfo::setRubyOnFlag(bool flag)
     rubyon_flag = flag;
     ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
     if (rubyon_flag && tateyoko_mode == TATE_MODE) ruby_offset_xy[0] = font_size_xy[0]-pitch_xy[0];
+    if (rubyon_flag && tateyoko_mode == YOKO_MODE) ruby_offset_xy[1] = pitch_xy[1] - font_size_xy[1];
 }
 
 SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)

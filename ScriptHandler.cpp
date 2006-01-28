@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -272,7 +272,7 @@ const char *ScriptHandler::readToken()
 
     next_script = checkComma(buf);
 
-    //printf("readToken [%s] len=%d [%c(%x)] %x\n", string_buffer, strlen(string_buffer), ch, ch, next_script);
+    //printf("readToken [%s] len=%d [%c(%x)] %p\n", string_buffer, strlen(string_buffer), ch, ch, next_script);
 
     return string_buffer;
 }
