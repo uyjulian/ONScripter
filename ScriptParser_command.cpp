@@ -623,9 +623,12 @@ int ScriptParser::linepageCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "linepage: not in the define section" );
 
-    linepage_line = 1000; // some big number
-    if ( script_h.isName( "linepage2" ) )
-        linepage_line = script_h.readInt();
+    if ( script_h.isName( "linepage2" ) ){
+        linepage_mode = 2;
+        clickstr_line = script_h.readInt();
+    }
+    else
+        linepage_mode = 1;
 
     script_h.setLinepage(true);
 

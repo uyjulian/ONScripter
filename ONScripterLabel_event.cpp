@@ -33,7 +33,7 @@ SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
                             SDLK_SPACE,  /* CROSS    */
                             SDLK_RCTRL,  /* SQUARE   */
                             SDLK_l,      /* LTRIGGER */
-                            SDLK_RETURN, /* RTRIGGER */
+                            SDLK_s,      /* RTRIGGER */
                             SDLK_DOWN,   /* DOWN     */
                             SDLK_LEFT,   /* LEFT     */
                             SDLK_UP,     /* UP       */

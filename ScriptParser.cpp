@@ -2,7 +2,7 @@
  *
  *  ScriptParser.cpp - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -24,7 +24,7 @@
 #include "ScriptParser.h"
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2005 Studio O.G.A. All Rights Reserved."
+#define VERSION_STR2 "Copyright (C) 2001-2006 Studio O.G.A. All Rights Reserved."
 
 #define DEFAULT_SAVE_MENU_NAME "＜セーブ＞"
 #define DEFAULT_LOAD_MENU_NAME "＜ロード＞"
@@ -277,7 +277,7 @@ void ScriptParser::reset()
     
     clickstr_line = 0;
     clickstr_state = CLICK_NONE;
-    linepage_line = -1;
+    linepage_mode = 0;
     
     /* ---------------------------------------- */
     /* Sound related variables */
@@ -792,9 +792,9 @@ void ScriptParser::readToken()
     script_h.readToken();
     if (script_h.isText()) string_buffer_offset = 0;
 
-    if (script_h.isText() && linepage_line >= 0){
+    if (script_h.isText() && linepage_mode > 0){
         char ch = '@'; // click wait
-        if (sentence_font.getRemainingLine() <= clickstr_line)
+        if (linepage_mode == 1 || sentence_font.getRemainingLine() <= clickstr_line)
             ch = '\\'; // newline
 
         // ugly work around

@@ -2,7 +2,7 @@
  * 
  *  ScriptParser.h - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -331,7 +331,7 @@ protected:
     int  max_text_buffer;
     int  clickstr_line;
     int  clickstr_state;
-    int  linepage_line;
+    int  linepage_mode;
     int  num_chars_in_sentence;
     
     /* ---------------------------------------- */
