@@ -1193,12 +1193,14 @@ int ONScripterLabel::monocroCommand()
 int ONScripterLabel::menu_windowCommand()
 {
     if ( fullscreen_mode ){
+#if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
         }
+#endif
         fullscreen_mode = false;
     }
 
@@ -1208,12 +1210,14 @@ int ONScripterLabel::menu_windowCommand()
 int ONScripterLabel::menu_fullCommand()
 {
     if ( !fullscreen_mode ){
+#if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
         }
+#endif
         fullscreen_mode = true;
     }
 
@@ -2209,7 +2213,8 @@ int ONScripterLabel::dvCommand()
 
 int ONScripterLabel::drawtextCommand()
 {
-    text_info.blendOnSurface( accumulation_surface, 0, 0, NULL );
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
+    text_info.blendOnSurface( accumulation_surface, 0, 0, clip );
     
     return RET_CONTINUE;
 }
@@ -2246,7 +2251,8 @@ int ONScripterLabel::drawspCommand()
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
-    si.blendOnSurface( accumulation_surface, x, y, NULL, alpha );
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
+    si.blendOnSurface( accumulation_surface, x, y, clip, alpha );
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -2272,7 +2278,8 @@ int ONScripterLabel::drawclearCommand()
 
 int ONScripterLabel::drawbgCommand()
 {
-    bg_info.blendOnSurface( accumulation_surface, bg_info.pos.x, bg_info.pos.y );
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
+    bg_info.blendOnSurface( accumulation_surface, bg_info.pos.x, bg_info.pos.y, clip );
     
     return RET_CONTINUE;
 }

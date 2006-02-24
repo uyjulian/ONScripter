@@ -96,7 +96,7 @@ public:
     void setCell(int cell);
     static int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );
     void blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                         SDL_Rect *clip=NULL, int alpha=256 );
+                         SDL_Rect &clip, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           int alpha=256, int scale_x=100, int scale_y=100, int rot=0 );
     void blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,

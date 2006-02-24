@@ -58,6 +58,9 @@ int NsaReader::open( char *nsa_path, int archive_type )
         return -1;
     }
 
+    archive_info.file_name = new char[strlen(archive_name)+1];
+    memcpy(archive_info.file_name, archive_name, strlen(archive_name)+1);
+    
     readArchive( &archive_info, archive_type );
     
     for ( i=0 ; i<MAX_EXTRA_ARCHIVE ; i++ ){
@@ -66,6 +69,10 @@ int NsaReader::open( char *nsa_path, int archive_type )
         if ( ( archive_info2[i].file_handle = fopen( archive_name, "rb" ) ) == NULL ){
             return 0;
         }
+        
+        archive_info2[i].file_name = new char[strlen(archive_name2)+1];
+        memcpy(archive_info2[i].file_name, archive_name2, strlen(archive_name2)+1);
+        
         num_of_nsa_archives = i+1;
         readArchive( &archive_info2[i], archive_type );
     }

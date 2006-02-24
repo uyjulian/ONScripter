@@ -625,7 +625,7 @@ private:
     bool new_line_skip_flag;
     int text_speed_no;
 
-    void shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip );
+    void shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip );
     void clearCurrentTextBuffer();
     void newPage( bool next_flag );
     
@@ -644,7 +644,7 @@ private:
     void resetRemainingTime( int t );
     void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL );
     void parseTaggedString( AnimationInfo *anim );
-    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip );
+    void drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip );
     void stopAnimation( int click );
     
     /* ---------------------------------------- */
@@ -668,9 +668,9 @@ private:
                      int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL );
     void alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                        SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
-    void makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect );
-    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect=NULL );
-    void refreshSurface( SDL_Surface *surface, SDL_Rect *clip=NULL, int refresh_mode = REFRESH_NORMAL_MODE );
+    void makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip );
+    void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &clip );
+    void refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int refresh_mode = REFRESH_NORMAL_MODE );
     void createBackground();
 
     /* ---------------------------------------- */

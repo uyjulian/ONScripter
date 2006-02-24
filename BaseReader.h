@@ -74,6 +74,7 @@ struct BaseReader
     struct ArchiveInfo{
         struct ArchiveInfo *next;
         FILE *file_handle;
+        char *file_name;
         struct FileInfo *fi_list;
         unsigned int num_of_files;
         unsigned long base_offset;
@@ -81,6 +82,7 @@ struct BaseReader
         ArchiveInfo(){
             next = NULL;
             file_handle = NULL;
+            file_name = NULL;
             fi_list = NULL;
             num_of_files = 0;
         }

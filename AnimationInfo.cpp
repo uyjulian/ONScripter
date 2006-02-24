@@ -228,30 +228,12 @@ int AnimationInfo::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped 
 #endif
 
 void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                                    SDL_Rect *clip, int alpha )
+                                    SDL_Rect &clip, int alpha )
 {
     if ( image_surface == NULL ) return;
     
-    SDL_Rect dst_rect = {dst_x, dst_y, pos.w, pos.h};
-    SDL_Rect src_rect = {0, 0, 0, 0};
-    SDL_Rect clipped_rect;
-
-    /* ---------------------------------------- */
-    /* 1st clipping */
-    if ( clip ){
-        if ( doClipping( &dst_rect, clip, &clipped_rect ) ) return;
-
-        src_rect.x += clipped_rect.x;
-        src_rect.y += clipped_rect.y;
-    }
-    
-    /* ---------------------------------------- */
-    /* 2nd clipping */
-    SDL_Rect clip_rect = {0, 0, dst_surface->w, dst_surface->h};
-    if ( doClipping( &dst_rect, &clip_rect, &clipped_rect ) ) return;
-    
-    src_rect.x += clipped_rect.x;
-    src_rect.y += clipped_rect.y;
+    SDL_Rect dst_rect = {dst_x, dst_y, pos.w, pos.h}, src_rect;
+    if ( doClipping( &dst_rect, &clip, &src_rect ) ) return;
 
     /* ---------------------------------------- */
     

@@ -267,6 +267,11 @@ void ONScripterLabel::initSDL()
     screen_ratio2 *= 8;
     screen_width   = screen_width  * 9 / 8;
     screen_height  = screen_height * 9 / 8;
+#elif defined(PDA) && defined(PDA_PSP2)
+    screen_ratio1 *= 6;
+    screen_ratio2 *= 5;
+    screen_width   = screen_width  * 6 / 5;
+    screen_height  = screen_height * 6 / 5;
 #endif
 
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
@@ -1027,16 +1032,15 @@ void ONScripterLabel::clearCurrentTextBuffer()
     cached_text_buffer = current_text_buffer;
 }
 
-void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect *clip )
+void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
 {
     if ( current_font->is_transparent ){
 
         SDL_Rect rect = {0, 0, screen_width, screen_height};
-        if ( current_font == &sentence_font ){
+        if ( current_font == &sentence_font )
             rect = sentence_font_info.pos;
 
-            if ( clip && AnimationInfo::doClipping( &rect, clip ) ) return;
-        }
+        if ( AnimationInfo::doClipping( &rect, &clip ) ) return;
 
         if ( rect.x + rect.w > surface->w ) rect.w = surface->w - rect.x;
         if ( rect.y + rect.h > surface->h ) rect.h = surface->h - rect.y;

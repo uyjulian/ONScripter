@@ -38,7 +38,7 @@ SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
                             SDLK_LEFT,   /* LEFT     */
                             SDLK_UP,     /* UP       */
                             SDLK_RIGHT,  /* RIGHT    */
-                            SDLK_TAB,    /* SELECT   */
+                            SDLK_0,      /* SELECT   */
                             SDLK_a,      /* START    */
                             SDLK_UNKNOWN,/* HOME     */ /* kernel mode only */
                             SDLK_UNKNOWN,/* HOLD     */};
@@ -757,6 +757,10 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
             advancePhase();
+        }
+        else if ( event->keysym.sym == SDLK_0 ){
+            if (++text_speed_no > 2) text_speed_no = 0;
+            sentence_font.wait_time = -1;
         }
         else if ( event->keysym.sym == SDLK_1 ){
             text_speed_no = 0;

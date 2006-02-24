@@ -308,7 +308,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
     }
 }
 
-void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect *clip )
+void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip )
 {
     SDL_Rect poly_rect = anim->pos;
     if ( !anim->abs_flag ){

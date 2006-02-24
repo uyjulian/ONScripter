@@ -222,45 +222,29 @@ void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_UnlockSurface( dst_surface );
 }
 
-void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect *dst_rect )
+void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip )
 {
-    SDL_Rect rect = {0, 0, surface->w, surface->h};
-
-    if ( dst_rect ){
-        rect = *dst_rect;
-        if ( rect.x + rect.w > surface->w ) rect.w = surface->w - rect.x;
-        if ( rect.y + rect.h > surface->h ) rect.h = surface->h - rect.y;
-    }
-
     SDL_LockSurface( surface );
-    ONSBuf *buf = (ONSBuf *)surface->pixels + rect.y * surface->w + rect.x;
+    ONSBuf *buf = (ONSBuf *)surface->pixels + clip.y * surface->w + clip.x;
 
     ONSBuf mask = surface->format->Rmask | surface->format->Gmask | surface->format->Bmask;
-    for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
-        for ( int j=rect.x ; j<rect.x + rect.w ; j++ )
+    for ( int i=clip.y ; i<clip.y + clip.h ; i++ ){
+        for ( int j=clip.x ; j<clip.x + clip.w ; j++ )
             *buf++ ^= mask;
-        buf += surface->w - rect.w;
+        buf += surface->w - clip.w;
     }
 
     SDL_UnlockSurface( surface );
 }
 
-void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst_rect )
+void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &clip )
 {
-    SDL_Rect rect = {0, 0, surface->w, surface->h};
-
-    if ( dst_rect ){
-        rect = *dst_rect;
-        if ( rect.x + rect.w > surface->w ) rect.w = surface->w - rect.x;
-        if ( rect.y + rect.h > surface->h ) rect.h = surface->h - rect.y;
-    }
-
     SDL_LockSurface( surface );
-    ONSBuf *buf = (ONSBuf *)surface->pixels + rect.y * surface->w + rect.x, c;
+    ONSBuf *buf = (ONSBuf *)surface->pixels + clip.y * surface->w + clip.x, c;
 
     SDL_PixelFormat *fmt = surface->format;
-    for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
-        for ( int j=rect.x ; j<rect.x + rect.w ; j++ ){
+    for ( int i=clip.y ; i<clip.y + clip.h ; i++ ){
+        for ( int j=clip.x ; j<clip.x + clip.w ; j++ ){
             c = ((((*buf & fmt->Rmask) >> fmt->Rshift) << fmt->Rloss) * 77 +
                  (((*buf & fmt->Gmask) >> fmt->Gshift) << fmt->Gloss) * 151 +
                  (((*buf & fmt->Bmask) >> fmt->Bshift) << fmt->Bloss) * 28 ) >> 8; 
@@ -268,19 +252,22 @@ void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect *dst
                       (monocro_color_lut[c][1] >> fmt->Gloss) << surface->format->Gshift |
                       (monocro_color_lut[c][2] >> fmt->Bloss) << surface->format->Bshift);
         }
-        buf += surface->w - rect.w;
+        buf += surface->w - clip.w;
     }
 
     SDL_UnlockSurface( surface );
 }
 
-void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip, int refresh_mode )
+void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int refresh_mode )
 {
     if (refresh_mode == REFRESH_NONE_MODE) return;
-    
+
+    SDL_Rect clip = {0, 0, surface->w, surface->h};
+    if (clip_src) if ( AnimationInfo::doClipping( &clip, clip_src ) ) return;
+
     int i, top;
 
-    SDL_FillRect( surface, clip, SDL_MapRGB( surface->format, 0, 0, 0) );
+    SDL_FillRect( surface, &clip, SDL_MapRGB( surface->format, 0, 0, 0) );
     
     drawTaggedSurface( surface, &bg_info, clip );
     

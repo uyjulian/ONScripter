@@ -45,6 +45,9 @@ int SarReader::open( char *name, int archive_type )
         return -1;
     }
 
+    info->file_name = new char[strlen(name)+1];
+    memcpy(info->file_name, name, strlen(name)+1);
+    
     readArchive( info );
 
     last_archive_info->next = info;
@@ -209,6 +212,7 @@ int SarReader::close()
     for ( int i=0 ; i<num_of_sar_archives ; i++ ){
         if ( info->file_handle ){
             fclose( info->file_handle );
+            delete[] info->file_name;
             delete[] info->fi_list;
         }
         last_archive_info = info;
