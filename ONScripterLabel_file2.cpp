@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file2.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -194,9 +194,8 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     // play, playonce MIDI
     if ( readInt() == 1 ){
         midi_play_loop_flag = true;
-        internal_midi_play_loop_flag = true;
         current_cd_track = -2;
-        playMIDIFile(midi_file_name);
+        playSound(midi_file_name, SOUND_MIDI, midi_play_loop_flag);
     }
     else
         midi_play_loop_flag = false;
@@ -205,19 +204,12 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     if ( readInt() == 1 ) wave_play_loop_flag = true;
     else                  wave_play_loop_flag = false;
     if ( wave_file_name && wave_play_loop_flag )
-        playWave( wave_file_name, wave_play_loop_flag, MIX_WAVE_CHANNEL );
+        playSound(wave_file_name, SOUND_WAVE|SOUND_OGG, wave_play_loop_flag, MIX_WAVE_CHANNEL);
 
     // play, playonce
     if ( readInt() == 1 ) cd_play_loop_flag = true;
     else                  cd_play_loop_flag = false;
-    if ( current_cd_track >= 0 ){
-        if ( cdaudio_flag ){
-            if ( cdrom_info ) playCDAudio( current_cd_track );
-        }
-        else{
-            playMP3( current_cd_track );
-        }
-    }
+    if ( current_cd_track >= 0 ) playCDAudio();
 
     // bgm, mp3, mp3loop
     if ( readInt() == 1 ) music_play_loop_flag = true;
@@ -226,15 +218,9 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     else                  mp3save_flag = false;
     readStr( &music_file_name );
     if ( music_file_name ){
-        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
-#if defined(EXTERNAL_MUSIC_PLAYER)
-            if (playMusicFile()){
-#else
-            if (playMP3( 0 )){
-#endif
-                internal_midi_play_loop_flag = music_play_loop_flag;
-                playMIDIFile(music_file_name);
-            }
+        playSound(music_file_name,
+                  SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3 | SOUND_MIDI,
+                  music_play_loop_flag, MIX_BGM_CHANNEL);
     }
 
     erase_text_window_mode = readInt();
@@ -330,8 +316,11 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     readStr( &loop_bgm_name[0] );
     readStr( &loop_bgm_name[1] );
     if ( loop_bgm_name[0] ) {
-        if ( loop_bgm_name[1] ) playWave( loop_bgm_name[1], false, MIX_LOOPBGM_CHANNEL1, WAVE_PRELOAD );
-        playWave( loop_bgm_name[0], false, MIX_LOOPBGM_CHANNEL0 );
+        if ( loop_bgm_name[1] )
+            playSound(loop_bgm_name[1],
+                      SOUND_PRELOAD|SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL1);
+        playSound(loop_bgm_name[0],
+                  SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL0);
     }
 
     if ( file_version >= 201 ){

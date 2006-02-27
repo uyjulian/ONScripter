@@ -69,6 +69,7 @@ static struct FuncLUT{
     {"spbtn",   &ONScripterLabel::spbtnCommand},
     {"skipoff",   &ONScripterLabel::skipoffCommand},
     {"sevol",   &ONScripterLabel::sevolCommand},
+    {"setwindow3",   &ONScripterLabel::setwindow3Command},
     {"setwindow2",   &ONScripterLabel::setwindow2Command},
     {"setwindow",   &ONScripterLabel::setwindowCommand},
     {"setcursor",   &ONScripterLabel::setcursorCommand},
@@ -363,6 +364,10 @@ ONScripterLabel::ONScripterLabel()
     }
     glyph_cache[NUM_GLYPH_CACHE-1].next = NULL;
     root_glyph_cache = &glyph_cache[0];
+
+    // External Players
+    music_cmd = getenv("PLAYER_CMD");
+    midi_cmd  = getenv("MUSIC_CMD");
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -497,9 +502,8 @@ int ONScripterLabel::init()
     mp3_sample = NULL;
     music_file_name = NULL;
     mp3_buffer = NULL;
-#if defined(EXTERNAL_MUSIC_PLAYER)
     music_info = NULL;
-#endif
+    music_ovi = NULL;
 
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
@@ -577,7 +581,6 @@ void ONScripterLabel::reset()
     
     wave_play_loop_flag = false;
     midi_play_loop_flag = false;
-    internal_midi_play_loop_flag = false;
     music_play_loop_flag = false;
     cd_play_loop_flag = false;
     mp3save_flag = false;
@@ -750,11 +753,13 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         if ( p_button_link ){
             if ( system_menu_mode != SYSTEM_NULL ){
                 if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
-                    playWave( menuselectvoice_file_name[MENUSELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
+                    playSound(menuselectvoice_file_name[MENUSELECTVOICE_OVER], 
+                              SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             }
             else{
                 if ( selectvoice_file_name[SELECTVOICE_OVER] )
-                    playWave( selectvoice_file_name[SELECTVOICE_OVER], false, MIX_WAVE_CHANNEL );
+                    playSound(selectvoice_file_name[SELECTVOICE_OVER], 
+                              SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             }
             check_dst_rect = p_button_link->image_rect;
             if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
@@ -1171,7 +1176,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             char *buf = sound_name;
             while (*ctl_str != ')' && *ctl_str != '\0' ) *buf++ = *ctl_str++;
             *buf++ = '\0';
-            playWave( sound_name, false, sprite_no );
+            playSound(sound_name, SOUND_WAVE|SOUND_OGG, false, sprite_no);
             if ( *ctl_str == ')' ) ctl_str++;
         }
         else if (com == 'M' || com == 'm'){
@@ -1238,12 +1243,12 @@ void ONScripterLabel::loadEnvData()
         readStr( &default_cdrom_drive );
         voice_volume = DEFAULT_VOLUME - readInt();
         se_volume = DEFAULT_VOLUME - readInt();
-        mp3_volume = DEFAULT_VOLUME - readInt();
+        music_volume = DEFAULT_VOLUME - readInt();
         if (readInt() == 0) kidokumode_flag = false;
     }
     else{
         setStr( &default_env_font, DEFAULT_ENV_FONT );
-        voice_volume = se_volume = mp3_volume = DEFAULT_VOLUME;
+        voice_volume = se_volume = music_volume = DEFAULT_VOLUME;
     }
 }
 
@@ -1261,7 +1266,7 @@ void ONScripterLabel::saveEnvData()
         writeStr( default_cdrom_drive, output_flag );
         writeInt( DEFAULT_VOLUME - voice_volume, output_flag );
         writeInt( DEFAULT_VOLUME - se_volume, output_flag );
-        writeInt( DEFAULT_VOLUME - mp3_volume, output_flag );
+        writeInt( DEFAULT_VOLUME - music_volume, output_flag );
         writeInt( kidokumode_flag?1:0, output_flag );
         writeInt( 0, output_flag ); // ?
 
@@ -1302,12 +1307,10 @@ void ONScripterLabel::quit()
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
     }
-#if defined(EXTERNAL_MUSIC_PLAYER)
     if ( music_info ){
         Mix_HaltMusic();
         Mix_FreeMusic( music_info );
     }
-#endif
 }
 
 void ONScripterLabel::disableGetButtonFlag()

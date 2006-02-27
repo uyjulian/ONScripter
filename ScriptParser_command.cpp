@@ -1048,7 +1048,7 @@ int ScriptParser::defsevolCommand()
 
 int ScriptParser::defmp3volCommand()
 {
-    mp3_volume = script_h.readInt();
+    music_volume = script_h.readInt();
 
     return RET_CONTINUE;
 }

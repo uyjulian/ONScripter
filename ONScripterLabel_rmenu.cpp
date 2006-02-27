@@ -151,13 +151,15 @@ void ONScripterLabel::executeSystemMenu()
 
         if ( current_button_state.button == -1 ){
             if ( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], false, MIX_WAVE_CHANNEL );
+                playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], 
+                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             leaveSystemCall();
             return;
         }
     
         if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
-            playWave( menuselectvoice_file_name[MENUSELECTVOICE_CLICK], false, MIX_WAVE_CHANNEL );
+            playSound(menuselectvoice_file_name[MENUSELECTVOICE_CLICK], 
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
 
         link = root_rmenu_link.next;
         while ( link ){
@@ -172,7 +174,8 @@ void ONScripterLabel::executeSystemMenu()
     }
     else{
         if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
-            playWave( menuselectvoice_file_name[MENUSELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
+            playSound(menuselectvoice_file_name[MENUSELECTVOICE_OPEN],
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
 
         system_menu_mode = SYSTEM_MENU;
         yesno_caller = SYSTEM_MENU;
@@ -425,7 +428,8 @@ void ONScripterLabel::executeSystemYesNo()
 
         if ( current_button_state.button == 1 ){ // yes is selected
             if ( menuselectvoice_file_name[MENUSELECTVOICE_YES] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_YES], false, MIX_WAVE_CHANNEL );
+                playSound(menuselectvoice_file_name[MENUSELECTVOICE_YES],
+                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             if ( yesno_caller == SYSTEM_SAVE ){
                 saveSaveFile( yesno_selected_file_no );
                 leaveSystemCall();
@@ -463,7 +467,8 @@ void ONScripterLabel::executeSystemYesNo()
         }
         else{
             if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
-                playWave( menuselectvoice_file_name[MENUSELECTVOICE_NO], false, MIX_WAVE_CHANNEL );
+                playSound(menuselectvoice_file_name[MENUSELECTVOICE_NO],
+                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             system_menu_mode = yesno_caller & 0xf;
             advancePhase();
         }

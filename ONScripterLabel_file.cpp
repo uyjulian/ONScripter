@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -461,29 +461,15 @@ int ONScripterLabel::loadSaveFile( int no )
     }
     
     if ( current_cd_track >= 0 ){
-        if ( cdaudio_flag ){
-            if ( cdrom_info ) playCDAudio( current_cd_track );
-        }
-        else{
-            playMP3( current_cd_track );
-        }
+        playCDAudio();
     }
     else if ( midi_file_name && midi_play_loop_flag ){
-        playMIDIFile(midi_file_name);
+        playSound(midi_file_name, SOUND_MIDI, midi_play_loop_flag);
     }
     else if ( music_file_name && music_play_loop_flag ){
-        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
-#if defined(EXTERNAL_MUSIC_PLAYER)
-            playMusicFile();
-#else
-            playMP3( 0 );
-#endif
-        else{
-            setStr( &wave_file_name, music_file_name );
-            wave_play_loop_flag = music_play_loop_flag;
-            setStr( &music_file_name, NULL );
-            music_play_loop_flag = false;
-        }
+        playSound(music_file_name,
+                  SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3,
+                  music_play_loop_flag, MIX_BGM_CHANNEL);
     }
 
     /* ---------------------------------------- */

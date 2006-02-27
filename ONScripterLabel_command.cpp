@@ -38,14 +38,13 @@ int ONScripterLabel::waveCommand()
 {
     wave_play_loop_flag = false;
     
-    if ( script_h.isName( "waveloop" ) ){
+    if (script_h.isName( "waveloop" ))
         wave_play_loop_flag = true;
-    }
 
     wavestopCommand();
 
-    setStr( &wave_file_name, script_h.readStr() );
-    playWave( wave_file_name, wave_play_loop_flag, MIX_WAVE_CHANNEL );
+    setStr(&wave_file_name, script_h.readStr());
+    playSound(wave_file_name, SOUND_WAVE|SOUND_OGG, wave_play_loop_flag, MIX_WAVE_CHANNEL);
         
     return RET_CONTINUE;
 }
@@ -100,8 +99,8 @@ int ONScripterLabel::vCommand()
 {
     char buf[256];
     
-    sprintf( buf, RELATIVEPATH "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1 );
-    playWave( buf, false, MIX_WAVE_CHANNEL );
+    sprintf(buf, RELATIVEPATH "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1);
+    playSound(buf, SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
     
     return RET_CONTINUE;
 }
@@ -486,25 +485,7 @@ int ONScripterLabel::sevolCommand()
     return RET_CONTINUE;
 }
 
-int ONScripterLabel::setwindow2Command()
-{
-    const char *buf = script_h.readStr();
-    if ( buf[0] == '#' ){
-        sentence_font.is_transparent = true;
-        readColor( &sentence_font.window_color, buf );
-    }
-    else{
-        sentence_font.is_transparent = false;
-        sentence_font_info.setImageName( buf );
-        parseTaggedString( &sentence_font_info );
-        setupAnimationInfo( &sentence_font_info );
-    }
-    repaintCommand();
-
-    return RET_CONTINUE;
-}
-
-int ONScripterLabel::setwindowCommand()
+void ONScripterLabel::setwindowCore()
 {
     sentence_font.ttf_font  = NULL;
     sentence_font.top_xy[0] = script_h.readInt();
@@ -545,11 +526,48 @@ int ONScripterLabel::setwindowCommand()
 #endif        
         sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0xff;
     }
+}
 
+int ONScripterLabel::setwindow3Command()
+{
+    setwindowCore();
+    
+    clearCurrentTextBuffer();
+    indent_offset = 0;
+    line_enter_status = 0;
+    flush( refreshMode(), &sentence_font_info.pos );
+    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+    
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::setwindow2Command()
+{
+    const char *buf = script_h.readStr();
+    if ( buf[0] == '#' ){
+        sentence_font.is_transparent = true;
+        readColor( &sentence_font.window_color, buf );
+    }
+    else{
+        sentence_font.is_transparent = false;
+        sentence_font_info.setImageName( buf );
+        parseTaggedString( &sentence_font_info );
+        setupAnimationInfo( &sentence_font_info );
+    }
+    repaintCommand();
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::setwindowCommand()
+{
+    setwindowCore();
+    
     dirty_rect.add( sentence_font_info.pos );
     lookbackflushCommand();
     indent_offset = 0;
     line_enter_status = 0;
+    flush( refreshMode(), &sentence_font_info.pos );
     display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
@@ -604,7 +622,8 @@ int ONScripterLabel::selectCommand()
         if ( current_button_state.button <= 0 ) return RET_WAIT | RET_REREAD;
         
         if ( selectvoice_file_name[SELECTVOICE_SELECT] )
-            playWave( selectvoice_file_name[SELECTVOICE_SELECT], false, MIX_WAVE_CHANNEL );
+            playSound(selectvoice_file_name[SELECTVOICE_SELECT], 
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
 
         event_mode = IDLE_EVENT_MODE;
 
@@ -647,7 +666,8 @@ int ONScripterLabel::selectCommand()
         xy[1] = sentence_font.xy[1];
 
         if ( selectvoice_file_name[SELECTVOICE_OPEN] )
-            playWave( selectvoice_file_name[SELECTVOICE_OPEN], false, MIX_WAVE_CHANNEL );
+            playSound(selectvoice_file_name[SELECTVOICE_OPEN],
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
 
         last_select_link = &root_select_link;
 
@@ -1042,13 +1062,7 @@ int ONScripterLabel::playCommand()
             stopBGM( false );
             cd_play_loop_flag = loop_flag;
             current_cd_track = new_cd_track;
-
-            if ( cdaudio_flag ){
-                if ( cdrom_info ) playCDAudio( current_cd_track );
-            }
-            else{
-                playMP3( current_cd_track );
-            }
+            playCDAudio();
 #ifdef CONTINUOUS_PLAY        
         }
 #endif
@@ -1056,10 +1070,11 @@ int ONScripterLabel::playCommand()
     else{ // play MIDI
         stopBGM( false );
         
-        setStr( &midi_file_name, buf );
+        setStr(&midi_file_name, buf);
         midi_play_loop_flag = loop_flag;
-        internal_midi_play_loop_flag = loop_flag;
-        playMIDIFile(midi_file_name);
+        if (playSound(midi_file_name, SOUND_MIDI, midi_play_loop_flag) != SOUND_MIDI){
+            fprintf(stderr, "can't play MIDI file %s\n", midi_file_name);
+        }
     }
 
     return RET_CONTINUE;
@@ -1112,9 +1127,9 @@ int ONScripterLabel::mpegplayCommand()
 
 int ONScripterLabel::mp3volCommand()
 {
-    mp3_volume = script_h.readInt();
+    music_volume = script_h.readInt();
 
-    if ( mp3_sample ) SMPEG_setvolume( mp3_sample, mp3_volume );
+    if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_volume );
 
     return RET_CONTINUE;
 }
@@ -1141,17 +1156,11 @@ int ONScripterLabel::mp3Command()
     music_play_loop_flag = loop_flag;
 
     const char *buf = script_h.readStr();
-    if ( buf[0] != '\0' ){
-        setStr( &music_file_name, buf );
-        if ( playWave( music_file_name, music_play_loop_flag, MIX_BGM_CHANNEL ) )
-#if defined(EXTERNAL_MUSIC_PLAYER)
-            if (playMusicFile()){
-#else
-            if (playMP3( 0 )){
-#endif
-                internal_midi_play_loop_flag = music_play_loop_flag;
-                playMIDIFile(music_file_name);
-            }
+    if (buf[0] != '\0'){
+        setStr(&music_file_name, buf);
+        playSound(music_file_name, 
+                  SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3 | SOUND_MIDI,
+                  music_play_loop_flag, MIX_BGM_CHANNEL);
     }
         
     return RET_CONTINUE;
@@ -1287,8 +1296,10 @@ int ONScripterLabel::loopbgmCommand()
     buf = script_h.readStr();
     setStr( &loop_bgm_name[1], buf );
 
-    playWave( loop_bgm_name[1], false, MIX_LOOPBGM_CHANNEL1, WAVE_PRELOAD );
-    playWave( loop_bgm_name[0], false, MIX_LOOPBGM_CHANNEL0 );
+    playSound(loop_bgm_name[1],
+              SOUND_PRELOAD|SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL1);
+    playSound(loop_bgm_name[0],
+              SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL0);
     
     return RET_CONTINUE;
 }
@@ -2192,11 +2203,16 @@ int ONScripterLabel::dwaveCommand()
     int ch = script_h.readInt();
     if      (ch < 0) ch = 0;
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
-    const char *buf = NULL;
-    if ( play_mode != WAVE_PLAY_LOADED ){
-        buf = script_h.readStr();
+
+    if (play_mode == WAVE_PLAY_LOADED){
+        Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
     }
-    playWave( buf, loop_flag, ch, play_mode );
+    else{
+        const char *buf = script_h.readStr();
+        int fmt = SOUND_WAVE|SOUND_OGG;
+        if (play_mode == WAVE_PRELOAD) fmt |= SOUND_PRELOAD;
+        playSound(buf, fmt, loop_flag, ch);
+    }
         
     return RET_CONTINUE;
 }
@@ -2205,8 +2221,8 @@ int ONScripterLabel::dvCommand()
 {
     char buf[256];
     
-    sprintf( buf, RELATIVEPATH "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2 );
-    playWave( buf, false, 0 );
+    sprintf(buf, RELATIVEPATH "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2);
+    playSound(buf, SOUND_WAVE|SOUND_OGG, false, 0);
     
     return RET_CONTINUE;
 }

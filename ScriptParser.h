@@ -336,7 +336,7 @@ protected:
     
     /* ---------------------------------------- */
     /* Sound related variables */
-    int mp3_volume;
+    int music_volume;
     int voice_volume;
     int se_volume;
 

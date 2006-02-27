@@ -35,15 +35,6 @@
 #include "AVIWrapper.h"
 #endif
 
-#if defined(USE_OGG_VORBIS)
-#if defined(INTEGER_OGG_VORBIS)
-#include <tremor/ivorbiscodec.h>
-#else
-#include <vorbis/codec.h>
-#endif
-#define OGG_BUFFER 4096
-ogg_int16_t convbuffer[OGG_BUFFER];
-#endif
 struct WAVE_HEADER{
     char chunk_riff[4];
     char riff_length[4];
@@ -60,60 +51,263 @@ struct WAVE_HEADER{
     char data_length[4];
 } header;
 
-#if defined(EXTERNAL_MUSIC_PLAYER)
 extern bool ext_music_play_once_flag;
-#endif
 
 extern "C"{
     extern void mp3callback( void *userdata, Uint8 *stream, int len );
+    extern void oggcallback( void *userdata, Uint8 *stream, int len );
     extern Uint32 cdaudioCallback( Uint32 interval, void *param );
 }
 extern void midiCallback( int sig );
-#if defined(EXTERNAL_MUSIC_PLAYER)
 extern void musicCallback( int sig );
-#endif
 extern SDL_TimerID timer_cdaudio_id;
 
 #define TMP_MIDI_FILE "tmp.mid"
 #define TMP_MUSIC_FILE "tmp.mus"
 
-int ONScripterLabel::playMIDIFile(const char* filename)
+extern long decodeOggVorbis(OVInfo *ovi, unsigned char *buf_dst, long len, bool do_rate_conversion)
 {
-    if ( !audio_open_flag ) return -1;
+    int current_section;
+    long total_len = 0;
 
-    FILE *fp;
-
-    if ( (fp = fopen( TMP_MIDI_FILE, "wb" )) == NULL ){
-        fprintf( stderr, "can't open temporaly MIDI file %s\n", TMP_MIDI_FILE );
-        return -1;
+    char *buf = (char*)buf_dst;
+    if (do_rate_conversion && ovi->cvt.needed){
+        len = len * ovi->mult1 / ovi->mult2;
+        if (ovi->cvt_len < len*ovi->cvt.len_mult){
+            if (ovi->cvt.buf) delete[] ovi->cvt.buf;
+            ovi->cvt.buf = new unsigned char[len*ovi->cvt.len_mult];
+            ovi->cvt_len = len*ovi->cvt.len_mult;
+        }
+        buf = (char*)ovi->cvt.buf;
     }
 
-    unsigned long length = script_h.cBR->getFileLength( filename );
-    if ( length == 0 ){
-        fprintf( stderr, " *** can't find file [%s] ***\n", filename );
-        return -1;
+#if defined(USE_OGG_VORBIS)
+    while(1){
+#if defined(INTEGER_OGG_VORBIS)
+        long src_len = ov_read( &ovi->ovf, buf, len, &current_section);
+#else
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        long src_len = ov_read( &ovi->ovf, buf, len, 0, 2, 1, &current_section);
+#else
+        long src_len = ov_read( &ovi->ovf, buf, len, 1, 2, 1, &current_section);
+#endif
+#endif
+        if (src_len <= 0) break;
+
+        long dst_len = src_len;
+        if (do_rate_conversion && ovi->cvt.needed){
+            ovi->cvt.len = src_len;
+            SDL_ConvertAudio(&ovi->cvt);
+            memcpy(buf_dst, ovi->cvt.buf, ovi->cvt.len_cvt);
+            dst_len = ovi->cvt.len_cvt;
+            buf_dst += ovi->cvt.len_cvt;
+        }
+        else{
+            buf += dst_len;
+        }
+        
+        total_len += dst_len;
+        if (src_len == len) break;
+        len -= src_len;
     }
-    unsigned char *buffer = new unsigned char[length];
-    script_h.cBR->getFile( filename, buffer );
-    fwrite( buffer, 1, length, fp );
-    delete[] buffer;
+#endif
 
-    fclose( fp );
-
-    return playMIDI();
+    return total_len;
 }
 
-int ONScripterLabel::playMIDI()
+int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag, int channel)
 {
-    int midi_looping = internal_midi_play_loop_flag ? -1 : 0;
-    char *midi_file = new char[ strlen(archive_path) + strlen(TMP_MIDI_FILE) + 1 ];
-    sprintf( midi_file, "%s%s", archive_path, TMP_MIDI_FILE );
+    if ( !audio_open_flag ) return SOUND_NONE;
 
-    char *music_cmd = getenv( "MUSIC_CMD" );
+    long length = script_h.cBR->getFileLength( filename );
+    if (length == 0) return SOUND_NONE;
+
+    unsigned char *buffer = new unsigned char[length];
+    script_h.cBR->getFile( filename, buffer );
+    
+    if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
+        int ret = playOGG(format, buffer, length, loop_flag, channel);
+        if (ret & (SOUND_OGG | SOUND_OGG_STREAMING)) return ret;
+    }
+    
+    if (format & SOUND_WAVE){
+        Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
+        if (playWave(chunk, format, loop_flag, channel) == 0){
+            delete[] buffer;
+            return SOUND_WAVE;
+        }
+    }
+
+    if (format & SOUND_MP3){
+        if (music_cmd){
+            FILE *fp;
+            if ( (fp = fopen(TMP_MUSIC_FILE, "wb")) == NULL){
+                fprintf(stderr, "can't open temporaly Music file %s\n", TMP_MUSIC_FILE);
+            }
+            else{
+                fwrite(buffer, 1, length, fp);
+                fclose( fp );
+                ext_music_play_once_flag = !loop_flag;
+                if (playExternalMusic(loop_flag) == 0){
+                    delete[] buffer;
+                    return SOUND_MP3;
+                }
+            }
+        }
+
+        mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( buffer, length ), NULL, 0 );
+        if (playMP3() == 0){
+            mp3_buffer = buffer;
+            return SOUND_MP3;
+        }
+    }
+
+    /* check WMA */
+    if ( buffer[0] == 0x30 && buffer[1] == 0x26 &&
+         buffer[2] == 0xb2 && buffer[3] == 0x75 ){
+        delete[] buffer;
+        return SOUND_OTHER;
+    }
+
+    if (format & SOUND_MIDI){
+        FILE *fp;
+        if ( (fp = fopen(TMP_MIDI_FILE, "wb")) == NULL){
+            fprintf(stderr, "can't open temporaly MIDI file %s\n", TMP_MIDI_FILE);
+        }
+        else{
+            fwrite(buffer, 1, length, fp);
+            fclose( fp );
+            ext_music_play_once_flag = !loop_flag;
+            if (playMIDI(loop_flag) == 0){
+                delete[] buffer;
+                return SOUND_MIDI;
+            }
+        }
+    }
+
+    delete[] buffer;
+    
+    return SOUND_OTHER;
+}
+
+void ONScripterLabel::playCDAudio()
+{
+    if ( cdaudio_flag ){
+        if ( cdrom_info ){
+            int length = cdrom_info->track[current_cd_track - 1].length / 75;
+            SDL_CDPlayTracks( cdrom_info, current_cd_track - 1, 0, 1, 0 );
+            timer_cdaudio_id = SDL_AddTimer( length * 1000, cdaudioCallback, NULL );
+        }
+    }
+    else{
+        char filename[256];
+        sprintf( filename, "cd\\track%2.2d.mp3", current_cd_track );
+        playSound( filename, SOUND_MP3, cd_play_loop_flag );
+    }
+}
+
+int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel)
+{
+    if (!chunk) return -1;
+
+    Mix_Pause( channel );
+    if ( wave_sample[channel] ) Mix_FreeChunk( wave_sample[channel] );
+    wave_sample[channel] = chunk;
+
+    if      (channel == 0)               Mix_Volume( channel, voice_volume * 128 / 100 );
+    else if (channel == MIX_BGM_CHANNEL) Mix_Volume( channel, music_volume * 128 / 100 );
+    else                                 Mix_Volume( channel, se_volume * 128 / 100 );
+
+    if ( !(format & SOUND_PRELOAD) )
+        Mix_PlayChannel( channel, wave_sample[channel], loop_flag?-1:0 );
+
+    return 0;
+}
+
+int ONScripterLabel::playMP3()
+{
+    if ( SMPEG_error( mp3_sample ) ){
+        //printf(" failed. [%s]\n",SMPEG_error( mp3_sample ));
+        // The line below fails. ?????
+        //SMPEG_delete( mp3_sample );
+        mp3_sample = NULL;
+        return -1;
+    }
+
+#ifndef MP3_MAD        
+    SMPEG_enableaudio( mp3_sample, 0 );
+    SMPEG_actualSpec( mp3_sample, &audio_format );
+    SMPEG_enableaudio( mp3_sample, 1 );
+#endif
+    SMPEG_setvolume( mp3_sample, music_volume );
+    Mix_HookMusic( mp3callback, mp3_sample );
+    SMPEG_play( mp3_sample );
+
+    return 0;
+}
+
+int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel)
+{
+    int channels, rate;
+    OVInfo *ovi = openOggVorbis(buffer, length, channels, rate);
+    if (ovi == NULL) return SOUND_OTHER;
+    
+    if (format & SOUND_OGG){
+        unsigned char *buffer2 = new unsigned char[sizeof(WAVE_HEADER)+ovi->decoded_length];
+        decodeOggVorbis(ovi, buffer2+sizeof(WAVE_HEADER), ovi->decoded_length, false);
+        setupWaveHeader(buffer2, channels, rate, ovi->decoded_length);
+        Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer2, sizeof(WAVE_HEADER)+ovi->decoded_length), 1);
+        delete[] buffer2;
+        closeOggVorbis(ovi);
+
+        playWave(chunk, format, loop_flag, channel);
+
+        return SOUND_OGG;
+    }
+
+    music_ovi = ovi;
+    Mix_VolumeMusic(music_volume * 128 / 100);
+    Mix_HookMusic(oggcallback, music_ovi);
+
+    return SOUND_OGG_STREAMING;
+}
+
+int ONScripterLabel::playExternalMusic(bool loop_flag)
+{
+    int music_looping = loop_flag ? -1 : 0;
+#if defined(LINUX)
+    signal(SIGCHLD, musicCallback);
+    if (music_cmd) music_looping = 0;
+#endif
+
+    Mix_SetMusicCMD(music_cmd);
+    
+    char music_filename[256];
+    sprintf(music_filename, "%s%s", archive_path, TMP_MUSIC_FILE);
+    if ((music_info = Mix_LoadMUS(music_filename)) == NULL){
+        fprintf( stderr, "can't load Music file %s\n", music_filename );
+        return -1;
+    }
+
+    // Mix_VolumeMusic( music_volume );
+    Mix_PlayMusic(music_info, music_looping);
+
+    return 0;
+}
+
+int ONScripterLabel::playMIDI(bool loop_flag)
+{
+    Mix_SetMusicCMD(midi_cmd);
+    
+    char midi_filename[256];
+    sprintf(midi_filename, "%s%s", archive_path, TMP_MIDI_FILE);
+    if ((midi_info = Mix_LoadMUS(midi_filename)) == NULL) return -1;
+
+    int midi_looping = loop_flag ? -1 : 0;
 
 #if defined(EXTERNAL_MIDI_PROGRAM)
     FILE *com_file;
-    if ( internal_midi_play_loop_flag ){
+    if ( midi_play_loop_flag ){
         if( (com_file = fopen("play_midi", "wb")) != NULL )
             fclose(com_file);
     }
@@ -124,136 +318,14 @@ int ONScripterLabel::playMIDI()
 #endif
 
 #if defined(LINUX)
-    signal( SIGCHLD, midiCallback );
-    if ( music_cmd ) midi_looping = 0;
+    signal(SIGCHLD, midiCallback);
+    if (midi_cmd) midi_looping = 0;
 #endif
-
-    Mix_SetMusicCMD( music_cmd );
-
-    if ( (midi_info = Mix_LoadMUS( midi_file )) == NULL ) {
-        fprintf( stderr, "can't load MIDI file %s\n", midi_file );
-        delete[] midi_file;
-        return -1;
-    }
-
-    delete[] midi_file;
-    Mix_VolumeMusic( mp3_volume );
-    Mix_PlayMusic( midi_info, midi_looping );
+    
+    Mix_VolumeMusic(music_volume);
+    Mix_PlayMusic(midi_info, midi_looping);
     current_cd_track = -2; 
     
-    return 0;
-}
-
-#if defined(EXTERNAL_MUSIC_PLAYER)
-int ONScripterLabel::playMusicFile()
-{
-    if ( !audio_open_flag ) return -1;
-    if ( music_file_name == NULL ) return -1;
-
-    char *player_cmd = getenv( "PLAYER_CMD" );
-    if ( player_cmd == NULL ){
-        playMP3( 0 );
-        return 0;
-    }
-
-    FILE *fp;
-
-    if ( (fp = fopen( TMP_MUSIC_FILE, "wb" )) == NULL ){
-        fprintf( stderr, "can't open temporaly Music file %s\n", TMP_MUSIC_FILE );
-        return -1;
-    }
-
-    unsigned long length = script_h.cBR->getFileLength( music_file_name );
-    if ( length == 0 ){
-        fprintf( stderr, " *** can't find file [%s] ***\n", music_file_name );
-        return -1;
-    }
-    unsigned char *buffer = new unsigned char[length];
-    script_h.cBR->getFile( music_file_name, buffer );
-    fwrite( buffer, 1, length, fp );
-    delete[] buffer;
-
-    fclose( fp );
-
-    ext_music_play_once_flag = !music_play_loop_flag;
-    
-    return playMusic();
-}
-
-int ONScripterLabel::playMusic()
-{
-    if ( !audio_open_flag ) return -1;
-    
-    int music_looping = music_play_loop_flag ? -1 : 0;
-    char *music_file = new char[ strlen(archive_path) + strlen(TMP_MUSIC_FILE) + 1 ];
-    sprintf( music_file, "%s%s", archive_path, TMP_MUSIC_FILE );
-
-    char *player_cmd = getenv( "PLAYER_CMD" );
-
-#if defined(LINUX)
-    signal( SIGCHLD, musicCallback );
-    if ( player_cmd ) music_looping = 0;
-#endif
-
-    Mix_SetMusicCMD( player_cmd );
-
-    if ( (music_info = Mix_LoadMUS( music_file )) == NULL ) {
-        fprintf( stderr, "can't load Music file %s\n", music_file );
-        delete[] music_file;
-        return -1;
-    }
-
-    delete[] music_file;
-    // Mix_VolumeMusic( mp3_volume );
-    Mix_PlayMusic( music_info, music_looping );
-
-    return 0;
-}
-#endif
-
-int ONScripterLabel::playMP3( int cd_no )
-{
-    if ( !audio_open_flag ) return -1;
-
-    char filename[128];
-    char *tmp_music_file_name = music_file_name;
-    if (tmp_music_file_name == NULL){
-        sprintf( filename, "cd\\track%2.2d.mp3", cd_no );
-        tmp_music_file_name = filename;
-    }
-
-    unsigned long length = script_h.cBR->getFileLength( tmp_music_file_name );
-    mp3_buffer = new unsigned char[length];
-    script_h.cBR->getFile( tmp_music_file_name, mp3_buffer );
-    if ( mp3_buffer[0] == 0x30 && mp3_buffer[1] == 0x26 &&
-         mp3_buffer[2] == 0xb2 && mp3_buffer[3] == 0x75 ){
-        /* WMA */
-        delete [] mp3_buffer;
-        mp3_buffer = NULL;
-        return -1;
-    }
-    mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( mp3_buffer, length ), NULL, 0 );
-
-    if ( SMPEG_error( mp3_sample ) ){
-        //printf(" failed. [%s]\n",SMPEG_error( mp3_sample ));
-        // The line below fails. ?????
-        //SMPEG_delete( mp3_sample );
-        mp3_sample = NULL;
-        return -1;
-    }
-    else{
-#ifndef MP3_MAD        
-        SMPEG_enableaudio( mp3_sample, 0 );
-        if ( audio_open_flag ){
-            SMPEG_actualSpec( mp3_sample, &audio_format );
-            SMPEG_enableaudio( mp3_sample, 1 );
-        }
-#endif
-        SMPEG_setvolume( mp3_sample, mp3_volume );
-        Mix_HookMusic( mp3callback, mp3_sample );
-        SMPEG_play( mp3_sample );
-    }
-
     return 0;
 }
 
@@ -275,7 +347,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool click_flag )
         }
         SMPEG_enablevideo( mpeg_sample, 1 );
         SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
-        SMPEG_setvolume( mpeg_sample, mp3_volume );
+        SMPEG_setvolume( mpeg_sample, music_volume );
 
         Mix_HookMusic( mp3callback, mpeg_sample );
         SMPEG_play( mpeg_sample );
@@ -346,64 +418,6 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 #endif
 }
 
-int ONScripterLabel::playCDAudio( int cd_no )
-{
-    int length = cdrom_info->track[cd_no - 1].length / 75;
-
-    SDL_CDPlayTracks( cdrom_info, cd_no - 1, 0, 1, 0 );
-    timer_cdaudio_id = SDL_AddTimer( length * 1000, cdaudioCallback, NULL );
-
-    return 0;
-}
-
-int ONScripterLabel::playWave( const char *file_name, bool loop_flag, int channel, int play_mode )
-{
-    unsigned long length = 0;
-    unsigned char *buffer;
-
-    if ( !audio_open_flag ) return -1;
-    
-    Mix_Pause( channel );
-    if ( !(play_mode & WAVE_PLAY_LOADED) ){
-        length = script_h.cBR->getFileLength( file_name );
-        if ( length==0 ) return -1;
-        buffer = new unsigned char[length];
-        script_h.cBR->getFile( file_name, buffer );
-
-        // check Ogg Vorbis
-        int channels, rate;
-        unsigned long length2 = decodeOggVorbis( buffer, NULL, length, channels, rate );
-        if ( length2 > 0 ){
-            unsigned char *buffer2 = new unsigned char[ sizeof(WAVE_HEADER) + length2 ];
-            decodeOggVorbis( buffer, buffer2+sizeof(WAVE_HEADER), length, channels, rate );
-            setupWaveHeader( buffer2, channels, rate, length2 );
-            delete[] buffer;
-            buffer = buffer2;
-            length = sizeof(WAVE_HEADER) + length2;
-        }
-        
-        if ( wave_sample[channel] ){
-            Mix_FreeChunk( wave_sample[channel] );
-        }
-        wave_sample[channel] = Mix_LoadWAV_RW(SDL_RWFromMem( buffer, length ), 1);
-        delete[] buffer;
-    }
-
-    if ( !wave_sample[channel] ) return -1; // if not pre-loaded or the format is MP3
-    
-    if ( channel == 0 ) Mix_Volume( channel, voice_volume * 128 / 100 );
-    else                Mix_Volume( channel, se_volume * 128 / 100 );
-
-    if ( debug_level > 0 )
-        printf("playWave %s %ld at vol %d\n", file_name, length, (channel==0)?voice_volume:se_volume );
-    
-    if ( !(play_mode & WAVE_PRELOAD) ){
-        Mix_PlayChannel( channel, wave_sample[channel], loop_flag?-1:0 );
-    }
-
-    return 0;
-}
-
 void ONScripterLabel::stopBGM( bool continue_flag )
 {
 #if defined(EXTERNAL_MIDI_PROGRAM)
@@ -435,6 +449,13 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         }
     }
 
+    if (music_ovi){
+        Mix_HaltMusic();
+        Mix_HookMusic( NULL, NULL );
+        closeOggVorbis(music_ovi);
+        music_ovi = NULL;
+    }
+
     if ( wave_sample[MIX_BGM_CHANNEL] ){
         Mix_Pause( MIX_BGM_CHANNEL );
         Mix_FreeChunk( wave_sample[MIX_BGM_CHANNEL] );
@@ -447,6 +468,7 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( midi_info ){
+        ext_music_play_once_flag = true;
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
         midi_info = NULL;
@@ -454,17 +476,15 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( !continue_flag ){
         setStr( &midi_file_name, NULL );
         midi_play_loop_flag = false;
-        internal_midi_play_loop_flag = false;
     }
 
-#if defined(EXTERNAL_MUSIC_PLAYER)
     if ( music_info ){
         ext_music_play_once_flag = true;
         Mix_HaltMusic();
         Mix_FreeMusic( music_info );
         music_info = NULL;
     }
-#endif
+
     if ( !continue_flag ) current_cd_track = -1;
 }
 
@@ -472,11 +492,13 @@ void ONScripterLabel::playClickVoice()
 {
     if      ( clickstr_state == CLICK_NEWPAGE ){
         if ( clickvoice_file_name[CLICKVOICE_NEWPAGE] )
-            playWave( clickvoice_file_name[CLICKVOICE_NEWPAGE], false, MIX_WAVE_CHANNEL );
+            playSound(clickvoice_file_name[CLICKVOICE_NEWPAGE], 
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
     }
     else if ( clickstr_state == CLICK_WAIT ){
         if ( clickvoice_file_name[CLICKVOICE_NORMAL] )
-            playWave( clickvoice_file_name[CLICKVOICE_NORMAL], false, MIX_WAVE_CHANNEL );
+            playSound(clickvoice_file_name[CLICKVOICE_NORMAL], 
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
     }
 }
 
@@ -517,199 +539,112 @@ void ONScripterLabel::setupWaveHeader( unsigned char *buffer, int channels, int 
 
     memcpy( buffer, &header, sizeof(header) );
 }
-
 #if defined(USE_OGG_VORBIS)
-inline int ogg_sync_sub( ogg_sync_state *oy, unsigned char **buffer_in, unsigned long &length )
+static size_t oc_read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-    int  bytes;
-#if defined(INTEGER_OGG_VORBIS)    
-    unsigned char *buffer = ogg_sync_bufferin( oy, OGG_BUFFER );
-#else
-    char *buffer = ogg_sync_buffer( oy, OGG_BUFFER );
-#endif    
-    if ( length > OGG_BUFFER ){
-        memcpy( buffer, *buffer_in, OGG_BUFFER );
-        *buffer_in += OGG_BUFFER;
-        bytes = OGG_BUFFER;
-        length -= OGG_BUFFER;
-    }
-    else{
-        memcpy( buffer, *buffer_in, length );
-        *buffer_in += length;
-        bytes = length;
-        length -= length;
-    }
-    if ( bytes > 0 )
-        ogg_sync_wrote( oy, bytes );
+    OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
 
-    return bytes;
+    size_t len = size*nmemb;
+    if (ogg_vorbis_info->pos+len > ogg_vorbis_info->length) 
+        len = ogg_vorbis_info->length - ogg_vorbis_info->pos;
+    memcpy(ptr, ogg_vorbis_info->buf+ogg_vorbis_info->pos, len);
+    ogg_vorbis_info->pos += len;
+
+    return len;
+}
+
+static int oc_seek_func(void *datasource, ogg_int64_t offset, int whence)
+{
+    OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
+
+    ogg_int64_t pos = 0;
+    if (whence == 0)
+        pos = offset;
+    else if (whence == 1)
+        pos = ogg_vorbis_info->pos + offset;
+    else if (whence == 2)
+        pos = ogg_vorbis_info->length + offset;
+
+    if (pos < 0 || pos > ogg_vorbis_info->length) return -1;
+
+    ogg_vorbis_info->pos = pos;
+
+    return 0;
+}
+
+static int oc_close_func(void *datasource)
+{
+    return 0;
+}
+
+static long oc_tell_func(void *datasource)
+{
+    OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
+
+    return ogg_vorbis_info->pos;
 }
 #endif
-
-unsigned long ONScripterLabel::decodeOggVorbis( unsigned char *buffer_in, unsigned char *buffer_out, unsigned long length, int &channels, int &rate )
+OVInfo *ONScripterLabel::openOggVorbis( unsigned char *buf, long len, int &channels, int &rate )
 {
+    OVInfo *ovi = new OVInfo();
+    
 #if defined(USE_OGG_VORBIS)
-    ogg_sync_state *oy=NULL;
-    ogg_stream_state *os=NULL;
-
-    ogg_page         og = {0,0,0,0};
-    ogg_packet       op = {0,0,0,0,0,0};
-
-    vorbis_info      vi;
-
-    vorbis_comment   vc;
-    vorbis_dsp_state vd;
-    vorbis_block     vb;
-
-#if defined(INTEGER_OGG_VORBIS)    
-    oy = ogg_sync_create();
-#else    
-    ogg_sync_state   oy_org;
-    ogg_sync_init(&oy_org);
-    oy = &oy_org;
-#endif
-    ogg_sync_sub( oy, &buffer_in, length );
-    if ( ogg_sync_pageout(oy,&og) != 1 )
-        return 0;
-  
-#if defined(INTEGER_OGG_VORBIS)    
-    os = ogg_stream_create(ogg_page_serialno(&og));
-#else    
-    ogg_stream_state os_org;
-    ogg_stream_init(&os_org,ogg_page_serialno(&og));
-    os = &os_org;
-#endif
+    ovi->buf = buf;
+    ovi->decoded_length = 0;
+    ovi->length = len;
+    ovi->pos = 0;
     
-    vorbis_info_init(&vi);
-    vorbis_comment_init(&vc);
-    if ( ogg_stream_pagein(os,&og) < 0 ) return 0;
-    if ( ogg_stream_packetout(os,&op) != 1 ) return 0;
-    if ( vorbis_synthesis_headerin(&vi,&vc,&op ) < 0) return 0;
-
-    channels = vi.channels;
-    rate = vi.rate;
-    
-    int length_out = 0;
-    int i=0;
-    while(i<2){
-        while(i<2){
-            int result = ogg_sync_pageout(oy,&og);
-            if ( result == 0) break;
-            if ( result == 1){
-                ogg_stream_pagein( os, &og );
-
-                while(i<2){
-                    result=ogg_stream_packetout(os,&op);
-                    if ( result == 0 ) break;
-                    if ( result < 0 ) return 0;
-                    vorbis_synthesis_headerin(&vi,&vc,&op);
-                    i++;
-                }
-            }
-        }
-
-        int bytes = ogg_sync_sub( oy, &buffer_in, length );
-        if (bytes==0 && i<2){
-            fprintf(stderr,"End of file before finding all Vorbis headers!\n");
-            return 0;
-        }
+    ov_callbacks oc;
+    oc.read_func  = oc_read_func;
+    oc.seek_func  = oc_seek_func;
+    oc.close_func = oc_close_func;
+    oc.tell_func  = oc_tell_func;
+    if (ov_open_callbacks(ovi, &ovi->ovf, NULL, 0, oc) < 0){
+        delete ovi;
+        return NULL;
     }
-    
-    int convsize = OGG_BUFFER/vi.channels;
 
-    vorbis_synthesis_init(&vd,&vi);
-    vorbis_block_init(&vd,&vb);
-
-    int eos = 0;
-    while(!eos){
-        while(!eos){
-            int result=ogg_sync_pageout(oy,&og);
-            if ( result == 0 ) break;
-            if ( result > 0 ){
-                ogg_stream_pagein( os, &og );
-                                              
-                while(1){
-                    result = ogg_stream_packetout(os,&op);
-
-                    if ( result == 0 ) break;
-                    if ( result > 0 ){
-#if defined(INTEGER_OGG_VORBIS)                        
-                        ogg_int32_t **pcm;
-#else                        
-                        float **pcm;
-#endif                        
-                        int samples;
-	      
-#if defined(INTEGER_OGG_VORBIS)                        
-                        if ( vorbis_synthesis(&vb,&op,1) == 0 )
-#else
-                        if ( vorbis_synthesis(&vb,&op) == 0 )
-#endif
-                            vorbis_synthesis_blockin(&vd,&vb);
-	      
-                        while((samples=vorbis_synthesis_pcmout(&vd,&pcm))>0){
-                            int bout=(samples<convsize?samples:convsize);
-
-                            length_out += bout;
-                            if ( buffer_out != NULL ){
-                                for ( i=0 ; i<vi.channels ; i++ ){
-                                    ogg_int16_t *ptr=convbuffer+i;
-#if defined(INTEGER_OGG_VORBIS)
-                                    ogg_int32_t *mono=pcm[i];
-#else                        
-                                    float  *mono=pcm[i];
-#endif                                    
-                                    for ( int j=0 ; j<bout ; j++){
-#if defined(INTEGER_OGG_VORBIS)
-                                        int x=mono[j]>>9;
-                                        int val=x;
-                                        val-= ((x<=32767)-1)&(x-32767);
-                                        val-= ((x>=-32768)-1)&(x+32768);
-#else
-                                        int val = (int)(mono[j]*32767.f);
-                                        if (val > 32767 )  val = 32767;
-                                        if (val < -32768 ) val = -32768;
-#endif                                        
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-                                        *ptr=val;
-#else
-                                        *ptr=(val>>8 & 0xff)|(val<<8 & 0xff00);
-#endif
-                                        ptr+=vi.channels;
-                                    }
-                                }
-		
-                                memcpy( buffer_out, convbuffer, 2*vi.channels*bout );
-                                buffer_out += 2*vi.channels*bout;
-                            }
-		
-                            vorbis_synthesis_read(&vd,bout);
-                        }	    
-                    }
-                }
-#if !defined(INTEGER_OGG_VORBIS)                
-                if (ogg_page_eos(&og)) eos=1;
-#endif                
-            }
-        }
-        if (!eos)
-            if ( ogg_sync_sub( oy, &buffer_in, length ) == 0 ) eos = 1;
+    vorbis_info *vi = ov_info( &ovi->ovf, -1 );
+    if (vi == NULL){
+        ov_clear(&ovi->ovf);
+        delete ovi;
+        return NULL;
     }
+
+    channels = vi->channels;
+    rate = vi->rate;
+
+    ovi->cvt.buf = NULL;
+    ovi->cvt_len = 0;
+    SDL_BuildAudioCVT(&ovi->cvt,
+                      AUDIO_S16, channels, rate,
+                      audio_format.format, audio_format.channels, audio_format.freq);
+    ovi->mult1 = 10;
+    ovi->mult2 = (int)(ovi->cvt.len_ratio*10.0);
     
-#if !defined(INTEGER_OGG_VORBIS)
-    ogg_stream_clear(os);
+    ovi->decoded_length = ov_pcm_total(&ovi->ovf, -1) * channels * 2;
 #endif
-    
-    vorbis_block_clear(&vb);
-    vorbis_dsp_clear(&vd);
-    vorbis_comment_clear(&vc);
-    vorbis_info_clear(&vi);
-#if !defined(INTEGER_OGG_VORBIS)
-    ogg_sync_clear(oy);
-#endif    
-  
-    return length_out * channels * 2;
-#else
+
+    return ovi;
+}
+
+int ONScripterLabel::closeOggVorbis(OVInfo *ovi)
+{
+    if (ovi->buf){
+        delete[] ovi->buf;
+        ovi->buf = NULL;
+#if defined(USE_OGG_VORBIS)
+        ovi->length = 0;
+        ovi->pos = 0;
+        ov_clear(&ovi->ovf);
+#endif
+    }
+    if (ovi->cvt.buf){
+        delete[] ovi->cvt.buf;
+        ovi->cvt.buf = NULL;
+        ovi->cvt_len = 0;
+    }
+    delete ovi;
+
     return 0;
-#endif    
 }

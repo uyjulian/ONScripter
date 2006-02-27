@@ -49,18 +49,16 @@ SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
 #define ONS_MIDI_EVENT    (SDL_USEREVENT+3)
 #define ONS_WAVE_EVENT    (SDL_USEREVENT+4)
-#if defined(EXTERNAL_MUSIC_PLAYER)
 #define ONS_MUSIC_EVENT   (SDL_USEREVENT+5)
-#endif
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)"
 
 static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
-#if defined(EXTERNAL_MUSIC_PLAYER)
 bool ext_music_play_once_flag = false;
-#endif
+
+extern long decodeOggVorbis(OVInfo *ovi, unsigned char *buf_dst, long len, bool do_rate_conversion);
 
 /* **************************************** *
  * Callback functions
@@ -68,6 +66,15 @@ bool ext_music_play_once_flag = false;
 extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 {
     if ( SMPEG_playAudio( (SMPEG*)userdata, stream, len ) == 0 ){
+        SDL_Event event;
+        event.type = ONS_SOUND_EVENT;
+        SDL_PushEvent(&event);
+    }
+}
+
+extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
+{
+    if (decodeOggVorbis((OVInfo*)userdata, stream, len, true) == 0){
         SDL_Event event;
         event.type = ONS_SOUND_EVENT;
         SDL_PushEvent(&event);
@@ -104,7 +111,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
         if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );
-            playMP3( current_cd_track );
+            playSound(music_file_name, SOUND_OGG_STREAMING|SOUND_MP3, true);
         }
         else{
             stopBGM( false );
@@ -113,31 +120,31 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
     else if ( event.type == ONS_CDAUDIO_EVENT ){
         if ( cd_play_loop_flag ){
             stopBGM( true );
-            playCDAudio( current_cd_track );
+            playCDAudio();
         }
         else{
             stopBGM( false );
         }
     }
     else if ( event.type == ONS_MIDI_EVENT ){
-        if ( internal_midi_play_loop_flag ){
-            Mix_FreeMusic( midi_info );
-            playMIDI();
-        }
+        ext_music_play_once_flag = !midi_play_loop_flag;
+        Mix_FreeMusic( midi_info );
+        playMIDI(midi_play_loop_flag);
     }
-#if defined(EXTERNAL_MUSIC_PLAYER)
     else if ( event.type == ONS_MUSIC_EVENT ){
         ext_music_play_once_flag = !music_play_loop_flag;
-        Mix_FreeMusic( music_info );
-        playMusic();
+        Mix_FreeMusic(music_info);
+        playExternalMusic(music_play_loop_flag);
     }
-#endif
     else if ( event.type == ONS_WAVE_EVENT ){ // for processing btntim2 and automode correctly
         if ( wave_sample[event.user.code] ){
             Mix_FreeChunk( wave_sample[event.user.code] );
             wave_sample[event.user.code] = NULL;
-            if ( event.user.code == MIX_LOOPBGM_CHANNEL0 && loop_bgm_name[1] )
-                playWave( loop_bgm_name[1], true, MIX_LOOPBGM_CHANNEL1, WAVE_PLAY_LOADED );
+            if (event.user.code == MIX_LOOPBGM_CHANNEL0 && 
+                loop_bgm_name[1] &&
+                wave_sample[MIX_LOOPBGM_CHANNEL1])
+                Mix_PlayChannel(MIX_LOOPBGM_CHANNEL1, 
+                                wave_sample[MIX_LOOPBGM_CHANNEL1], -1);
         }
     }
 }
@@ -187,9 +194,11 @@ void midiCallback( int sig )
     int status;
     wait( &status );
 #endif
-    SDL_Event event;
-    event.type = ONS_MIDI_EVENT;
-    SDL_PushEvent(&event);
+    if ( !ext_music_play_once_flag ){
+        SDL_Event event;
+        event.type = ONS_MIDI_EVENT;
+        SDL_PushEvent(&event);
+    }
 }
 
 extern "C" void waveCallback( int channel )
@@ -200,21 +209,18 @@ extern "C" void waveCallback( int channel )
     SDL_PushEvent(&event);
 }
 
-#if defined(EXTERNAL_MUSIC_PLAYER)
 void musicCallback( int sig )
 {
 #if defined(LINUX)
     int status;
     wait( &status );
 #endif
-
     if ( !ext_music_play_once_flag ){
         SDL_Event event;
         event.type = ONS_MUSIC_EVENT;
         SDL_PushEvent(&event);
     }
 }
-#endif
 
 void ONScripterLabel::trapHandler()
 {
@@ -325,7 +331,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
       case SDLK_m:
         if ( variable_edit_mode != EDIT_SELECT_MODE ) return;
         variable_edit_mode = EDIT_MP3_VOLUME_MODE;
-        variable_edit_num = mp3_volume;
+        variable_edit_num = music_volume;
         break;
 
       case SDLK_s:
@@ -386,8 +392,8 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             break;
 
           case EDIT_MP3_VOLUME_MODE:
-            mp3_volume = variable_edit_num;
-            if ( mp3_sample ) SMPEG_setvolume( mp3_sample, mp3_volume );
+            music_volume = variable_edit_num;
+            if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_volume );
             break;
 
           case EDIT_SE_VOLUME_MODE:
@@ -441,7 +447,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             var_name = var_index; p = script_h.variable_data[ variable_edit_index ].num; break;
 
           case EDIT_MP3_VOLUME_MODE:
-            var_name = "MP3 Volume"; p = mp3_volume; break;
+            var_name = "MP3 Volume"; p = music_volume; break;
 
           case EDIT_VOICE_VOLUME_MODE:
             var_name = "Voice Volume"; p = voice_volume; break;
@@ -940,9 +946,7 @@ int ONScripterLabel::eventLoop()
           case ONS_SOUND_EVENT:
           case ONS_CDAUDIO_EVENT:
           case ONS_MIDI_EVENT:
-#if defined(EXTERNAL_MUSIC_PLAYER)
           case ONS_MUSIC_EVENT:
-#endif
             flushEventSub( event );
             break;
 

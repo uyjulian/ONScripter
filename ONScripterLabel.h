@@ -37,6 +37,14 @@
 #include <smpeg.h>
 #endif
 
+#if defined(USE_OGG_VORBIS)
+#if defined(INTEGER_OGG_VORBIS)
+#include <tremor/ivorbisfile.h>
+#else
+#include <vorbis/vorbisfile.h>
+#endif
+#endif
+
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
 #define DEFAULT_BLIT_FLAG (0)
@@ -57,6 +65,20 @@
 #define DEFAULT_WM_ICON  "ONScripter"
 
 #define NUM_GLYPH_CACHE 30
+
+struct OVInfo{
+    SDL_AudioCVT cvt;
+    int cvt_len;
+    int mult1;
+    int mult2;
+    unsigned char *buf;
+    long decoded_length;
+#if defined(USE_OGG_VORBIS)
+    ogg_int64_t length;
+    ogg_int64_t pos;
+    OggVorbis_File ovf;
+#endif
+};
 
 class ONScripterLabel : public ScriptParser
 {
@@ -127,6 +149,7 @@ public:
     int spbtnCommand();
     int skipoffCommand();
     int sevolCommand();
+    int setwindow3Command();
     int setwindow2Command();
     int setwindowCommand();
     int setcursorCommand();
@@ -456,6 +479,7 @@ private:
     void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect );
 
     void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect=NULL, SDL_Rect *check_dst_rect=NULL );
+    
     void disableGetButtonFlag();
     int getNumberFromBuffer( const char **buf );
     
@@ -514,6 +538,7 @@ private:
     } *root_glyph_cache, glyph_cache[NUM_GLYPH_CACHE];
 
     int refreshMode();
+    void setwindowCore();
     
     SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect );
@@ -569,6 +594,16 @@ private:
     
     /* ---------------------------------------- */
     /* Sound related variables */
+    enum{
+        SOUND_NONE          =  0,
+        SOUND_PRELOAD       =  1,
+        SOUND_WAVE          =  2,
+        SOUND_OGG           =  4,
+        SOUND_OGG_STREAMING =  8,
+        SOUND_MP3           = 16,
+        SOUND_MIDI          = 32,
+        SOUND_OTHER         = 64
+    };
     int  cdrom_drive_number;
     char *default_cdrom_drive;
     bool cdaudio_on_flag; // false if mute
@@ -580,7 +615,6 @@ private:
     char *wave_file_name;
     
     bool midi_play_loop_flag;
-    bool internal_midi_play_loop_flag; // for playing MIDI both via playCommand and via mp3Command
     char *midi_file_name;
     Mix_Music *midi_info;
     
@@ -592,32 +626,34 @@ private:
     char *music_file_name;
     unsigned char *mp3_buffer;
     SMPEG *mp3_sample;
-#if defined(EXTERNAL_MUSIC_PLAYER)
+    OVInfo *music_ovi;
     Mix_Music *music_info;
-#endif
     char *loop_bgm_name[2];
     
     Mix_Chunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
 
-#if defined(EXTERNAL_MUSIC_PLAYER)
-    int playMusic();
-    int playMusicFile();
-#endif
-    int playMIDIFile(const char* filename);
-    int playMIDI();
-    int playMP3( int cd_no );
+    char *music_cmd;
+    char *midi_cmd;
+
+    int playSound(const char *filename, int format, bool loop_flag, int channel=0);
+    void playCDAudio();
+    int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
+    int playMP3();
+    int playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel);
+    int playExternalMusic(bool loop_flag);
+    int playMIDI(bool loop_flag);
+    
     int playMPEG( const char *filename, bool click_flag );
     void playAVI( const char *filename, bool click_flag );
-    int playCDAudio( int cd_no );
     enum { WAVE_PLAY        = 0,
            WAVE_PRELOAD     = 1,
            WAVE_PLAY_LOADED = 2
     };
-    int playWave( const char *file_name, bool loop_flag, int channel, int play_mode=WAVE_PLAY );
     void stopBGM( bool continue_flag );
     void playClickVoice();
     void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
-    unsigned long decodeOggVorbis( unsigned char *buffer_in, unsigned char *buffer_out, unsigned long length, int &channels, int &rate );
+    OVInfo *openOggVorbis(unsigned char *buf, long len, int &channels, int &rate);
+    int  closeOggVorbis(OVInfo *ovi);
     
     /* ---------------------------------------- */
     /* Text event related variables */
