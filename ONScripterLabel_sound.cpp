@@ -6,11 +6,6 @@
  *
  *  ogapee@aqua.dti2.ne.jp
  *
- *  A part of this code is derived from decoder_example.c included
- *  in libvorbis-1.0.tar.gz.
- *  (Copyright (c) 1994-2002 by the Xiph.Org Foundation)
- *
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
@@ -586,9 +581,11 @@ static long oc_tell_func(void *datasource)
 #endif
 OVInfo *ONScripterLabel::openOggVorbis( unsigned char *buf, long len, int &channels, int &rate )
 {
-    OVInfo *ovi = new OVInfo();
+    OVInfo *ovi = NULL;
     
 #if defined(USE_OGG_VORBIS)
+    ovi = new OVInfo();
+
     ovi->buf = buf;
     ovi->decoded_length = 0;
     ovi->length = len;

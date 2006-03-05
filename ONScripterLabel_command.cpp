@@ -229,9 +229,7 @@ int ONScripterLabel::talCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, NULL, TACHI_EFFECT_IMAGE );
-        else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if (no >= 0){
@@ -239,8 +237,7 @@ int ONScripterLabel::talCommand()
             dirty_rect.add( tachi_info[ no ].pos );
         }
 
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
    }
 }
 
@@ -929,19 +926,19 @@ int ONScripterLabel::quakeCommand()
         quake_type = 2;
     }
 
-    tmp_effect.num      = script_h.readInt();
+    tmp_effect.no       = script_h.readInt();
     tmp_effect.duration = script_h.readInt();
-    if ( tmp_effect.duration < tmp_effect.num * 4 ) tmp_effect.duration = tmp_effect.num * 4;
-    
+    if ( tmp_effect.duration < tmp_effect.no * 4 ) tmp_effect.duration = tmp_effect.no * 4;
+    tmp_effect.effect   = CUSTOM_EFFECT_NO + quake_type;
+
     if ( event_mode & EFFECT_EVENT_MODE ){
-        tmp_effect.effect = CUSTOM_EFFECT_NO + quake_type;
-        return doEffect( TMP_EFFECT, NULL, DIRECT_EFFECT_IMAGE );
+        return doEffect( &tmp_effect, NULL, DIRECT_EFFECT_IMAGE );
     }
     else{
         dirty_rect.fill( screen_width, screen_height );
         SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
 
-        return setEffect( 2 ); // 2 is dummy value
+        return setEffect( &tmp_effect ); // 2 is dummy value
     }
 }
 
@@ -1028,15 +1025,11 @@ int ONScripterLabel::printCommand()
     int ret = leaveTextDisplayMode();
     if ( ret != RET_NOMATCH ) return ret;
 
-    if ( event_mode & EFFECT_EVENT_MODE )
-    {
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, NULL, TACHI_EFFECT_IMAGE );
-        else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
+    if ( event_mode & EFFECT_EVENT_MODE ){
+        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
     }
 }
 
@@ -1446,9 +1439,7 @@ int ONScripterLabel::ldCommand()
     if (no >= 0) buf = script_h.readStr();
     
     if ( event_mode & EFFECT_EVENT_MODE ){
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, NULL, TACHI_EFFECT_IMAGE );
-        else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if (no >= 0){
@@ -1464,8 +1455,7 @@ int ONScripterLabel::ldCommand()
             }
         }
 
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
     }
 }
 
@@ -1585,16 +1575,13 @@ int ONScripterLabel::humanorderCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, &bg_info, bg_effect_image );
-        else           return doEffect( tmp_effect.effect, &bg_info, bg_effect_image );
+        return doEffect( parseEffect(), &bg_info, bg_effect_image );
     }
     else{
         for ( i=0 ; i<3 ; i++ )
             dirty_rect.add( tachi_info[i].pos );
 
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
     }
 }
 
@@ -2049,7 +2036,10 @@ int ONScripterLabel::exec_dllCommand()
     const char *buf = script_h.readStr();
     char dll_name[256];
     unsigned int c=0;
-    while( buf[c] != '/' ) dll_name[c] = buf[c++];
+    while(buf[c] != '/'){
+        dll_name[c] = buf[c];
+        c++;
+    }
     dll_name[c] = '\0';
 
     printf("  reading %s for %s\n", dll_file, dll_name );
@@ -2448,9 +2438,7 @@ int ONScripterLabel::clCommand()
     char loc = script_h.readLabel()[0];
     
     if ( event_mode & EFFECT_EVENT_MODE ){
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, NULL, TACHI_EFFECT_IMAGE );
-        else           return doEffect( tmp_effect.effect, NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if ( loc == 'l' || loc == 'a' ){
@@ -2466,8 +2454,7 @@ int ONScripterLabel::clCommand()
             tachi_info[2].remove();
         }
 
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
     }
 }
 
@@ -2524,21 +2511,24 @@ int ONScripterLabel::captionCommand()
 {
     const char* buf = script_h.readStr();
     size_t len = strlen(buf);
-    
-#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    char *buf2 = new char[len*2+1];
-    CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)buf, len, kCFStringEncodingShiftJIS, false);
-    Boolean ret = CFStringGetCString(unicodeStrRef, buf2, len*2+1, kCFStringEncodingUTF8);
-    CFRelease(unicodeStrRef);
-    if (!ret) strcpy(buf2,buf);
-#else
-    char *buf2 = new char[len+1];
-    strcpy( buf2, buf );
-#if defined(LINUX) /* convert sjis to euc */
-    DirectReader::convertFromSJISToEUC(buf2);
-#endif    
-#endif
 
+    char *buf2 = new char[len*2+3];
+#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
+    DirectReader::convertFromSJISToUTF8(buf2, buf, len);
+#elif defined(LINUX)
+#if defined(UTF8_FILESYSTEM)
+    char *buf1 = new char[len+1];
+    strcpy(buf1, buf);
+    DirectReader::convertFromSJISToUTF8(buf2, buf1, len);
+    delete[] buf1;
+#else
+    strcpy(buf2, buf);
+    DirectReader::convertFromSJISToEUC(buf2);
+#endif
+#else
+    strcpy(buf2, buf);
+#endif
+    
     setStr( &wm_title_string, buf2 );
     setStr( &wm_icon_string,  buf2 );
     delete[] buf2;
@@ -2893,9 +2883,7 @@ int ONScripterLabel::bgCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        int num = readEffect( &tmp_effect );
-        if ( num > 1 ) return doEffect( TMP_EFFECT, &bg_info, bg_effect_image );
-        else           return doEffect( tmp_effect.effect, &bg_info, bg_effect_image );
+        return doEffect( parseEffect(), &bg_info, bg_effect_image );
     }
     else{
         for ( int i=0 ; i<3 ; i++ )
@@ -2907,8 +2895,7 @@ int ONScripterLabel::bgCommand()
         createBackground();
         dirty_rect.fill( screen_width, screen_height );
 
-        readEffect( &tmp_effect );
-        return setEffect( tmp_effect.effect );
+        return setEffect( parseEffect() );
     }
 }
 

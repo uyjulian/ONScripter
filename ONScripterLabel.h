@@ -564,8 +564,8 @@ private:
     int effect_start_time;
     int effect_start_time_old;
     
-    int  setEffect( int effect_no );
-    int  doEffect( int effect_no, AnimationInfo *anim, int effect_image );
+    int  setEffect( EffectLink *effect );
+    int  doEffect( EffectLink *effect, AnimationInfo *anim, int effect_image );
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     

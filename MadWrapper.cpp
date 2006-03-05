@@ -48,7 +48,7 @@ struct _MAD_WRAPPER{
 
     unsigned char *input_buf;
     unsigned char *output_buf;
-    unsigned long output_buf_index;
+    long output_buf_index;
 };
 
 typedef struct _MAD_WRAPPER MAD_WRAPPER;

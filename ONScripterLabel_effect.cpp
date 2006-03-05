@@ -27,9 +27,9 @@
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
 #define EFFECT_QUAKE_AMP (12 * screen_ratio1 / screen_ratio2)
 
-int ONScripterLabel::setEffect( int effect_no )
+int ONScripterLabel::setEffect( EffectLink *effect )
 {
-    if ( effect_no == 0 ) return RET_CONTINUE;
+    if ( effect->effect == 0 ) return RET_CONTINUE;
 
     effect_counter = 0;
     event_mode = EFFECT_EVENT_MODE;
@@ -38,7 +38,7 @@ int ONScripterLabel::setEffect( int effect_no )
     return RET_WAIT | RET_REREAD;
 }
 
-int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_image )
+int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effect_image )
 {
     effect_start_time = SDL_GetTicks();
     if ( effect_counter == 0 ) effect_start_time_old = effect_start_time - 1;
@@ -46,9 +46,7 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
     effect_timer_resolution = effect_start_time - effect_start_time_old;
     effect_start_time_old = effect_start_time;
     
-    EffectLink *effect = getEffect( effect_no );
-
-    effect_no = effect->effect;
+    int effect_no = effect->effect;
     if ( effect_cut_flag && skip_flag ) effect_no = 1;
     
     if ( effect_counter == 0 ){
@@ -292,27 +290,27 @@ int ONScripterLabel::doEffect( int effect_no, AnimationInfo *anim, int effect_im
         break;
 
       case (CUSTOM_EFFECT_NO + 0 ): // quakey
-        if ( effect_timer_resolution > effect->duration / 4 / effect->num )
-            effect_timer_resolution = effect->duration / 4 / effect->num;
+        if ( effect_timer_resolution > effect->duration / 4 / effect->no )
+            effect_timer_resolution = effect->duration / 4 / effect->no;
         dst_rect.x = 0;
-        dst_rect.y = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
-                              EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
+        dst_rect.y = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
+                              EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
         SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
         
       case (CUSTOM_EFFECT_NO + 1 ): // quakex
-        if ( effect_timer_resolution > effect->duration / 4 / effect->num )
-            effect_timer_resolution = effect->duration / 4 / effect->num;
-        dst_rect.x = (Sint16)(sin(M_PI * 2.0 * effect->num * effect_counter / effect->duration) *
-                              EFFECT_QUAKE_AMP * effect->num * (effect->duration -  effect_counter) / effect->duration);
+        if ( effect_timer_resolution > effect->duration / 4 / effect->no )
+            effect_timer_resolution = effect->duration / 4 / effect->no;
+        dst_rect.x = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
+                              EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
         dst_rect.y = 0;
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
         
       case (CUSTOM_EFFECT_NO + 2 ): // quake
-        dst_rect.x = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
-        dst_rect.y = effect->num*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
+        dst_rect.x = effect->no*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
+        dst_rect.y = effect->no*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;

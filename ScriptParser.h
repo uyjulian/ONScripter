@@ -246,10 +246,9 @@ protected:
 
     /* ---------------------------------------- */
     /* Effect related variables */
-    enum{ WINDOW_EFFECT = -1, TMP_EFFECT = -2 };
     struct EffectLink{
         struct EffectLink *next;
-        int num;
+        int no;
         int effect;
         int duration;
         AnimationInfo anim;
@@ -266,8 +265,8 @@ protected:
     int effect_blank;
     bool effect_cut_flag;
 
-    EffectLink *getEffect( int effect_no );
     int readEffect( EffectLink *effect );
+    EffectLink *parseEffect();
 
     /* ---------------------------------------- */
     /* Lookback related variables */

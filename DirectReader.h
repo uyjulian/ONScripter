@@ -27,11 +27,7 @@
 #include "BaseReader.h"
 #include <string.h>
 
-#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
-#include <iconv.h>
-#endif
-
-#define MAX_FILE_NAME_LENGTH 512
+#define MAX_FILE_NAME_LENGTH 256
 
 class DirectReader : public BaseReader
 {
@@ -51,16 +47,14 @@ public:
     size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL );
 
     static void convertFromSJISToEUC( char *buf );
-
+    static void convertFromSJISToUTF8( char *dst_buf, char *src_buf, size_t src_len );
+    
 protected:
     char *file_full_path;
     char *file_sub_path;
     size_t file_path_len;
     char *capital_name;
     char *capital_name_tmp;
-#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
-    iconv_t iconv_cd;
-#endif
 
     char *archive_path;
     unsigned char key_table[256];

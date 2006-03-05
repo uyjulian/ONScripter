@@ -310,7 +310,7 @@ void ScriptParser::reset()
 
     window_effect.effect = 1;
     window_effect.duration = 0;
-    root_effect_link.num = 0;
+    root_effect_link.no = 0;
     root_effect_link.effect = 0;
     root_effect_link.duration = 0;
 
@@ -326,10 +326,6 @@ void ScriptParser::reset()
     readLog( script_h.log_info[ScriptHandler::LABEL_LOG] );
     
     current_mode = DEFINE_MODE;
-
-    script_h.setCurrent( "effect 1,1" );
-    readToken();
-    effectCommand();
 }
 
 int ScriptParser::open()
@@ -435,21 +431,6 @@ int ScriptParser::parseLine()
     }
 
     return RET_NOMATCH;
-}
-
-ScriptParser::EffectLink *ScriptParser::getEffect( int effect_no )
-{
-    if      ( effect_no == WINDOW_EFFECT ) return &window_effect;
-    else if ( effect_no == TMP_EFFECT )    return &tmp_effect;
-    
-    EffectLink *link = &root_effect_link;
-    while( link ){
-        if ( link->num == effect_no ) return link;
-        link = link->next;
-    }
-
-    fprintf( stderr, "no effect was found [%d]\n", effect_no );
-    exit(-1);
 }
 
 void ScriptParser::deleteRMenuLink()
@@ -825,9 +806,32 @@ int ScriptParser::readEffect( EffectLink *effect )
         else
             effect->anim.remove();
     }
+    else if (effect->effect < 0 || effect->effect > 255){
+        fprintf(stderr, "Effect %d is out of range and is switched to 0.", effect->effect);
+        effect->effect = 0; // to suppress error
+    }
 
     //printf("readEffect %d: %d %d %s\n", num, effect->effect, effect->duration, effect->anim.image_name );
     return num;
+}
+
+ScriptParser::EffectLink *ScriptParser::parseEffect()
+{
+    int num = readEffect(&tmp_effect);
+
+    if (num > 1) return &tmp_effect;
+    if (tmp_effect.effect == 0 || tmp_effect.effect == 1) return &tmp_effect;
+
+    EffectLink *link = &root_effect_link;
+    while(link){
+        if (link->no == tmp_effect.effect) return link;
+        link = link->next;
+    }
+
+    fprintf(stderr, "Effect No. %d is not found.\n", tmp_effect.effect);
+    exit(-1);
+
+    return NULL;
 }
 
 FILE *ScriptParser::fopen(const char *path, const char *mode)

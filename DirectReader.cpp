@@ -27,8 +27,13 @@
 #include <dirent.h>
 #endif
 
-#if defined(UTF8_FILESYSTEM) && defined(MACOSX)
+#if defined(UTF8_FILESYSTEM)
+#if defined(MACOSX)
 #include <CoreFoundation/CoreFoundation.h>
+#else
+#include <iconv.h>
+static iconv_t iconv_cd = NULL;
+#endif
 #endif
 
 #ifndef SEEK_END
@@ -53,7 +58,7 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
     capital_name = new char[MAX_FILE_NAME_LENGTH*2+1];
     capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*2+1];
 #if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
-    iconv_cd = iconv_open("UTF-8", "SJIS");
+    if (iconv_cd == NULL) iconv_cd = iconv_open("UTF-8", "SJIS");
 #endif
 
     if ( path ){
@@ -92,7 +97,7 @@ DirectReader::~DirectReader()
     delete[] capital_name;
     delete[] capital_name_tmp;
 #if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
-    iconv_close(iconv_cd);
+    //iconv_close(iconv_cd);
 #endif
     delete[] read_buf;
     delete[] decomp_buffer;
@@ -294,19 +299,8 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     }
 
 #if defined(UTF8_FILESYSTEM)
-#if defined(MACOSX)
-    CFStringRef unicodeFileNameRef = CFStringCreateWithBytes(nil, (const UInt8*)capital_name, len, kCFStringEncodingShiftJIS, false);
-    Boolean ret = CFStringGetCString(unicodeFileNameRef, capital_name_tmp, MAX_FILE_NAME_LENGTH*2+1, kCFStringEncodingUTF8);
-    CFRelease(unicodeFileNameRef);
-    if (ret) strcpy(capital_name, capital_name_tmp);
-#else
-    char *buf_src = capital_name;
-    len++;
-    char *buf_dst = capital_name_tmp;
-    size_t left = MAX_FILE_NAME_LENGTH*2+1;
-    int ret = iconv(iconv_cd, &buf_src, &len, &buf_dst, &left);
-    if (ret != -1) strcpy(capital_name, capital_name_tmp);
-#endif
+    convertFromSJISToUTF8(capital_name_tmp, capital_name, len);
+    strcpy(capital_name, capital_name_tmp);
     len = strlen(capital_name);
 #elif defined(LINUX)
     convertFromSJISToEUC(capital_name);
@@ -392,6 +386,24 @@ void DirectReader::convertFromSJISToEUC( char *buf )
         }
         i++;
     }
+}
+
+void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf, size_t src_len )
+{
+#if defined(UTF8_FILESYSTEM)
+#if defined(MACOSX)
+    CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)src_buf, src_len, 
+                                                        kCFStringEncodingShiftJIS, false);
+    Boolean ret = CFStringGetCString(unicodeStrRef, dst_buf, src_len*2+1, kCFStringEncodingUTF8);
+    CFRelease(unicodeStrRef);
+    if (!ret) strcpy(dst_buf, src_buf);
+#else
+    src_len++;
+    size_t dst_len = src_len*2+1;
+    int ret = iconv(iconv_cd, &src_buf, &src_len, &dst_buf, &dst_len);
+    if (ret == -1) strcpy(dst_buf, src_buf);
+#endif
+#endif
 }
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )

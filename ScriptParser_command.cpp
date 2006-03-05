@@ -992,7 +992,8 @@ int ScriptParser::effectCommand()
         if ( current_mode != DEFINE_MODE ) errorAndExit( "effect: not in the define section" );
 
         elink = new EffectLink();
-        elink->num = script_h.readInt();
+        elink->no = script_h.readInt();
+        if (elink->no < 2 || elink->no > 255) errorAndExit( "Effect No. is out of range" );
 
         last_effect_link->next = elink;
         last_effect_link = last_effect_link->next;
