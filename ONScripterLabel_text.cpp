@@ -845,6 +845,11 @@ int ONScripterLabel::processText()
             drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
         }
+        else if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
+            drawDoubleChars( out_text, &sentence_font, flush_flag, true, accumulation_surface, &text_info );
+            num_chars_in_sentence++;
+        }
+        
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
                  script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&

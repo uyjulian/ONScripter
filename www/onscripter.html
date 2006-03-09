@@ -18,7 +18,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Mar. 5, 2006 [ソース更新]<br>
+Last updated: Mar. 9, 2006 [ソース更新]<br>
 <!--Last updated: Jan. 31, 2006 [バイナリパッケージ追加]<br>-->
 <!--Last updated: Aug. 20, 2005 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
@@ -99,8 +99,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20060305.tar.gz">onscripter-20060305.tar.gz</a>
-  <li> <a href="onscripter-20060227.tar.gz">onscripter-20060227.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20060309.tar.gz">onscripter-20060309.tar.gz</a>
+  <li> <a href="onscripter-20060305.tar.gz">onscripter-20060305.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20051030.tar.gz">onscripter-exp-20051030.tar.gz</a>(実験版, PSP patch)-->
 </ul>
 </div> <!-- sub-content -->
@@ -565,17 +565,22 @@ ret = 2
 <div class="sub-content">
 
 <p>ゲームのスクリプトがある場所に cd というディレクトリを作り、そこに<br>
-cd/track01.mp3<br>
-cd/track02.mp3<br>
-cd/track03.mp3<br>
+cd/track01.xxx<br>
+cd/track02.xxx<br>
+cd/track03.xxx<br>
 ...<br>
-cd/track14.mp3<br>
+cd/track14.xxx<br>
 ...<br>
-という名前で MP3 ファイルを置きます。</p>
+という名前で音楽ファイルを置きます。音楽ファイルのフォーマットは、mp3,
+ogg, wav 形式に対応しています。上のxxxは、使用するフォーマットに合わせ
+て変更してください。</p>
 
-<p>すると、スクリプトで CD audio の１曲目を演奏するコマンドがあった場合に、対応する track01.mp3 を演奏するようになります。</p>
+<p>これにより、スクリプトで CD audio の１曲目を演奏するコマンドがあっ
+た場合に、対応する track01.mp3 (mp3 形式の場合)を演奏するようになりま
+す。</p>
 
-<p>MP3 を必ず用意する必要はなく、その場合は音が鳴らないだけです。</p>
+<p>音楽ファイルを必ず用意する必要はなく、その場合は音が鳴らないだけで
+す。</p>
 
 </div> <!-- sub-content -->
 

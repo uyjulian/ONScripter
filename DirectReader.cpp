@@ -23,7 +23,7 @@
 
 #include "DirectReader.h"
 #include <bzlib.h>
-#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP)
+#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
 #include <dirent.h>
 #endif
 
@@ -32,6 +32,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #else
 #include <iconv.h>
+static int iconv_ref_count = 0;
 static iconv_t iconv_cd = NULL;
 #endif
 #endif
@@ -59,6 +60,7 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
     capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*2+1];
 #if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
     if (iconv_cd == NULL) iconv_cd = iconv_open("UTF-8", "SJIS");
+    iconv_ref_count++;
 #endif
 
     if ( path ){
@@ -97,7 +99,10 @@ DirectReader::~DirectReader()
     delete[] capital_name;
     delete[] capital_name_tmp;
 #if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
-    //iconv_close(iconv_cd);
+    if (--iconv_ref_count == 0){
+        iconv_close(iconv_cd);
+        iconv_cd = NULL;
+    }
 #endif
     delete[] read_buf;
     delete[] decomp_buffer;
@@ -125,7 +130,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
     FILE *fp = ::fopen( file_full_path, mode );
     if (fp) return fp;
 
-#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP)
+#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
     char *cur_p = NULL;
     DIR *dp = NULL;
     len = strlen(archive_path);

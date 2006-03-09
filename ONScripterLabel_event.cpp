@@ -81,7 +81,7 @@ extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
     }
 }
 
-extern "C" Uint32 timerCallback( Uint32 interval, void *param )
+extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
 {
     SDL_RemoveTimer( timer_id );
     timer_id = NULL;
@@ -111,7 +111,10 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
         if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );
-            playSound(music_file_name, SOUND_OGG_STREAMING|SOUND_MP3, true);
+            if (music_file_name)
+                playSound(music_file_name, SOUND_OGG_STREAMING|SOUND_MP3, true);
+            else
+                playCDAudio();
         }
         else{
             stopBGM( false );

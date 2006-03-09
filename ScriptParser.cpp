@@ -807,7 +807,7 @@ int ScriptParser::readEffect( EffectLink *effect )
             effect->anim.remove();
     }
     else if (effect->effect < 0 || effect->effect > 255){
-        fprintf(stderr, "Effect %d is out of range and is switched to 0.", effect->effect);
+        fprintf(stderr, "Effect %d is out of range and is switched to 0.\n", effect->effect);
         effect->effect = 0; // to suppress error
     }
 

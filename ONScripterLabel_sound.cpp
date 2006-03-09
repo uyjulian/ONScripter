@@ -51,7 +51,7 @@ extern bool ext_music_play_once_flag;
 extern "C"{
     extern void mp3callback( void *userdata, Uint8 *stream, int len );
     extern void oggcallback( void *userdata, Uint8 *stream, int len );
-    extern Uint32 cdaudioCallback( Uint32 interval, void *param );
+    extern Uint32 SDLCALL cdaudioCallback( Uint32 interval, void *param );
 }
 extern void midiCallback( int sig );
 extern void musicCallback( int sig );
@@ -197,7 +197,15 @@ void ONScripterLabel::playCDAudio()
     else{
         char filename[256];
         sprintf( filename, "cd\\track%2.2d.mp3", current_cd_track );
-        playSound( filename, SOUND_MP3, cd_play_loop_flag );
+        int ret = playSound( filename, SOUND_MP3, cd_play_loop_flag );
+        if (ret == SOUND_MP3) return;
+
+        sprintf( filename, "cd\\track%2.2d.ogg", current_cd_track );
+        ret = playSound( filename, SOUND_OGG_STREAMING, cd_play_loop_flag );
+        if (ret == SOUND_OGG_STREAMING) return;
+
+        sprintf( filename, "cd\\track%2.2d.wav", current_cd_track );
+        ret = playSound( filename, SOUND_WAVE, cd_play_loop_flag, MIX_BGM_CHANNEL );
     }
 }
 

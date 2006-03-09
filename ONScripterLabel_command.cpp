@@ -22,12 +22,11 @@
  */
 
 #include "ONScripterLabel.h"
+#include "version.h"
 
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208)
 #include <CoreFoundation/CoreFoundation.h>
 #endif
-
-#define ONSCRIPTER_VERSION 200
 
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
@@ -1053,7 +1052,6 @@ int ONScripterLabel::playCommand()
         if ( current_cd_track != new_cd_track ) {
 #endif        
             stopBGM( false );
-            cd_play_loop_flag = loop_flag;
             current_cd_track = new_cd_track;
             playCDAudio();
 #ifdef CONTINUOUS_PLAY        
@@ -1595,7 +1593,7 @@ int ONScripterLabel::getzxcCommand()
 int ONScripterLabel::getversionCommand()
 {
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, ONSCRIPTER_VERSION );
+    script_h.setInt( &script_h.current_variable, NSC_VERSION );
 
     return RET_CONTINUE;
 }

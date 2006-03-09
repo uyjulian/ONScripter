@@ -223,6 +223,11 @@ static struct FuncLUT{
     {"", NULL}
 };
 
+static void SDL_Quit_Wrapper()
+{
+    SDL_Quit();
+}
+
 void ONScripterLabel::initSDL()
 {
     /* ---------------------------------------- */
@@ -232,7 +237,7 @@ void ONScripterLabel::initSDL()
         fprintf( stderr, "Couldn't initialize SDL: %s\n", SDL_GetError() );
         exit(-1);
     }
-    atexit(SDL_Quit);
+    atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
         fprintf( stderr, "Couldn't initialize CD-ROM: %s\n", SDL_GetError() );

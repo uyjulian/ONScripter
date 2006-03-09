@@ -61,7 +61,7 @@ conv_shared$(OBJSUFFIX): resize_image.h
 
 onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
 ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
 ONScripterLabel_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_event$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
