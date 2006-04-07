@@ -15,7 +15,7 @@ DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
 
 # with Integer OggVorbis and AVI in PDA size
 #LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbisidec
-#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS -DPDA -DPDA_VGA
+#DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS -DPDA -DPDA_WIDTH=640
 
 # with OggVorbis and AVI and English mode
 #LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis

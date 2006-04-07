@@ -265,33 +265,23 @@ void ONScripterLabel::initSDL()
     screen_bpp = 32;
 #endif
     
-#if defined(PDA) && defined(PDA_VGA)
-    screen_width  *= 2; // for checking VGA screen
-    screen_height *= 2;
-#elif defined(PDA) && defined(PDA_PSP)
-    screen_ratio1 *= 9;
-    screen_ratio2 *= 8;
-    screen_width   = screen_width  * 9 / 8;
-    screen_height  = screen_height * 9 / 8;
-#elif defined(PDA) && defined(PDA_PSP2)
-    screen_ratio1 *= 6;
-    screen_ratio2 *= 5;
-    screen_width   = screen_width  * 6 / 5;
-    screen_height  = screen_height * 6 / 5;
+#if defined(PDA) && defined(PDA_WIDTH)
+    screen_ratio1 *= PDA_WIDTH;
+    screen_ratio2 *= 320;
+    screen_width   = screen_width  * PDA_WIDTH / 320;
+    screen_height  = screen_height * PDA_WIDTH / 320;
 #endif
 
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
-#if defined(PDA) && defined(PDA_VGA)
+#if defined(PDA) && (PDA_WIDTH==640)
     if ( screen_surface == NULL ){
+        screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
         screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-    }
-    else{
-        screen_ratio1 *= 2;
     }
 #endif
     underline_value = screen_height - 1;

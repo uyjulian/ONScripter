@@ -2228,8 +2228,8 @@ int ONScripterLabel::drawsp2Command()
     int sprite_no = script_h.readInt();
     int cell_no = script_h.readInt();
     int alpha = script_h.readInt();
-    int x = script_h.readInt();
-    int y = script_h.readInt();
+    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     int scale_x = script_h.readInt();
     int scale_y = script_h.readInt();
     int rot = script_h.readInt();
@@ -2249,8 +2249,8 @@ int ONScripterLabel::drawspCommand()
     int sprite_no = script_h.readInt();
     int cell_no = script_h.readInt();
     int alpha = script_h.readInt();
-    int x = script_h.readInt();
-    int y = script_h.readInt();
+    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
@@ -2290,8 +2290,8 @@ int ONScripterLabel::drawbgCommand()
 
 int ONScripterLabel::drawbg2Command()
 {
-    int x = script_h.readInt();
-    int y = script_h.readInt();
+    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     int scale_x = script_h.readInt();
     int scale_y = script_h.readInt();
     int rot = script_h.readInt();

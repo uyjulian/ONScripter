@@ -18,7 +18,7 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: Mar. 9, 2006 [ソース更新]<br>
+Last updated: Apr. 8, 2006 [ソース更新]<br>
 <!--Last updated: Jan. 31, 2006 [バイナリパッケージ追加]<br>-->
 <!--Last updated: Aug. 20, 2005 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
@@ -99,8 +99,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20060309.tar.gz">onscripter-20060309.tar.gz</a>
-  <li> <a href="onscripter-20060305.tar.gz">onscripter-20060305.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20060408.tar.gz">onscripter-20060408.tar.gz</a>
+  <li> <a href="onscripter-20060309.tar.gz">onscripter-20060309.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20051030.tar.gz">onscripter-exp-20051030.tar.gz</a>(実験版, PSP patch)-->
 </ul>
 </div> <!-- sub-content -->
@@ -139,6 +139,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
   <li> <a href="http://www.fastwave.gr.jp/diarysrv/sofiya/200603a.html#20060304">ONScripter for OS2/Warp</a>（Sofiya猫さん）
   <li> MacOSX 版 （バージョンの新しい方を使ってください）
       <ul>
+        <li> <a href="http://tmkk.hp.infoseek.co.jp/onscripter/">ONScripter Launcher and Binary for Mac OS X</a>（tmkkさん）
         <li> <a href="http://kimatten.hp.infoseek.co.jp/">「ぼくだけの小さな世界」</a>（しーくるさん）
         <li> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）
       </ul>
@@ -169,7 +170,7 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
   <li> 現時点(2005.12.09)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
   <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
-  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
+  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod nano, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
   <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
@@ -230,7 +231,7 @@ href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
 </dl>
 
 <p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
-また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, Dreamcast での動作報告をいただいております。<br>
+また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod nano, Dreamcast での動作報告をいただいております。<br>
 
 その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</p>
 
@@ -617,27 +618,31 @@ ogg, wav 形式に対応しています。上のxxxは、使用するフォーマットに合わせ
 <p>画面のサイズが 640x480 で、拡張子が sar のアーカイブを 320x240 にする場合は、</p>
 
 <pre>
-&gt; sarconv 640 arc.sar zaurus_dir/arc.sar
+&gt; sarconv 640 320 arc.sar zaurus_dir/arc.sar
 ...
 </pre>
 
 <p>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン１）を 320x240 にする場合は、</p>
 
 <pre>
-&gt; nsaconv [-e] 800 arc.nsa zaurus_dir/arc.nsa
-&gt; nsaconv [-e] 800 arc1.nsa zaurus_dir/arc1.nsa
+&gt; nsaconv [-e] 800 320 arc.nsa zaurus_dir/arc.nsa
+&gt; nsaconv [-e] 800 320 arc1.nsa zaurus_dir/arc1.nsa
 ...
 </pre>
 
 <p>画面のサイズが 800x600 で、拡張子が nsa のアーカイブ（バージョン２）を 640x480 にする場合は、</p>
 
 <pre>
-&gt; nsaconv [-e] -vga -ns2 800 arc.nsa zaurus_dir/arc.nsa
-&gt; nsaconv [-e] -vga -ns2 800 arc1.nsa zaurus_dir/arc1.nsa
+&gt; nsaconv [-e] -ns2 800 640 arc.nsa zaurus_dir/arc.nsa
+&gt; nsaconv [-e] -ns2 800 640 arc1.nsa zaurus_dir/arc1.nsa
 ...
 </pre>
 
 <p>として変換してください。</p>
+
+<p>変換元のサイズは、640 か 800 のいずれかを指定してください。</p>
+
+<p>変換先のサイズは、176(iPod), 320(QVGA), 360, 384(PSP), 640(VGA) などが指定できます。</p>
 
 <p>最後の例は、-e オプション（後述）を指定したときに意味を持ちます。</p>
 
@@ -645,9 +650,7 @@ ogg, wav 形式に対応しています。上のxxxは、使用するフォーマットに合わせ
 
 <p>-e オプションを付けると、wav と bmp ファイルを nbz 圧縮します。これを行うと、NSA アーカイブの圧縮の種類を示すフラグに ONScripter 独自の値を設定します。この独自拡張については、本家が将来アーカイブの仕様を拡張したときにバッティングする可能性がありますが、その時はそれを回避するようにコンバータを修正し、再コンバートすることで解決できます。その場合でも、save file 等には一切影響がありませんので、Zaurus で使用される方はこのオプションを付けてコンバートすることをお勧めします。wav を bzip2 で圧縮するので、wav を多用するゲームではかなりアーカイブが小さくなります。デメリットとしては、bzip2 の復号を行うため若干遅くなりますが、気がづかない程度です。</p>
 
-<p>-vga オプションをつけると、640x480(VGA)サイズに圧縮します。SL-C700用です。-e オプションと組み合わせると効果的です。</p>
-
-<p>さらに、サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
+<p>サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
 
 なお、Linux 等でも、-DPDA をつけてコンパイルすることにより、320x240 画面でゲームをすることができます。
 </p>

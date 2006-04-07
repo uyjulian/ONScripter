@@ -298,7 +298,6 @@ private:
     char *script_buffer;
     char *tmp_script_buf;
     
-    int  string_buffer_length;
     char *string_buffer; // update only be readToken
     int  string_counter;
     char *saved_string_buffer; // updated only by saveStringBuffer

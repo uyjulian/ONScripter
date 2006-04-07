@@ -181,14 +181,14 @@ void ONScripterLabel::advancePhase( int count )
         SDL_RemoveTimer( timer_id );
     }
 
-    if ( count > 0 ){
+    if (count > 0){
         timer_id = SDL_AddTimer( count, timerCallback, NULL );
+        if (timer_id != NULL) return;
     }
-    else{
-        SDL_Event event;
-        event.type = ONS_TIMER_EVENT;
-        SDL_PushEvent( &event );
-    }
+
+    SDL_Event event;
+    event.type = ONS_TIMER_EVENT;
+    SDL_PushEvent( &event );
 }
 
 void midiCallback( int sig )
@@ -920,7 +920,7 @@ int ONScripterLabel::eventLoop()
 #if defined(PSP)
           case SDL_JOYBUTTONDOWN:
             ((SDL_KeyboardEvent*)&event)->type = SDL_KEYDOWN;
-            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[(&event.jbutton)->button];
+            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[event.jbutton.button];
             if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
                 break;
 #endif
@@ -933,7 +933,7 @@ int ONScripterLabel::eventLoop()
 #if defined(PSP)
           case SDL_JOYBUTTONUP:
             ((SDL_KeyboardEvent*)&event)->type = SDL_KEYUP;
-            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[(&event.jbutton)->button];
+            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[event.jbutton.button];
             if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
                 break;
 #endif

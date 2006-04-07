@@ -2,7 +2,7 @@
  * 
  *  nsaconv.cpp - Images in NSA archive are re-scaled to 320x240 size
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,6 +40,14 @@ extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigne
 #undef main
 #endif
 
+void help()
+{
+    fprintf(stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "           src_width ... 640 or 800\n");
+    fprintf(stderr, "           dst_width ... 176, 320, 360, 384, 640, etc.\n");
+    exit(-1);
+}
+
 int main( int argc, char **argv )
 {
     NsaReader cSR;
@@ -48,35 +56,23 @@ int main( int argc, char **argv )
     unsigned int i, count;
     int archive_type = BaseReader::ARCHIVE_TYPE_NSA;
     bool enhanced_flag = false;
-    bool vga_flag = false;
-    bool psp_flag = false;
-    bool psp2_flag = false;
     FILE *fp;
 
-    if ( argc >= 4 ){
-        while ( argc > 4 ){
-            if      ( !strcmp( argv[1], "-e" ) )    enhanced_flag = true;
-            else if ( !strcmp( argv[1], "-ns2" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS2;
-            else if ( !strcmp( argv[1], "-ns3" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS3;
-            else if ( !strcmp( argv[1], "-vga" ) )  vga_flag = true;
-            else if ( !strcmp( argv[1], "-psp" ) )  psp_flag = true;
-            else if ( !strcmp( argv[1], "-psp2" ) ) psp2_flag = true;
-            argc--;
-            argv++;
-        }
-        int s = atoi( argv[1] );
-        if      ( s == 640 ){ scale_ratio_upper = 1; scale_ratio_lower = 2; }
-        else if ( s == 800 ){ scale_ratio_upper = 2; scale_ratio_lower = 5; }
-        else argc = 1;
+    argc--; // skip command name
+    argv++;
+    while (argc > 4){
+        if      ( !strcmp( argv[0], "-e" ) )    enhanced_flag = true;
+        else if ( !strcmp( argv[0], "-ns2" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+        else if ( !strcmp( argv[0], "-ns3" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS3;
+        argc--;
+        argv++;
     }
-    if ( argc != 4 ){
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] [-psp] [-psp2] 640 arc_file rescaled_arc_file\n");
-        fprintf( stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] [-vga] [-psp] [-psp2] 800 arc_file rescaled_arc_file\n");
-        exit(-1);
-    }
-    if ( vga_flag ) scale_ratio_upper *= 2;
-    else if( psp_flag ) { scale_ratio_upper *= 9; scale_ratio_lower *= 8; }
-    else if( psp2_flag ) { scale_ratio_upper *= 6; scale_ratio_lower *= 5; }
+    if (argc != 4) help();
+
+    scale_ratio_lower = atoi(argv[0]); // src width
+    if (scale_ratio_lower!=640 && scale_ratio_lower!=800) help();
+    
+    scale_ratio_upper = atoi(argv[1]); // dst width
     
     if ( (fp = fopen( argv[3], "wb" ) ) == NULL ){
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );

@@ -10,7 +10,7 @@ ONScripter
 	libjpeg 6b, bzip2-1.0.2, SDL-1.2.6, SDL_image-1.2.3, SDL_mixer-1.2.5, SDL_ttf-2.0.6, 及び SMPEG-0.4.4 が動作する環境です。
 	Linux 2.4.27 + XFree86 4.3.0 + g++ (gcc 3.3.4) で開発しています。
 	Linux, Windows 2000 (Visual C++ 6.0), Zaurus (SL-5500,SL-C700)上で動作確認をしています。
-	MacOS X および MacOS 9, FreeBSD, Solaris, Tru64 UNIX, PSP, OS/Warp, Dreamcast 上での動作報告をいただいています。
+	MacOS X および MacOS 9, FreeBSD, Solaris, Tru64 UNIX, PSP, OS/Warp, iPod nano, Dreamcast 上での動作報告をいただいています。
 
 
 2. コンパイル・起動方法

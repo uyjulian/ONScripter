@@ -2,7 +2,7 @@
  * 
  *  sarconv.cpp - Images in SAR archive are re-scaled to 320x240 size
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,35 +40,31 @@ extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigne
 #undef main
 #endif
 
+void help()
+{
+    fprintf(stderr, "Usage: sarconv src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "           src_width ... 640 or 800\n");
+    fprintf(stderr, "           dst_width ... 176, 320, 360, 384, 640, etc.\n");
+    exit(-1);
+}
+
 int main( int argc, char **argv )
 {
     SarReader cSR;
     unsigned long length, offset = 0, buffer_length = 0;
     unsigned char *buffer = NULL, *rescaled_buffer = NULL;
     unsigned int i, count;
-    bool psp_flag = false;
-    bool psp2_flag = false;
     FILE *fp;
 
-    if ( argc >= 4 ){
-        while ( argc > 4 ){
-            if ( !strcmp( argv[1], "-psp" ) ) psp_flag = true;
-            argc--;
-            argv++;
-        }
-        int s = atoi( argv[1] );
-        if      ( s == 640 ){ scale_ratio_upper = 1; scale_ratio_lower = 2; }
-        else if ( s == 800 ){ scale_ratio_upper = 2; scale_ratio_lower = 5; }
-        else argc = 1;
-    }
-    if ( argc != 4 ){
-        fprintf( stderr, "Usage: sarconv [-psp] [-psp2] 640 arc_file rescaled_arc_file\n");
-        fprintf( stderr, "Usage: sarconv [-psp] [-psp2] 800 arc_file rescaled_arc_file\n");
-        exit(-1);
-    }
-    if( psp_flag ) { scale_ratio_upper *= 9; scale_ratio_lower *= 8; }
-    if( psp2_flag ) { scale_ratio_upper *= 6; scale_ratio_lower *= 5; }
+    argc--; // skip command name
+    argv++;
+    if (argc != 4) help();
 
+    scale_ratio_lower = atoi(argv[0]); // src width
+    if (scale_ratio_lower!=640 && scale_ratio_lower!=800) help();
+    
+    scale_ratio_upper = atoi(argv[1]); // dst width
+    
     if ( (fp = fopen( argv[3], "wb" ) ) == NULL ){
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );
         exit(-1);

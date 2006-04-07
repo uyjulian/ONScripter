@@ -24,6 +24,7 @@
 #include "ScriptHandler.h"
 
 #define TMP_SCRIPT_BUF_LEN 4096
+#define STRING_BUFFER_LENGTH 2048
 
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
@@ -36,10 +37,9 @@ ScriptHandler::ScriptHandler()
     log_info[FILE_LOG].filename  = "NScrflog.dat";
     clickstr_list = NULL;
     
-    string_buffer_length = 512;
-    string_buffer       = new char[ string_buffer_length ];
-    str_string_buffer   = new char[ string_buffer_length ];
-    saved_string_buffer = new char[ string_buffer_length ];
+    string_buffer       = new char[STRING_BUFFER_LENGTH];
+    str_string_buffer   = new char[STRING_BUFFER_LENGTH];
+    saved_string_buffer = new char[STRING_BUFFER_LENGTH];
 
     variable_data = new VariableData[VARIABLE_RANGE+1]; // the last one is a sink
     root_array_variable = NULL;
@@ -324,13 +324,21 @@ const char *ScriptHandler::readStr()
     current_script = next_script;
     SKIP_SPACE( current_script );
     char *buf = current_script;
-    
-    parseStr(&buf);
 
-    next_script = checkComma(buf);
-    
-    strcpy( string_buffer, str_string_buffer );
-    string_counter = strlen(string_buffer);
+    string_buffer[0] = '\0';
+    string_counter = 0;
+
+    while(1){
+        parseStr(&buf);
+        buf = checkComma(buf);
+        string_counter += strlen(string_buffer);
+        if (string_counter+1 >= STRING_BUFFER_LENGTH)
+            errorAndExit("readStr: string length exceeds 2048 bytes.");
+        strcat(string_buffer, str_string_buffer);
+        if (buf[0] != '+') break;
+        buf++;
+    }
+    next_script = buf;
     
     return string_buffer;
 }
@@ -765,7 +773,7 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
     bool cr_flag = false;
 
     if (encrypt_mode == 3 && !key_table_flag)
-        errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.\n");
+        errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.");
 
     size_t len=0, count=0;
     while(1){
@@ -1047,22 +1055,8 @@ void ScriptHandler::errorAndExit( char *str )
 
 void ScriptHandler::addStringBuffer( char ch )
 {
-    /* In case of string bufer over flow */
-    if ( string_counter+1 == string_buffer_length ){
-        string_buffer_length += 512;
-        char *tmp_buffer = new char[ string_buffer_length ];
-        memcpy( tmp_buffer, string_buffer, string_counter+1 );
-
-        delete[] string_buffer;
-        string_buffer = tmp_buffer;
-
-        delete[] str_string_buffer;
-        str_string_buffer = new char[ string_buffer_length ];
-
-        delete[] saved_string_buffer;
-        saved_string_buffer = new char[ string_buffer_length ];
-    }
-
+    if (string_counter+1 == STRING_BUFFER_LENGTH)
+        errorAndExit("addStringBuffer: string exceeds 2048.");
     string_buffer[string_counter++] = ch;
     string_buffer[string_counter] = '\0';
 }
@@ -1381,7 +1375,7 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
         *num = parseIntExpression( buf );
         if (minus_flag) *num = -*num;
         SKIP_SPACE(*buf);
-        if ( (*buf)[0] != ')' ) errorAndExit(") is not found.\n");
+        if ( (*buf)[0] != ')' ) errorAndExit(") is not found.");
         (*buf)++;
     }
     else{
