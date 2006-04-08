@@ -16,7 +16,7 @@ LIBS += -lSDL_ttf -lSDL_image -lSDL_mixer -lSDL -lSDLmain -lfreetype -lbz2 -lm -
 INCS += -I$(PSPSDK)/include -I$(PSPDEV)/include -I$(PSPPRE)/include
 
 # Link PSPSDK and Libc Libraries
-LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lpspsdk -lpspgu -lpspdebug -lpspdisplay -lpsphprm -lpspaudio -lpspge -lpspctrl -lc -lpspuser -lpspsdk -lpspkernel
+LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lpspsdk -lpspgu -lpspdebug -lpspdisplay -lpsphprm -lpspaudio -lpspge -lpspctrl -lc -lpspuser -lpspkernel
 
 
 # with OggVorbis (Tremor) in PDA size (QVGA)

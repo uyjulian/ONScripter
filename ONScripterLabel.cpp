@@ -244,12 +244,11 @@ void ONScripterLabel::initSDL()
         exit(-1);
     }
 
-#if defined(PSP)
-    if( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) < 0 || SDL_JoystickOpen(0) == NULL ){
-        fprintf( stderr, "Couldn't initialize JOYSTICK: %s\n", SDL_GetError() );
-        exit(-1);
-    }
-    SDL_ShowCursor(0);
+    if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
+        printf( "Initialize JOYSTICK\n");
+    
+#if defined(PSP) || defined(IPODLINUX)
+    SDL_ShowCursor(SDL_DISABLE);
 #endif
 
     /* ---------------------------------------- */

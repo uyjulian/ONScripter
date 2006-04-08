@@ -27,23 +27,6 @@
 #include <sys/wait.h>
 #endif
 
-#if defined(PSP)
-SDLKey psp_button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
-                            SDLK_RETURN, /* CIRCLE   */
-                            SDLK_SPACE,  /* CROSS    */
-                            SDLK_RCTRL,  /* SQUARE   */
-                            SDLK_l,      /* LTRIGGER */
-                            SDLK_s,      /* RTRIGGER */
-                            SDLK_DOWN,   /* DOWN     */
-                            SDLK_LEFT,   /* LEFT     */
-                            SDLK_UP,     /* UP       */
-                            SDLK_RIGHT,  /* RIGHT    */
-                            SDLK_0,      /* SELECT   */
-                            SDLK_a,      /* START    */
-                            SDLK_UNKNOWN,/* HOME     */ /* kernel mode only */
-                            SDLK_UNKNOWN,/* HOLD     */};
-#endif
-
 #define ONS_TIMER_EVENT   (SDL_USEREVENT)
 #define ONS_SOUND_EVENT   (SDL_USEREVENT+1)
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
@@ -103,6 +86,81 @@ extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
     SDL_PushEvent( &event );
 
     return interval;
+}
+
+/* **************************************** *
+ * OS Dependent Input Translation
+ * **************************************** */
+
+SDLKey transKey(SDLKey key)
+{
+#if defined(IPODLINUX)
+ 	switch(key){
+      case SDLK_m:      key = SDLK_UP;      break; /* Menu                   */
+      case SDLK_d:      key = SDLK_DOWN;    break; /* Play/Pause             */
+      case SDLK_f:      key = SDLK_0;       break; /* Fast forward           */
+      case SDLK_w:      key = SDLK_s;       break; /* Rewind                 */
+      case SDLK_RETURN: key = SDLK_RETURN;  break; /* Action                 */
+      case SDLK_h:      key = SDLK_ESCAPE;  break; /* Hold                   */
+      case SDLK_r:      key = SDLK_UNKNOWN; break; /* Wheel clockwise        */
+      case SDLK_l:      key = SDLK_UNKNOWN; break; /* Wheel counterclockwise */
+      default: break;
+    }
+#endif
+    return key;
+}
+
+SDLKey transJoystickButton(Uint8 button)
+{
+#if defined(PSP)    
+    SDLKey button_map[] = { SDLK_ESCAPE, /* TRIANGLE */
+                            SDLK_RETURN, /* CIRCLE   */
+                            SDLK_SPACE,  /* CROSS    */
+                            SDLK_RCTRL,  /* SQUARE   */
+                            SDLK_o,      /* LTRIGGER */
+                            SDLK_s,      /* RTRIGGER */
+                            SDLK_DOWN,   /* DOWN     */
+                            SDLK_LEFT,   /* LEFT     */
+                            SDLK_UP,     /* UP       */
+                            SDLK_RIGHT,  /* RIGHT    */
+                            SDLK_0,      /* SELECT   */
+                            SDLK_a,      /* START    */
+                            SDLK_UNKNOWN,/* HOME     */ /* kernel mode only */
+                            SDLK_UNKNOWN,/* HOLD     */};
+    return button_map[button];
+#endif
+    return SDLK_UNKNOWN;
+}
+
+SDL_KeyboardEvent transJoystickAxis(SDL_JoyAxisEvent &jaxis)
+{
+    static int old_axis=-1;
+
+    SDL_KeyboardEvent event;
+
+    SDLKey axis_map[] = {SDLK_LEFT,  /* AL-LEFT  */
+                         SDLK_RIGHT, /* AL-RIGHT */
+                         SDLK_UP,    /* AL-UP    */
+                         SDLK_DOWN   /* AL-DOWN  */};
+
+    int axis = ((3200 > jaxis.value) && (jaxis.value > -3200) ? -1 :
+                (jaxis.axis * 2 + (jaxis.value>0 ? 1 : 0) ));
+
+    if (axis != old_axis){
+        old_axis = axis;
+        if (axis == -1){
+            event.type = SDL_KEYUP;
+        }
+        else{
+            event.type = SDL_KEYDOWN;
+            event.keysym.sym = axis_map[axis];
+        }
+    }
+    else{
+        event.keysym.sym = SDLK_UNKNOWN;
+    }
+    
+    return event;
 }
 
 void ONScripterLabel::flushEventSub( SDL_Event &event )
@@ -294,7 +352,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 #if SDL_VERSION_ATLEAST(1, 2, 5)
     else if (event->button == SDL_BUTTON_WHEELUP &&
              (event_mode & WAIT_TEXT_MODE ||
-              event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+              usewheel_flag && event_mode & WAIT_BUTTON_MODE || 
               system_menu_mode == SYSTEM_LOOKBACK)){
         current_button_state.button = -2;
         volatile_button_state.button = -2;
@@ -568,9 +626,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             SDL_WM_SetCaption( wm_edit_string, wm_icon_string );
         }
 
-        if ( skip_flag &&
-             ( ( !getcursor_flag && event->keysym.sym == SDLK_LEFT ) ||
-               event->keysym.sym == SDLK_s ) )
+        if (skip_flag && event->keysym.sym == SDLK_s)
             skip_flag = false;
     }
     if ( shift_pressed_status && event->keysym.sym == SDLK_q && current_mode == NORMAL_MODE ){
@@ -594,14 +650,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
          ( event->type == SDL_KEYUP ||
            ( btndown_flag && event->keysym.sym == SDLK_RETURN ||
              btndown_flag && event->keysym.sym == SDLK_KP_ENTER) ) ){
-        if ( ( !getcursor_flag && event->keysym.sym == SDLK_UP ) ||
-             event->keysym.sym == SDLK_p || event->keysym.sym == SDLK_k ){
+        if (!getcursor_flag && event->keysym.sym == SDLK_LEFT ||
+            event->keysym.sym == SDLK_h){
 
             shiftCursorOnButton( 1 );
             return;
         }
-        else if ( ( !getcursor_flag && event->keysym.sym == SDLK_DOWN ) ||
-                  event->keysym.sym == SDLK_n || event->keysym.sym == SDLK_j ){
+        else if (!getcursor_flag && event->keysym.sym == SDLK_RIGHT ||
+                 event->keysym.sym == SDLK_l){
 
             shiftCursorOnButton( -1 );
             return;
@@ -650,12 +706,27 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             current_button_state.button  = -11;
         }
         else if ((event_mode & WAIT_TEXT_MODE ||
-                  event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+                  usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
                   system_menu_mode == SYSTEM_LOOKBACK) &&
-                 event->keysym.sym == SDLK_l){
+                 (!getcursor_flag && event->keysym.sym == SDLK_UP ||
+                  event->keysym.sym == SDLK_k)){
             current_button_state.button = -2;
             volatile_button_state.button = -2;
             if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
+        }
+        else if ((enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE ||
+                  usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
+                  system_menu_mode == SYSTEM_LOOKBACK) &&
+                 (!getcursor_flag && event->keysym.sym == SDLK_DOWN ||
+                  event->keysym.sym == SDLK_j)){
+            if (event_mode & WAIT_TEXT_MODE){
+                current_button_state.button = 0;
+                volatile_button_state.button = 0;
+            }
+            else{
+                current_button_state.button = -3;
+                volatile_button_state.button = -3;
+            }
         }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){
             current_button_state.button  = -12;
@@ -743,15 +814,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE) && 
          !key_pressed_flag ){
-        if ( (event->keysym.sym == SDLK_LEFT || event->keysym.sym == SDLK_s) &&
-             !automode_flag ){
+        if (event->keysym.sym == SDLK_s && !automode_flag ){
             skip_flag = true;
             printf("toggle skip to true\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
             advancePhase();
         }
-        else if ( event->keysym.sym == SDLK_RIGHT || event->keysym.sym == SDLK_o ){
+        else if (event->keysym.sym == SDLK_o){
             draw_one_page_flag = !draw_one_page_flag;
             printf("toggle draw one page flag to %s\n", (draw_one_page_flag?"true":"false") );
             if ( draw_one_page_flag ){
@@ -793,12 +863,27 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     }
 
     if ((event_mode & WAIT_TEXT_MODE ||
-         event_mode & WAIT_BUTTON_MODE && usewheel_flag || 
+         usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
          system_menu_mode == SYSTEM_LOOKBACK) &&
-        event->keysym.sym == SDLK_l ){
+        (!getcursor_flag && event->keysym.sym == SDLK_UP ||
+         event->keysym.sym == SDLK_k)){
         current_button_state.button = -2;
         volatile_button_state.button = -2;
         if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
+    }
+    else if ((enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE ||
+              usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
+              system_menu_mode == SYSTEM_LOOKBACK) &&
+             (!getcursor_flag && event->keysym.sym == SDLK_DOWN ||
+              event->keysym.sym == SDLK_j)){
+        if (event_mode & WAIT_TEXT_MODE){
+            current_button_state.button = 0;
+            volatile_button_state.button = 0;
+        }
+        else{
+            current_button_state.button = -3;
+            volatile_button_state.button = -3;
+        }
     }
 }
 
@@ -917,31 +1002,46 @@ int ONScripterLabel::eventLoop()
             mousePressEvent( (SDL_MouseButtonEvent*)&event );
             break;
 
-#if defined(PSP)
           case SDL_JOYBUTTONDOWN:
-            ((SDL_KeyboardEvent*)&event)->type = SDL_KEYDOWN;
-            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[event.jbutton.button];
-            if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
+            event.key.type = SDL_KEYDOWN;
+            event.key.keysym.sym = transJoystickButton(event.jbutton.button);
+            if(event.key.keysym.sym == SDLK_UNKNOWN)
                 break;
-#endif
+            
           case SDL_KEYDOWN:
+            event.key.keysym.sym = transKey(event.key.keysym.sym);
             keyDownEvent( (SDL_KeyboardEvent*)&event );
             if ( btndown_flag )
                 keyPressEvent( (SDL_KeyboardEvent*)&event );
             break;
 
-#if defined(PSP)
           case SDL_JOYBUTTONUP:
-            ((SDL_KeyboardEvent*)&event)->type = SDL_KEYUP;
-            ((SDL_KeyboardEvent*)&event)->keysym.sym = psp_button_map[event.jbutton.button];
-            if(((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_UNKNOWN)
+            event.key.type = SDL_KEYUP;
+            event.key.keysym.sym = transJoystickButton(event.jbutton.button);
+            if(event.key.keysym.sym == SDLK_UNKNOWN)
                 break;
-#endif
+            
           case SDL_KEYUP:
+            event.key.keysym.sym = transKey(event.key.keysym.sym);
             keyUpEvent( (SDL_KeyboardEvent*)&event );
             keyPressEvent( (SDL_KeyboardEvent*)&event );
             break;
 
+          case SDL_JOYAXISMOTION:
+            SDL_KeyboardEvent ke = transJoystickAxis(event.jaxis);
+            if (ke.keysym.sym != SDLK_UNKNOWN){
+                if (ke.type == SDL_KEYDOWN){
+                    keyDownEvent( &ke );
+                    if (btndown_flag)
+                        keyPressEvent( &ke );
+                }
+                else if (event.type == SDL_KEYUP){
+                    keyUpEvent( &ke );
+                    keyPressEvent( &ke );
+                }
+            }
+            break;
+             
           case ONS_TIMER_EVENT:
             timerEvent();
             break;
