@@ -60,7 +60,7 @@ extern "C" int main( int argc, char **argv )
 int main( int argc, char **argv )
 #endif
 {
-    printf("ONScripter version %d(%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
+    printf("ONScripter version %s(%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
 
     ONScripterLabel ons;
 
