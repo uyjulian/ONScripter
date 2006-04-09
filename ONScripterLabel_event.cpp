@@ -98,8 +98,8 @@ SDLKey transKey(SDLKey key)
  	switch(key){
       case SDLK_m:      key = SDLK_UP;      break; /* Menu                   */
       case SDLK_d:      key = SDLK_DOWN;    break; /* Play/Pause             */
-      case SDLK_f:      key = SDLK_0;       break; /* Fast forward           */
-      case SDLK_w:      key = SDLK_s;       break; /* Rewind                 */
+      case SDLK_f:      key = SDLK_RIGHT;   break; /* Fast forward           */
+      case SDLK_w:      key = SDLK_LEFT;    break; /* Rewind                 */
       case SDLK_RETURN: key = SDLK_RETURN;  break; /* Action                 */
       case SDLK_h:      key = SDLK_ESCAPE;  break; /* Hold                   */
       case SDLK_r:      key = SDLK_UNKNOWN; break; /* Wheel clockwise        */
