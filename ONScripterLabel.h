@@ -203,6 +203,7 @@ public:
     int indentCommand();
     int humanorderCommand();
     int getzxcCommand();
+    int getvoicevolCommand();
     int getversionCommand();
     int gettimerCommand();
     int gettextCommand();
@@ -210,11 +211,13 @@ public:
     int gettabCommand();
     int getspsizeCommand();
     int getspmodeCommand();
+    int getsevolCommand();
     int getscreenshotCommand();
     int getretCommand();
     int getregCommand();
     int getpageupCommand();
     int getpageCommand();
+    int getmp3volCommand();
     int getmouseposCommand();
     int getlogCommand();
     int getinsertCommand();

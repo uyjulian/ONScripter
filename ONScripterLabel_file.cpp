@@ -139,7 +139,7 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     script_h.getStringFromInteger( save_file_info.sjis_month,  save_file_info.month,  2 );
     script_h.getStringFromInteger( save_file_info.sjis_day,    save_file_info.day,    2 );
     script_h.getStringFromInteger( save_file_info.sjis_hour,   save_file_info.hour,   2 );
-    script_h.getStringFromInteger( save_file_info.sjis_minute, save_file_info.minute, 2 );
+    script_h.getStringFromInteger( save_file_info.sjis_minute, save_file_info.minute, 2, true );
 }
 
 int ONScripterLabel::loadSaveFile( int no )

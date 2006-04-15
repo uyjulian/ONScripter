@@ -1590,6 +1590,13 @@ int ONScripterLabel::getzxcCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::getvoicevolCommand()
+{
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, voice_volume );
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::getversionCommand()
 {
     script_h.readInt();
@@ -1734,6 +1741,13 @@ int ONScripterLabel::getspmodeCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::getsevolCommand()
+{
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, se_volume );
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::getscreenshotCommand()
 {
     int w = script_h.readInt();
@@ -1850,6 +1864,13 @@ int ONScripterLabel::getregCommand()
     if ( !found_flag ) fprintf( stderr, "  The key is not found.\n" );
     fclose(fp);
 
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getmp3volCommand()
+{
+    script_h.readInt();
+    script_h.setInt( &script_h.current_variable, music_volume );
     return RET_CONTINUE;
 }
 
@@ -2512,7 +2533,10 @@ int ONScripterLabel::captionCommand()
 
     char *buf2 = new char[len*2+3];
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    DirectReader::convertFromSJISToUTF8(buf2, buf, len);
+    char *buf1 = new char[len+1];
+    strcpy(buf1, buf);
+    DirectReader::convertFromSJISToUTF8(buf2, buf1, len);
+    delete[] buf1;
 #elif defined(LINUX)
 #if defined(UTF8_FILESYSTEM)
     char *buf1 = new char[len+1];

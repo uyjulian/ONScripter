@@ -175,7 +175,7 @@ protected:
 
     enum { SYSTEM_NULL        = 0,
            SYSTEM_SKIP        = 1,
-           SYSTEM_RESET       = 0x10, // used in logical operation
+           SYSTEM_RESET       = 2,
            SYSTEM_SAVE        = 3,
            SYSTEM_LOAD        = 4,
            SYSTEM_LOOKBACK    = 5,
@@ -183,7 +183,7 @@ protected:
            SYSTEM_MENU        = 7,
            SYSTEM_YESNO       = 8,
            SYSTEM_AUTOMODE    = 9,
-           SYSTEM_END         = 0x20 // used in logical operation
+           SYSTEM_END         = 10
     };
     enum { RET_NOMATCH   = 0,
            RET_SKIP_LINE = 1,

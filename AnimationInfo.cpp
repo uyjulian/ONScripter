@@ -455,8 +455,10 @@ void AnimationInfo::blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, 
             Uint32 an = 0xff ^ ((0xff ^ an_1)*(0xff ^ mask2) >> 8);
             mask1 = ((0xff ^ mask2)*an_1)>>8;
 
-            mask_rb =  (((*dst_buffer & 0xff00ff) * mask1 + 
-                         src_color1 * mask2) / an) & 0xff00ff;
+            mask_rb =  ((*dst_buffer & 0xff00ff) * mask1 + 
+                        src_color1 * mask2);
+            mask_rb =  (((mask_rb / an) & 0x00ff0000) | 
+                        (((mask_rb & 0xffff) / an) & 0xff));
             mask = (((*dst_buffer & 0x00ff00) * mask1 +
                      src_color2 * mask2) / an) & 0x00ff00;
             *dst_buffer = mask_rb | mask | (an << 24);

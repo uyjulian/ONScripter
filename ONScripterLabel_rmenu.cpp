@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,10 +26,10 @@
 #if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
 #define MESSAGE_SAVE_EXIST "`%s%s    Date %s/%s    Time %s:%s"
 #define MESSAGE_SAVE_EMPTY "`%s%s    ------------------------"
-#define MESSAGE_SAVE_CONFIRM "`%s%s will be saved. Are you sure?"
-#define MESSAGE_LOAD_CONFIRM "`%s%s will be loaded. Are you sure?"
-#define MESSAGE_RESET_CONFIRM "`The game will be reset. Are you sure?"
-#define MESSAGE_END_CONFIRM "`Are you sure you want to exit?"
+#define MESSAGE_SAVE_CONFIRM "`Save in slot %s%s?"
+#define MESSAGE_LOAD_CONFIRM "`Load from slot %s%s?"
+#define MESSAGE_RESET_CONFIRM "`Return to Title Menu?"
+#define MESSAGE_END_CONFIRM "`Quit?"
 #define MESSAGE_YES "Yes"
 #define MESSAGE_NO "No"
 #else
@@ -228,7 +228,7 @@ void ONScripterLabel::executeSystemReset()
         leaveSystemCall();
     }
     else{
-        yesno_caller |= SYSTEM_RESET;
+        yesno_caller = SYSTEM_RESET;
         system_menu_mode = SYSTEM_YESNO;
         advancePhase();
     }
@@ -240,7 +240,7 @@ void ONScripterLabel::executeSystemEnd()
         leaveSystemCall();
     }
     else{
-        yesno_caller |= SYSTEM_END;
+        yesno_caller = SYSTEM_END;
         system_menu_mode = SYSTEM_YESNO;
         advancePhase();
     }
@@ -454,13 +454,13 @@ void ONScripterLabel::executeSystemYesNo()
                     gosubReal( loadgosub_label, script_h.getCurrent() );
                 readToken();
             }
-            else if ( yesno_caller & SYSTEM_RESET ){
+            else if ( yesno_caller ==  SYSTEM_RESET ){
                 resetCommand();
                 readToken();
                 event_mode = IDLE_EVENT_MODE;
                 leaveSystemCall( false );
             }
-            else if ( yesno_caller & SYSTEM_END ){
+            else if ( yesno_caller ==  SYSTEM_END ){
 
                 endCommand();
             }
@@ -470,6 +470,8 @@ void ONScripterLabel::executeSystemYesNo()
                 playSound(menuselectvoice_file_name[MENUSELECTVOICE_NO],
                           SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
             system_menu_mode = yesno_caller & 0xf;
+            if (yesno_caller == SYSTEM_RESET)
+                leaveSystemCall();
             advancePhase();
         }
     }
@@ -490,9 +492,9 @@ void ONScripterLabel::executeSystemYesNo()
                      save_item_name,
                      save_file_info.sjis_no );
         }
-        else if ( yesno_caller & SYSTEM_RESET )
+        else if ( yesno_caller ==  SYSTEM_RESET )
             strcpy( name, MESSAGE_RESET_CONFIRM );
-        else if ( yesno_caller & SYSTEM_END )
+        else if ( yesno_caller ==  SYSTEM_END )
             strcpy( name, MESSAGE_END_CONFIRM );
         
         

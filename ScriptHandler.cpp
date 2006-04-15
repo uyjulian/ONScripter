@@ -712,7 +712,7 @@ void ScriptHandler::setNumVariable( int no, int val )
     vd.num = val;
 }
 
-int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
+int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column, bool is_zero_inserted )
 {
     int i, num_space=0, num_minus = 0;
     if (no < 0){
@@ -736,16 +736,27 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column )
 
 #if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
     if (num_minus == 1) no = -no;
-    char format[5];
-    sprintf(format, "%%%dd", num_column);
+    char format[6];
+    if (is_zero_inserted)
+        sprintf(format, "%%0%dd", num_column);
+    else
+        sprintf(format, "%%%dd", num_column);
     sprintf(buffer, format, no);
     
     return num_column;
 #else
     int c = 0;
-    for (i=0 ; i<num_space ; i++){
-        buffer[c++] = ((char*)"@")[0];
-        buffer[c++] = ((char*)"@")[1];
+    if (is_zero_inserted){
+        for (i=0 ; i<num_space ; i++){
+            buffer[c++] = ((char*)"‚O")[0];
+            buffer[c++] = ((char*)"‚O")[1];
+        }
+    }
+    else{
+        for (i=0 ; i<num_space ; i++){
+            buffer[c++] = ((char*)"@")[0];
+            buffer[c++] = ((char*)"@")[1];
+        }
     }
     if (num_minus == 1){
         buffer[c++] = "|"[0];
