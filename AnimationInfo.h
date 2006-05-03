@@ -98,7 +98,7 @@ public:
     void blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
                          SDL_Rect &clip, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                          int alpha=256, int scale_x=100, int scale_y=100, int rot=0 );
+                          int alpha, int mat[2][2] );
     void blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
                          SDL_Rect *clip, bool rotate_flag );
     

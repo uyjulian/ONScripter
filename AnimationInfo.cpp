@@ -277,19 +277,18 @@ void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst
 }
 
 void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
-                                     int alpha, int scale_x, int scale_y, int rot )
+                                     int alpha, int mat[2][2] )
 {
     if ( image_surface == NULL ) return;
-    if ( scale_x == 0 || scale_y == 0 ) return;
     
     int i, x, y;
-
-    // for integer arithmetic operation
-    int cos_i = 1000, sin_i = 0;
-    if (rot != 0){
-        cos_i = (int)(1000.0 * cos(-M_PI*rot/180));
-        sin_i = (int)(1000.0 * sin(-M_PI*rot/180));
-    }
+    // calculate Inverse of mat
+    int inv_mat[2][2], denom = mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0];
+    if (denom == 0) return;
+    inv_mat[0][0] =  mat[1][1] * 1000000 / denom;
+    inv_mat[0][1] = -mat[0][1] * 1000000 / denom;
+    inv_mat[1][0] = -mat[1][0] * 1000000 / denom;
+    inv_mat[1][1] =  mat[0][0] * 1000000 / denom;
 
     // project corner point and calculate bounding box
     int dst_corner_xy[4][2];
@@ -297,8 +296,8 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     for (i=0 ; i<4 ; i++){
         int c_x = (i<2)?(-pos.w/2):(pos.w/2);
         int c_y = ((i+1)&2)?(pos.h/2):(-pos.h/2);
-        dst_corner_xy[i][0] = (cos_i * scale_x * c_x - sin_i * scale_y * c_y) / (100000) + dst_x;
-        dst_corner_xy[i][1] = (sin_i * scale_x * c_x + cos_i * scale_y * c_y) / (100000) + dst_y;
+        dst_corner_xy[i][0] = (mat[0][0] * c_x + mat[0][1] * c_y) / 1000 + dst_x;
+        dst_corner_xy[i][1] = (mat[1][0] * c_x + mat[1][1] * c_y) / 1000 + dst_y;
 
         if (min_xy[0] > dst_corner_xy[i][0]) min_xy[0] = dst_corner_xy[i][0];
         if (max_xy[0] < dst_corner_xy[i][0]) max_xy[0] = dst_corner_xy[i][0];
@@ -330,27 +329,25 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     for (y=min_xy[1] ; y<= max_xy[1] ; y++){
         // calculate the start and end point for each raster scan
         int raster_min = min_xy[0], raster_max = max_xy[0];
-        if (rot != 0){
-            for (i=0 ; i<4 ; i++){
-                if (dst_corner_xy[i][1] == dst_corner_xy[(i+1)%4][1]) continue;
-                x = (dst_corner_xy[(i+1)%4][0] - dst_corner_xy[i][0])*(y-dst_corner_xy[i][1])/(dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1]) + dst_corner_xy[i][0];
-                if (dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1] > 0){
-                    if (raster_min < x) raster_min = x;
-                }
-                else{
-                    if (raster_max > x) raster_max = x;
-                }
+        for (i=0 ; i<4 ; i++){
+            if (dst_corner_xy[i][1] == dst_corner_xy[(i+1)%4][1]) continue;
+            x = (dst_corner_xy[(i+1)%4][0] - dst_corner_xy[i][0])*(y-dst_corner_xy[i][1])/(dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1]) + dst_corner_xy[i][0];
+            if (dst_corner_xy[(i+1)%4][1] - dst_corner_xy[i][1] > 0){
+                if (raster_min < x) raster_min = x;
+            }
+            else{
+                if (raster_max > x) raster_max = x;
             }
         }
 
         ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
         // inverse-projection
-        int x1 = sin_i * (y-dst_y) / (scale_x*10) + pos.w/2;
-        int y1 = cos_i * (y-dst_y) / (scale_y*10) + pos.h/2;
+        int x_offset = inv_mat[0][1] * (y-dst_y) / 1000 + pos.w/2;
+        int y_offset = inv_mat[1][1] * (y-dst_y) / 1000 + pos.h/2;
         for (x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
-            int x2 = x1 + cos_i * x / (scale_x*10);
-            int y2 = y1 - sin_i * x / (scale_y*10);
+            int x2 = inv_mat[0][0] * x / 1000 + x_offset;
+            int y2 = inv_mat[1][0] * x / 1000 + y_offset;
 
             if (x2 < 0 || x2 >= pos.w ||
                 y2 < 0 || y2 >= pos.h) continue;

@@ -140,6 +140,7 @@ public:
     int talCommand();
     int tablegotoCommand();
     int systemcallCommand();
+    int strspCommand();
     int stopCommand();
     int sp_rgb_gradationCommand();
     int spstrCommand();
@@ -237,6 +238,7 @@ public:
     int dwaveCommand();
     int dvCommand();
     int drawtextCommand();
+    int drawsp3Command();
     int drawsp2Command();
     int drawspCommand();
     int drawfillCommand();

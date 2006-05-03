@@ -259,7 +259,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
             text[1] = *str++;
             drawChar( text, info, false, false, surface, cache_info );
         }
-        else if (*str == 0x0a){
+        else if (*str == 0x0a || *str == '\\' && info->is_newline_accepted){
             info->newLine();
             str++;
         }

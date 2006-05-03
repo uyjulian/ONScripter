@@ -61,6 +61,7 @@ void FontInfo::reset()
     is_bold = true;
     is_shadow = true;
     is_transparent = true;
+    is_newline_accepted = false;
 }
 
 void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )

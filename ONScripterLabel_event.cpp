@@ -625,10 +625,15 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             sprintf( wm_edit_string, "%s%s", EDIT_MODE_PREFIX, EDIT_SELECT_STRING );
             SDL_WM_SetCaption( wm_edit_string, wm_icon_string );
         }
-
-        if (skip_flag && event->keysym.sym == SDLK_s)
-            skip_flag = false;
     }
+    
+    if (event->type == SDL_KEYUP && 
+        (event->keysym.sym == SDLK_RETURN || 
+         event->keysym.sym == SDLK_KP_ENTER ||
+         event->keysym.sym == SDLK_SPACE ||
+         event->keysym.sym == SDLK_s))
+        skip_flag = false;
+    
     if ( shift_pressed_status && event->keysym.sym == SDLK_q && current_mode == NORMAL_MODE ){
         endCommand();
     }
@@ -804,7 +809,6 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         if (event->keysym.sym == SDLK_RETURN || 
             event->keysym.sym == SDLK_KP_ENTER ||
             event->keysym.sym == SDLK_SPACE ){
-            skip_flag = false;
             key_pressed_flag = true;
             playClickVoice();
             stopAnimation( clickstr_state );
@@ -1028,19 +1032,21 @@ int ONScripterLabel::eventLoop()
             break;
 
           case SDL_JOYAXISMOTION:
-            SDL_KeyboardEvent ke = transJoystickAxis(event.jaxis);
-            if (ke.keysym.sym != SDLK_UNKNOWN){
-                if (ke.type == SDL_KEYDOWN){
-                    keyDownEvent( &ke );
-                    if (btndown_flag)
-                        keyPressEvent( &ke );
-                }
-                else if (event.type == SDL_KEYUP){
-                    keyUpEvent( &ke );
-                    keyPressEvent( &ke );
-                }
-            }
-            break;
+          {
+              SDL_KeyboardEvent ke = transJoystickAxis(event.jaxis);
+              if (ke.keysym.sym != SDLK_UNKNOWN){
+                  if (ke.type == SDL_KEYDOWN){
+                      keyDownEvent( &ke );
+                      if (btndown_flag)
+                          keyPressEvent( &ke );
+                  }
+                  else if (ke.type == SDL_KEYUP){
+                      keyUpEvent( &ke );
+                      keyPressEvent( &ke );
+                  }
+              }
+              break;
+          }
              
           case ONS_TIMER_EVENT:
             timerEvent();

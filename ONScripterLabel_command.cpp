@@ -265,6 +265,50 @@ int ONScripterLabel::systemcallCommand()
     return RET_WAIT;
 }
 
+int ONScripterLabel::strspCommand()
+{
+    int sprite_no = script_h.readInt();
+    AnimationInfo *ai = &sprite_info[sprite_no];
+    ai->removeTag();
+    setStr(&ai->file_name, script_h.readStr());
+    
+    FontInfo fi;
+    fi.is_newline_accepted = true;
+    ai->pos.x = script_h.readInt();
+    ai->pos.y = script_h.readInt();
+    fi.num_xy[0] = script_h.readInt();
+    fi.num_xy[1] = script_h.readInt();
+    fi.font_size_xy[0] = script_h.readInt();
+    fi.font_size_xy[1] = script_h.readInt();
+    fi.pitch_xy[0] = script_h.readInt() + fi.font_size_xy[0];
+    fi.pitch_xy[1] = script_h.readInt() + fi.font_size_xy[1];
+    fi.is_bold = script_h.readInt()?true:false;
+    fi.is_shadow = script_h.readInt()?true:false;
+
+    char *buffer = script_h.getNext();
+    while(script_h.getEndStatus() & ScriptHandler::END_COMMA){
+        ai->num_of_cells++;
+        script_h.readStr();
+    }
+    if (ai->num_of_cells == 0){
+        ai->num_of_cells = 1;
+        ai->color_list = new uchar3[ai->num_of_cells];
+        ai->color_list[0][0] = ai->color_list[0][1] = ai->color_list[0][2] = 0xff;
+    }
+    else{
+        ai->color_list = new uchar3[ai->num_of_cells];
+        script_h.setCurrent(buffer);
+        for (int i=0 ; i<ai->num_of_cells ; i++)
+            readColor(&ai->color_list[i], script_h.readStr());
+    }
+
+    ai->trans_mode = AnimationInfo::TRANS_STRING;
+    ai->is_single_line = false;
+    setupAnimationInfo(ai, &fi);
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::stopCommand()
 {
     stopBGM( false );
@@ -1371,7 +1415,9 @@ int ONScripterLabel::logspCommand()
     }
 
     si.is_single_line = false;
+    sentence_font.is_newline_accepted = true;
     setupAnimationInfo( &si );
+    sentence_font.is_newline_accepted = false;
     si.visible = true;
     dirty_rect.add( si.pos );
     
@@ -2244,6 +2290,32 @@ int ONScripterLabel::drawtextCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::drawsp3Command()
+{
+    int sprite_no = script_h.readInt();
+    int cell_no = script_h.readInt();
+    int alpha = script_h.readInt();
+    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+
+    // |mat[0][0] mat[0][1]|
+    // |mat[1][0] mat[1][1]|
+    int mat[2][2];
+    mat[0][0] = script_h.readInt();
+    mat[0][1] = script_h.readInt();
+    mat[1][0] = script_h.readInt();
+    mat[1][1] = script_h.readInt();
+
+    AnimationInfo &si = sprite_info[sprite_no];
+    int old_cell_no = si.current_cell;
+    si.setCell(cell_no);
+
+    si.blendOnSurface2( accumulation_surface, x, y, alpha, mat );
+    si.setCell(old_cell_no);
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::drawsp2Command()
 {
     int sprite_no = script_h.readInt();
@@ -2258,8 +2330,22 @@ int ONScripterLabel::drawsp2Command()
     AnimationInfo &si = sprite_info[sprite_no];
     int old_cell_no = si.current_cell;
     si.setCell(cell_no);
-    si.blendOnSurface2( accumulation_surface, x, y,
-                        alpha, scale_x, scale_y, rot );
+
+    if ( scale_x == 0 || scale_y == 0 ) return RET_CONTINUE;
+
+    // |mat[0][0] mat[0][1]|
+    // |mat[1][0] mat[1][1]|
+    int mat[2][2];
+    int cos_i = 1000, sin_i = 0;
+    if (rot != 0){
+        cos_i = (int)(1000.0 * cos(-M_PI*rot/180));
+        sin_i = (int)(1000.0 * sin(-M_PI*rot/180));
+    }
+    mat[0][0] =  cos_i*scale_x/100;
+    mat[0][1] = -sin_i*scale_y/100;
+    mat[1][0] =  sin_i*scale_x/100;
+    mat[1][1] =  cos_i*scale_y/100;
+    si.blendOnSurface2( accumulation_surface, x, y, alpha, mat );
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -2317,8 +2403,21 @@ int ONScripterLabel::drawbg2Command()
     int scale_y = script_h.readInt();
     int rot = script_h.readInt();
 
+    // |mat[0][0] mat[0][1]|
+    // |mat[1][0] mat[1][1]|
+    int mat[2][2];
+    int cos_i = 1000, sin_i = 0;
+    if (rot != 0){
+        cos_i = (int)(1000.0 * cos(-M_PI*rot/180));
+        sin_i = (int)(1000.0 * sin(-M_PI*rot/180));
+    }
+    mat[0][0] =  cos_i*scale_x/100;
+    mat[0][1] = -sin_i*scale_y/100;
+    mat[1][0] =  sin_i*scale_x/100;
+    mat[1][1] =  cos_i*scale_y/100;
+
     bg_info.blendOnSurface2( accumulation_surface, x, y,
-                             256, scale_x, scale_y, rot );
+                             256, mat );
 
     return RET_CONTINUE;
 }
