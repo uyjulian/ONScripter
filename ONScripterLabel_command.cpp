@@ -304,6 +304,7 @@ int ONScripterLabel::strspCommand()
 
     ai->trans_mode = AnimationInfo::TRANS_STRING;
     ai->is_single_line = false;
+    ai->is_tight_region = false;
     setupAnimationInfo(ai, &fi);
 
     return RET_CONTINUE;
@@ -1415,6 +1416,7 @@ int ONScripterLabel::logspCommand()
     }
 
     si.is_single_line = false;
+    si.is_tight_region = false;
     sentence_font.is_newline_accepted = true;
     setupAnimationInfo( &si );
     sentence_font.is_newline_accepted = false;

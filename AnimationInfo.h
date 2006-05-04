@@ -61,6 +61,7 @@ public:
     int loop_mode;
     bool is_animatable;
     bool is_single_line;
+    bool is_tight_region; // valid under TRANS_STRING
         
     char *file_name;
     char *mask_file_name;
