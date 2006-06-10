@@ -26,15 +26,15 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include "NsaReader.h"
 
-extern int errno;
 extern int scale_ratio_upper;
 extern int scale_ratio_lower;
 
-extern size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer );
-extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer );
+extern size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer,
+                           int quality );
+extern size_t rescaleBMP( unsigned char *original_buffer, unsigned char **rescaled_buffer,
+                          bool output_jpeg_flag, int quality );
 
 #ifdef main
 #undef main
@@ -42,9 +42,10 @@ extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigne
 
 void help()
 {
-    fprintf(stderr, "Usage: nsaconv [-e] [-ns2] [-ns3] src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "Usage: nsaconv [-e] [-j] [-ns2] [-ns3] [-q quality] src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "           quality   ... 0 to 100\n");
     fprintf(stderr, "           src_width ... 640 or 800\n");
-    fprintf(stderr, "           dst_width ... 176, 320, 360, 384, 640, etc.\n");
+    fprintf(stderr, "           dst_width ... 176, 220, 320, 360, 384, 640, etc.\n");
     exit(-1);
 }
 
@@ -56,18 +57,27 @@ int main( int argc, char **argv )
     unsigned int i, count;
     int archive_type = BaseReader::ARCHIVE_TYPE_NSA;
     bool enhanced_flag = false;
+    bool bmp2jpeg_flag = false;
+    int quality = 75;
     FILE *fp;
 
     argc--; // skip command name
     argv++;
     while (argc > 4){
         if      ( !strcmp( argv[0], "-e" ) )    enhanced_flag = true;
+        else if ( !strcmp( argv[0], "-j" ) )    bmp2jpeg_flag = true;
         else if ( !strcmp( argv[0], "-ns2" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS2;
         else if ( !strcmp( argv[0], "-ns3" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS3;
+        else if ( !strcmp( argv[0], "-q" ) ){
+            argc--;
+            argv++;
+            quality = atoi(argv[0]);
+        }
         argc--;
         argv++;
     }
     if (argc != 4) help();
+    if (bmp2jpeg_flag) enhanced_flag = false;
 
     scale_ratio_lower = atoi(argv[0]); // src width
     if (scale_ratio_lower!=640 && scale_ratio_lower!=800) help();
@@ -101,7 +111,7 @@ int main( int argc, char **argv )
                 fprintf( stderr, "file %s can't be retrieved %ld\n", sFI.name, length );
                 continue;
             }
-            sFI.length = rescaleJPEG( buffer, length, &rescaled_buffer );
+            sFI.length = rescaleJPEG( buffer, length, &rescaled_buffer, quality );
             cSR.putFile( fp, i, sFI.offset, sFI.length, sFI.length, sFI.compression_type, true, rescaled_buffer );
         }
         else if ( strlen( sFI.name ) > 3 && !strcmp( sFI.name + strlen( sFI.name ) - 3, "BMP") ){
@@ -109,7 +119,7 @@ int main( int argc, char **argv )
                 fprintf( stderr, "file %s can't be retrieved %ld\n", sFI.name, length );
                 continue;
             }
-            sFI.length = rescaleBMP( buffer, length, &rescaled_buffer );
+            sFI.length = rescaleBMP( buffer, &rescaled_buffer, bmp2jpeg_flag, quality );
             cSR.putFile( fp, i, sFI.offset, sFI.length, sFI.length, enhanced_flag?BaseReader::NBZ_COMPRESSION:sFI.compression_type, true, rescaled_buffer );
         }
         else if ( enhanced_flag && strlen( sFI.name ) > 3 && !strcmp( sFI.name + strlen( sFI.name ) - 3, "WAV") ){
@@ -132,5 +142,5 @@ int main( int argc, char **argv )
     if ( rescaled_buffer ) delete[] rescaled_buffer;
     if ( buffer ) delete[] buffer;
     
-    exit(0);
+    return 0;
 }

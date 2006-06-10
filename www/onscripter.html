@@ -18,11 +18,9 @@
 <H1>ONScripter のページ</H1>
 
 Since: Feb. 6, 2002<br>
-Last updated: May 4, 2006 [ソース更新]<br>
-<font color=red>バグトラッキングシステムが酷いことになっていますが、αβεさんと連絡がとれず困っています。<br>
-どなたか代わりにバグトラッキングシステムを運用してくださる方はいらっしゃらないでしょうか。<br></font>
+<!--Last updated: May 4, 2006 [ソース更新]<br>-->
 <!--Last updated: Jan. 31, 2006 [バイナリパッケージ追加]<br>-->
-<!--Last updated: Aug. 20, 2005 [Experimental ソース更新]<br>-->
+Last updated: Jun. 10, 2006 [Experimental ソース更新]<br>
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
 ミラーサイト</a><br>
@@ -103,7 +101,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <ul>
   <li> <a href="onscripter-20060504.tar.gz">onscripter-20060504.tar.gz</a>
   <li> <a href="onscripter-20060503.tar.gz">onscripter-20060503.tar.gz</a>(１つ前のバージョン)
-<!--  <li> <a href="onscripter-exp-20051030.tar.gz">onscripter-exp-20051030.tar.gz</a>(実験版, PSP patch)-->
+  <li> <a href="onscripter-exp-20060610.tar.gz">onscripter-exp-20060610.tar.gz</a>(実験版, sarconv, nsaconv に -j -q オプション追加、ベースライン最適化)
 </ul>
 </div> <!-- sub-content -->
 
@@ -153,13 +151,12 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 
 <p>更新内容については[<a href="onscripter_devel.2006_1.html">開発日誌
 </a>]を参照して下さい。動作報告・バグ報告・機能追加要望・パッチは随時
-受け付けます<s>ので[<a
-href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグ
-トラッキングシステム</a>]までお願いします</s>。バグトラッキングシステ
-ムは、メンテナンスされていないため当座の使用を中止します。「○○ゲーム
-の××場面がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。
-[<a href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]ま
-で直接送っていただいても構いません。</p>
+受け付けますので[<a
+href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;action=top">
+バグトラッキングシステム</a>]までお願いします。「○○ゲームの××場面
+がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。[<a
+href="mailto:ogapee@aqua.dti2.ne.jp">ogapee@aqua.dti2.ne.jp</a>]まで直
+接送っていただいても構いません。</p>
 
 </div> <!-- content -->
 
@@ -288,10 +285,13 @@ href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグ
 <dl>
   <dt> ○<a href="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</a>
   <dd> 千熊屋さんによる様々なゲーム互換エンジンへのリンク集です。ONScripter も紹介していただいてます。
+  <dt> ○<a href="http://you-like.to/cgi-bin/ponytail/yukiwiki/wiki.cgi">技術屋きさらの箱庭</a>
+  <dd> きさらさんが公開されている日記です。<br>
+       <a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;action=top">新バグトラッキングシステム</a>を運用していただいてます。
   <dt> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
   <dd> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
        ONScripter を開発する上でたいへんお世話になっております。<br>
-       <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。<br></s>
+       <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。</s>現在は、きさらさんの新バグトラッキングシステムに移行しています。<br>
        ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
   <dt> ○<a href="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</a>
   <dd> Mac OS X で検証していただいている adas さんページです。<br>
@@ -670,6 +670,10 @@ nsaconv [-e] [-ns2] [-ns3] 変換元画面幅 変換先画面幅 変換元NSAファイル名 変換先N
 <p>NSA アーカイブのバージョン１と２と３の区別は手動です。スクリプトで ns2 コマンドが使われていればバージョン２、ns3 コマンドが使われていればバージョン３です。スクリプトが確認できない場合は、まず -ns2 を付けずに試し、うまくいかなかったら -ns2 もしくは -ns3 を付けて試してください。</p>
 
 <p>-e オプションを付けると、wav と bmp ファイルを nbz 圧縮します。これを行うと、NSA アーカイブの圧縮の種類を示すフラグに ONScripter 独自の値を設定します。この独自拡張については、本家が将来アーカイブの仕様を拡張したときにバッティングする可能性がありますが、その時はそれを回避するようにコンバータを修正し、再コンバートすることで解決できます。その場合でも、save file 等には一切影響がありませんので、Zaurus で使用される方はこのオプションを付けてコンバートすることをお勧めします。wav を bzip2 で圧縮するので、wav を多用するゲームではかなりアーカイブが小さくなります。デメリットとしては、bzip2 の復号を行うため若干遅くなりますが、気がづかない程度です。</p>
+
+<p>-j オプションを付けると、ファイル名はそのままで bmp ファイルを jpeg に変換します。ただし、パレットカラーの bmp ファイルは bmp のまま変換されます。</p>
+
+<p>-q オプションで jpeg で圧縮する際の品質（０〜１００）を指定することができます。小さい値を指定すると、品質が悪くなりますが、圧縮後のサイズが小さくなります。デフォルトとは７５です。</p>
 
 <p>サイズを小さくしたアーカイブを使うときは、onscripter に --disable-rescale オプションを指定してください。<br>
 

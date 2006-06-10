@@ -26,15 +26,15 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include "SarReader.h"
 
-extern int errno;
 extern int scale_ratio_upper;
 extern int scale_ratio_lower;
 
-extern size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer );
-extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer );
+extern size_t rescaleJPEG( unsigned char *original_buffer, size_t length, unsigned char **rescaled_buffer,
+                           int quality );
+extern size_t rescaleBMP( unsigned char *original_buffer, unsigned char **rescaled_buffer,
+                          bool output_jpeg_flag, int quality );
 
 #ifdef main
 #undef main
@@ -42,9 +42,10 @@ extern size_t rescaleBMP( unsigned char *original_buffer, size_t length, unsigne
 
 void help()
 {
-    fprintf(stderr, "Usage: sarconv src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "Usage: sarconv [-j] [-q quality] src_width dst_width src_archive_file dst_archive_file\n");
+    fprintf(stderr, "           quality   ... 0 to 100\n");
     fprintf(stderr, "           src_width ... 640 or 800\n");
-    fprintf(stderr, "           dst_width ... 176, 320, 360, 384, 640, etc.\n");
+    fprintf(stderr, "           dst_width ... 176, 220, 320, 360, 384, 640, etc.\n");
     exit(-1);
 }
 
@@ -54,10 +55,22 @@ int main( int argc, char **argv )
     unsigned long length, offset = 0, buffer_length = 0;
     unsigned char *buffer = NULL, *rescaled_buffer = NULL;
     unsigned int i, count;
+    bool bmp2jpeg_flag = false;
+    int quality = 75;
     FILE *fp;
 
     argc--; // skip command name
     argv++;
+    while (argc > 4){
+        if      ( !strcmp( argv[0], "-j" ) )    bmp2jpeg_flag = true;
+        else if ( !strcmp( argv[0], "-q" ) ){
+            argc--;
+            argv++;
+            quality = atoi(argv[0]);
+        }
+        argc--;
+        argv++;
+    }
     if (argc != 4) help();
 
     scale_ratio_lower = atoi(argv[0]); // src width
@@ -95,7 +108,7 @@ int main( int argc, char **argv )
                 fprintf( stderr, "file %s can't be retrieved %ld\n", sFI.name, length );
                 continue;
             }
-            sFI.length = rescaleJPEG( buffer, length, &rescaled_buffer );
+            sFI.length = rescaleJPEG( buffer, length, &rescaled_buffer, quality );
             cSR.putFile( fp, i, sFI.offset, sFI.length, sFI.length, true, rescaled_buffer );
         }
         else if ( strlen( sFI.name ) > 3 && !strcmp( sFI.name + strlen( sFI.name ) - 3, "BMP") ){
@@ -103,7 +116,7 @@ int main( int argc, char **argv )
                 fprintf( stderr, "file %s can't be retrieved %ld\n", sFI.name, length );
                 continue;
             }
-            sFI.length = rescaleBMP( buffer, length, &rescaled_buffer );
+            sFI.length = rescaleBMP( buffer, &rescaled_buffer, bmp2jpeg_flag, quality );
             cSR.putFile( fp, i, sFI.offset, sFI.length, sFI.length, true, rescaled_buffer );
         }
         else{
@@ -119,5 +132,5 @@ int main( int argc, char **argv )
     if ( rescaled_buffer ) delete[] rescaled_buffer;
     if ( buffer ) delete[] buffer;
     
-    exit(0);
+    return 0;
 }
