@@ -39,7 +39,7 @@ void optionHelp()
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheeldown event\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
     printf( "      --edit\t\tenable editing the volumes and the variables when 'z' is pressed\n");
-    printf( "      --key-exe file\tset a file (*.EXE) which contains a key table\n");
+    printf( "      --key-exe file\tset a file (*.EXE) that includes a key table\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
     printf( "  -v, --version\t\tshow the version information and exit\n");
     exit(0);

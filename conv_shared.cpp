@@ -182,7 +182,7 @@ size_t rescaleJPEGWrite( unsigned int width, unsigned int height, int byte_per_p
     while (cinfo2.next_scanline < cinfo2.image_height) {
         if (bmp2jpeg_flag){
             unsigned char *src = row_pointer[0] = &rescaled_tmp_buffer[(cinfo2.image_height - 1 - cinfo2.next_scanline) * row_stride];
-            for(int i=0 ; i<cinfo2.image_width ; i++, src+=3){
+            for(unsigned int i=0 ; i<cinfo2.image_width ; i++, src+=3){
                 unsigned char tmp = src[2];
                 src[2] = src[0];
                 src[0] = tmp;

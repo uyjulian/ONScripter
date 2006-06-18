@@ -84,9 +84,6 @@ class ONScripterLabel : public ScriptParser
 {
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
-    typedef struct{
-        short x, y, w, h;
-    } Rect;
     
     ONScripterLabel();
     ~ONScripterLabel();

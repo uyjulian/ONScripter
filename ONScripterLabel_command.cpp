@@ -2873,77 +2873,27 @@ int ONScripterLabel::brCommand()
 
 int ONScripterLabel::bltCommand()
 {
-    Rect src_rect, dst_rect;
+    int dx,dy,dw,dh;
+    int sx,sy,sw,sh;
 
-    dst_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dst_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dst_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dst_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    src_rect.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    src_rect.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    src_rect.w = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    src_rect.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dx = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dy = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dw = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dh = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    sx = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    sy = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    sw = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    sh = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
     if (btndef_info.image_surface == NULL) return RET_CONTINUE;
-    if (dst_rect.w == 0 || dst_rect.h == 0 ||
-        src_rect.w == 0 || src_rect.h == 0) return RET_CONTINUE;
-        
-    int w, w_margin[2]={0,0};
-    if (src_rect.w > 0){
-        w = src_rect.w;
-        if (src_rect.x < 0) w_margin[0] = -src_rect.x;
-        if (src_rect.x+src_rect.w > btndef_info.pos.w) w_margin[1] = src_rect.x+src_rect.w-btndef_info.pos.w;
-        src_rect.x += w_margin[0];
-        src_rect.w -= w_margin[0]+w_margin[1];
-    }
-    else{
-        w = -src_rect.w;
-        if (src_rect.x+src_rect.w+1 < 0) w_margin[0] = -(src_rect.x+src_rect.w+1);
-        if (src_rect.x >= btndef_info.pos.w) w_margin[1] = src_rect.x-btndef_info.pos.w+1;
-        src_rect.x -= w_margin[1];
-        src_rect.w += w_margin[0]+w_margin[1];
-    }
-    int h, h_margin[2]={0,0};
-    if (src_rect.h > 0){
-        h = src_rect.h;
-        if (src_rect.y < 0) h_margin[0] = -src_rect.y;
-        if (src_rect.y+src_rect.h > btndef_info.pos.h) h_margin[1] = src_rect.y+src_rect.h-btndef_info.pos.h;
-        src_rect.y += h_margin[0];
-        src_rect.h -= h_margin[0]+h_margin[1];
-    }
-    else{
-        h = -src_rect.h;
-        if (src_rect.y+src_rect.h+1 < 0) h_margin[0] = -(src_rect.y+src_rect.h+1);
-        if (src_rect.y >= btndef_info.pos.h) h_margin[1] = src_rect.y-btndef_info.pos.h+1;
-        src_rect.y -= h_margin[1];
-        src_rect.h += h_margin[0]+h_margin[1];
-    }
-
-    if (dst_rect.w > 0)
-        dst_rect.x += dst_rect.w*w_margin[0]/w;
-    else
-        dst_rect.x += dst_rect.w*w_margin[1]/w;
-    dst_rect.w -= dst_rect.w*(w_margin[0]+w_margin[1])/w;
+    if (dw == 0 || dh == 0 || sw == 0 || sh == 0) return RET_CONTINUE;
     
-    if (dst_rect.h > 0)
-        dst_rect.y += dst_rect.h*h_margin[0]/h;
-    else
-        dst_rect.y += dst_rect.h*h_margin[1]/h;
-    dst_rect.h -= dst_rect.h*(h_margin[0]+h_margin[1])/h;
+    if ( sw == dw && sw > 0 && sh == dh && sh > 0 ){
 
-    if (dst_rect.w == 0 || dst_rect.h == 0 ||
-        src_rect.w == 0 || src_rect.h == 0) return RET_CONTINUE;
-    
-    if ( src_rect.w == dst_rect.w && src_rect.h == dst_rect.h ){
+        SDL_Rect src_rect = {sx,sy,sw,sh};
+        SDL_Rect dst_rect = {dx,dy,dw,dh};
 
-        SDL_Rect clip = {0, 0, screen_width, screen_height}, clipped;
-        AnimationInfo::doClipping( (SDL_Rect*)&dst_rect, &clip, &clipped );
-        src_rect.x += clipped.x;
-        src_rect.y += clipped.y;
-        src_rect.w = clipped.w;
-        src_rect.h = clipped.h;
-
-        SDL_BlitSurface( btndef_info.image_surface, (SDL_Rect*)&src_rect, screen_surface, (SDL_Rect*)&dst_rect );
+        SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
         dirty_rect.clear();
     }
@@ -2952,20 +2902,48 @@ int ONScripterLabel::bltCommand()
         SDL_LockSurface(btndef_info.image_surface);
         ONSBuf *dst_buf = (ONSBuf*)accumulation_surface->pixels;
         ONSBuf *src_buf = (ONSBuf*)btndef_info.image_surface->pixels;
-        int src_w = btndef_info.image_surface->w;
-        for (int i=dst_rect.y ; i<dst_rect.y+dst_rect.h ; i++){
-            if (i<0 || i>=screen_height) continue;
-            for (int j=dst_rect.x ; j<dst_rect.x+dst_rect.w ; j++){
-                if (j<0 || j>=screen_width) continue;
+#if defined(BPP16)
+        int dst_width = accumulation_surface->pitch / 2;
+        int src_width = btndef_info.image_surface->pitch / 2;
+#else
+        int dst_width = accumulation_surface->pitch / 4;
+        int src_width = btndef_info.image_surface->pitch / 4;
+#endif    
 
-                int x = src_rect.x+src_rect.w*(j-dst_rect.x)/dst_rect.w;
-                int y = src_rect.y+src_rect.h*(i-dst_rect.y)/dst_rect.h;
-                *(dst_buf+i*screen_width+j) = *(src_buf+y*src_w+x);
+        int start_y = dy, end_y = dy+dh;
+        if (dh < 0){
+            start_y = dy+dh;
+            end_y = dy;
+        }
+        if (start_y < 0) start_y = 0;
+        if (end_y > screen_height) end_y = screen_height;
+        
+        int start_x = dx, end_x = dx+dw;
+        if (dw < 0){
+            start_x = dx+dw;
+            end_x = dx;
+        }
+        if (start_x < 0) start_x = 0;
+        if (end_x >= screen_width) end_x = screen_width;
+
+        dst_buf += start_y*dst_width;
+        for (int i=start_y ; i<end_y ; i++){
+            int y = sy+sh*(i-dy)/dh;
+            for (int j=start_x ; j<end_x ; j++){
+
+                int x = sx+sw*(j-dx)/dw;
+                if (x<0 || x>=btndef_info.image_surface->w ||
+                    y<0 || y>=btndef_info.image_surface->h)
+                    *(dst_buf+j) = 0;
+                else
+                    *(dst_buf+j) = *(src_buf+y*src_width+x);
             }
+            dst_buf += dst_width;
         }
         SDL_UnlockSurface(btndef_info.image_surface);
         SDL_UnlockSurface(accumulation_surface);
-    
+        
+        SDL_Rect dst_rect = {start_x, start_y, end_x-start_x, end_y-start_y};
         flushDirect( (SDL_Rect&)dst_rect, REFRESH_NONE_MODE );
     }
 

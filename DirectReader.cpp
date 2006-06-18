@@ -418,7 +418,7 @@ size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
     
     unsigned int original_length, count;
 	BZFILE *bfp;
-	unsigned char *unused;
+	void *unused;
 	int err, len, nunused;
 
     fseek( fp, offset, SEEK_SET );
@@ -436,7 +436,7 @@ size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 		buf += len;
 	}
 
-	BZ2_bzReadGetUnused(&err, bfp, (void **)&unused, &nunused );
+	BZ2_bzReadGetUnused(&err, bfp, &unused, &nunused );
 	BZ2_bzReadClose( &err, bfp );
 
     return original_length - count;
