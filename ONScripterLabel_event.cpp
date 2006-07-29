@@ -917,7 +917,7 @@ void ONScripterLabel::timerEvent( void )
                 }
                 else{
                     loop_flag = true;
-                    if ( automode_flag )
+                    if (automode_flag || autoclick_time>0)
                         current_button_state.button = 0;
                     else if ( usewheel_flag )
                         current_button_state.button = -5;

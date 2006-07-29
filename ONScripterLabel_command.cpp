@@ -1767,9 +1767,9 @@ int ONScripterLabel::getspsizeCommand()
     int no = script_h.readInt();
 
     script_h.readVariable();
-    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.w );
+    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.w * screen_ratio2 / screen_ratio1 );
     script_h.readVariable();
-    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.h );
+    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.h * screen_ratio2 / screen_ratio1 );
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
         script_h.readVariable();
         script_h.setInt( &script_h.current_variable, sprite_info[no].num_of_cells );
@@ -2763,6 +2763,9 @@ int ONScripterLabel::btnwaitCommand()
                     else
                         startTimer( automode_time );
                     //current_button_state.button = 0;
+                }
+                else if (autoclick_time > 0){
+                    startTimer( autoclick_time );
                 }
             }
         }

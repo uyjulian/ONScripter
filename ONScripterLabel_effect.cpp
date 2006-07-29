@@ -38,7 +38,7 @@ int ONScripterLabel::setEffect( EffectLink *effect )
     return RET_WAIT | RET_REREAD;
 }
 
-int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effect_image )
+int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effect_image, bool clear_dirty_region )
 {
     effect_start_time = SDL_GetTicks();
     if ( effect_counter == 0 ) effect_start_time_old = effect_start_time - 1;
@@ -60,10 +60,10 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
             if (effect_no == 1){
-                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() );
+                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() | REFRESH_DISPLAYABLE );
             }
             else{
-                refreshSurface( effect_dst_surface, NULL, refreshMode() );
+                refreshSurface( effect_dst_surface, NULL, refreshMode() | REFRESH_DISPLAYABLE );
             }
             break;
         }
@@ -327,7 +327,7 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
     else{
         SDL_BlitSurface( effect_dst_surface, &dirty_rect.bounding_box, accumulation_surface, &dirty_rect.bounding_box );
 
-        if ( effect_no != 0 ) flush(REFRESH_NONE_MODE);
+        if ( effect_no != 0 ) flush(REFRESH_NONE_MODE, NULL, clear_dirty_region);
         if ( effect_no == 1 ) effect_counter = 0;
         event_mode = IDLE_EVENT_MODE;
         

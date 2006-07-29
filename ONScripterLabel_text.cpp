@@ -344,7 +344,7 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
     
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         if ( event_mode & EFFECT_EVENT_MODE ){
-            if ( doEffect( &window_effect, NULL, DIRECT_EFFECT_IMAGE ) == RET_CONTINUE ){
+            if ( doEffect( &window_effect, NULL, DIRECT_EFFECT_IMAGE, false ) == RET_CONTINUE ){
                 display_mode = TEXT_DISPLAY_MODE;
                 text_on_flag = true;
                 return RET_CONTINUE | RET_NOREAD;
@@ -370,7 +370,7 @@ int ONScripterLabel::leaveTextDisplayMode()
          erase_text_window_mode != 0 ){
 
         if ( event_mode & EFFECT_EVENT_MODE ){
-            if ( doEffect( &window_effect,  NULL, DIRECT_EFFECT_IMAGE ) == RET_CONTINUE ){
+            if ( doEffect( &window_effect,  NULL, DIRECT_EFFECT_IMAGE, false ) == RET_CONTINUE ){
                 display_mode = NORMAL_DISPLAY_MODE;
                 return RET_CONTINUE | RET_NOREAD;
             }
