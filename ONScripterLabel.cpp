@@ -458,9 +458,11 @@ int ONScripterLabel::init()
     image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
     
     accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height );
+    accumulation_comp_surface = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     SDL_SetAlpha( accumulation_surface, 0, SDL_ALPHA_OPAQUE );
+    SDL_SetAlpha( accumulation_comp_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
     screenshot_surface   = NULL;
@@ -695,6 +697,12 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
+    if (refresh_mode != REFRESH_NONE_MODE && !(refresh_mode & REFRESH_CURSOR_MODE)){
+        if (refresh_mode & REFRESH_SHADOW_MODE)
+            refreshSurface( accumulation_comp_surface, &rect, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+        else
+            refreshSurface( accumulation_comp_surface, &rect, refresh_mode | refresh_shadow_text_mode );
+    }
 
     SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
     SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
@@ -747,7 +755,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
         }
 
         if ( exbtn_d_button_link.exbtn_ctl ){
-            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
+            decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
         }
         
         if ( p_button_link ){
@@ -767,7 +775,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
                 sprite_info[ p_button_link->sprite_no ].setCell(1);
                 sprite_info[ p_button_link->sprite_no ].visible = true;
                 if ( p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                    decodeExbtnControl( accumulation_surface, p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
+                    decodeExbtnControl( p_button_link->exbtn_ctl, &check_src_rect, &check_dst_rect );
                 }
             }
             else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
@@ -1138,7 +1146,7 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     return button_link;
 }
 
-void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
+void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     char sound_name[256];
     int i, sprite_no, sprite_no2, cell_no;
@@ -1153,7 +1161,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
                 sprite_no2 = getNumberFromBuffer( &ctl_str );
             }
             for (i=sprite_no ; i<=sprite_no2 ; i++)
-                refreshSprite( surface, i, false, cell_no, NULL, NULL );
+                refreshSprite( i, false, cell_no, NULL, NULL );
         }
         else if (com == 'P' || com == 'p'){
             sprite_no = getNumberFromBuffer( &ctl_str );
@@ -1163,7 +1171,7 @@ void ONScripterLabel::decodeExbtnControl( SDL_Surface *surface, const char *ctl_
             }
             else
                 cell_no = 0;
-            refreshSprite( surface, sprite_no, true, cell_no, check_src_rect, check_dst_rect );
+            refreshSprite( sprite_no, true, cell_no, check_src_rect, check_dst_rect );
         }
         else if (com == 'S' || com == 's'){
             sprite_no = getNumberFromBuffer( &ctl_str );

@@ -413,7 +413,7 @@ int ONScripterLabel::sp_rgb_gradationCommand()
 
 int ONScripterLabel::spstrCommand()
 {
-    decodeExbtnControl( accumulation_surface, script_h.readStr() );
+    decodeExbtnControl( script_h.readStr() );
     
     return RET_CONTINUE;
 }
@@ -2720,7 +2720,7 @@ int ONScripterLabel::btnwaitCommand()
 
         if ( exbtn_d_button_link.exbtn_ctl ){
             SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
-            decodeExbtnControl( accumulation_surface, exbtn_d_button_link.exbtn_ctl, &check_src_rect );
+            decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect );
         }
 
         ButtonLink *p_button_link = root_button_link.next;
@@ -2740,7 +2740,7 @@ int ONScripterLabel::btnwaitCommand()
 
         flush( refreshMode() );
 
-        flushEvent();
+        //flushEvent();
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
 

@@ -606,6 +606,7 @@ void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
 void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
+    current_button_state.down_flag = false;
     if ( automode_flag ){
         remaining_time = -1;
         automode_flag = false;
@@ -677,8 +678,6 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
                 volatile_button_state.button = current_over_button;
                 if ( event->type == SDL_KEYDOWN )
                     current_button_state.down_flag = true;
-                else
-                    current_button_state.down_flag = false;
             }
             else{
                 current_button_state.button = 0;

@@ -70,7 +70,6 @@ void AnimationInfo::reset()
 
     trans = 256;
     pos.x = pos.y = 0;
-    displayable = false;
     visible = false;
     abs_flag = true;
 

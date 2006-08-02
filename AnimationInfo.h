@@ -67,7 +67,6 @@ public:
     char *mask_file_name;
 
     /* Variables from AnimationInfo */
-    bool displayable; // false if an image is loaded but is not printed
     bool visible;
     bool abs_flag;
     int trans;

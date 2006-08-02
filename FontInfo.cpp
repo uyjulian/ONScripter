@@ -194,7 +194,7 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
     if (tateyoko_mode == YOKO_MODE){
         if (start_xy[1] == xy[1]){
             rect.x = top_xy[0] + pitch_xy[0]*start_xy[0]/2;
-            rect.w = pitch_xy[0]*(xy[0]-start_xy[0]+2)/2;
+            rect.w = pitch_xy[0]*(xy[0]-start_xy[0])/2+1;
         }
         else{
             rect.x = top_xy[0];
@@ -208,7 +208,7 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2], int ratio1, int ratio2)
         rect.w = pitch_xy[0]*(start_xy[0]-xy[0]+2)/2;
         if (start_xy[0] == xy[0]){
             rect.y = top_xy[1] + pitch_xy[1]*start_xy[1]/2;
-            rect.h = pitch_xy[1]*(xy[1]-start_xy[1]+2)/2;
+            rect.h = pitch_xy[1]*(xy[1]-start_xy[1])/2+1;
         }
         else{
             rect.y = top_xy[1];

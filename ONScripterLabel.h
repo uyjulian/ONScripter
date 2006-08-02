@@ -389,8 +389,7 @@ private:
            REFRESH_SAYA_MODE        = 2,
            REFRESH_SHADOW_MODE      = 4,
            REFRESH_TEXT_MODE        = 8,
-           REFRESH_CURSOR_MODE      = 16,
-           REFRESH_DISPLAYABLE      = 32
+           REFRESH_CURSOR_MODE      = 16
     };
     
     int refresh_shadow_text_mode;
@@ -398,6 +397,7 @@ private:
     int display_mode, next_display_mode;
     int event_mode;
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
+    SDL_Surface *accumulation_comp_surface; // Complementary final image, i.e. Final image xor (shadow + text_surface)
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
@@ -479,9 +479,9 @@ private:
     void resetSentenceFont();
     void deleteButtonLink();
     void refreshMouseOverButton();
-    void refreshSprite( SDL_Surface *surface, int sprite_no, bool active_flag, int cell_no, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect );
+    void refreshSprite( int sprite_no, bool active_flag, int cell_no, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect );
 
-    void decodeExbtnControl( SDL_Surface *surface, const char *ctl_str, SDL_Rect *check_src_rect=NULL, SDL_Rect *check_dst_rect=NULL );
+    void decodeExbtnControl( const char *ctl_str, SDL_Rect *check_src_rect=NULL, SDL_Rect *check_dst_rect=NULL );
     
     void disableGetButtonFlag();
     int getNumberFromBuffer( const char **buf );

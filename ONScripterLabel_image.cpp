@@ -277,8 +277,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         else
             top = z_order;
         for ( i=MAX_SPRITE_NUM-1 ; i>top ; i-- ){
-            if (refresh_mode & REFRESH_DISPLAYABLE) sprite_info[i].displayable = true;
-            if ( sprite_info[i].image_surface && sprite_info[i].displayable && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
@@ -307,8 +306,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         else
             top = 0;
         for ( i=z_order ; i>=top ; i-- ){
-            if (refresh_mode & REFRESH_DISPLAYABLE) sprite_info[i].displayable = true;
-            if ( sprite_info[i].image_surface && sprite_info[i].displayable && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
                 drawTaggedSurface( surface, &sprite_info[i], clip );
             }
         }
@@ -356,8 +354,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
     }
 }
 
-void ONScripterLabel::refreshSprite( SDL_Surface *surface, int sprite_no,
-                                     bool active_flag, int cell_no,
+void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_no,
                                      SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     if ( sprite_info[sprite_no].image_name && 

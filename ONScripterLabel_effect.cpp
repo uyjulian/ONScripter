@@ -59,11 +59,20 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
           case COLOR_EFFECT_IMAGE:
           case BG_EFFECT_IMAGE:
           case TACHI_EFFECT_IMAGE:
+            int refresh_mode = refreshMode();
             if (effect_no == 1){
-                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refreshMode() | REFRESH_DISPLAYABLE );
+                refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refresh_mode );
+                if (refresh_mode & REFRESH_SHADOW_MODE)
+                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+                else
+                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, refresh_mode | refresh_shadow_text_mode );
             }
             else{
-                refreshSurface( effect_dst_surface, NULL, refreshMode() | REFRESH_DISPLAYABLE );
+                refreshSurface( effect_dst_surface, NULL, refresh_mode );
+                if (refresh_mode & REFRESH_SHADOW_MODE)
+                    refreshSurface( accumulation_comp_surface, NULL, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+                else
+                    refreshSurface( accumulation_comp_surface, NULL, refresh_mode | refresh_shadow_text_mode );
             }
             break;
         }
