@@ -1293,12 +1293,12 @@ int ONScripterLabel::refreshMode()
     if ( next_display_mode == TEXT_DISPLAY_MODE ||
          (system_menu_mode == SYSTEM_NULL) && 
          erase_text_window_mode == 0 &&
-         (current_refresh_mode & REFRESH_SHADOW_MODE) &&
+         //(current_refresh_mode & REFRESH_SHADOW_MODE) && // commented out in 20060803
          text_on_flag ){
         ret = refresh_shadow_text_mode;
     }
 
-    if (system_menu_mode == SYSTEM_NULL) current_refresh_mode = ret;
+    //if (system_menu_mode == SYSTEM_NULL) current_refresh_mode = ret; // commented out in 20060803
 
     return ret;
 }

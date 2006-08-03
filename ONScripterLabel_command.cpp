@@ -2666,11 +2666,11 @@ int ONScripterLabel::btnwaitCommand()
     bool del_flag=false, textbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
-        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        if (erase_text_window_mode > 0) display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "btnwait" ) ){
         del_flag = true;
-        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        if (erase_text_window_mode > 0) display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "textbtnwait" ) ){
         textbtn_flag = true;
