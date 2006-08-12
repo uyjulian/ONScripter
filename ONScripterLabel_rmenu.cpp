@@ -55,7 +55,8 @@ void ONScripterLabel::enterSystemCall()
     event_mode = IDLE_EVENT_MODE;
     system_menu_enter_flag = true;
     yesno_caller = SYSTEM_NULL;
-    next_display_mode = TEXT_DISPLAY_MODE;
+    shelter_display_mode = display_mode;
+    display_mode = TEXT_DISPLAY_MODE;
     shelter_draw_cursor_flag = draw_cursor_flag;
     draw_cursor_flag = false;
 }
@@ -63,7 +64,7 @@ void ONScripterLabel::enterSystemCall()
 void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
     current_font = &sentence_font;
-    next_display_mode = display_mode;
+    display_mode = shelter_display_mode;
     system_menu_mode = SYSTEM_NULL;
     system_menu_enter_flag = false;
     yesno_caller = SYSTEM_NULL;
@@ -254,7 +255,7 @@ void ONScripterLabel::executeWindowErase()
         leaveSystemCall();
     }
     else{
-        next_display_mode = NORMAL_DISPLAY_MODE;
+        display_mode = NORMAL_DISPLAY_MODE;
         flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
 
         event_mode = WAIT_BUTTON_MODE;

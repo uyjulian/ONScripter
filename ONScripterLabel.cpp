@@ -554,8 +554,7 @@ void ONScripterLabel::reset()
     key_pressed_flag = false;
     shift_pressed_status = 0;
     ctrl_pressed_status = 0;
-    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
-    current_refresh_mode = REFRESH_NORMAL_MODE;
+    display_mode = NORMAL_DISPLAY_MODE;
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
 
@@ -699,9 +698,9 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
     refreshSurface( accumulation_surface, &rect, refresh_mode );
     if (refresh_mode != REFRESH_NONE_MODE && !(refresh_mode & REFRESH_CURSOR_MODE)){
         if (refresh_mode & REFRESH_SHADOW_MODE)
-            refreshSurface( accumulation_comp_surface, &rect, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+            refreshSurface( accumulation_comp_surface, &rect, (refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE) | REFRESH_COMP_MODE );
         else
-            refreshSurface( accumulation_comp_surface, &rect, refresh_mode | refresh_shadow_text_mode );
+            refreshSurface( accumulation_comp_surface, &rect, refresh_mode | refresh_shadow_text_mode | REFRESH_COMP_MODE );
     }
 
     SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
@@ -1288,19 +1287,10 @@ void ONScripterLabel::saveEnvData()
 
 int ONScripterLabel::refreshMode()
 {
-    int ret = REFRESH_NORMAL_MODE;
+    if (display_mode == TEXT_DISPLAY_MODE)
+        return refresh_shadow_text_mode;
 
-    if ( next_display_mode == TEXT_DISPLAY_MODE ||
-         (system_menu_mode == SYSTEM_NULL) && 
-         erase_text_window_mode == 0 &&
-         //(current_refresh_mode & REFRESH_SHADOW_MODE) && // commented out in 20060803
-         text_on_flag ){
-        ret = refresh_shadow_text_mode;
-    }
-
-    //if (system_menu_mode == SYSTEM_NULL) current_refresh_mode = ret; // commented out in 20060803
-
-    return ret;
+    return REFRESH_NORMAL_MODE;
 }
 
 void ONScripterLabel::quit()

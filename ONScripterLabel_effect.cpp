@@ -63,16 +63,16 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
             if (effect_no == 1){
                 refreshSurface( effect_dst_surface, &dirty_rect.bounding_box, refresh_mode );
                 if (refresh_mode & REFRESH_SHADOW_MODE)
-                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, (refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE) | REFRESH_COMP_MODE );
                 else
-                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, refresh_mode | refresh_shadow_text_mode );
+                    refreshSurface( accumulation_comp_surface, &dirty_rect.bounding_box, refresh_mode | refresh_shadow_text_mode | REFRESH_COMP_MODE );
             }
             else{
                 refreshSurface( effect_dst_surface, NULL, refresh_mode );
                 if (refresh_mode & REFRESH_SHADOW_MODE)
-                    refreshSurface( accumulation_comp_surface, NULL, refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE );
+                    refreshSurface( accumulation_comp_surface, NULL, (refresh_mode & ~REFRESH_SHADOW_MODE & ~REFRESH_TEXT_MODE) | REFRESH_COMP_MODE  );
                 else
-                    refreshSurface( accumulation_comp_surface, NULL, refresh_mode | refresh_shadow_text_mode );
+                    refreshSurface( accumulation_comp_surface, NULL, refresh_mode | refresh_shadow_text_mode | REFRESH_COMP_MODE );
             }
             break;
         }

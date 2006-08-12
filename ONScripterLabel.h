@@ -389,12 +389,12 @@ private:
            REFRESH_SAYA_MODE        = 2,
            REFRESH_SHADOW_MODE      = 4,
            REFRESH_TEXT_MODE        = 8,
-           REFRESH_CURSOR_MODE      = 16
+           REFRESH_CURSOR_MODE      = 16,
+           REFRESH_COMP_MODE        = 32
     };
     
     int refresh_shadow_text_mode;
-    int current_refresh_mode;
-    int display_mode, next_display_mode;
+    int display_mode;
     int event_mode;
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *accumulation_comp_surface; // Complementary final image, i.e. Final image xor (shadow + text_surface)
@@ -718,6 +718,7 @@ private:
     int  system_menu_mode;
 
     int  shelter_event_mode;
+    int  shelter_display_mode;
     bool shelter_draw_cursor_flag;
     struct TextBuffer *cached_text_buffer;
     

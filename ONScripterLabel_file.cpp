@@ -485,8 +485,7 @@ int ONScripterLabel::loadSaveFile( int no )
     num_chars_in_sentence = 0;
     cached_text_buffer = current_text_buffer;
 
-    display_mode = next_display_mode = TEXT_DISPLAY_MODE;
-    current_refresh_mode = REFRESH_NORMAL_MODE;
+    display_mode = shelter_display_mode = TEXT_DISPLAY_MODE;
 
     event_mode = tmp_event_mode;
     if ( event_mode & WAIT_BUTTON_MODE ) event_mode = WAIT_SLEEP_MODE; // Re-execute the selectCommand, etc.

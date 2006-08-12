@@ -151,7 +151,7 @@ int ONScripterLabel::textonCommand()
     text_on_flag = true;
     if ( !(display_mode & TEXT_DISPLAY_MODE) ){
         dirty_rect.fill( screen_width, screen_height );
-        display_mode = next_display_mode = TEXT_DISPLAY_MODE;
+        display_mode = TEXT_DISPLAY_MODE;
         flush(refreshMode());
     }
 
@@ -163,7 +163,7 @@ int ONScripterLabel::textoffCommand()
     text_on_flag = false;
     if ( display_mode & TEXT_DISPLAY_MODE ){
         dirty_rect.fill( screen_width, screen_height );
-        display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        display_mode = NORMAL_DISPLAY_MODE;
         flush(refreshMode());
     }
 
@@ -303,6 +303,8 @@ int ONScripterLabel::strspCommand()
     }
 
     ai->trans_mode = AnimationInfo::TRANS_STRING;
+    ai->trans = 256;
+    ai->visible = true;
     ai->is_single_line = false;
     ai->is_tight_region = false;
     setupAnimationInfo(ai, &fi);
@@ -576,8 +578,8 @@ int ONScripterLabel::setwindow3Command()
     clearCurrentTextBuffer();
     indent_offset = 0;
     line_enter_status = 0;
+    display_mode = NORMAL_DISPLAY_MODE;
     flush( refreshMode(), &sentence_font_info.pos );
-    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
 }
@@ -604,12 +606,11 @@ int ONScripterLabel::setwindowCommand()
 {
     setwindowCore();
     
-    dirty_rect.add( sentence_font_info.pos );
     lookbackflushCommand();
     indent_offset = 0;
     line_enter_status = 0;
+    display_mode = NORMAL_DISPLAY_MODE;
     flush( refreshMode(), &sentence_font_info.pos );
-    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
     
     return RET_CONTINUE;
 }
@@ -2666,11 +2667,11 @@ int ONScripterLabel::btnwaitCommand()
     bool del_flag=false, textbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
-        if (erase_text_window_mode > 0) display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        if (erase_text_window_mode > 0) display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "btnwait" ) ){
         del_flag = true;
-        if (erase_text_window_mode > 0) display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
+        if (erase_text_window_mode > 0) display_mode = NORMAL_DISPLAY_MODE;
     }
     else if ( script_h.isName( "textbtnwait" ) ){
         textbtn_flag = true;
@@ -2711,12 +2712,6 @@ int ONScripterLabel::btnwaitCommand()
     else{
         shortcut_mouse_line = 0;
         skip_flag = false;
-
-        /* ---------------------------------------- */
-        /* Resotre csel button */
-        if ( refreshMode() & REFRESH_TEXT_MODE ){
-            display_mode = next_display_mode = TEXT_DISPLAY_MODE;
-        }
 
         if ( exbtn_d_button_link.exbtn_ctl ){
             SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};

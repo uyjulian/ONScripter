@@ -352,8 +352,6 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
             return RET_WAIT | RET_REREAD;
         }
         else{
-            next_display_mode = TEXT_DISPLAY_MODE;
-            refreshMode();
             SDL_BlitSurface( accumulation_comp_surface, NULL, effect_dst_surface, NULL );
             SDL_BlitSurface( accumulation_surface, NULL, accumulation_comp_surface, NULL );
             dirty_rect.clear();
@@ -379,8 +377,6 @@ int ONScripterLabel::leaveTextDisplayMode()
             return RET_WAIT | RET_REREAD;
         }
         else{
-            next_display_mode = NORMAL_DISPLAY_MODE;
-            refreshMode();
             SDL_BlitSurface( accumulation_comp_surface, NULL, effect_dst_surface, NULL );
             SDL_BlitSurface( accumulation_surface, NULL, accumulation_comp_surface, NULL );
             dirty_rect.add( sentence_font_info.pos );

@@ -358,9 +358,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     }
     script_h.setCurrent( buf );
 
-    display_mode = next_display_mode = NORMAL_DISPLAY_MODE;
-    current_refresh_mode = REFRESH_NORMAL_MODE;
-
+    display_mode = shelter_display_mode = TEXT_DISPLAY_MODE;
     clickstr_state = CLICK_NONE;
     event_mode = 0;//WAIT_SLEEP_MODE;
     draw_cursor_flag = false;
