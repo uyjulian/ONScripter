@@ -799,7 +799,6 @@ int ONScripterLabel::selectCommand()
 
         flush( refreshMode() );
         
-        flushEvent();
         event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
         advancePhase();
         refreshMouseOverButton();
@@ -2735,7 +2734,6 @@ int ONScripterLabel::btnwaitCommand()
 
         flush( refreshMode() );
 
-        //flushEvent();
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
 

@@ -1276,6 +1276,8 @@ void ONScripterLabel::saveEnvData()
         writeInt( DEFAULT_VOLUME - music_volume, output_flag );
         writeInt( kidokumode_flag?1:0, output_flag );
         writeInt( 0, output_flag ); // ?
+        writeChar( 0, output_flag ); // ?
+        writeInt( 1000, output_flag ); // ?
 
         if (i==1) break;
         allocFileIOBuf();

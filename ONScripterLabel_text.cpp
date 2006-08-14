@@ -157,7 +157,6 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
             sentence_font.advanceCharInHankaku(2);
 
         if ( lookback_flag ){
-            current_text_buffer->addBuffer( 0x0a );
             for (int i=0 ; i<indent_offset ; i++){
                 current_text_buffer->addBuffer(((char*)"Å@")[0]);
                 current_text_buffer->addBuffer(((char*)"Å@")[1]);
@@ -646,7 +645,6 @@ int ONScripterLabel::processText()
             }
 
             if (sentence_font.isEndOfLine(i)){
-                current_text_buffer->addBuffer( 0x0a );
                 sentence_font.newLine();
                 for (int i=0 ; i<indent_offset ; i++){
                     current_text_buffer->addBuffer(((char*)"Å@")[0]);

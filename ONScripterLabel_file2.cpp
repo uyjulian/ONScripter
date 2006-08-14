@@ -119,6 +119,12 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     readInt(); // 0
     readInt(); // 0
     
+    if (file_version >= 203){
+        readInt(); // -1
+        readInt(); // -1
+        readInt(); // -1
+    }
+    
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
         sprite_info[i].remove();
         readStr( &sprite_info[i].image_name );
@@ -131,6 +137,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         if ( readInt() == 1 ) sprite_info[i].visible = true;
         else                  sprite_info[i].visible = false;
         sprite_info[i].current_cell = readInt();
+        if (file_version >= 203) readInt(); // -1
     }
 
     readVariables( 0, script_h.global_variable_border );
@@ -340,6 +347,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
             current_text_buffer->buffer2[current_text_buffer->buffer2_count] = readChar();
         }
         while( current_text_buffer->buffer2[current_text_buffer->buffer2_count++] );
+        if (file_version >= 203) readChar(); // 0
         current_text_buffer->buffer2_count--;
         current_text_buffer = current_text_buffer->next;
     }
@@ -424,6 +432,10 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
+
+    writeInt( -1, output_flag );
+    writeInt( -1, output_flag );
+    writeInt( -1, output_flag );
     
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
         writeStr( sprite_info[i].image_name, output_flag );
@@ -431,6 +443,7 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
         writeInt( sprite_info[i].pos.y * screen_ratio2 / screen_ratio1, output_flag );
         writeInt( sprite_info[i].visible?1:0, output_flag );
         writeInt( sprite_info[i].current_cell, output_flag );
+        writeInt( -1, output_flag );
     }
 
     writeVariables( 0, script_h.global_variable_border, output_flag );
@@ -561,6 +574,7 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     for ( i=0 ; i<text_num ; i++ ){
         for ( j=0 ; j<tb->buffer2_count ; j++ )
             writeChar( tb->buffer2[j], output_flag );
+        writeChar( 0, output_flag );
         writeChar( 0, output_flag );
         tb = tb->next;
     }
