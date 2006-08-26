@@ -319,6 +319,15 @@ void ONScripterLabel::restoreTextBuffer()
 #endif
             if ( IS_TWO_BYTE(out_text[0]) ){
                 out_text[1] = current_text_buffer->buffer2[i+1];
+                
+                if (IS_KINSOKU( current_text_buffer->buffer2+i+2 )){
+                    int i = 2;
+                    while (!f_info.isEndOfLine(i) &&
+                           IS_KINSOKU( current_text_buffer->buffer2+i+2 )){
+                        i += 2;
+                    }
+                    if (f_info.isEndOfLine(i)) f_info.newLine();
+                }
             }
             else{
                 out_text[1] = '\0';

@@ -332,7 +332,12 @@ int ScriptParser::returnCommand()
     
     current_label_info = script_h.getLabelByAddress( last_nest_info->next_script );
     current_line = script_h.getLineByAddress( last_nest_info->next_script );
-    script_h.setCurrent( last_nest_info->next_script );
+
+    char *buf = script_h.getNext();
+    if ( buf[0] == 0x0a || buf[0] == ':' || buf[0] == ';' )
+        script_h.setCurrent( last_nest_info->next_script );
+    else
+        setCurrentLabel( script_h.readLabel()+1 );
     
     last_nest_info = last_nest_info->previous;
     delete last_nest_info->next;
