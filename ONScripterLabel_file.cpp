@@ -40,7 +40,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 3
+#define SAVEFILE_VERSION_MINOR 4
 
 #define READ_LENGTH 4096
 

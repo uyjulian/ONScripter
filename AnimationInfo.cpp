@@ -72,6 +72,8 @@ void AnimationInfo::reset()
     pos.x = pos.y = 0;
     visible = false;
     abs_flag = true;
+    scale_x = scale_y = rot = 0;
+    blending_mode = 0;
 
     font_size_xy[0] = font_size_xy[1] = -1;
     font_pitch = -1;

@@ -338,6 +338,39 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         readStr( &ruby_struct.font_name );
         sentence_font.setRubyOnFlag(rubyon_flag);
     }
+
+    if (file_version >= 204){
+        readInt();
+        
+        for ( i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
+            sprite2_info[i].remove();
+            readStr( &sprite2_info[i].image_name );
+            if ( sprite2_info[i].image_name ){
+                parseTaggedString( &sprite2_info[i] );
+                setupAnimationInfo( &sprite2_info[i] );
+            }
+            sprite2_info[i].pos.x = readInt() * screen_ratio1 / screen_ratio2;
+            sprite2_info[i].pos.y = readInt() * screen_ratio1 / screen_ratio2;
+            sprite2_info[i].scale_x = readInt();
+            sprite2_info[i].scale_y = readInt();
+            sprite2_info[i].rot = readInt();
+            if ( readInt() == 1 ) sprite2_info[i].visible = true;
+            else                  sprite2_info[i].visible = false;
+            j = readInt();
+            if (j == -1)
+                sprite2_info[i].trans = 256;
+            else
+                sprite2_info[i].trans = j;
+            sprite2_info[i].blending_mode = readInt();
+        }
+        
+        readInt();
+        readInt();
+        readInt();
+        readInt();
+        readInt();
+        readInt();
+    }
     
     int text_num = readInt();
     start_text_buffer = current_text_buffer;
@@ -347,12 +380,15 @@ int ONScripterLabel::loadSaveFile2( int file_version )
             current_text_buffer->buffer2[current_text_buffer->buffer2_count] = readChar();
         }
         while( current_text_buffer->buffer2[current_text_buffer->buffer2_count++] );
-        if (file_version >= 203) readChar(); // 0
+        if (file_version == 203) readChar(); // 0
         current_text_buffer->buffer2_count--;
         current_text_buffer = current_text_buffer->next;
     }
     clearCurrentTextBuffer();
 
+    if (file_version >= 204) readInt();
+    if (file_version >= 204) readInt();
+    
     i = readInt();
     current_label_info = script_h.getLabelByLine( i );
     current_line = i - current_label_info.start_line;
@@ -563,6 +599,30 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt( ruby_struct.font_size_xy[1], output_flag );
     writeStr( ruby_struct.font_name, output_flag );
     
+    writeInt( 0, output_flag );
+    
+    for ( i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
+        writeStr( sprite2_info[i].image_name, output_flag );
+        writeInt( sprite2_info[i].pos.x * screen_ratio2 / screen_ratio1, output_flag );
+        writeInt( sprite2_info[i].pos.y * screen_ratio2 / screen_ratio1, output_flag );
+        writeInt( sprite2_info[i].scale_x, output_flag );
+        writeInt( sprite2_info[i].scale_y, output_flag );
+        writeInt( sprite2_info[i].rot, output_flag );
+        writeInt( sprite2_info[i].visible?1:0, output_flag );
+        if (sprite2_info[i].trans == 256)
+            writeInt( -1, output_flag );
+        else
+            writeInt( sprite2_info[i].trans, output_flag );
+        writeInt( sprite2_info[i].blending_mode, output_flag );
+    }
+
+    writeInt( 0, output_flag );
+    writeInt( 0, output_flag );
+    writeInt( 0, output_flag );
+    writeInt( 0, output_flag );
+    writeInt( 0, output_flag );
+    writeInt( 0, output_flag );
+    
     TextBuffer *tb = current_text_buffer;
     int text_num = 0;
     while( tb != start_text_buffer ){
@@ -575,10 +635,12 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
         for ( j=0 ; j<tb->buffer2_count ; j++ )
             writeChar( tb->buffer2[j], output_flag );
         writeChar( 0, output_flag );
-        writeChar( 0, output_flag );
         tb = tb->next;
     }
 
+    writeInt(0, output_flag);
+    writeInt(0, output_flag);
+    
     writeInt( current_label_info.start_line + current_line, output_flag );
     char *buf = script_h.getAddressByLine( current_label_info.start_line + current_line );
     //printf("save %d:%d\n", current_label_info.start_line, current_line);

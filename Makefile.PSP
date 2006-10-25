@@ -8,15 +8,15 @@ PSPPRE = $(shell psp-config --psp-prefix)
 PSPDEV = $(shell psp-config --pspdev-path)
 PSPSDK = $(shell psp-config --pspsdk-path)
 
-INCS  = $(shell $(PSPDEV)/bin/sdl-config --cflags) $(shell $(PSPDEV)/bin/freetype-config --cflags)
-LIBS  = $(shell $(PSPDEV)/bin/sdl-config --libs)
+INCS  = $(shell $(PSPPRE)/bin/sdl-config --cflags) $(shell $(PSPPRE)/bin/freetype-config --cflags)
+LIBS  = $(shell $(PSPPRE)/bin/sdl-config --libs)
 LIBS += -lSDL_ttf -lSDL_image -lSDL_mixer -lSDL -lSDLmain -lfreetype -lbz2 -lm -ljpeg -lpng -lz -lmad -lvorbisidec
 
 # Include PSPSDK and Libc Headers
 INCS += -I$(PSPSDK)/include -I$(PSPDEV)/include -I$(PSPPRE)/include
 
 # Link PSPSDK and Libc Libraries
-LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lpspsdk -lpspgu -lpspdebug -lpspdisplay -lpsphprm -lpspaudio -lpspge -lpspctrl -lc -lpspuser -lpspkernel
+LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lstdc++ -lpspsdk -lpspgu -lpspdebug -lpspdisplay -lpsphprm -lpspaudio -lpspge -lpspctrl -lc -lpspnet_inet -lpspuser -lpspkernel
 
 
 # with OggVorbis (Tremor) in PDA size (QVGA)
@@ -32,8 +32,8 @@ OBJSUFFIX = .o
 .SUFFIXES:
 .SUFFIXES: $(OBJSUFFIX) .cpp .h
 
-CC = psp-g++ 
-LD = psp-g++ -o 
+CC = psp-gcc 
+LD = psp-gcc -o
 
 CFLAGS = -g -G0 -O2 -Wall -Wpointer-arith -fno-exceptions -fno-rtti -fno-check-new -pipe -c $(INCS) $(DEFS)
 RM = rm -f
@@ -44,11 +44,13 @@ EXT_OBJS = MadWrapper$(OBJSUFFIX)
 
 # onscripter.elf -> EBOOT.PBP for PSP Firmware version 1.0
 
-STRIP    = psp-strip
-MKSFO    = mksfo
-PACK_PBP = pack-pbp
+FIXUP_IMPORTS = psp-fixup-imports
+STRIP         = psp-strip
+MKSFO         = mksfo
+PACK_PBP      = pack-pbp
 
 PSP_TARGET       = onscripter$(EXESUFFIX)
+PSP_TARGET_FIXUP = onscripter_fixup$(EXESUFFIX)
 PSP_TARGET_STRIP = onscripter_strip$(EXESUFFIX)
 PSP_EBOOT_TITLE  = ONScripter for PSP
 PSP_EBOOT_SFO    = PARAM.SFO
@@ -67,13 +69,16 @@ EBOOT.PBP : $(PSP_TARGET_STRIP) $(PSP_EBOOT_SFO)
 $(PSP_EBOOT_SFO) :
 	$(MKSFO) '$(PSP_EBOOT_TITLE)' $(PSP_EBOOT_SFO)
 
-$(PSP_TARGET_STRIP) : $(PSP_TARGET)
-	$(STRIP) $(PSP_TARGET) -o $(PSP_TARGET_STRIP)
+$(PSP_TARGET_FIXUP) : $(PSP_TARGET)
+	$(FIXUP_IMPORTS) $(PSP_TARGET) -o $(PSP_TARGET_FIXUP)
+
+$(PSP_TARGET_STRIP) : $(PSP_TARGET_FIXUP)
+	$(STRIP) $(PSP_TARGET_FIXUP) -o $(PSP_TARGET_STRIP)
 
 include Makefile.onscripter
 
 # overriding
 clean :
 	$(RM) $(TARGET)
-	$(RM) $(PSP_TARGET) $(PSP_TARGET_STRIP) $(PSP_EBOOT_SFO)
+	$(RM) $(PSP_TARGET) $(PSP_TARGET_FIXUP) $(PSP_TARGET_STRIP) $(PSP_EBOOT_SFO)
 	$(RM) *.o

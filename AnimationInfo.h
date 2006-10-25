@@ -73,6 +73,9 @@ public:
     char *image_name;
     SDL_Surface *image_surface;
     unsigned char *alpha_buf;
+    int scale_x, scale_y, rot; // for lsp2
+    int blending_mode; // 0...normal, 1...additive
+    int cos_i, sin_i;
 
     int font_size_xy[2]; // used by prnum and lsp string
     int font_pitch; // used by lsp string

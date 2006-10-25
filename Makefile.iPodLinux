@@ -1,14 +1,14 @@
 # -*- Makefile -*-
 #
-# Makefile.iPodLinux - Makefile rules for uClinux on iPod (photo/nano/video)
+# Makefile.iPodLinux - Makefile rules for uCLinux on iPod (photo/nano/video)
 #   Thanks Shiikuru-san
 #
 # Playing movie and audio is not supported.
 #
 
-PREF = /usr/local/arm-uclinux-elf-tools/arm-uclinux-elf
+PREF = /usr/local/arm-uclinux-tools/arm-uclinux-elf
 
-INCS = `$(PREF)/bin/sdl-config --cflags`
+INCS = `$(PREF)/bin/sdl-config --cflags` `$(PREF)/bin/freetype-config --cflags`
 
 LIBS = `$(PREF)/bin/sdl-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lSDL -lmad -lfreetype -ljpeg -lbz2
 
@@ -17,7 +17,10 @@ LIBS = `$(PREF)/bin/sdl-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lSDL -
 # for iPod photo      : 220x176 -> 220x165
 #DEFS = -DIPODLINUX -DLINUX -DPDA -DPDA_WIDTH=220 -DBPP16 -DMP3_MAD
 # for iPod nano       : 176x132
-DEFS = -DIPODLINUX -DLINUX -DPDA -DPDA_WIDTH=176 -DBPP16 -DMP3_MAD
+#DEFS = -DIPODLINUX -DLINUX -DPDA -DPDA_WIDTH=176 -DBPP16 -DMP3_MAD
+
+# for iPod (nano, photo, 4G color, 5G) : Auto
+DEFS = -DIPODLINUX -DLINUX -DPDA -DPDA_AUTOSIZE -DBPP16 -DMP3_MAD
 
 EXESUFFIX =
 OBJSUFFIX = .o

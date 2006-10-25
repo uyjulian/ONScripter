@@ -275,6 +275,27 @@ void ONScripterLabel::initSDL()
     screen_ratio2 *= 320;
     screen_width   = screen_width  * PDA_WIDTH / 320;
     screen_height  = screen_height * PDA_WIDTH / 320;
+#elif defined(PDA) && defined(PDA_AUTOSIZE)
+    SDL_Rect **modes;
+    modes = SDL_ListModes(NULL, 0);
+    if (modes == (SDL_Rect **)0){
+        fprintf(stderr, "No Video mode available.\n");
+        exit(-1);
+    }
+    else if (modes == (SDL_Rect **)-1){
+        // no restriction
+    }
+ 	else{
+        int width;
+        if (modes[0]->w * 3 > modes[0]->h * 4)
+            width = (modes[0]->h / 3) * 4;
+        else
+            width = (modes[0]->w / 4) * 4;
+        screen_ratio1 *= width;
+        screen_ratio2 *= 320;
+        screen_width   = screen_width  * width / 320;
+        screen_height  = screen_height * width / 320;
+    }
 #endif
 
     screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );

@@ -51,6 +51,7 @@
 //#define DEFAULT_BLIT_FLAG (SDL_RLEACCEL)
 
 #define MAX_SPRITE_NUM 1000
+#define MAX_SPRITE2_NUM 256
 #define MAX_PARAM_NUM 100
 #define CUSTOM_EFFECT_NO 100
 
@@ -500,6 +501,7 @@ private:
     /* ---------------------------------------- */
     /* Sprite related variables */
     AnimationInfo sprite_info[MAX_SPRITE_NUM];
+    AnimationInfo sprite2_info[MAX_SPRITE2_NUM];
     bool all_sprite_hide_flag;
     
     /* ---------------------------------------- */

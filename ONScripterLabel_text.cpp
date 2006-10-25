@@ -618,7 +618,6 @@ int ONScripterLabel::processText()
             }
         }
         else if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-                  script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
                   !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
             string_buffer_offset += 2;
         }
@@ -629,7 +628,8 @@ int ONScripterLabel::processText()
     }
 
     
-    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a ||
+        script_h.getStringBuffer()[string_buffer_offset] == 0x00){
         indent_offset = 0; // redundant
         return RET_CONTINUE;
     }
@@ -818,7 +818,8 @@ int ONScripterLabel::processText()
                     return clickWait( out_text );
             }
             else if (script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-                     script_h.checkClickstr(&script_h.getStringBuffer()[string_buffer_offset+1]) == 1){
+                     script_h.checkClickstr(&script_h.getStringBuffer()[string_buffer_offset+1]) == 1 &&
+                     script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR){
                 if ( script_h.getStringBuffer()[ string_buffer_offset + 2 ] &&
                      script_h.checkClickstr(&script_h.getStringBuffer()[string_buffer_offset+2]) > 0){
                     clickstr_state = CLICK_NONE;
@@ -859,7 +860,6 @@ int ONScripterLabel::processText()
         
         if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
-                 script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
                 string_buffer_offset++;
             string_buffer_offset++;
@@ -877,4 +877,5 @@ int ONScripterLabel::processText()
 
     return RET_NOMATCH;
 }
+
 

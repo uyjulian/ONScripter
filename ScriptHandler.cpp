@@ -331,7 +331,7 @@ const char *ScriptHandler::readStr()
     while(1){
         parseStr(&buf);
         buf = checkComma(buf);
-        string_counter += strlen(string_buffer);
+        string_counter += strlen(str_string_buffer);
         if (string_counter+1 >= STRING_BUFFER_LENGTH)
             errorAndExit("readStr: string length exceeds 2048 bytes.");
         strcat(string_buffer, str_string_buffer);

@@ -2475,7 +2475,7 @@ int ONScripterLabel::cspCommand()
             root_button_link.removeSprite(i);
             sprite_info[i].remove();
         }
-    else{
+    else if (no >= 0 && no < MAX_SPRITE_NUM){
         if ( sprite_info[no].visible )
             dirty_rect.add( sprite_info[no].pos );
         root_button_link.removeSprite(no);
