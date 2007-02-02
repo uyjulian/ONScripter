@@ -56,6 +56,7 @@ public:
     FontInfo();
     void reset();
     void *openFont( char *font_file, int ratio1, int ratio2 );
+    void reopenFont( char *font_file, int ratio1, int ratio2 );
     void setTateyokoMode( int tateyoko_mode );
     int getTateyokoMode();
     int getRemainingLine();

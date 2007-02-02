@@ -74,6 +74,9 @@ struct BaseReader
     struct ArchiveInfo{
         struct ArchiveInfo *next;
         FILE *file_handle;
+#if defined(PSP)
+        int power_resume_number;
+#endif
         char *file_name;
         struct FileInfo *fi_list;
         unsigned int num_of_files;
@@ -82,6 +85,9 @@ struct BaseReader
         ArchiveInfo(){
             next = NULL;
             file_handle = NULL;
+#if defined(PSP)
+            power_resume_number = 0;
+#endif
             file_name = NULL;
             fi_list = NULL;
             num_of_files = 0;

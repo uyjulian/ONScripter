@@ -24,6 +24,53 @@
 #include "ONScripterLabel.h"
 #include "version.h"
 
+#if defined(PSP)
+#include <pspkernel.h>
+#include <pspdebug.h>
+#include <pspctrl.h>
+#include <pspdisplay.h>
+#include <stdio.h>
+#include <pspmoduleinfo.h>
+#include <psppower.h>
+
+int psp_power_resume_number = 0;
+
+int exit_callback(int arg1, int arg2, void *common)
+{
+    sceKernelExitGame();
+    return 0;
+}
+
+int power_callback(int unknown, int pwrflags, void *common)
+{
+    if (pwrflags & PSP_POWER_CB_RESUMING)
+        psp_power_resume_number++;
+    
+    return 0;
+}
+
+int CallbackThread(SceSize args, void *argp)
+{
+    int cbid;
+    cbid = sceKernelCreateCallback("Exit Callback", exit_callback, NULL);
+    sceKernelRegisterExitCallback(cbid);
+    cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
+    scePowerRegisterCallback(0, cbid);
+    sceKernelSleepThreadCB();
+
+    return 0;
+}
+
+int SetupCallbacks(void)
+{
+    int thid = 0;
+    thid = sceKernelCreateThread("update_thread", CallbackThread, 0x11, 0xFA0, 0, 0);
+    if (thid >= 0)
+        sceKernelStartThread(thid, 0, 0);
+    return thid;
+}
+#endif
+
 void optionHelp()
 {
     printf( "Usage: onscripter [option ...]\n" );
@@ -67,6 +114,7 @@ int main( int argc, char **argv )
 #if defined(PSP)
     ons.disableRescale();
     ons.enableButtonShortCut();
+    SetupCallbacks();
 #endif
 
     // ----------------------------------------

@@ -119,7 +119,7 @@ int ONScripterLabel::trapCommand()
         return RET_CONTINUE;
     }
 
-    const char *buf = script_h.readLabel();
+    const char *buf = script_h.readStr();
     if ( buf[0] == '*' ){
         setStr(&trap_dist, buf+1);
     }
@@ -228,7 +228,7 @@ int ONScripterLabel::talCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(false), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if (no >= 0){
@@ -236,7 +236,7 @@ int ONScripterLabel::talCommand()
             dirty_rect.add( tachi_info[ no ].pos );
         }
 
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
    }
 }
 
@@ -246,7 +246,7 @@ int ONScripterLabel::tablegotoCommand()
     int no = script_h.readInt();
 
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-        const char *buf = script_h.readLabel();
+        const char *buf = script_h.readStr();
         if ( count++ == no ){
             setCurrentLabel( buf+1 );
             break;
@@ -727,7 +727,7 @@ int ONScripterLabel::selectCommand()
 
                 // Label part
                 if (select_mode != SELECT_NUM_MODE){
-                    script_h.readLabel();
+                    script_h.readStr();
                     setStr( &slink->label, script_h.getStringBuffer()+1 );
                     //printf("Select label %s\n", slink->label );
                 }
@@ -1070,10 +1070,10 @@ int ONScripterLabel::printCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(false), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
     }
 }
 
@@ -1485,7 +1485,7 @@ int ONScripterLabel::ldCommand()
     if (no >= 0) buf = script_h.readStr();
     
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(false), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if (no >= 0){
@@ -1501,7 +1501,7 @@ int ONScripterLabel::ldCommand()
             }
         }
 
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
     }
 }
 
@@ -1621,13 +1621,13 @@ int ONScripterLabel::humanorderCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), &bg_info, bg_effect_image );
+        return doEffect( parseEffect(false), &bg_info, bg_effect_image );
     }
     else{
         for ( i=0 ; i<3 ; i++ )
             dirty_rect.add( tachi_info[i].pos );
 
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
     }
 }
 
@@ -2558,7 +2558,7 @@ int ONScripterLabel::clCommand()
     char loc = script_h.readLabel()[0];
     
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), NULL, TACHI_EFFECT_IMAGE );
+        return doEffect( parseEffect(false), NULL, TACHI_EFFECT_IMAGE );
     }
     else{
         if ( loc == 'l' || loc == 'a' ){
@@ -2574,7 +2574,7 @@ int ONScripterLabel::clCommand()
             tachi_info[2].remove();
         }
 
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
     }
 }
 
@@ -2980,7 +2980,7 @@ int ONScripterLabel::bgCommand()
     }
 
     if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(), &bg_info, bg_effect_image );
+        return doEffect( parseEffect(false), &bg_info, bg_effect_image );
     }
     else{
         for ( int i=0 ; i<3 ; i++ )
@@ -2992,7 +2992,7 @@ int ONScripterLabel::bgCommand()
         createBackground();
         dirty_rect.fill( screen_width, screen_height );
 
-        return setEffect( parseEffect() );
+        return setEffect( parseEffect(true) );
     }
 }
 

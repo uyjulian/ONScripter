@@ -25,15 +25,30 @@
 #include <stdio.h>
 #include <SDL_ttf.h>
 
+#if defined(PSP)
+#include <string.h>
+#include <stdlib.h>
+extern int psp_power_resume_number;
+#endif
+
 static struct FontContainer{
     FontContainer *next;
     int size;
     TTF_Font *font;
+#if defined(PSP)
+    SDL_RWops *rw_ops;
+    int power_resume_number;
+    char name[256];
+#endif
 
     FontContainer(){
         size = 0;
         next = NULL;
         font = NULL;
+#if defined(PSP)
+        rw_ops = NULL;
+        power_resume_number = 0;
+#endif
     };
 } root_font_container;
 
@@ -83,12 +98,30 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
         FILE *fp = fopen( font_file, "r" );
         if ( fp == NULL ) return NULL;
         fclose( fp );
+#if defined(PSP)
+        fc->next->rw_ops = SDL_RWFromFile(font_file, "r");
+        fc->next->font = TTF_OpenFontRW( fc->next->rw_ops, SDL_TRUE, font_size * ratio1 / ratio2 );
+        fc->next->power_resume_number = psp_power_resume_number;
+        strcpy(fc->next->name, font_file);
+#else
         fc->next->font = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+#endif
     }
 
     ttf_font = (void*)fc->next->font;
     
     return fc->next->font;
+}
+
+void FontInfo::reopenFont( char *font_file, int ratio1, int ratio2 )
+{
+#if defined(PSP)
+    if (fc->next->power_resume_number != psp_power_resume_number){
+        FILE *fp = fopen(fc->next->name, "r");
+        fc->next->rw_ops->hidden.stdio.fp = fp;
+        fc->next->power_resume_number = psp_power_resume_number;
+    }
+#endif
 }
 
 void FontInfo::setTateyokoMode( int tateyoko_mode )

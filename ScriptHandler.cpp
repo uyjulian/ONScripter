@@ -1173,6 +1173,22 @@ void ScriptHandler::parseStr( char **buf )
         str_string_buffer[7] = '\0';
         current_variable.type = VAR_NONE;
     }
+    else if ( **buf == '*' ){ // label
+        int c=0;
+        str_string_buffer[c++] = *(*buf)++;
+        SKIP_SPACE(*buf);
+        char ch = **buf;
+        while((ch >= 'a' && ch <= 'z') || 
+              (ch >= 'A' && ch <= 'Z') ||
+              (ch >= '0' && ch <= '9') ||
+              ch == '_'){
+            if (ch >= 'A' && ch <= 'Z') ch += 'a' - 'A';
+            str_string_buffer[c++] = ch;
+            ch = *++(*buf);
+        }
+        str_string_buffer[c] = '\0';
+        current_variable.type |= VAR_CONST;
+    }
     else{ // str alias
         char ch, alias_buf[512];
         int alias_buf_len = 0;

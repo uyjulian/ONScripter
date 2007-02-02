@@ -266,7 +266,7 @@ protected:
     bool effect_cut_flag;
 
     int readEffect( EffectLink *effect );
-    EffectLink *parseEffect();
+    EffectLink *parseEffect(bool init_flag);
 
     /* ---------------------------------------- */
     /* Lookback related variables */

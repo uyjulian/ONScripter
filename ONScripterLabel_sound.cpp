@@ -543,7 +543,7 @@ static size_t oc_read_func(void *ptr, size_t size, size_t nmemb, void *datasourc
 {
     OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
 
-    size_t len = size*nmemb;
+    ogg_int64_t len = size*nmemb;
     if (ogg_vorbis_info->pos+len > ogg_vorbis_info->length) 
         len = ogg_vorbis_info->length - ogg_vorbis_info->pos;
     memcpy(ptr, ogg_vorbis_info->buf+ogg_vorbis_info->pos, len);

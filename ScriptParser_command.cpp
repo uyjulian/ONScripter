@@ -120,7 +120,7 @@ int ScriptParser::textgosubCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "textgosub: not in the define section" );
 
-    setStr( &textgosub_label, script_h.readLabel()+1 );
+    setStr( &textgosub_label, script_h.readStr()+1 );
     script_h.enableTextgosub(true);
     
     return RET_CONTINUE;
@@ -337,7 +337,7 @@ int ScriptParser::returnCommand()
     if ( buf[0] == 0x0a || buf[0] == ':' || buf[0] == ';' )
         script_h.setCurrent( last_nest_info->next_script );
     else
-        setCurrentLabel( script_h.readLabel()+1 );
+        setCurrentLabel( script_h.readStr()+1 );
     
     last_nest_info = last_nest_info->previous;
     delete last_nest_info->next;
@@ -350,7 +350,7 @@ int ScriptParser::pretextgosubCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "pretextgosub: not in the define section" );
 
-    setStr( &pretextgosub_label, script_h.readLabel()+1 );
+    setStr( &pretextgosub_label, script_h.readStr()+1 );
     
     return RET_CONTINUE;
 }
@@ -619,7 +619,7 @@ int ScriptParser::loadgosubCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "loadgosub: not in the define section" );
 
-    setStr( &loadgosub_label, script_h.readLabel()+1 );
+    setStr( &loadgosub_label, script_h.readStr()+1 );
 
     return RET_CONTINUE;
 }
@@ -740,19 +740,13 @@ int ScriptParser::ifCommand()
     while(1){
         if (script_h.compareString("fchk")){
             script_h.readLabel();
-            if (script_h.getNext()[0] == '*')
-                buf = script_h.readLabel();
-            else
-                buf = script_h.readStr();
+            buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ) != NULL);
             //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
-            if (script_h.getNext()[0] == '*')
-                buf = script_h.readLabel();
-            else
-                buf = script_h.readStr();
+            buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ) != NULL);
             //printf("lchk %s (%d,%d)\n", buf, f, condition_flag );
         }
@@ -844,7 +838,7 @@ int ScriptParser::humanzCommand()
 
 int ScriptParser::gotoCommand()
 {
-    setCurrentLabel( script_h.readLabel()+1 );
+    setCurrentLabel( script_h.readStr()+1 );
     
     return RET_CONTINUE;
 }
@@ -862,7 +856,7 @@ void ScriptParser::gosubReal( const char *label, char *next_script )
 
 int ScriptParser::gosubCommand()
 {
-    const char *buf = script_h.readLabel();
+    const char *buf = script_h.readStr();
     gosubReal( buf+1, script_h.getNext() );
 
     return RET_CONTINUE;
@@ -1164,7 +1158,7 @@ int ScriptParser::breakCommand()
         delete last_nest_info->next;
         last_nest_info->next = NULL;
         
-        setCurrentLabel( script_h.readLabel()+1 );
+        setCurrentLabel( script_h.readStr()+1 );
     }
     else{
         break_flag = true;
