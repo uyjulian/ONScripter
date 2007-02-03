@@ -107,21 +107,17 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
         fc->next->font = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
 #endif
     }
-
-    ttf_font = (void*)fc->next->font;
-    
-    return fc->next->font;
-}
-
-void FontInfo::reopenFont( char *font_file, int ratio1, int ratio2 )
-{
 #if defined(PSP)
-    if (fc->next->power_resume_number != psp_power_resume_number){
+    else if (fc->next->font_resume_number != psp_power_resume_number){
         FILE *fp = fopen(fc->next->name, "r");
         fc->next->rw_ops->hidden.stdio.fp = fp;
         fc->next->power_resume_number = psp_power_resume_number;
     }
 #endif
+
+    ttf_font = (void*)fc->next->font;
+    
+    return fc->next->font;
 }
 
 void FontInfo::setTateyokoMode( int tateyoko_mode )

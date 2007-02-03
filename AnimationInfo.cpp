@@ -584,7 +584,7 @@ void AnimationInfo::fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a )
     SDL_UnlockSurface( image_surface );
 }
 
-void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
+void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha )
 {
     if (surface == NULL) return;
     SDL_LockSurface( surface );
@@ -686,10 +686,19 @@ void AnimationInfo::setupImage( SDL_Surface *surface, SDL_Surface *surface_m )
         }
     }
     else { // TRANS_COPY
-        for (i=0 ; i<h ; i++){
-            for (j=0 ; j<w ; j++, buffer++)
-                SET_PIXEL(*buffer, 0xff);
-            buffer_dst += dst_margin;
+        if (has_alpha){
+            for (i=0 ; i<h ; i++){
+                for (j=0 ; j<w ; j++, buffer++)
+                    SET_PIXEL(*buffer, *buffer >> 24);
+                buffer_dst += dst_margin;
+            }
+        }
+        else{
+            for (i=0 ; i<h ; i++){
+                for (j=0 ; j<w ; j++, buffer++)
+                    SET_PIXEL(*buffer, 0xff);
+                buffer_dst += dst_margin;
+            }
         }
     }
     

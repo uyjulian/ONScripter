@@ -179,13 +179,14 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         }
     }
     else{
-        SDL_Surface *surface = loadImage( anim->file_name );
+        bool has_alpha;
+        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha );
 
         SDL_Surface *surface_m = NULL;
         if (anim->trans_mode == AnimationInfo::TRANS_MASK)
             surface_m = loadImage( anim->mask_file_name );
         
-        anim->setupImage(surface, surface_m);
+        anim->setupImage(surface, surface_m, has_alpha);
 
         if ( surface ) SDL_FreeSurface(surface);
         if ( surface_m ) SDL_FreeSurface(surface_m);

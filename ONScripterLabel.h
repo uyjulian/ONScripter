@@ -673,7 +673,7 @@ private:
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
     void executeLabel();
-    SDL_Surface *loadImage( char *file_name );
+    SDL_Surface *loadImage( char *file_name, bool *has_alpha=NULL );
     int parseLine();
 
     void mouseOverCheck( int x, int y );

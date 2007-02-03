@@ -152,7 +152,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
 #if defined(PSP)
     else
-        info->reopenFont( font_file, screen_ratio1, screen_ratio2 );
+        info->openFont( font_file, screen_ratio1, screen_ratio2 );
 #endif
 
     if ( info->isEndOfLine() ){

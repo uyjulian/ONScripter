@@ -948,7 +948,7 @@ int ONScripterLabel::parseLine( )
     return ret;
 }
 
-SDL_Surface *ONScripterLabel::loadImage( char *file_name )
+SDL_Surface *ONScripterLabel::loadImage( char *file_name, bool *has_alpha )
 {
     if ( !file_name ) return NULL;
     unsigned long length = script_h.cBR->getFileLength( file_name );
@@ -970,6 +970,13 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name )
         SDL_RWops *src = SDL_RWFromMem( buffer, length );
         tmp = IMG_LoadJPG_RW(src);
         SDL_RWclose(src);
+    }
+
+    if (has_alpha){
+        if (tmp->format->Amask)
+            *has_alpha = true;
+        else
+            *has_alpha = false;
     }
     
     delete[] buffer;
