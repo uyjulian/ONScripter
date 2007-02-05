@@ -2,7 +2,7 @@
  * 
  *  FontInfo.cpp - Font information storage class of ONScripter
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -108,7 +108,7 @@ void *FontInfo::openFont( char *font_file, int ratio1, int ratio2 )
 #endif
     }
 #if defined(PSP)
-    else if (fc->next->font_resume_number != psp_power_resume_number){
+    else if (fc->next->power_resume_number != psp_power_resume_number){
         FILE *fp = fopen(fc->next->name, "r");
         fc->next->rw_ops->hidden.stdio.fp = fp;
         fc->next->power_resume_number = psp_power_resume_number;
