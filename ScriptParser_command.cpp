@@ -417,8 +417,8 @@ int ScriptParser::nextCommand()
     val = script_h.variable_data[ last_nest_info->var_no ].num;
     
     if ( break_flag ||
-         last_nest_info->step >= 0 && val > last_nest_info->to ||
-         last_nest_info->step < 0  && val < last_nest_info->to ){
+         last_nest_info->step > 0 && val > last_nest_info->to ||
+         last_nest_info->step < 0 && val < last_nest_info->to ){
         break_flag = false;
         last_nest_info = last_nest_info->previous;
 
@@ -928,7 +928,8 @@ int ScriptParser::forCommand()
         errorAndExit( "for: no =" );
 
     script_h.setCurrent(script_h.getNext() + 1);
-    script_h.setInt( &script_h.pushed_variable, script_h.readInt() );
+    int from = script_h.readInt();
+    script_h.setInt( &script_h.pushed_variable, from );
     
     if ( !script_h.compareString("to") )
         errorAndExit( "for: no to" );
@@ -944,6 +945,12 @@ int ScriptParser::forCommand()
     else{
         last_nest_info->step = 1;
     }
+
+    if (last_nest_info->step > 0 && from > last_nest_info->to ||
+        last_nest_info->step < 0 && from < last_nest_info->to)
+        break_flag = true;
+    else
+        break_flag = false;
     
     /* ---------------------------------------- */
     /* Step forward callee's label info */

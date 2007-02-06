@@ -450,6 +450,7 @@ void ONScripterLabel::executeSystemYesNo()
                 indent_offset = 0;
                 line_enter_status = 0;
                 string_buffer_offset = 0;
+                break_flag = false;
 
                 if (loadgosub_label)
                     gosubReal( loadgosub_label, script_h.getCurrent() );

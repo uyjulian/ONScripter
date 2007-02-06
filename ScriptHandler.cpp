@@ -364,7 +364,6 @@ int ScriptHandler::readInt()
 
 void ScriptHandler::skipToken()
 {
-    current_script = next_script;
     SKIP_SPACE( current_script );
     char *buf = current_script;
 
@@ -381,6 +380,8 @@ void ScriptHandler::skipToken()
         else
             buf++;
     }
+    if (text_flag && *buf == 0x0a) buf++;
+    
     next_script = buf;
 }
 
