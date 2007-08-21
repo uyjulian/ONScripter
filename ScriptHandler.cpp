@@ -649,7 +649,7 @@ void ScriptHandler::readVariable( bool reread_flag )
     SKIP_SPACE(buf);
 
     bool ptr_flag = false;
-    if ( *buf == 'i' || *buf == 'f' ){
+    if ( *buf == 'i' || *buf == 's' ){
         ptr_flag = true;
         buf++;
     }
@@ -929,6 +929,7 @@ int ScriptHandler::readScript( char *path )
         }
         else if ( !strncmp( buf, "value", 5 ) ){
             buf += 5;
+            SKIP_SPACE(buf);
             global_variable_border = 0;
             while ( *buf >= '0' && *buf <= '9' )
                 global_variable_border = global_variable_border * 10 + *buf++ - '0';

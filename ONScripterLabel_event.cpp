@@ -129,6 +129,30 @@ SDLKey transJoystickButton(Uint8 button)
                             SDLK_UNKNOWN,/* HOLD     */};
     return button_map[button];
 #endif
+#if defined(__PS3__)    
+    SDLKey button_map[] = {
+        SDLK_0,      /* SELECT   */
+        SDLK_UNKNOWN,/* L3       */
+        SDLK_UNKNOWN,/* R3       */
+        SDLK_a,      /* START    */
+        SDLK_UP,     /* UP       */
+        SDLK_RIGHT,  /* RIGHT    */
+        SDLK_DOWN,   /* DOWN     */
+        SDLK_LEFT,   /* LEFT     */
+        SDLK_SPACE,  /* L2       */
+        SDLK_RETURN, /* R2       */
+        SDLK_o,      /* L1       */
+        SDLK_s,      /* R1       */
+        SDLK_ESCAPE, /* TRIANGLE */
+        SDLK_RETURN, /* CIRCLE   */
+        SDLK_SPACE,  /* CROSS    */
+        SDLK_RCTRL,  /* SQUARE   */
+        SDLK_UNKNOWN,/* PS       */
+        SDLK_UNKNOWN,
+        SDLK_UNKNOWN,
+    };
+    return button_map[button];
+#endif
     return SDLK_UNKNOWN;
 }
 
@@ -143,8 +167,13 @@ SDL_KeyboardEvent transJoystickAxis(SDL_JoyAxisEvent &jaxis)
                          SDLK_UP,    /* AL-UP    */
                          SDLK_DOWN   /* AL-DOWN  */};
 
-    int axis = ((3200 > jaxis.value) && (jaxis.value > -3200) ? -1 :
+    int axis = -1;
+    /* rerofumi: Jan.15.2007 */
+    /* ps3's pad has 0x1b axis (with analog button) */
+    if (jaxis.axis < 2){
+        axis = ((3200 > jaxis.value) && (jaxis.value > -3200) ? -1 :
                 (jaxis.axis * 2 + (jaxis.value>0 ? 1 : 0) ));
+    }
 
     if (axis != old_axis){
         if (axis == -1){

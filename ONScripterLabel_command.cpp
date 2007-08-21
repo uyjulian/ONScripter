@@ -2228,6 +2228,8 @@ int ONScripterLabel::endCommand()
 int ONScripterLabel::dwavestopCommand()
 {
     int ch = script_h.readInt();
+    if      (ch < 0) ch = 0;
+    else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
 
     if ( wave_sample[ch] ){
         Mix_Pause( ch );
@@ -2582,6 +2584,8 @@ int ONScripterLabel::clCommand()
 int ONScripterLabel::chvolCommand()
 {
     int ch  = script_h.readInt();
+    if      (ch < 0) ch = 0;
+    else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
     int vol = script_h.readInt();
 
     if ( wave_sample[ch] ){

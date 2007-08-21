@@ -366,10 +366,12 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         
         readInt();
         readInt();
+        if (file_version >= 205) readInt(); // 1
         readInt();
         readInt();
         readInt();
         readInt();
+        if (file_version >= 205) readChar(); // 0
     }
     
     int text_num = readInt();
@@ -386,8 +388,14 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     }
     clearCurrentTextBuffer();
 
-    if (file_version >= 204) readInt();
-    if (file_version >= 204) readInt();
+    if (file_version >= 205){
+        j = readInt();
+        for (i=0 ; i<j ; i++) readChar();
+    }
+    else if (file_version >= 204){
+        readInt();
+        readInt();
+    }
     
     i = readInt();
     current_label_info = script_h.getLabelByLine( i );
@@ -579,7 +587,7 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
         }
     }
 
-    writeInt( 1, output_flag );
+    writeInt( 1, output_flag ); // unidentified (not 1) data in version 205
     writeInt( 0, output_flag );
     writeInt( 1, output_flag );
     writeStr( btndef_info.image_name, output_flag );
@@ -618,10 +626,12 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
 
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
+    writeInt( 1, output_flag ); // added in version 205
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
+    writeChar( 0, output_flag ); // added in version 205
     
     TextBuffer *tb = current_text_buffer;
     int text_num = 0;
@@ -638,8 +648,9 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
         tb = tb->next;
     }
 
-    writeInt(0, output_flag);
-    writeInt(0, output_flag);
+    writeInt(text_num+1, output_flag);
+    for (i=0 ; i<text_num+1 ; i++)
+        writeChar(0, output_flag);
     
     writeInt( current_label_info.start_line + current_line, output_flag );
     char *buf = script_h.getAddressByLine( current_label_info.start_line + current_line );

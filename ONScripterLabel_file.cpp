@@ -40,7 +40,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 4
+#define SAVEFILE_VERSION_MINOR 5
 
 #define READ_LENGTH 4096
 
@@ -208,7 +208,7 @@ int ONScripterLabel::loadSaveFile( int no )
         num_xy[1] = readInt();
         current_text_buffer->num = (num_xy[0]*2+1)*num_xy[1];
         if (sentence_font.getTateyokoMode() == FontInfo::TATE_MODE)
-            current_text_buffer->num = (num_xy[1]*2+1)*num_xy[1];
+            current_text_buffer->num = (num_xy[1]*2+1)*num_xy[0];
         int xy[2];
         xy[0] = readInt();
         xy[1] = readInt();

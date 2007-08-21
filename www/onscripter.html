@@ -19,8 +19,8 @@
 了承下さい。<br>
 
 Since: Feb. 6, 2002<br>
-Last updated: Feb. 6, 2007 [ソース更新]<br>
-<!--Last updated: Jan. 31, 2006 [バイナリパッケージ追加]<br>-->
+Last updated: Aug. 21, 2007 [ソース更新]<br>
+<!--Last updated: Feb. 14, 2006 [バイナリパッケージ追加]<br>-->
 <!--Last updated: Aug. 5, 2006 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
@@ -61,7 +61,7 @@ Last updated: Feb. 6, 2007 [ソース更新]<br>
        <ul>
 	 <li> <a href="#keyboard-shortcut">キーボードショートカット</a>
 	 <li> <a href="#option">起動オプション</a>
-	 <li> <a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a><font color=red>(updated in Sep. 11, 2004)</font>
+	 <li> <a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>
 	 <li> <a href="#registry">レジストリ読み込み</a>
 	 <li> <a href="#dll">DLL 読み込み</a>
 	 <li> <a href="#edit-mode">音量及び変数編集モード</a>
@@ -100,8 +100,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20070206.tar.gz">onscripter-20070206.tar.gz</a>
-  <li> <a href="onscripter-20070205.tar.gz">onscripter-20070205.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20070821.tar.gz">onscripter-20070821.tar.gz</a>
+  <li> <a href="onscripter-20070206.tar.gz">onscripter-20070206.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20060812.tar.gz">onscripter-exp-20060812.tar.gz</a>(実験版, ２種類目の画像バッファ生成効率アップ)-->
 </ul>
 </div> <!-- sub-content -->
@@ -143,6 +143,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
       <ul>
         <li><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2"> インストールのしかたやバイナリパッケージ </a>
       </ul>
+  <li> Playstation3 版 <a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a>（rerofumiさん）
   <li> FreeBSD 版 <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a>（藤田さん）
   <li> Dreamcast 版 <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a>（bero さん）
   <li> その他募集中。
@@ -167,10 +168,10 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 <h3><a name="feature-comparison">NScripter と比較した特徴</a></h3>
 <div class="sub-content">
 <ol>
-  <li> 現時点(2006/09/16)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
+  <li> 現時点(2007/08/21)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
   <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
-  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, PocketPC, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
+  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, PocketPC, Playstation3, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
   <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
@@ -206,9 +207,9 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
   <dt> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
   <dd> bzip2-1.0.2
   <dt> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
-  <dd> SDL-1.2.5, SDL_image-1.2.3, SDL_mixer-1.2.5, SDL_ttf-2.0.6, SMPEG-0.4.4
+  <dd> SDL-1.2.5, SDL_image-1.2.4, SDL_mixer-1.2.6, SDL_ttf-2.0.6, SMPEG-0.4.4
   <dt> ・<a href="http://www.freetype.org/"> FreeType </a>
-  <dd> FreeType 2.1.4
+  <dd> FreeType 2.1.7
 </dl>
 
 <h4>推奨</h4>
@@ -231,7 +232,7 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 </dl>
 
 <p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
-また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod, PocketPC, Dreamcast での動作報告をいただいております。<br>
+また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod, PocketPC, Playstation3, Dreamcast での動作報告をいただいております。<br>
 
 その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</p>
 
@@ -433,7 +434,7 @@ sav というディレクトリがある場合には、ヘッダ無しのセーブファイルを sav
 
 <h4>注意点</h4>
 <ul>
-  <li>NScripter は、現時点(2006/09/16)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
+  <li>NScripter は、現時点(2007/08/21)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
   <li>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
   <li>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
   <li>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。

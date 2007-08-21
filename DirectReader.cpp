@@ -399,9 +399,12 @@ void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf, size_t s
 #if defined(MACOSX)
     CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)src_buf, src_len, 
                                                         kCFStringEncodingShiftJIS, false);
-    Boolean ret = CFStringGetCString(unicodeStrRef, dst_buf, src_len*2+1, kCFStringEncodingUTF8);
-    CFRelease(unicodeStrRef);
-    if (!ret) strcpy(dst_buf, src_buf);
+    if(unicodeStrRef) {
+        Boolean ret = CFStringGetCString(unicodeStrRef, dst_buf, src_len*2+1, kCFStringEncodingUTF8);
+        CFRelease(unicodeStrRef);
+        if (!ret) strcpy(dst_buf, src_buf);
+    }
+    else strcpy(dst_buf, src_buf);
 #else
     src_len++;
     size_t dst_len = src_len*2+1;

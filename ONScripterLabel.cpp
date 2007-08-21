@@ -972,6 +972,12 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name, bool *has_alpha )
         SDL_RWclose(src);
     }
 
+    delete[] buffer;
+    if ( !tmp ){
+        fprintf( stderr, " *** can't load file [%s] ***\n", file_name );
+        return NULL;
+    }
+
     if (has_alpha){
         if (tmp->format->Amask)
             *has_alpha = true;
@@ -979,12 +985,6 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name, bool *has_alpha )
             *has_alpha = false;
     }
     
-    delete[] buffer;
-    if ( !tmp ){
-        fprintf( stderr, " *** can't load file [%s] ***\n", file_name );
-        return NULL;
-    }
-
     SDL_Surface *ret = SDL_ConvertSurface( tmp, image_surface->format, SDL_SWSURFACE );
     if ( ret &&
          screen_ratio2 != screen_ratio1 &&

@@ -99,6 +99,7 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
     /* Execute effect */
     //printf("Effect number %d %d\n", effect_no, effect->duration );
 
+    bool not_implemented = false;
     switch ( effect_no ){
       case 0: // Instant display
       case 1: // Instant display
@@ -207,7 +208,7 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
         break;
 
       default:
-        printf("effect No. %d is not implemented. Crossfade is substituted for that.\n",effect_no);
+        not_implemented = true;
         
       case 10: // Cross fade
         height = 256 * effect_counter / effect->duration;
@@ -324,6 +325,9 @@ int ONScripterLabel::doEffect( EffectLink *effect, AnimationInfo *anim, int effe
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
         break;
     }
+
+    if (effect_counter == 0 && not_implemented)
+        printf("effect No. %d is not implemented. Crossfade is substituted for that.\n", effect_no);
 
     //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
     
