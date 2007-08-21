@@ -61,7 +61,7 @@ int SarReader::open( char *name, int archive_type )
     return 0;
 }
 
-int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
+void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
 {
     unsigned int i=0;
     
@@ -82,15 +82,40 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
     if ( archive_type == ARCHIVE_TYPE_NS3 )
         ai->base_offset += 2;
     
+    
+    fpos_t pos;
+    fgetpos(ai->file_handle, &pos);
+
+    int num = readArchiveSub(ai, archive_type, true);
+    ai->name_buffer = new char[num];
+    //printf("buffer size %d v.s. %d\n", num, ai->num_of_files*256);
+
+    fsetpos(ai->file_handle, &pos);
+    readArchiveSub(ai, archive_type, false);
+}
+
+int SarReader::readArchiveSub( struct ArchiveInfo *ai, int archive_type, bool check_size )
+{
+    unsigned int i;
+    char name[256];
+    int name_buffer_pos = 0;
+
     for ( i=0 ; i<ai->num_of_files ; i++ ){
         unsigned char ch;
         int count = 0;
 
         while( (ch = key_table[fgetc( ai->file_handle )] ) ){
             if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
-            ai->fi_list[i].name[count++] = ch;
+            name[count++] = ch;
         }
-        ai->fi_list[i].name[count] = ch;
+        name[count++] = ch;
+
+        if (!check_size){
+            ai->fi_list[i].name = ai->name_buffer + name_buffer_pos;
+            memcpy(ai->fi_list[i].name, name, count);
+        }
+
+        name_buffer_pos += count;
 
         if ( archive_type >= ARCHIVE_TYPE_NSA )
             ai->fi_list[i].compression_type = readChar( ai->file_handle );
@@ -108,7 +133,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
 
         /* Registered Plugin check */
         if ( ai->fi_list[i].compression_type == NO_COMPRESSION )
-            ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
+            ai->fi_list[i].compression_type = getRegisteredCompressionType( name );
 
         if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ||
              ai->fi_list[i].compression_type == SPB_COMPRESSION ){
@@ -116,7 +141,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
         }
     }
     
-    return 0;
+    return name_buffer_pos;
 }
 
 int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type )
@@ -218,6 +243,7 @@ int SarReader::close()
             fclose( info->file_handle );
             delete[] info->file_name;
             delete[] info->fi_list;
+            delete[] info->name_buffer;
         }
         last_archive_info = info;
         info = info->next;

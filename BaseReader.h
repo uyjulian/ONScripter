@@ -64,7 +64,7 @@ struct BaseReader
     };
 
     struct FileInfo{
-        char name[256];
+        char *name;
         int  compression_type;
         size_t offset;
         size_t length;
@@ -79,6 +79,7 @@ struct BaseReader
         struct FileInfo *fi_list;
         unsigned int num_of_files;
         unsigned long base_offset;
+        char *name_buffer;
 
         ArchiveInfo(){
             next = NULL;
@@ -87,6 +88,7 @@ struct BaseReader
             file_name = NULL;
             fi_list = NULL;
             num_of_files = 0;
+            name_buffer = NULL;
         }
     };
 

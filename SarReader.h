@@ -49,7 +49,8 @@ protected:
     struct ArchiveInfo *root_archive_info, *last_archive_info;
     int num_of_sar_archives;
 
-    int readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR );
+    void readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR );
+    int readArchiveSub( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR, bool check_size = true );
     int getIndexFromFile( ArchiveInfo *ai, const char *file_name );
     size_t getFileSub( ArchiveInfo *ai, const char *file_name, unsigned char *buf );
 
