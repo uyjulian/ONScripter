@@ -189,7 +189,6 @@ int ONScripterLabel::texecCommand()
 {
     if ( textgosub_clickstr_state == CLICK_NEWPAGE ){
         newPage( true );
-        clickstr_state = CLICK_NONE;
     }
     else if ( textgosub_clickstr_state == (CLICK_WAIT | CLICK_EOL) ){
         if ( !sentence_font.isLineEmpty() && !new_line_skip_flag ){

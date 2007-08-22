@@ -286,12 +286,12 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     
     int i, x, y;
     // calculate Inverse of mat
-    int inv_mat[2][2], denom = mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0];
+    int inv_mat[2][2], denom = (mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0])/1000;
     if (denom == 0) return;
-    inv_mat[0][0] =  mat[1][1] * 1000000 / denom;
-    inv_mat[0][1] = -mat[0][1] * 1000000 / denom;
-    inv_mat[1][0] = -mat[1][0] * 1000000 / denom;
-    inv_mat[1][1] =  mat[0][0] * 1000000 / denom;
+    inv_mat[0][0] =  mat[1][1] * 1000 / denom;
+    inv_mat[0][1] = -mat[0][1] * 1000 / denom;
+    inv_mat[1][0] = -mat[1][0] * 1000 / denom;
+    inv_mat[1][1] =  mat[0][0] * 1000 / denom;
 
     // project corner point and calculate bounding box
     int dst_corner_xy[4][2];

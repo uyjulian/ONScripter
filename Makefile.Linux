@@ -10,7 +10,7 @@
 
 INCS = `sdl-config --cflags` `smpeg-config --cflags` `avifile-config --cflags`
 # with OggVorbis and AVI
-LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis
+LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -logg -lvorbis -lvorbisfile
 DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
 
 # with Integer OggVorbis and AVI in PDA size
@@ -18,7 +18,7 @@ DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS
 #DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS -DPDA -DPDA_WIDTH=640
 
 # with OggVorbis and AVI and English mode
-#LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -lvorbis
+#LIBS = `sdl-config --libs` `smpeg-config --libs` `avifile-config --libs` -lSDL_ttf -lSDL_image -lSDL_mixer -lbz2 -ljpeg -lm -logg -lvorbis -lvorbisfile
 #DEFS = -DLINUX -DUSE_AVIFILE -DUSE_OGG_VORBIS -DENABLE_1BYTE_CHAR -DFORCE_1BYTE_CHAR
 
 EXESUFFIX =

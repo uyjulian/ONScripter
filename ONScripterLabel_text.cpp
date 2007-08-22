@@ -439,7 +439,6 @@ int ONScripterLabel::clickWait( char *out_text )
         return RET_CONTINUE | RET_NOREAD;
     }
     else{
-        clickstr_state = CLICK_WAIT;
         key_pressed_flag = false;
         if ( out_text ){
             drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
@@ -458,6 +457,7 @@ int ONScripterLabel::clickWait( char *out_text )
             return RET_CONTINUE;
         }
 
+        clickstr_state = CLICK_WAIT;
         doClickEnd();
 
         return RET_WAIT | RET_NOREAD;
@@ -466,7 +466,6 @@ int ONScripterLabel::clickWait( char *out_text )
 
 int ONScripterLabel::clickNewPage( char *out_text )
 {
-    clickstr_state = CLICK_NEWPAGE;
     if ( out_text ){
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
         num_chars_in_sentence++;
@@ -477,6 +476,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
         event_mode = WAIT_SLEEP_MODE;
         advancePhase();
         num_chars_in_sentence = 0;
+        clickstr_state = CLICK_NEWPAGE;
     }
     else{
         key_pressed_flag = false;
@@ -491,6 +491,7 @@ int ONScripterLabel::clickNewPage( char *out_text )
             return RET_CONTINUE;
         }
 
+        clickstr_state = CLICK_NEWPAGE;
         doClickEnd();
     }
     return RET_WAIT | RET_NOREAD;
