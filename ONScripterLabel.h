@@ -629,7 +629,8 @@ private:
     bool music_play_loop_flag;
     bool mp3save_flag;
     char *music_file_name;
-    unsigned char *mp3_buffer;
+    unsigned char *music_buffer; // for looped music
+    long music_buffer_length;
     SMPEG *mp3_sample;
     OVInfo *music_ovi;
     Mix_Music *music_info;
@@ -655,6 +656,7 @@ private:
            WAVE_PLAY_LOADED = 2
     };
     void stopBGM( bool continue_flag );
+    void stopAllDWAVE();
     void playClickVoice();
     void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
     OVInfo *openOggVorbis(unsigned char *buf, long len, int &channels, int &rate);

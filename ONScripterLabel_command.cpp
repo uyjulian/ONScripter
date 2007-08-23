@@ -2683,13 +2683,13 @@ int ONScripterLabel::btnwaitCommand()
     script_h.readInt();
 
     if ( event_mode & WAIT_BUTTON_MODE ||
-         (textbtn_flag && (skip_flag || (draw_one_page_flag && clickstr_state == CLICK_WAIT) || ctrl_pressed_status)) )
+         (textbtn_flag && (skip_flag || (draw_one_page_flag && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || ctrl_pressed_status)) )
     {
         btnwait_time = SDL_GetTicks() - internal_button_timer;
         btntime_value = 0;
         num_chars_in_sentence = 0;
 
-        if ( textbtn_flag && (skip_flag || (draw_one_page_flag && clickstr_state == CLICK_WAIT) || ctrl_pressed_status))
+        if ( textbtn_flag && (skip_flag || (draw_one_page_flag && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || ctrl_pressed_status))
             current_button_state.button = 0;
         script_h.setInt( &script_h.current_variable, current_button_state.button );
 

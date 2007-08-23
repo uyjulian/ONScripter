@@ -110,11 +110,20 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 {
     if ( !audio_open_flag ) return SOUND_NONE;
 
-    long length = script_h.cBR->getFileLength( filename );
-    if (length == 0) return SOUND_NONE;
+    long length;
+    unsigned char *buffer;
 
-    unsigned char *buffer = new unsigned char[length];
-    script_h.cBR->getFile( filename, buffer );
+    if (format & (SOUND_MP3 | SOUND_OGG_STREAMING) && music_buffer){
+        length = music_buffer_length;
+        buffer = music_buffer;
+    }
+    else{
+        length = script_h.cBR->getFileLength( filename );
+        if (length == 0) return SOUND_NONE;
+
+        buffer = new unsigned char[length];
+        script_h.cBR->getFile( filename, buffer );
+    }
     
     if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
         int ret = playOGG(format, buffer, length, loop_flag, channel);
@@ -140,7 +149,8 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
                 fclose( fp );
                 ext_music_play_once_flag = !loop_flag;
                 if (playExternalMusic(loop_flag) == 0){
-                    delete[] buffer;
+                    music_buffer = buffer;
+                    music_buffer_length = length;
                     return SOUND_MP3;
                 }
             }
@@ -148,7 +158,8 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
         mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( buffer, length ), NULL, 0 );
         if (playMP3() == 0){
-            mp3_buffer = buffer;
+            music_buffer = buffer;
+            music_buffer_length = length;
             return SOUND_MP3;
         }
     }
@@ -258,6 +269,7 @@ int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, boo
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer2, sizeof(WAVE_HEADER)+ovi->decoded_length), 1);
         delete[] buffer2;
         closeOggVorbis(ovi);
+        delete[] buffer;
 
         playWave(chunk, format, loop_flag, channel);
 
@@ -267,6 +279,9 @@ int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, boo
     music_ovi = ovi;
     Mix_VolumeMusic(music_volume * 128 / 100);
     Mix_HookMusic(oggcallback, music_ovi);
+
+    music_buffer = buffer;
+    music_buffer_length = length;
 
     return SOUND_OGG_STREAMING;
 }
@@ -441,11 +456,6 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_HookMusic( NULL, NULL );
         SMPEG_delete( mp3_sample );
         mp3_sample = NULL;
-
-        if ( mp3_buffer ){
-            delete[] mp3_buffer;
-            mp3_buffer = NULL;
-        }
     }
 
     if (music_ovi){
@@ -464,6 +474,10 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( !continue_flag ){
         setStr( &music_file_name, NULL );
         music_play_loop_flag = false;
+        if (music_buffer){
+            delete[] music_buffer;
+            music_buffer = NULL;
+        }
     }
 
     if ( midi_info ){
@@ -485,6 +499,16 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( !continue_flag ) current_cd_track = -1;
+}
+
+void ONScripterLabel::stopAllDWAVE()
+{
+    for (int ch=0; ch<ONS_MIX_CHANNELS ; ch++)
+        if ( wave_sample[ch] ){
+            Mix_Pause( ch );
+            Mix_FreeChunk( wave_sample[ch] );
+            wave_sample[ch] = NULL;
+        }
 }
 
 void ONScripterLabel::playClickVoice()
@@ -632,7 +656,6 @@ OVInfo *ONScripterLabel::openOggVorbis( unsigned char *buf, long len, int &chann
 int ONScripterLabel::closeOggVorbis(OVInfo *ovi)
 {
     if (ovi->buf){
-        delete[] ovi->buf;
         ovi->buf = NULL;
 #if defined(USE_OGG_VORBIS)
         ovi->length = 0;

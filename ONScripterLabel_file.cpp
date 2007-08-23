@@ -437,6 +437,7 @@ int ONScripterLabel::loadSaveFile( int no )
     /* Load current playing CD track */
     stopCommand();
     loopbgmstopCommand();
+    stopAllDWAVE();
 
     current_cd_track = (Sint8)readChar();
     bool play_once_flag = (readChar()==1)?true:false;

@@ -524,7 +524,7 @@ int ONScripterLabel::init()
     midi_info  = NULL;
     mp3_sample = NULL;
     music_file_name = NULL;
-    mp3_buffer = NULL;
+    music_buffer = NULL;
     music_info = NULL;
     music_ovi = NULL;
 
@@ -649,6 +649,7 @@ void ONScripterLabel::resetSub()
 
     stopCommand();
     loopbgmstopCommand();
+    stopAllDWAVE();
     setStr(&loop_bgm_name[1], NULL);
 
     // ----------------------------------------
