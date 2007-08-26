@@ -95,7 +95,7 @@ void optionHelp()
 void optionVersion()
 {
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
-    printf("Copyright (c) 2001-2006 Ogapee.\n");
+    printf("Copyright (c) 2001-2007 Ogapee.\n");
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }

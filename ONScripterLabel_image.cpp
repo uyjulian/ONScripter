@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -286,14 +286,6 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
     }
 
-    if ( !all_sprite2_hide_flag && is_drawable){
-        for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
-            if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
-                drawTaggedSurface( surface, &sprite2_info[i], clip );
-            }
-        }
-    }
-    
     if ( is_drawable ){
         for ( i=0 ; i<3 ; i++ ){
             if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
@@ -309,6 +301,14 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
             if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
         }
 
+        if (!all_sprite2_hide_flag && is_drawable){
+            for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
+                if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
+                    drawTaggedSurface( surface, &sprite2_info[i], clip );
+                }
+            }
+        }
+    
         if (is_drawable)
             SDL_BlitSurface( surface, &clip, accumulation_comp_surface, &clip );
             
@@ -333,6 +333,14 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
     }
 
     if ( !windowback_flag && is_drawable ){
+        if (!all_sprite2_hide_flag && is_drawable){
+            for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
+                if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
+                    drawTaggedSurface( surface, &sprite2_info[i], clip );
+                }
+            }
+        }
+
         if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
         if ( monocro_flag )   makeMonochromeSurface( surface, clip );
         if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
