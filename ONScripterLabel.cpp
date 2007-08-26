@@ -104,6 +104,7 @@ static struct FuncLUT{
     {"ofscpy", &ONScripterLabel::ofscopyCommand},
     {"ofscopy", &ONScripterLabel::ofscopyCommand},
     {"nega", &ONScripterLabel::negaCommand},
+    {"msp2", &ONScripterLabel::mspCommand},
     {"msp", &ONScripterLabel::mspCommand},
     {"mpegplay", &ONScripterLabel::mpegplayCommand},
     {"mp3vol", &ONScripterLabel::mp3volCommand},
@@ -116,7 +117,9 @@ static struct FuncLUT{
     {"menu_window", &ONScripterLabel::menu_windowCommand},
     {"menu_full", &ONScripterLabel::menu_fullCommand},
     {"menu_automode", &ONScripterLabel::menu_automodeCommand},
+    {"lsph2", &ONScripterLabel::lsp2Command},
     {"lsph", &ONScripterLabel::lspCommand},
+    {"lsp2", &ONScripterLabel::lsp2Command},
     {"lsp", &ONScripterLabel::lspCommand},
     {"lr_trap",   &ONScripterLabel::trapCommand},
     {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
@@ -189,6 +192,7 @@ static struct FuncLUT{
     {"draw", &ONScripterLabel::drawCommand},
     {"delay", &ONScripterLabel::delayCommand},
     {"definereset", &ONScripterLabel::defineresetCommand},
+    {"csp2", &ONScripterLabel::cspCommand},
     {"csp", &ONScripterLabel::cspCommand},
     {"cselgoto", &ONScripterLabel::cselgotoCommand},
     {"cselbtn", &ONScripterLabel::cselbtnCommand},
@@ -222,8 +226,11 @@ static struct FuncLUT{
     {"avi",      &ONScripterLabel::aviCommand},
     {"automode_time",      &ONScripterLabel::automode_timeCommand},
     {"autoclick",      &ONScripterLabel::autoclickCommand},
+    {"amsp2",      &ONScripterLabel::amspCommand},
     {"amsp",      &ONScripterLabel::amspCommand},
+    {"allsp2resume",      &ONScripterLabel::allsp2resumeCommand},
     {"allspresume",      &ONScripterLabel::allspresumeCommand},
+    {"allsp2hide",      &ONScripterLabel::allsp2hideCommand},
     {"allsphide",      &ONScripterLabel::allsphideCommand},
     {"abssetcursor", &ONScripterLabel::setcursorCommand},
     {"", NULL}
@@ -378,7 +385,10 @@ ONScripterLabel::ONScripterLabel()
     fullscreen_mode = false;
     window_mode = false;
 
-    for (int i=0 ; i<NUM_GLYPH_CACHE ; i++){
+    int i;
+    for (i=0 ; i<MAX_SPRITE2_NUM ; i++)
+        sprite2_info[i].affine_flag = true;
+    for (i=0 ; i<NUM_GLYPH_CACHE ; i++){
         if (i != NUM_GLYPH_CACHE-1) glyph_cache[i].next = &glyph_cache[i+1];
         glyph_cache[i].font = NULL;
         glyph_cache[i].surface = NULL;
@@ -578,6 +588,7 @@ void ONScripterLabel::reset()
     display_mode = NORMAL_DISPLAY_MODE;
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
+    all_sprite2_hide_flag = false;
 
     if (resize_buffer_size != 16){
         delete[] resize_buffer;

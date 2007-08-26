@@ -110,17 +110,17 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 {
     if ( !audio_open_flag ) return SOUND_NONE;
 
-    long length;
+    long length = script_h.cBR->getFileLength( filename );
+    if (length == 0) return SOUND_NONE;
+
     unsigned char *buffer;
 
-    if (format & (SOUND_MP3 | SOUND_OGG_STREAMING) && music_buffer){
-        length = music_buffer_length;
+    if (format & (SOUND_MP3 | SOUND_OGG_STREAMING) && 
+        length == music_buffer_length &&
+        music_buffer ){
         buffer = music_buffer;
     }
     else{
-        length = script_h.cBR->getFileLength( filename );
-        if (length == 0) return SOUND_NONE;
-
         buffer = new unsigned char[length];
         script_h.cBR->getFile( filename, buffer );
     }

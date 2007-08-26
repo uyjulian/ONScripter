@@ -183,6 +183,7 @@ public:
     int menu_windowCommand();
     int menu_fullCommand();
     int menu_automodeCommand();
+    int lsp2Command();
     int lspCommand();
     int loopbgmstopCommand();
     int loopbgmCommand();
@@ -271,7 +272,9 @@ public:
     int aviCommand();
     int automode_timeCommand();
     int autoclickCommand();
+    int allsp2resumeCommand();
     int allspresumeCommand();
+    int allsp2hideCommand();
     int allsphideCommand();
     int amspCommand();
     
@@ -503,6 +506,7 @@ private:
     AnimationInfo sprite_info[MAX_SPRITE_NUM];
     AnimationInfo sprite2_info[MAX_SPRITE2_NUM];
     bool all_sprite_hide_flag;
+    bool all_sprite2_hide_flag;
     
     /* ---------------------------------------- */
     /* Parameter related variables */
