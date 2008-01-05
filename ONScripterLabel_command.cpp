@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -194,7 +194,7 @@ int ONScripterLabel::texecCommand()
         if ( !sentence_font.isLineEmpty() && !new_line_skip_flag ){
             indent_offset = 0;
             line_enter_status = 0;
-            current_text_buffer->addBuffer( 0x0a );
+            current_page->add( 0x0a );
             sentence_font.newLine();
         }
     }
@@ -273,8 +273,8 @@ int ONScripterLabel::strspCommand()
     
     FontInfo fi;
     fi.is_newline_accepted = true;
-    ai->pos.x = script_h.readInt();
-    ai->pos.y = script_h.readInt();
+    ai->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    ai->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     fi.num_xy[0] = script_h.readInt();
     fi.num_xy[1] = script_h.readInt();
     fi.font_size_xy[0] = script_h.readInt();
@@ -574,9 +574,10 @@ int ONScripterLabel::setwindow3Command()
 {
     setwindowCore();
     
-    clearCurrentTextBuffer();
+    clearCurrentPage();
     indent_offset = 0;
     line_enter_status = 0;
+    page_enter_status = 0;
     display_mode = NORMAL_DISPLAY_MODE;
     flush( refreshMode(), &sentence_font_info.pos );
     
@@ -608,6 +609,7 @@ int ONScripterLabel::setwindowCommand()
     lookbackflushCommand();
     indent_offset = 0;
     line_enter_status = 0;
+    page_enter_status = 0;
     display_mode = NORMAL_DISPLAY_MODE;
     flush( refreshMode(), &sentence_font_info.pos );
     
@@ -842,7 +844,7 @@ int ONScripterLabel::savescreenshotCommand()
     const char *buf = script_h.readStr();
     char filename[256];
     
-    char *ext = strrchr( buf, '.' );
+    const char *ext = strrchr( buf, '.' );
     if ( ext && (!strcmp( ext+1, "BMP" ) || !strcmp( ext+1, "bmp" ) ) ){
         sprintf( filename, "%s%s", archive_path, buf );
         for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
@@ -872,13 +874,21 @@ int ONScripterLabel::saveoffCommand()
 
 int ONScripterLabel::savegameCommand()
 {
+    bool savegame2_flag = false;
+    if ( script_h.isName( "savegame2" ) )
+        savegame2_flag = true;
+    
     int no = script_h.readInt();
+
+    const char* savestr = NULL;
+    if (savegame2_flag)
+        savestr = script_h.readStr();
 
     if ( no < 0 )
         errorAndExit("savegame: the specified number is less than 0.");
     else{
         shelter_event_mode = event_mode;
-        saveSaveFile( no ); 
+        saveSaveFile( no, savestr ); 
     }
 
     return RET_CONTINUE;
@@ -939,7 +949,7 @@ int ONScripterLabel::resettimerCommand()
 int ONScripterLabel::resetCommand()
 {
     resetSub();
-    clearCurrentTextBuffer();
+    clearCurrentPage();
     
     setCurrentLabel( "start" );
     saveSaveFile(-1);
@@ -999,15 +1009,7 @@ int ONScripterLabel::puttextCommand()
     ret = processText();
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
-        if (!sentence_font.isLineEmpty() && !new_line_skip_flag){
-            current_text_buffer->addBuffer( 0x0a );
-            sentence_font.newLine();
-            for (int i=0 ; i<indent_offset ; i++){
-                current_text_buffer->addBuffer(((char*)"@")[0]);
-                current_text_buffer->addBuffer(((char*)"@")[1]);
-                sentence_font.advanceCharInHankaku(2);
-            }
-        }
+        processEOL();
     }
     if (ret != RET_CONTINUE){
         ret &= ~RET_NOREAD;
@@ -1225,8 +1227,8 @@ int ONScripterLabel::mp3Command()
 
 int ONScripterLabel::movemousecursorCommand()
 {
-    int x = script_h.readInt();
-    int y = script_h.readInt();
+    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
     SDL_WarpMouse( x, y );
     
@@ -1398,13 +1400,13 @@ int ONScripterLabel::loopbgmCommand()
 
 int ONScripterLabel::lookbackflushCommand()
 {
-    current_text_buffer = current_text_buffer->next;
-    for ( int i=0 ; i<max_text_buffer-1 ; i++ ){
-        current_text_buffer->buffer2_count = 0;
-        current_text_buffer = current_text_buffer->next;
+    current_page = current_page->next;
+    for ( int i=0 ; i<max_page_list-1 ; i++ ){
+        current_page->text_count = 0;
+        current_page = current_page->next;
     }
-    clearCurrentTextBuffer();
-    start_text_buffer = current_text_buffer;
+    clearCurrentPage();
+    start_page = current_page;
     
     return RET_CONTINUE;
 }
@@ -1434,8 +1436,8 @@ int ONScripterLabel::logspCommand()
     si.remove();
     setStr( &si.file_name, script_h.readStr() );
 
-    si.pos.x = script_h.readInt();
-    si.pos.y = script_h.readInt();
+    si.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    si.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     
     si.trans_mode = AnimationInfo::TRANS_STRING;
     if (logsp2_flag){
@@ -1473,6 +1475,7 @@ int ONScripterLabel::logspCommand()
 
     si.is_single_line = false;
     si.is_tight_region = false;
+    si.is_ruby_drawable = true;
     sentence_font.is_newline_accepted = true;
     setupAnimationInfo( &si );
     sentence_font.is_newline_accepted = false;
@@ -1513,6 +1516,7 @@ int ONScripterLabel::loadgameCommand()
         text_on_flag = false;
         indent_offset = 0;
         line_enter_status = 0;
+        page_enter_status = 0;
         string_buffer_offset = 0;
         break_flag = false;
 
@@ -1737,11 +1741,11 @@ int ONScripterLabel::gettextCommand()
     script_h.readStr();
     int no = script_h.current_variable.var_no;
 
-    char *buf = new char[ current_text_buffer->buffer2_count + 1 ];
+    char *buf = new char[ current_page->text_count + 1 ];
     int i, j;
-    for ( i=0, j=0 ; i<current_text_buffer->buffer2_count ; i++ ){
-        if ( current_text_buffer->buffer2[i] != 0x0a )
-            buf[j++] = current_text_buffer->buffer2[i];
+    for ( i=0, j=0 ; i<current_page->text_count ; i++ ){
+        if ( current_page->text[i] != 0x0a )
+            buf[j++] = current_page->text[i];
     }
     buf[j] = '\0';
 
@@ -1751,20 +1755,33 @@ int ONScripterLabel::gettextCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::gettaglogCommand()
+{
+    script_h.readVariable();
+    script_h.pushVariable();
+
+    int page_no = script_h.readInt();
+
+    Page *page = current_page;
+    while(page != start_page && page_no > 0){
+        page_no--;
+        page = page->previous;
+    }
+
+    if (page->tag)
+        setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, page->tag);
+    else
+        setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::gettagCommand()
 {
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    bool end_flag = false;
-    char *buf = last_nest_info->next_script;
-    while(*buf == ' ' || *buf == '\t') buf++;
-    if (zenkakko_flag && buf[0] == "y"[0] && buf[1] == "y"[1])
-        buf += 2;
-    else if (*buf == '[')
-        buf++;
-    else
-        end_flag = true;
+    char *buf = current_tag.tag;
     
     int end_status;
     do{
@@ -1774,20 +1791,15 @@ int ONScripterLabel::gettagCommand()
 
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
              script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
-            if (end_flag)
-                script_h.setInt( &script_h.pushed_variable, 0);
-            else{
+            if (buf)
                 script_h.setInt( &script_h.pushed_variable, script_h.parseInt(&buf));
-            }
+            else
+                script_h.setInt( &script_h.pushed_variable, 0);
         }
         else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
-            if (end_flag)
-                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
-            else{
+            if (buf){
                 const char *buf_start = buf;
-                while(*buf != '/' &&
-                      (!zenkakko_flag || (buf[0] != "z"[0] || buf[1] != "z"[1])) &&
-                      *buf != ']'){
+                while(*buf != '/' && *buf != 0){
                     if (IS_TWO_BYTE(*buf))
                         buf += 2;
                     else
@@ -1795,19 +1807,17 @@ int ONScripterLabel::gettagCommand()
                 }
                 setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf_start, buf-buf_start );
             }
+            else{
+                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
+            }
         }
 
-        if (*buf == '/')
+        if (buf && *buf == '/')
             buf++;
         else
-            end_flag = true;
+            buf = NULL;
     }
     while(end_status & ScriptHandler::END_COMMA);
-
-    if (zenkakko_flag && buf[0] == "z"[0] && buf[1] == "z"[1]) buf += 2;
-    else if (*buf == ']') buf++;
-    while(*buf == ' ' || *buf == '\t') buf++;
-    last_nest_info->next_script = buf;
 
     return RET_CONTINUE;
 }
@@ -1999,16 +2009,16 @@ int ONScripterLabel::getlogCommand()
 
     int page_no = script_h.readInt();
 
-    TextBuffer *t_buf = current_text_buffer;
-    while(t_buf != start_text_buffer && page_no > 0){
+    Page *page = current_page;
+    while(page != start_page && page_no > 0){
         page_no--;
-        t_buf = t_buf->previous;
+        page = page->previous;
     }
 
     if (page_no > 0)
         setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL );
     else
-        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, t_buf->buffer2, t_buf->buffer2_count );
+        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, page->text, page->text_count );
 
     return RET_CONTINUE;
 }
@@ -2124,16 +2134,16 @@ int ONScripterLabel::gameCommand()
 
     /* ---------------------------------------- */
     /* Initialize text buffer */
-    text_buffer = new TextBuffer[max_text_buffer];
-    for ( i=0 ; i<max_text_buffer-1 ; i++ ){
-        text_buffer[i].next = &text_buffer[i+1];
-        text_buffer[i+1].previous = &text_buffer[i];
+    page_list = new Page[max_page_list];
+    for ( i=0 ; i<max_page_list-1 ; i++ ){
+        page_list[i].next = &page_list[i+1];
+        page_list[i+1].previous = &page_list[i];
     }
-    text_buffer[0].previous = &text_buffer[max_text_buffer-1];
-    text_buffer[max_text_buffer-1].next = &text_buffer[0];
-    start_text_buffer = current_text_buffer = &text_buffer[0];
+    page_list[0].previous = &page_list[max_page_list-1];
+    page_list[max_page_list-1].next = &page_list[0];
+    start_page = current_page = &page_list[0];
 
-    clearCurrentTextBuffer();
+    clearCurrentPage();
 
     /* ---------------------------------------- */
     /* Initialize local variables */
@@ -2668,10 +2678,10 @@ int ONScripterLabel::checkpageCommand()
 
     int page_no = script_h.readInt();
     
-    TextBuffer *t_buf = current_text_buffer;
-    while(t_buf != start_text_buffer && page_no > 0){
+    Page *page = current_page;
+    while(page != start_page && page_no > 0){
         page_no--;
-        t_buf = t_buf->previous;
+        page = page->previous;
     }
 
     if (page_no > 0)
@@ -2680,7 +2690,6 @@ int ONScripterLabel::checkpageCommand()
         script_h.setInt( &script_h.pushed_variable, 1 );
 
     return RET_CONTINUE;
-    
 }
 
 int ONScripterLabel::cellCommand()
@@ -2929,7 +2938,7 @@ int ONScripterLabel::brCommand()
     if ( ret != RET_NOMATCH ) return ret;
 
     sentence_font.newLine();
-    current_text_buffer->addBuffer( 0x0a );
+    current_page->add( 0x0a );
 
     return RET_CONTINUE;
 }

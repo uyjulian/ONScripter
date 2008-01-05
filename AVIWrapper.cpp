@@ -2,7 +2,7 @@
  * 
  *  AVIWrapper.cpp - avifile library wrapper class to play AVI video & audio stream
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -88,14 +88,14 @@ int AVIWrapper::initAV( SDL_Surface *surface, bool audio_open_flag )
         if ( debug_flag ) fprintf( stderr, "GetVideoDecoder() return 0.\n" );
         return -1;
     }
-    IVideoDecoder::CAPS cap = v_stream->GetVideoDecoder()->GetCapabilities();
+    avm::IVideoDecoder::CAPS cap = v_stream->GetVideoDecoder()->GetCapabilities();
     if ( debug_flag ) printf("cap %x\n", cap );
 
-    if ( cap & IVideoDecoder::CAP_YV12 ){
+    if ( cap & avm::IVideoDecoder::CAP_YV12 ){
         v_stream->GetVideoDecoder()->SetDestFmt( 0, fccYV12 );
         screen_overlay = SDL_CreateYUVOverlay( width, height, SDL_YV12_OVERLAY, surface );
     }
-    else if ( cap & IVideoDecoder::CAP_YUY2 ){
+    else if ( cap & avm::IVideoDecoder::CAP_YUY2 ){
         v_stream->GetVideoDecoder()->SetDestFmt( 0, fccYUY2 );
         screen_overlay = SDL_CreateYUVOverlay( width, height, SDL_YUY2_OVERLAY, surface );
     }
@@ -204,7 +204,7 @@ int AVIWrapper::playVideo( void *userdata )
 
     struct{
         bool valid;
-        CImage *image;
+        avm::CImage *image;
         double time;
     } cache[NUM_CACHES];
     for ( i=0 ; i<NUM_CACHES ; i++ ){
@@ -213,7 +213,7 @@ int AVIWrapper::playVideo( void *userdata )
     int remaining_cache = NUM_CACHES;
 
     while ( status == AVI_PLAYING && !v_stream->Eof() ){
-        CImage *image = v_stream->GetFrame( true );
+        avm::CImage *image = v_stream->GetFrame( true );
         if ( image == NULL ) break;
 
         double current_time = v_stream->GetTime();
@@ -247,7 +247,7 @@ int AVIWrapper::playVideo( void *userdata )
             for ( i=0 ; i<NUM_CACHES ; i++ ){
                 if ( cache[i].valid == false ){
                     cache[i].valid = true;
-                    cache[i].image = new CImage(image);
+                    cache[i].image = new avm::CImage(image);
                     cache[i].time = current_time;
                     remaining_cache--;
                     break;
@@ -326,7 +326,7 @@ int AVIWrapper::play( bool click_flag )
     return ret;
 }
 
-int AVIWrapper::drawFrame( CImage *image )
+int AVIWrapper::drawFrame( avm::CImage *image )
 {
     if ( image == NULL ) return -1;
 

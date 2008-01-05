@@ -2,7 +2,7 @@
  * 
  *  AVIWrapper.h - avifile library wrapper class to play AVI video & audio stream
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -51,7 +51,7 @@ public:
 
 private:    
     double getAudioTime();
-    int drawFrame( CImage *image );
+    int drawFrame( avm::CImage *image );
 
     SDL_Overlay *screen_overlay;
     SDL_Rect screen_rect;

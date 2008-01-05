@@ -83,10 +83,11 @@ static struct FuncLUT{
     {"savescreenshot",   &ONScripterLabel::savescreenshotCommand},
     {"saveon",   &ONScripterLabel::saveonCommand},
     {"saveoff",   &ONScripterLabel::saveoffCommand},
+    {"savegame2",   &ONScripterLabel::savegameCommand},
     {"savegame",   &ONScripterLabel::savegameCommand},
     {"savefileexist",   &ONScripterLabel::savefileexistCommand},
-    {"rnd",   &ONScripterLabel::rndCommand},
     {"rnd2",   &ONScripterLabel::rndCommand},
+    {"rnd",   &ONScripterLabel::rndCommand},
     {"rmode",   &ONScripterLabel::rmodeCommand},
     {"resettimer",   &ONScripterLabel::resettimerCommand},
     {"reset",   &ONScripterLabel::resetCommand},
@@ -149,6 +150,7 @@ static struct FuncLUT{
     {"getsevol", &ONScripterLabel::getsevolCommand},
     {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
+    {"gettaglog", &ONScripterLabel::gettaglogCommand},
     {"gettag", &ONScripterLabel::gettagCommand},
     {"gettab", &ONScripterLabel::gettabCommand},
     {"getret", &ONScripterLabel::getretCommand},
@@ -651,6 +653,7 @@ void ONScripterLabel::resetSub()
     textgosub_clickstr_state = CLICK_NONE;
     indent_offset = 0;
     line_enter_status = 0;
+    page_enter_status = 0;
 
     resetSentenceFont();
 
@@ -671,6 +674,7 @@ void ONScripterLabel::resetSub()
     createBackground();
     for (i=0 ; i<3 ; i++) tachi_info[i].reset();
     for (i=0 ; i<MAX_SPRITE_NUM ; i++) sprite_info[i].reset();
+    for (i=0 ; i<MAX_SPRITE2_NUM ; i++) sprite2_info[i].reset();
     barclearCommand();
     prnumclearCommand();
     for (i=0 ; i<2 ; i++) cursor_info[i].reset();
@@ -937,22 +941,14 @@ int ONScripterLabel::parseLine( )
             tmp = script_h.getStringBuffer() + strlen(script_h.getStringBuffer());
         int len = tmp - script_h.getStringBuffer() - string_buffer_offset - 1;
         if (len > 0 && sentence_font.isEndOfLine(len)){
-            current_text_buffer->addBuffer( 0x0a );
+            current_page->add( 0x0a );
             sentence_font.newLine();
         }
     }
 #endif    
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
-        if (!sentence_font.isLineEmpty() && !new_line_skip_flag){
-            current_text_buffer->addBuffer( 0x0a );
-            sentence_font.newLine();
-            for (int i=0 ; i<indent_offset ; i++){
-                current_text_buffer->addBuffer(((char*)"@")[0]);
-                current_text_buffer->addBuffer(((char*)"@")[1]);
-                sentence_font.advanceCharInHankaku(2);
-            }
-        }
+        processEOL();
         //event_mode = IDLE_EVENT_MODE;
         line_enter_status = 0;
     }
@@ -1058,7 +1054,7 @@ void ONScripterLabel::deleteSelectLink()
     root_select_link.next = NULL;
 }
 
-void ONScripterLabel::clearCurrentTextBuffer()
+void ONScripterLabel::clearCurrentPage()
 {
     sentence_font.clear();
 
@@ -1066,22 +1062,27 @@ void ONScripterLabel::clearCurrentTextBuffer()
     if (sentence_font.getTateyokoMode() == FontInfo::TATE_MODE)
         num = (sentence_font.num_xy[1]*2+1)*sentence_font.num_xy[1];
     
-    if ( current_text_buffer->buffer2 &&
-         current_text_buffer->num != num ){
-        delete[] current_text_buffer->buffer2;
-        current_text_buffer->buffer2 = NULL;
+    if ( current_page->text &&
+         current_page->max_text != num ){
+        delete[] current_page->text;
+        current_page->text = NULL;
     }
-    if ( !current_text_buffer->buffer2 ){
-        current_text_buffer->buffer2 = new char[num];
-        current_text_buffer->num = num;
+    if ( !current_page->text ){
+        current_page->text = new char[num];
+        current_page->max_text = num;
+    }
+    current_page->text_count = 0;
+
+    if (current_page->tag){
+        delete[] current_page->tag;
+        current_page->tag = NULL;
     }
 
-    current_text_buffer->buffer2_count = 0;
     num_chars_in_sentence = 0;
     internal_saveon_flag = true;
 
     text_info.fill( 0, 0, 0, 0 );
-    cached_text_buffer = current_text_buffer;
+    cached_page = current_page;
 }
 
 void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
@@ -1126,18 +1127,19 @@ void ONScripterLabel::newPage( bool next_flag )
 {
     /* ---------------------------------------- */
     /* Set forward the text buffer */
-    if ( current_text_buffer->buffer2_count != 0 ){
-        current_text_buffer = current_text_buffer->next;
-        if ( start_text_buffer == current_text_buffer )
-            start_text_buffer = start_text_buffer->next;
+    if ( current_page->text_count != 0 ){
+        current_page = current_page->next;
+        if ( start_page == current_page )
+            start_page = start_page->next;
     }
 
     if ( next_flag ){
         indent_offset = 0;
         //line_enter_status = 0;
+        page_enter_status = 0;
     }
     
-    clearCurrentTextBuffer();
+    clearCurrentPage();
 
     flush( refreshMode(), &sentence_font_info.pos );
 }

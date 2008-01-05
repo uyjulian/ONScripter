@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -207,6 +207,7 @@ public:
     int getversionCommand();
     int gettimerCommand();
     int gettextCommand();
+    int gettaglogCommand();
     int gettagCommand();
     int gettabCommand();
     int getspsizeCommand();
@@ -539,6 +540,7 @@ private:
     int  textgosub_clickstr_state;
     int  indent_offset;
     int  line_enter_status; // 0 ... no enter, 1 ... pretext, 2 ... body
+    int  page_enter_status; // 0 ... no enter, 1 ... body
     struct GlyphCache{
         GlyphCache *next;
         Uint16 text;
@@ -560,9 +562,10 @@ private:
     void doClickEnd();
     int  clickWait( char *out_text );
     int  clickNewPage( char *out_text );
-    void startRuby(char *buf, FontInfo &info);
-    void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface);
+    void startRuby(const char *buf, FontInfo &info);
+    void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info);
     int  textCommand();
+    void processEOL();
     int  processText();
     
     /* ---------------------------------------- */
@@ -673,7 +676,7 @@ private:
     int text_speed_no;
 
     void shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip );
-    void clearCurrentTextBuffer();
+    void clearCurrentPage();
     void newPage( bool next_flag );
     
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
@@ -699,7 +702,7 @@ private:
     void searchSaveFile( SaveFileInfo &info, int no );
     int  loadSaveFile( int no );
     void saveMagicNumber( bool output_flag );
-    int  saveSaveFile( int no );
+    int  saveSaveFile( int no, const char *savestr=NULL );
 
     int  loadSaveFile2( int file_version );
     void saveSaveFile2( bool output_flag );
@@ -728,7 +731,7 @@ private:
     int  shelter_event_mode;
     int  shelter_display_mode;
     bool shelter_draw_cursor_flag;
-    struct TextBuffer *cached_text_buffer;
+    struct Page *cached_page;
     
     void enterSystemCall();
     void leaveSystemCall( bool restore_flag = true );

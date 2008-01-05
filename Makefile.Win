@@ -17,7 +17,7 @@ OBJSUFFIX = .obj
 CC = cl
 LD = link /nologo /subsystem:console /incremental:no /machine:I386 /nodefaultlib:LIBC /out: 
 
-CFLAGS = /nologo /MD /W3 /GX /c /O2 $(INCS) $(DEFS)
+CFLAGS = /nologo /MD /W3 /EHsc /c /O2 $(INCS) $(DEFS)
 RM = del
 
 TARGET = onscripter$(EXESUFFIX) sarconv$(EXESUFFIX) nsaconv$(EXESUFFIX)

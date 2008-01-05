@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.h - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -61,7 +61,8 @@ public:
     int loop_mode;
     bool is_animatable;
     bool is_single_line;
-    bool is_tight_region; // valid under TRANS_STRING
+    bool is_tight_region; // valid under TRANS_STRING, if false, ruby is parsed
+    bool is_ruby_drawable;
         
     char *file_name;
     char *mask_file_name;

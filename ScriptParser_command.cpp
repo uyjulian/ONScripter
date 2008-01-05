@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -210,8 +210,10 @@ int ScriptParser::sinCommand()
 int ScriptParser::shadedistanceCommand()
 {
     if (current_mode != DEFINE_MODE) errorAndExit( "shadedistance: not in the define section" );
-    shade_distance[0] = script_h.readInt();
-    shade_distance[1] = script_h.readInt();
+    shade_distance[0] = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    if (shade_distance[0] == 0) shade_distance[0] = 1;
+    shade_distance[1] = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    if (shade_distance[1] == 0) shade_distance[1] = 1;
 
     return RET_CONTINUE;
 }
@@ -351,6 +353,15 @@ int ScriptParser::pretextgosubCommand()
     if ( current_mode != DEFINE_MODE ) errorAndExit( "pretextgosub: not in the define section" );
 
     setStr( &pretextgosub_label, script_h.readStr()+1 );
+    
+    return RET_CONTINUE;
+}
+
+int ScriptParser::pagetagCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "pagetag: not in the define section" );
+
+    pagetag_flag = true;
     
     return RET_CONTINUE;
 }
@@ -585,7 +596,7 @@ int ScriptParser::menuselectcolorCommand()
 int ScriptParser::maxkaisoupageCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "maxkaisoupage: not in the define section" );
-    max_text_buffer = script_h.readInt();
+    max_page_list = script_h.readInt()+1;
 
     return RET_CONTINUE;
 }

@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -72,7 +72,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 
     if ( restore_flag ){
         
-        current_text_buffer = cached_text_buffer;
+        current_page = cached_page;
         restoreTextBuffer();
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
@@ -309,7 +309,7 @@ void ONScripterLabel::executeSystemLoad()
         flush( refreshMode() );
         
         bool nofile_flag;
-        char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
+        char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
 
         for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
             searchSaveFile( save_file_info, i );
@@ -380,7 +380,7 @@ void ONScripterLabel::executeSystemSave()
         flush( refreshMode() );
         
         bool nofile_flag;
-        char *buffer = new char[ strlen( save_item_name ) + 30 + 1 ];
+        char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
     
         for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
             SaveFileInfo save_file_info;
@@ -449,6 +449,7 @@ void ONScripterLabel::executeSystemYesNo()
                 text_on_flag = false;
                 indent_offset = 0;
                 line_enter_status = 0;
+                page_enter_status = 0;
                 string_buffer_offset = 0;
                 break_flag = false;
 
@@ -537,8 +538,8 @@ void ONScripterLabel::setupLookbackButton()
     
     /* ---------------------------------------- */
     /* Previous button check */
-    if ( (current_text_buffer->previous->buffer2_count > 0 ) &&
-         current_text_buffer != start_text_buffer ){
+    if ( (current_page->previous->text_count > 0 ) &&
+         current_page != start_page ){
         ButtonLink *button = new ButtonLink();
         root_button_link.insert( button );
     
@@ -573,7 +574,7 @@ void ONScripterLabel::setupLookbackButton()
 
     /* ---------------------------------------- */
     /* Next button check */
-    if ( current_text_buffer->next != cached_text_buffer ){
+    if ( current_page->next != cached_page ){
         ButtonLink *button = new ButtonLink();
         root_button_link.insert( button );
     
@@ -615,12 +616,12 @@ void ONScripterLabel::executeSystemLookback()
     current_font = &sentence_font;
     if ( event_mode & WAIT_BUTTON_MODE ){
         if ( current_button_state.button == 0 ||
-             ( current_text_buffer == start_text_buffer &&
+             ( current_page == start_page &&
                current_button_state.button == -2 ) )
             return;
         if ( current_button_state.button == -1 ||
              ( current_button_state.button == -3 &&
-               current_text_buffer->next == cached_text_buffer ) ||
+               current_page->next == cached_page ) ||
              current_button_state.button <= -4 )
         {
             event_mode = IDLE_EVENT_MODE;
@@ -635,14 +636,14 @@ void ONScripterLabel::executeSystemLookback()
         
         if ( current_button_state.button == 1 ||
              current_button_state.button == -2 ){
-            current_text_buffer = current_text_buffer->previous;
+            current_page = current_page->previous;
         }
         else
-            current_text_buffer = current_text_buffer->next;
+            current_page = current_page->next;
     }
     else{
-        current_text_buffer = current_text_buffer->previous;
-        if ( current_text_buffer->buffer2_count == 0 ){
+        current_page = current_page->previous;
+        if ( current_page->text_count == 0 ){
             if ( lookback_sp[0] >= 0 )
                 sprite_info[ lookback_sp[0] ].visible = false;
             if ( lookback_sp[1] >= 0 )
