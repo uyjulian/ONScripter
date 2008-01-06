@@ -77,10 +77,20 @@ int ONScripterLabel::waitCommand()
 
 int ONScripterLabel::vspCommand()
 {
+    bool vsp2_flag = false;
+    if (script_h.isName("vsp2")) vsp2_flag = true;
+
     int no = script_h.readInt();
     int v  = script_h.readInt();
-    sprite_info[ no ].visible = (v==1)?true:false;
-    dirty_rect.add( sprite_info[no].pos );
+
+    if (vsp2_flag){
+        sprite2_info[ no ].visible = (v==1)?true:false;
+        dirty_rect.add( sprite2_info[no].bounding_rect );
+    }
+    else{
+        sprite_info[ no ].visible = (v==1)?true:false;
+        dirty_rect.add( sprite_info[no].pos );
+    }
     
     return RET_CONTINUE;
 }
@@ -1321,7 +1331,6 @@ int ONScripterLabel::lsp2Command()
     sprite2_info[ no ].scale_x = script_h.readInt();
     sprite2_info[ no ].scale_y = script_h.readInt();
     sprite2_info[ no ].rot = script_h.readInt();
-    sprite2_info[ no ].calcAffineMatrix();
 
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
         sprite2_info[ no ].trans = script_h.readInt();
@@ -1330,6 +1339,8 @@ int ONScripterLabel::lsp2Command()
 
     parseTaggedString( &sprite2_info[ no ] );
     setupAnimationInfo( &sprite2_info[ no ] );
+    sprite2_info[ no ].calcAffineMatrix();
+
     if ( sprite2_info[no].visible )
         dirty_rect.add( sprite2_info[no].bounding_rect );
 

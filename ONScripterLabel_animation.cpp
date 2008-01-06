@@ -191,8 +191,6 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         if ( surface ) SDL_FreeSurface(surface);
         if ( surface_m ) SDL_FreeSurface(surface_m);
     }
-
-    anim->calcBoundingBox();
 }
 
 void ONScripterLabel::parseTaggedString( AnimationInfo *anim )

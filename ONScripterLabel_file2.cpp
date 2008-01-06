@@ -657,7 +657,7 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt(num_page, output_flag);
     for (i=0 ; i<num_page ; i++){
         if (page->tag)
-            for ( j=0 ; j<strlen(page->tag) ; j++ )
+            for ( j=0 ; j<(int)strlen(page->tag) ; j++ )
                 writeChar( page->tag[j], output_flag );
         writeChar( 0, output_flag );
         page = page->next;

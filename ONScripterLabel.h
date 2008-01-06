@@ -504,8 +504,8 @@ private:
 
     /* ---------------------------------------- */
     /* Sprite related variables */
-    AnimationInfo sprite_info[MAX_SPRITE_NUM];
-    AnimationInfo sprite2_info[MAX_SPRITE2_NUM];
+    AnimationInfo *sprite_info;
+    AnimationInfo *sprite2_info;
     bool all_sprite_hide_flag;
     bool all_sprite2_hide_flag;
     

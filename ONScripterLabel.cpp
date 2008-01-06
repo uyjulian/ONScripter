@@ -44,6 +44,7 @@ static struct FuncLUT{
     {"wave",   &ONScripterLabel::waveCommand},
     {"waittimer",   &ONScripterLabel::waittimerCommand},
     {"wait",   &ONScripterLabel::waitCommand},
+    {"vsp2",   &ONScripterLabel::vspCommand},
     {"vsp",   &ONScripterLabel::vspCommand},
     {"voicevol",   &ONScripterLabel::voicevolCommand},
     {"trap",   &ONScripterLabel::trapCommand},
@@ -386,6 +387,8 @@ ONScripterLabel::ONScripterLabel()
     key_exe_file = NULL;
     fullscreen_mode = false;
     window_mode = false;
+    sprite_info  = new AnimationInfo[MAX_SPRITE_NUM];
+    sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
 
     int i;
     for (i=0 ; i<MAX_SPRITE2_NUM ; i++)
@@ -406,6 +409,9 @@ ONScripterLabel::ONScripterLabel()
 ONScripterLabel::~ONScripterLabel()
 {
     reset();
+
+    delete[] sprite_info;
+    delete[] sprite2_info;
 }
 
 void ONScripterLabel::enableCDAudio(){

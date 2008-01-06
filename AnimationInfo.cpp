@@ -55,6 +55,7 @@ AnimationInfo::AnimationInfo()
     mask_file_name = NULL;
 
     trans_mode = TRANS_TOPLEFT;
+    affine_flag = false;
 
     reset();
 }
@@ -72,12 +73,16 @@ void AnimationInfo::reset()
     pos.x = pos.y = 0;
     visible = false;
     abs_flag = true;
-    affine_flag = false;
     scale_x = scale_y = rot = 0;
     blending_mode = 0;
 
     font_size_xy[0] = font_size_xy[1] = -1;
     font_pitch = -1;
+
+    mat[0][0] = 1000;
+    mat[0][1] = 0;
+    mat[1][0] = 0;
+    mat[1][1] = 1000;
 }
 
 void AnimationInfo::deleteImageName(){
@@ -483,20 +488,7 @@ void AnimationInfo::calcAffineMatrix()
     mat[1][0] =  sin_i*scale_x/100;
     mat[1][1] =  cos_i*scale_y/100;
 
-    calcBoundingBox();
-    
-    // calculate inverse matrix
-    int denom = scale_x*scale_y;
-    if (denom == 0) return;
-
-    inv_mat[0][0] =  mat[1][1] * 10000 / denom;
-    inv_mat[0][1] = -mat[0][1] * 10000 / denom;
-    inv_mat[1][0] = -mat[1][0] * 10000 / denom;
-    inv_mat[1][1] =  mat[0][0] * 10000 / denom;
-}
-
-void AnimationInfo::calcBoundingBox()
-{
+    // calculate bounding box
     int min_xy[2], max_xy[2];
     for (int i=0 ; i<4 ; i++){
         int c_x = (i<2)?(-pos.w/2):(pos.w/2);
@@ -514,6 +506,15 @@ void AnimationInfo::calcBoundingBox()
     bounding_rect.y = min_xy[1];
     bounding_rect.w = max_xy[0]-min_xy[0]+1;
     bounding_rect.h = max_xy[1]-min_xy[1]+1;
+    
+    // calculate inverse matrix
+    int denom = scale_x*scale_y;
+    if (denom == 0) return;
+
+    inv_mat[0][0] =  mat[1][1] * 10000 / denom;
+    inv_mat[0][1] = -mat[0][1] * 10000 / denom;
+    inv_mat[1][0] = -mat[1][0] * 10000 / denom;
+    inv_mat[1][1] =  mat[0][0] * 10000 / denom;
 }
 
 SDL_Surface *AnimationInfo::allocSurface( int w, int h )

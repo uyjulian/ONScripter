@@ -24,7 +24,7 @@
 #include "ScriptParser.h"
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2007 Studio O.G.A. All Rights Reserved."
+#define VERSION_STR2 "Copyright (C) 2001-2008 Studio O.G.A. All Rights Reserved."
 
 #define DEFAULT_SAVE_MENU_NAME "＜セーブ＞"
 #define DEFAULT_LOAD_MENU_NAME "＜ロード＞"
