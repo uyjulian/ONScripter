@@ -158,24 +158,20 @@ int ONScripterLabel::textshowCommand()
 
 int ONScripterLabel::textonCommand()
 {
+    int ret = enterTextDisplayMode();
+    if (ret != RET_NOMATCH) return ret;
+
     text_on_flag = true;
-    if ( !(display_mode & TEXT_DISPLAY_MODE) ){
-        dirty_rect.fill( screen_width, screen_height );
-        display_mode = TEXT_DISPLAY_MODE;
-        flush(refreshMode());
-    }
 
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::textoffCommand()
 {
+    int ret = leaveTextDisplayMode(true);
+    if (ret != RET_NOMATCH) return ret;
+
     text_on_flag = false;
-    if ( display_mode & TEXT_DISPLAY_MODE ){
-        dirty_rect.fill( screen_width, screen_height );
-        display_mode = NORMAL_DISPLAY_MODE;
-        flush(refreshMode());
-    }
 
     return RET_CONTINUE;
 }

@@ -262,6 +262,15 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 {
     if (refresh_mode == REFRESH_NONE_MODE) return;
 
+    bool windowchip_sprite_visible = false;
+    if (windowchip_sprite_no >= 0){
+        windowchip_sprite_visible = sprite_info[windowchip_sprite_no].visible;
+        if (refresh_mode & REFRESH_TEXT_MODE) 
+            sprite_info[windowchip_sprite_no].visible = true;
+        else
+            sprite_info[windowchip_sprite_no].visible = false;
+    }
+
     SDL_Rect clip = {0, 0, surface->w, surface->h};
     if (clip_src) if ( AnimationInfo::doClipping( &clip, clip_src ) ) return;
 
@@ -385,6 +394,9 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
         p_button_link = p_button_link->next;
     }
+
+    if (windowchip_sprite_no >= 0)
+        sprite_info[windowchip_sprite_no].visible = windowchip_sprite_visible;
 }
 
 void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_no,

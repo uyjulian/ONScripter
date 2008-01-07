@@ -64,6 +64,7 @@ public:
 
     /* Command */
     int zenkakkoCommand();
+    int windowchipCommand();
     int windowbackCommand();
     int versionstrCommand();
     int usewheelCommand();
@@ -222,6 +223,7 @@ protected:
     bool rubyon_flag;
     bool zenkakko_flag;
     bool pagetag_flag;
+    int  windowchip_sprite_no;
     
     int string_buffer_offset;
 

@@ -36,6 +36,14 @@ int ScriptParser::zenkakkoCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::windowchipCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    windowchip_sprite_no = script_h.readInt();
+
+    return RET_CONTINUE;
+}
+
 int ScriptParser::windowbackCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );

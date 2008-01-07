@@ -43,6 +43,7 @@ static struct FuncLUT{
 } func_lut[] = {
     {"zenkakko", &ScriptParser::zenkakkoCommand},
     {"windoweffect", &ScriptParser::effectCommand},
+    {"windowchip", &ScriptParser::windowchipCommand},
     {"windowback", &ScriptParser::windowbackCommand},
     {"versionstr", &ScriptParser::versionstrCommand},
     {"usewheel", &ScriptParser::usewheelCommand},
@@ -224,6 +225,7 @@ void ScriptParser::reset()
     rubyon_flag = false;
     zenkakko_flag = false;
     pagetag_flag = false;
+    windowchip_sprite_no = -1;
     string_buffer_offset = 0;
 
     break_flag = false;
