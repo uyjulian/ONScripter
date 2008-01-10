@@ -135,7 +135,7 @@ int MAD_WRAPPER_playAudio( void *userdata, Uint8 *stream, int len )
             }
         }
 
-#if defined(PDA) && !defined(PSP)
+#if defined(PDA) && !defined(PSP) && !defined(IPHONE)
         if ( mad->Frame.header.samplerate == 44100 )
             mad->Frame.options |= MAD_OPTION_HALFSAMPLERATE;
 #endif

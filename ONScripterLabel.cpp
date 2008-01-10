@@ -263,7 +263,7 @@ void ONScripterLabel::initSDL()
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
         printf( "Initialize JOYSTICK\n");
     
-#if defined(PSP) || defined(IPODLINUX)
+#if defined(PSP) || defined(IPODLINUX) || defined(GP2X) || defined(WINCE)
     SDL_ShowCursor(SDL_DISABLE);
 #endif
 
@@ -342,7 +342,7 @@ void ONScripterLabel::initSDL()
 
 void ONScripterLabel::openAudio()
 {
-#if defined(PDA) && !defined(PSP)
+#if defined(PDA) && !defined(PSP) && !defined(IPHONE)
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
     if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
@@ -402,8 +402,13 @@ ONScripterLabel::ONScripterLabel()
     root_glyph_cache = &glyph_cache[0];
 
     // External Players
+#if defined(WINCE)
+    music_cmd = NULL;
+    midi_cmd  = NULL;
+#else
     music_cmd = getenv("PLAYER_CMD");
     midi_cmd  = getenv("MUSIC_CMD");
+#endif
 }
 
 ONScripterLabel::~ONScripterLabel()

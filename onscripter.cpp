@@ -115,6 +115,19 @@ int main( int argc, char **argv )
     ons.disableRescale();
     ons.enableButtonShortCut();
     SetupCallbacks();
+#elif defined(WINCE)
+    char currentDir[256];
+    strcpy(currentDir, argv[0]);
+    char* cptr = currentDir;
+    int i, len = strlen(currentDir);
+    for(i=len-1; i>0; i--){
+        if(cptr[i] == '\\' || cptr[i] == '/')
+            break;
+    }
+    cptr[i] = '\0';
+    ons.setArchivePath(currentDir);
+    ons.disableRescale();
+    ons.enableButtonShortCut();
 #endif
 
     // ----------------------------------------

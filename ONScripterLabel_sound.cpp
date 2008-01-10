@@ -91,9 +91,23 @@ extern long decodeOggVorbis(OVInfo *ovi, unsigned char *buf_dst, long len, bool 
             SDL_ConvertAudio(&ovi->cvt);
             memcpy(buf_dst, ovi->cvt.buf, ovi->cvt.len_cvt);
             dst_len = ovi->cvt.len_cvt;
+#if 0
+            for (int i=0 ; i<ovi->cvt.len_cvt/2 ; i++){
+                short a = ((short*)buf_dst)[i];
+                ((short*)buf_dst)[i] = a*music_volume/100;
+            }
+#endif
             buf_dst += ovi->cvt.len_cvt;
         }
         else{
+#if 0
+            if (do_rate_conversion){ // under SOUND_OGG_STREAMING
+                for (int i=0 ; i<dst_len/2 ; i++){
+                    short a = ((short*)buf)[i];
+                    ((short*)buf)[i] = a*music_volume/100;
+                }
+            }
+#endif
             buf += dst_len;
         }
         

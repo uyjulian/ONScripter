@@ -69,8 +69,15 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     FILETIME    tm, ltm;
     SYSTEMTIME  stm;
 
+#if defined(WINCE)
+    WCHAR file_nameW[256];
+    MultiByteToWideChar(CP_ACP, 0, file_name, -1, file_nameW, 256);
+    handle = CreateFile( file_nameW, GENERIC_READ, 0, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+#else
     handle = CreateFile( file_name, GENERIC_READ, 0, NULL,
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+#endif
     if ( handle == INVALID_HANDLE_VALUE ){
         save_file_info.valid = false;
         return;

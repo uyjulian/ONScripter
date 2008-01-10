@@ -107,6 +107,19 @@ SDLKey transKey(SDLKey key)
       default: break;
     }
 #endif
+#if defined(WINCE)
+    switch(key){
+      case SDLK_UP:     key = SDLK_UP;      break; /* vkUP    */
+      case SDLK_DOWN:   key = SDLK_DOWN;    break; /* vkDOWN  */
+      case SDLK_LEFT:   key = SDLK_LCTRL;   break; /* vkLEFT  */
+      case SDLK_RIGHT:  key = SDLK_RETURN;  break; /* vkRIGHT */
+      case SDLK_KP0:    key = SDLK_q;       break; /* vkStart */
+      case SDLK_KP1:    key = SDLK_RETURN;  break; /* vkA     */
+      case SDLK_KP2:    key = SDLK_SPACE;   break; /* vkB     */
+      case SDLK_KP3:    key = SDLK_ESCAPE;  break; /* vkC     */
+      default: break;
+    }
+#endif
     return key;
 }
 
@@ -128,8 +141,7 @@ SDLKey transJoystickButton(Uint8 button)
                             SDLK_UNKNOWN,/* HOME     */ /* kernel mode only */
                             SDLK_UNKNOWN,/* HOLD     */};
     return button_map[button];
-#endif
-#if defined(__PS3__)    
+#elif defined(__PS3__)    
     SDLKey button_map[] = {
         SDLK_0,      /* SELECT   */
         SDLK_UNKNOWN,/* L3       */
@@ -150,6 +162,29 @@ SDLKey transJoystickButton(Uint8 button)
         SDLK_UNKNOWN,/* PS       */
         SDLK_UNKNOWN,
         SDLK_UNKNOWN,
+    };
+    return button_map[button];
+#elif defined(GP2X)
+    SDLKey button_map[] = {
+        SDLK_UP,      /* UP        */
+        SDLK_UNKNOWN, /* UPLEFT    */
+        SDLK_LEFT,    /* LEFT      */
+        SDLK_UNKNOWN, /* DOWNLEFT  */
+        SDLK_DOWN,    /* DOWN      */
+        SDLK_UNKNOWN, /* DOWNRIGHT */
+        SDLK_RIGHT,   /* RIGHT     */
+        SDLK_UNKNOWN, /* UPRIGHT   */
+        SDLK_a,       /* START     */
+        SDLK_0,       /* SELECT    */
+        SDLK_o,       /* L         */
+        SDLK_s,       /* R         */
+        SDLK_RCTRL,   /* A         */
+        SDLK_RETURN,  /* B         */
+        SDLK_SPACE,   /* X         */
+        SDLK_ESCAPE,  /* Y         */
+        SDLK_UNKNOWN, /* VOLUP     */
+        SDLK_UNKNOWN, /* VOLDOWN   */
+        SDLK_UNKNOWN, /* STICK     */
     };
     return button_map[button];
 #endif
