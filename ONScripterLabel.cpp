@@ -549,7 +549,7 @@ int ONScripterLabel::init()
     music_file_name = NULL;
     music_buffer = NULL;
     music_info = NULL;
-    music_ovi = NULL;
+    music_struct.ovi = NULL;
 
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
@@ -1303,7 +1303,7 @@ void ONScripterLabel::loadEnvData()
         readStr( &default_cdrom_drive );
         voice_volume = DEFAULT_VOLUME - readInt();
         se_volume = DEFAULT_VOLUME - readInt();
-        music_volume = DEFAULT_VOLUME - readInt();
+        music_struct.volume = DEFAULT_VOLUME - readInt();
         if (readInt() == 0) kidokumode_flag = false;
     }
     else{

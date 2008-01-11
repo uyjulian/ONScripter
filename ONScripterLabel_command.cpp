@@ -1192,9 +1192,9 @@ int ONScripterLabel::mpegplayCommand()
 
 int ONScripterLabel::mp3volCommand()
 {
-    music_volume = script_h.readInt();
+    music_struct.volume = script_h.readInt();
 
-    if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_volume );
+    if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_struct.volume );
 
     return RET_CONTINUE;
 }

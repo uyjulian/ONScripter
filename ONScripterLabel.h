@@ -86,6 +86,11 @@ class ONScripterLabel : public ScriptParser
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
     
+    typedef struct{
+        OVInfo *ovi;
+        int volume;
+    } MusicStruct;
+
     ONScripterLabel();
     ~ONScripterLabel();
 
@@ -639,7 +644,7 @@ private:
     unsigned char *music_buffer; // for looped music
     long music_buffer_length;
     SMPEG *mp3_sample;
-    OVInfo *music_ovi;
+    MusicStruct music_struct;
     Mix_Music *music_info;
     char *loop_bgm_name[2];
     

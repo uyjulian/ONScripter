@@ -41,7 +41,7 @@ static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 bool ext_music_play_once_flag = false;
 
-extern long decodeOggVorbis(OVInfo *ovi, unsigned char *buf_dst, long len, bool do_rate_conversion);
+extern long decodeOggVorbis(ONScripterLabel::MusicStruct *username, unsigned char *buf_dst, long len, bool do_rate_conversion);
 
 /* **************************************** *
  * Callback functions
@@ -57,7 +57,7 @@ extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 
 extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
 {
-    if (decodeOggVorbis((OVInfo*)userdata, stream, len, true) == 0){
+    if (decodeOggVorbis((ONScripterLabel::MusicStruct*)userdata, stream, len, true) == 0){
         SDL_Event event;
         event.type = ONS_SOUND_EVENT;
         SDL_PushEvent(&event);
@@ -517,7 +517,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             break;
 
           case EDIT_MP3_VOLUME_MODE:
-            music_volume = variable_edit_num;
+            music_struct.volume = variable_edit_num;
             if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_volume );
             break;
 
