@@ -274,6 +274,12 @@ void FontInfo::addShadeArea(SDL_Rect &rect, int shade_distance[2])
 
 int FontInfo::initRuby(FontInfo &body_info, int body_count, int ruby_count)
 {
+    if (tateyoko_mode == YOKO_MODE &&
+        body_count + body_info.xy[0]/2 >= body_info.num_xy[0]-1 ||
+        tateyoko_mode == TATE_MODE &&
+        body_count + body_info.xy[1]/2 > body_info.num_xy[1])
+        body_info.newLine();
+
     top_xy[0] = body_info.x();
     top_xy[1] = body_info.y();
     pitch_xy[0] = font_size_xy[0];

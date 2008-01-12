@@ -1994,7 +1994,7 @@ int ONScripterLabel::getregCommand()
 int ONScripterLabel::getmp3volCommand()
 {
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, music_volume );
+    script_h.setInt( &script_h.current_variable, music_struct.volume );
     return RET_CONTINUE;
 }
 

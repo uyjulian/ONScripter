@@ -456,7 +456,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
       case SDLK_m:
         if ( variable_edit_mode != EDIT_SELECT_MODE ) return;
         variable_edit_mode = EDIT_MP3_VOLUME_MODE;
-        variable_edit_num = music_volume;
+        variable_edit_num = music_struct.volume;
         break;
 
       case SDLK_s:
@@ -518,7 +518,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 
           case EDIT_MP3_VOLUME_MODE:
             music_struct.volume = variable_edit_num;
-            if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_volume );
+            if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_struct.volume );
             break;
 
           case EDIT_SE_VOLUME_MODE:
@@ -572,7 +572,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             var_name = var_index; p = script_h.variable_data[ variable_edit_index ].num; break;
 
           case EDIT_MP3_VOLUME_MODE:
-            var_name = "MP3 Volume"; p = music_volume; break;
+            var_name = "MP3 Volume"; p = music_struct.volume; break;
 
           case EDIT_VOICE_VOLUME_MODE:
             var_name = "Voice Volume"; p = voice_volume; break;

@@ -1308,7 +1308,7 @@ void ONScripterLabel::loadEnvData()
     }
     else{
         setStr( &default_env_font, DEFAULT_ENV_FONT );
-        voice_volume = se_volume = music_volume = DEFAULT_VOLUME;
+        voice_volume = se_volume = music_struct.volume = DEFAULT_VOLUME;
     }
 }
 
@@ -1326,7 +1326,7 @@ void ONScripterLabel::saveEnvData()
         writeStr( default_cdrom_drive, output_flag );
         writeInt( DEFAULT_VOLUME - voice_volume, output_flag );
         writeInt( DEFAULT_VOLUME - se_volume, output_flag );
-        writeInt( DEFAULT_VOLUME - music_volume, output_flag );
+        writeInt( DEFAULT_VOLUME - music_struct.volume, output_flag );
         writeInt( kidokumode_flag?1:0, output_flag );
         writeInt( 0, output_flag ); // ?
         writeChar( 0, output_flag ); // ?

@@ -37,14 +37,6 @@
 #include <smpeg.h>
 #endif
 
-#if defined(USE_OGG_VORBIS)
-#if defined(INTEGER_OGG_VORBIS)
-#include <tremor/ivorbisfile.h>
-#else
-#include <vorbis/vorbisfile.h>
-#endif
-#endif
-
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
 #define DEFAULT_BLIT_FLAG (0)
@@ -67,30 +59,11 @@
 
 #define NUM_GLYPH_CACHE 30
 
-struct OVInfo{
-    SDL_AudioCVT cvt;
-    int cvt_len;
-    int mult1;
-    int mult2;
-    unsigned char *buf;
-    long decoded_length;
-#if defined(USE_OGG_VORBIS)
-    ogg_int64_t length;
-    ogg_int64_t pos;
-    OggVorbis_File ovf;
-#endif
-};
-
 class ONScripterLabel : public ScriptParser
 {
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
     
-    typedef struct{
-        OVInfo *ovi;
-        int volume;
-    } MusicStruct;
-
     ONScripterLabel();
     ~ONScripterLabel();
 
@@ -644,7 +617,6 @@ private:
     unsigned char *music_buffer; // for looped music
     long music_buffer_length;
     SMPEG *mp3_sample;
-    MusicStruct music_struct;
     Mix_Music *music_info;
     char *loop_bgm_name[2];
     

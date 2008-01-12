@@ -36,6 +36,14 @@
 #include "AnimationInfo.h"
 #include "FontInfo.h"
 
+#if defined(USE_OGG_VORBIS)
+#if defined(INTEGER_OGG_VORBIS)
+#include <tremor/ivorbisfile.h>
+#else
+#include <vorbis/vorbisfile.h>
+#endif
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -49,9 +57,28 @@
 
 typedef unsigned char uchar3[3];
 
+struct OVInfo{
+    SDL_AudioCVT cvt;
+    int cvt_len;
+    int mult1;
+    int mult2;
+    unsigned char *buf;
+    long decoded_length;
+#if defined(USE_OGG_VORBIS)
+    ogg_int64_t length;
+    ogg_int64_t pos;
+    OggVorbis_File ovf;
+#endif
+};
+
 class ScriptParser
 {
 public:
+    typedef struct{
+        OVInfo *ovi;
+        int volume;
+    } MusicStruct;
+
     ScriptParser();
     ~ScriptParser();
 
@@ -344,7 +371,7 @@ protected:
     
     /* ---------------------------------------- */
     /* Sound related variables */
-    int music_volume;
+    MusicStruct music_struct;
     int voice_volume;
     int se_volume;
 
