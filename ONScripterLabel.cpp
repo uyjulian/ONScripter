@@ -32,7 +32,6 @@ extern "C" void waveCallback( int channel );
 #define REGISTRY_FILE "registry.txt"
 #define DLL_FILE "dll.txt"
 #define DEFAULT_ENV_FONT "ÇlÇr ÉSÉVÉbÉN"
-#define DEFAULT_VOLUME 100
 
 typedef int (ONScripterLabel::*FuncList)();
 static struct FuncLUT{

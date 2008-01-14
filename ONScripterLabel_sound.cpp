@@ -93,9 +93,9 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned
             memcpy(buf_dst, ovi->cvt.buf, ovi->cvt.len_cvt);
             dst_len = ovi->cvt.len_cvt;
 
-            if (music_struct->volume != 100){
+            if (music_struct->volume != DEFAULT_VOLUME){
                 // volume change under SOUND_OGG_STREAMING
-                for (int i=0 ; i<ovi->cvt.len_cvt ; i+=2){
+                for (int i=0 ; i<dst_len ; i+=2){
                     short a = buf_dst[i+1]<<8|buf_dst[i];
                     a = a*music_struct->volume/100;
                     buf_dst[i  ] = a & 0xff;
@@ -105,7 +105,7 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned
             buf_dst += ovi->cvt.len_cvt;
         }
         else{
-            if (do_rate_conversion && music_struct->volume != 100){ 
+            if (do_rate_conversion && music_struct->volume != DEFAULT_VOLUME){ 
                 // volume change under SOUND_OGG_STREAMING
                 for (int i=0 ; i<dst_len ; i+=2){
                     short a = buf_dst[i+1]<<8|buf_dst[i];
@@ -286,8 +286,10 @@ int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, boo
     if (format & SOUND_OGG){
         unsigned char *buffer2 = new unsigned char[sizeof(WAVE_HEADER)+ovi->decoded_length];
         
-        music_struct.ovi = ovi;
-        decodeOggVorbis(&music_struct, buffer2+sizeof(WAVE_HEADER), ovi->decoded_length, false);
+        MusicStruct ms;
+        ms.ovi = ovi;
+        ms.volume = DEFAULT_VOLUME;
+        decodeOggVorbis(&ms, buffer2+sizeof(WAVE_HEADER), ovi->decoded_length, false);
         setupWaveHeader(buffer2, channels, rate, ovi->decoded_length);
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer2, sizeof(WAVE_HEADER)+ovi->decoded_length), 1);
         delete[] buffer2;
