@@ -617,8 +617,10 @@ int ONScripterLabel::textCommand()
                 script_h.setCurrent(end_buf+1);
                 break;
             }
-            //else if (*end_buf == 0x0a) break;
-            end_buf++;
+            else if (IS_TWO_BYTE(end_buf[0]))
+                end_buf+=2;
+            else
+                end_buf++;
         }
 
         if (current_page->tag) delete[] current_page->tag;
