@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -27,7 +27,7 @@
 #include <dirent.h>
 #endif
 
-#if defined(UTF8_FILESYSTEM)
+#if defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)
 #if defined(MACOSX)
 #include <CoreFoundation/CoreFoundation.h>
 #else
@@ -58,7 +58,7 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
 
     capital_name = new char[MAX_FILE_NAME_LENGTH*2+1];
     capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*2+1];
-#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+#if (defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)) && !defined(MACOSX)
     if (iconv_cd == NULL) iconv_cd = iconv_open("UTF-8", "SJIS");
     iconv_ref_count++;
 #endif
@@ -98,7 +98,7 @@ DirectReader::~DirectReader()
 
     delete[] capital_name;
     delete[] capital_name_tmp;
-#if defined(UTF8_FILESYSTEM) && !defined(MACOSX)
+#if (defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)) && !defined(MACOSX)
     if (--iconv_ref_count == 0){
         iconv_close(iconv_cd);
         iconv_cd = NULL;
@@ -244,7 +244,7 @@ int DirectReader::close()
     return 0;
 }
 
-char *DirectReader::getArchiveName() const
+const char *DirectReader::getArchiveName() const
 {
     return "direct";
 }
@@ -393,9 +393,9 @@ void DirectReader::convertFromSJISToEUC( char *buf )
     }
 }
 
-void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf, size_t src_len )
+void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf, size_t src_len )
 {
-#if defined(UTF8_FILESYSTEM)
+#if defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)
 #if defined(MACOSX)
     CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)src_buf, src_len, 
                                                         kCFStringEncodingShiftJIS, false);

@@ -41,7 +41,7 @@ static SDL_TimerID timer_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 bool ext_music_play_once_flag = false;
 
-extern long decodeOggVorbis(ONScripterLabel::MusicStruct *username, unsigned char *buf_dst, long len, bool do_rate_conversion);
+extern long decodeOggVorbis(ONScripterLabel::MusicStruct *username, Uint8 *buf_dst, long len, bool do_rate_conversion);
 
 /* **************************************** *
  * Callback functions
@@ -393,7 +393,7 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     current_button_state.x = event->x;
     current_button_state.y = event->y;
     current_button_state.down_flag = false;
-    skip_flag = false;
+    skip_mode &= ~SKIP_NORMAL;
 
     if ( event->button == SDL_BUTTON_RIGHT &&
          event->type == SDL_MOUSEBUTTONUP &&
@@ -441,6 +441,8 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     else return;
     
     if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)){
+        if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+            skip_mode |= SKIP_TO_EOL;
         playClickVoice();
         stopAnimation( clickstr_state );
         advancePhase();
@@ -696,7 +698,7 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
          event->keysym.sym == SDLK_KP_ENTER ||
          event->keysym.sym == SDLK_SPACE ||
          event->keysym.sym == SDLK_s))
-        skip_flag = false;
+        skip_mode &= ~SKIP_NORMAL;
     
     if ( shift_pressed_status && event->keysym.sym == SDLK_q && current_mode == NORMAL_MODE ){
         endCommand();
@@ -865,12 +867,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             return;
         }
     }
-    
+
     if ( event_mode & WAIT_INPUT_MODE && !key_pressed_flag &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if (event->keysym.sym == SDLK_RETURN || 
             event->keysym.sym == SDLK_KP_ENTER ||
             event->keysym.sym == SDLK_SPACE ){
+            if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+                skip_mode |= SKIP_TO_EOL;
             key_pressed_flag = true;
             playClickVoice();
             stopAnimation( clickstr_state );
@@ -881,23 +885,26 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE) && 
          !key_pressed_flag ){
         if (event->keysym.sym == SDLK_s && !automode_flag ){
-            skip_flag = true;
+            skip_mode |= SKIP_NORMAL;
             printf("toggle skip to true\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
             advancePhase();
         }
         else if (event->keysym.sym == SDLK_o){
-            draw_one_page_flag = !draw_one_page_flag;
-            printf("toggle draw one page flag to %s\n", (draw_one_page_flag?"true":"false") );
-            if ( draw_one_page_flag ){
+            if (skip_mode & SKIP_TO_EOP)
+                skip_mode &= ~SKIP_TO_EOP;
+            else
+                skip_mode |= SKIP_TO_EOP;
+            printf("toggle draw one page flag to %s\n", (skip_mode & SKIP_TO_EOP?"true":"false") );
+            if ( skip_mode & SKIP_TO_EOP ){
                 stopAnimation( clickstr_state );
                 advancePhase();
             }
         }
         else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
             automode_flag = true;
-            skip_flag = false;
+            skip_mode &= ~SKIP_NORMAL;
             printf("change to automode\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );

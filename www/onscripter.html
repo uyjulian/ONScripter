@@ -19,9 +19,9 @@
 了承下さい。<br>
 
 Since: Feb. 6, 2002<br>
-Last updated: Jan. 21, 2008 [ソース更新]<br>
+Last updated: Aug. 24, 2008 [ソース更新]<br>
 <!--Last updated: Feb. 14, 2006 [バイナリパッケージ追加]<br>-->
-<!--Last updated: Aug. 5, 2006 [Experimental ソース更新]<br>-->
+<!--Last updated: Aug. 23, 2008 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
 </a>、<A HREF="http://www.angelfire.com/space/ogapee/onscripter.html">
 ミラーサイト</a><br>
@@ -100,8 +100,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20080121.tar.gz">onscripter-20080121.tar.gz</a>
-  <li> <a href="onscripter-20080115.tar.gz">onscripter-20080115.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20080824.tar.gz">onscripter-20080824.tar.gz</a>
+  <li> <a href="onscripter-20080127.tar.gz">onscripter-20080127.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20060812.tar.gz">onscripter-exp-20060812.tar.gz</a>(実験版, ２種類目の画像バッファ生成効率アップ)-->
 </ul>
 </div> <!-- sub-content -->
@@ -136,11 +136,11 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
   <li> MacOSX 版
       <ul>
         <li> <a href="http://tmkk.hp.infoseek.co.jp/onscripter/">ONScripter Launcher and Binary for Mac OS X</a>（tmkkさん）
-        <li> <a href="http://kimatten.hp.infoseek.co.jp/">「ぼくだけの小さな世界」</a>（し〜くるさん）
+        <li> <s><a href="http://kimatten.hp.infoseek.co.jp/">「ぼくだけの小さな世界」</a>（し〜くるさん）</s>
         <li> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a>（かつらさん）
       </ul>
   <li> PSP 版 <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a>（すとーむさん）
-  <li> iPod (5G, photo, nano, mini), PocketPC, GP2X, iPhone &amp; iPod touch 版 <a href="http://kimatten.hp.infoseek.co.jp/">「ぼくだけの小さな世界」</a>（し〜くるさん）
+  <li> <s>iPod (5G, photo, nano, mini), PocketPC, GP2X, iPhone &amp; iPod touch 版 <a href="http://kimatten.hp.infoseek.co.jp/">「ぼくだけの小さな世界」</a>（し〜くるさん）</s>
   <li> OS2/Warp 版 <a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a>（Sofiya猫さん）
   <li> NetBSD 版 <a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>（いしはらさん）
       <ul>
@@ -171,7 +171,7 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 <h3><a name="feature-comparison">NScripter と比較した特徴</a></h3>
 <div class="sub-content">
 <ol>
-  <li> 現時点(2008/01/05)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
+  <li> 現時点(2008/08/10)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
   <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
   <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Android, GP2X, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
@@ -202,23 +202,23 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 <h4>必須</h4>
 <dl>
   <dt> ・C++ 処理系
-  <dd> g++ 3.3.5 (Linux)
-  <dd> Visual C++ 6.0 (Windows)
+  <dd> g++ 4.1.2 (Linux)
+  <dd> Visual Studio 2005 C++ (Windows)
   <dt> ・Unicode で指定された日本語 TTF フォント(ファイル名は default.ttf に)
   <dt> ・<a href="http://www.ijg.org/">Independent JPEG Group</a>
   <dd> libjpeg-6b
   <dt> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
-  <dd> bzip2-1.0.2
+  <dd> bzip2-1.0.3
   <dt> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
-  <dd> SDL-1.2.5, SDL_image-1.2.4, SDL_mixer-1.2.6, SDL_ttf-2.0.6, SMPEG-0.4.4
+  <dd> SDL-1.2.11, SDL_image-1.2.4, SDL_mixer-1.2.6, SDL_ttf-2.0.6, SMPEG-0.4.5
   <dt> ・<a href="http://www.freetype.org/"> FreeType </a>
-  <dd> FreeType 2.1.7
+  <dd> FreeType 2.2.1
 </dl>
 
 <h4>推奨</h4>
 <dl>
   <dt> ・<a href="http://www.xiph.org/">The Ogg Vorbis CODEC Project</a>
-  <dd> ogg-1.0, vorbis-1.0 (or Tremor vorbis)
+  <dd> ogg-1.1.3, vorbis-1.1.2 (or Tremor vorbis)
   <dd> これは必須ではありませんが、最近多くのゲームで使われている Ogg Vorbis 形式で圧縮された音声を聞きたい場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。
 </dl>
 
@@ -232,6 +232,10 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
   <dd> avifile-0.7-0.7.38
   <dd> これは必要ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
   <dd> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
+  <dt> ・<a href="http://www.meadowy.org/meadow/dists/snapshot/old/iconv-1.8.win32.zip">iconv-1.8.win32.zip</a>
+  <dd> iconv-1.8
+  <dd> Windows 用の iconv 開発用バイナリです。ここでは Meadowy.org で配布しているものを利用していますが、他のバージョンや配布物でも問題ないと思います。
+  <dd> Windows で最新の SDL を使用する場合に、正しくキャプションを表示するために必要になります。
 </dl>
 
 <p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
@@ -270,10 +274,10 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 <p>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</p>
 
 <OL>
-  <li> (<FONT color="#ff8800">中</FONT>)コマンド引数の unsigned (SDL_Rect)へのキャスト問題の解決。
-  <li> (<FONT color="#ff8800">中</FONT>)SIGSEGV 等の補足。
-  <li> (<FONT color="#ff8800">中</FONT>)bgcopy の後に画像を保存するようにする。
+  <li> (<FONT color="#ff8800">中</FONT>)右クリックからの windowerase を実行する時に windoweffect の効果を反映させる。
+  <li> (<FONT color="#ff8800">中</FONT>)bgcopy で取得した画像をセーブ時にファイルに保存するようにする。
   <li> (<FONT color="#ff8800">中</FONT>)文字の影が既に描画されている文字にかぶった場合に対処する。
+  <li> (<FONT color="#00ff00">低</FONT>)正式な英語モード(english コマンド)への移行。
   <li> (<FONT color="#00ff00">低</FONT>)existspbtn を spbtn として実装しているが、それでよいのかを検証する。
   <li> (<FONT color="#00ff00">低</FONT>)コードの clean up。
 </OL>       
@@ -437,7 +441,7 @@ sav というディレクトリがある場合には、ヘッダ無しのセーブファイルを sav
 
 <h4>注意点</h4>
 <ul>
-  <li>NScripter は、現時点(2008/01/05)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
+  <li>NScripter は、現時点(2008/08/10)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
   <li>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
   <li>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
   <li>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。
@@ -805,10 +809,12 @@ return
 <table>
 <tr><th>通常</th><th>windowback 使用</th></tr>
 <tr><td colspan="2" align="center">ボタン</td></tr>
+<tr><td colspan="2" align="center">カーソル</td></tr>
 <tr><td>テキストウィンドウ・文字</td><td>数値ラベル</td></tr>
 <tr><td>数値ラベル</td><td>バー</td></tr>
 <tr><td>バー</td><td>スプライト (humanz から 0)</td></tr>
 <tr><td>＊＊モノクロ・ネガ効果＊＊</td><td>テキストウィンドウ・文字</td></tr>
+<tr><td>スプライト２ (255 から 0)</td><td>スプライト２ (255 から 0)</td></tr>
 <tr><td>スプライト (humanz から 0)</td><td>＊＊モノクロ・ネガ効果＊＊</td></tr>
 <tr><td colspan="2" align="center">立ち絵</td></tr>
 <tr><td colspan="2" align="center">スプライト (999 から humanz+1)</td></tr>

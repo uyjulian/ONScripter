@@ -379,22 +379,21 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
         internal_saveon_flag = false;
     }
     
-    if ( !(display_mode & TEXT_DISPLAY_MODE) ){
+    if ( !(display_mode & DISPLAY_MODE_TEXT) ){
         if ( event_mode & EFFECT_EVENT_MODE ){
-            if ( doEffect( &window_effect, NULL, DIRECT_EFFECT_IMAGE, false ) == RET_CONTINUE ){
-                display_mode = TEXT_DISPLAY_MODE;
+            if ( doEffect( &window_effect, false ) == RET_CONTINUE ){
+                display_mode = DISPLAY_MODE_TEXT;
                 text_on_flag = true;
                 return RET_CONTINUE | RET_NOREAD;
             }
             return RET_WAIT | RET_REREAD;
         }
         else{
-            SDL_BlitSurface( accumulation_comp_surface, NULL, effect_dst_surface, NULL );
-            SDL_BlitSurface( accumulation_surface, NULL, accumulation_comp_surface, NULL );
+            refreshSurface( effect_dst_surface, NULL, refresh_shadow_text_mode );
             dirty_rect.clear();
             dirty_rect.add( sentence_font_info.pos );
 
-            return setEffect( &window_effect );
+            return setEffect( &window_effect, EFFECT_DST_GIVEN, true );
         }
     }
     
@@ -403,24 +402,25 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
 
 int ONScripterLabel::leaveTextDisplayMode(bool force_leave_flag)
 {
-    if ( display_mode & TEXT_DISPLAY_MODE &&
+    if ( display_mode & DISPLAY_MODE_TEXT &&
          (force_leave_flag || erase_text_window_mode != 0) ){
 
         if ( event_mode & EFFECT_EVENT_MODE ){
-            if ( doEffect( &window_effect,  NULL, DIRECT_EFFECT_IMAGE, false ) == RET_CONTINUE ){
-                display_mode = NORMAL_DISPLAY_MODE;
+            if ( doEffect( &window_effect, false ) == RET_CONTINUE ){
+                display_mode = DISPLAY_MODE_NORMAL | DISPLAY_MODE_UPDATED;
                 return RET_CONTINUE | RET_NOREAD;
             }
             return RET_WAIT | RET_REREAD;
         }
         else{
-            SDL_BlitSurface( accumulation_comp_surface, NULL, effect_dst_surface, NULL );
-            SDL_BlitSurface( accumulation_surface, NULL, accumulation_comp_surface, NULL );
+            SDL_BlitSurface( backup_surface, NULL, effect_dst_surface, NULL );
             dirty_rect.add( sentence_font_info.pos );
             
-            return setEffect( &window_effect );
+            return setEffect( &window_effect, EFFECT_DST_GIVEN, false );
         }
     }
+
+    display_mode |= DISPLAY_MODE_UPDATED;
     
     return RET_NOMATCH;
 }
@@ -448,7 +448,12 @@ void ONScripterLabel::doClickEnd()
 
 int ONScripterLabel::clickWait( char *out_text )
 {
-    if ( (skip_flag || draw_one_page_flag || ctrl_pressed_status) && !textgosub_label ){
+    if ( skip_mode & SKIP_TO_EOL ){
+        flush( refreshMode() );
+        skip_mode &= ~SKIP_TO_EOL;
+    }
+
+    if ( (skip_mode & (SKIP_NORMAL | SKIP_TO_EOP) || ctrl_pressed_status) && !textgosub_label ){
         clickstr_state = CLICK_NONE;
         if ( out_text ){
             drawDoubleChars( out_text, &sentence_font, false, true, accumulation_surface, &text_info );
@@ -496,9 +501,12 @@ int ONScripterLabel::clickNewPage( char *out_text )
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
         num_chars_in_sentence++;
     }
-    if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ) flush( refreshMode() );
+    if ( skip_mode || ctrl_pressed_status ){
+        flush( refreshMode() );
+        skip_mode &= ~SKIP_TO_EOL;
+    }
     
-    if ( (skip_flag || ctrl_pressed_status) && !textgosub_label  ){
+    if ( (skip_mode & SKIP_NORMAL || ctrl_pressed_status) && !textgosub_label  ){
         event_mode = WAIT_SLEEP_MODE;
         advancePhase();
         num_chars_in_sentence = 0;
@@ -696,6 +704,7 @@ int ONScripterLabel::processText()
             if (script_h.checkClickstr(script_h.getStringBuffer() + string_buffer_offset) != 1) string_buffer_offset++;
             string_buffer_offset++;
             clickstr_state = CLICK_NONE;
+            key_pressed_flag = false;
         }
         else if ( clickstr_state == CLICK_NEWPAGE ){
             event_mode = IDLE_EVENT_MODE;
@@ -703,6 +712,7 @@ int ONScripterLabel::processText()
             string_buffer_offset++;
             newPage( true );
             clickstr_state = CLICK_NONE;
+            key_pressed_flag = false;
             return RET_CONTINUE | RET_NOREAD;
         }
         else if ( IS_TWO_BYTE(script_h.getStringBuffer()[ string_buffer_offset ]) ){
@@ -723,8 +733,9 @@ int ONScripterLabel::processText()
                   !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
             string_buffer_offset += 2;
         }
-        else
+        else{
             string_buffer_offset++;
+        }
 
         event_mode = IDLE_EVENT_MODE;
     }
@@ -782,7 +793,7 @@ int ONScripterLabel::processText()
             }
         }
         
-        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
+        if ( skip_mode || ctrl_pressed_status ){
             drawChar( out_text, &sentence_font, false, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
                 
@@ -792,7 +803,7 @@ int ONScripterLabel::processText()
         else{
             drawChar( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
-            event_mode = WAIT_SLEEP_MODE;
+            event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE;
             if ( sentence_font.wait_time == -1 )
                 advancePhase( default_text_speed[text_speed_no] );
             else
@@ -845,7 +856,7 @@ int ONScripterLabel::processText()
             }
             while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
                    script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
-            if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
+            if ( skip_mode || ctrl_pressed_status ){
                 return RET_CONTINUE | RET_NOREAD;
             }
             else{
@@ -878,7 +889,7 @@ int ONScripterLabel::processText()
             sentence_font.addLineOffset(ruby_struct.margin);
             string_buffer_offset = ruby_struct.ruby_end - script_h.getStringBuffer();
             if (*ruby_struct.ruby_end == ')'){
-                if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
+                if ( skip_mode || ctrl_pressed_status )
                     endRuby(false, true, accumulation_surface, &text_info);
                 else
                     endRuby(true, true, accumulation_surface, &text_info);
@@ -946,7 +957,7 @@ int ONScripterLabel::processText()
         }
         
         bool flush_flag = true;
-        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status )
+        if ( skip_mode || ctrl_pressed_status )
             flush_flag = false;
         if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
              script_h.getStringBuffer()[ string_buffer_offset + 1 ] != 0x0a &&
@@ -960,7 +971,7 @@ int ONScripterLabel::processText()
             num_chars_in_sentence++;
         }
         
-        if ( skip_flag || draw_one_page_flag || ctrl_pressed_status ){
+        if ( skip_mode || ctrl_pressed_status ){
             if ( script_h.getStringBuffer()[ string_buffer_offset + 1 ] &&
                  !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR))
                 string_buffer_offset++;
@@ -968,7 +979,7 @@ int ONScripterLabel::processText()
             return RET_CONTINUE | RET_NOREAD;
         }
         else{
-            event_mode = WAIT_SLEEP_MODE;
+            event_mode = WAIT_SLEEP_MODE | WAIT_INPUT_MODE;
             if ( sentence_font.wait_time == -1 )
                 advancePhase( default_text_speed[text_speed_no] );
             else

@@ -2,7 +2,7 @@
  *
  *  NsaReader.cpp - Reader from a NSA archive
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -105,7 +105,7 @@ size_t NsaReader::putFile( FILE *fp, int no, size_t offset, size_t length, size_
     return putFileSub( ai, fp, no, offset, length, original_length , compression_type, modified_flag, buffer );
 }
 
-char *NsaReader::getArchiveName() const
+const char *NsaReader::getArchiveName() const
 {
     return "nsa";
 }

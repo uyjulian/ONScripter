@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -34,7 +34,7 @@ public:
 
     int open( char *name=NULL, int archive_type = ARCHIVE_TYPE_SAR );
     int close();
-    char *getArchiveName() const;
+    const char *getArchiveName() const;
     int getNumFiles();
     
     size_t getFileLength( const char *file_name );

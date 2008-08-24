@@ -60,7 +60,7 @@ extern SDL_TimerID timer_cdaudio_id;
 #define TMP_MIDI_FILE "tmp.mid"
 #define TMP_MUSIC_FILE "tmp.mus"
 
-extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned char *buf_dst, long len, bool do_rate_conversion)
+extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *buf_dst, long len, bool do_rate_conversion)
 {
     int current_section;
     long total_len = 0;
@@ -71,7 +71,7 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned
         len = len * ovi->mult1 / ovi->mult2;
         if (ovi->cvt_len < len*ovi->cvt.len_mult){
             if (ovi->cvt.buf) delete[] ovi->cvt.buf;
-            ovi->cvt.buf = new unsigned char[len*ovi->cvt.len_mult];
+            ovi->cvt.buf = new Uint8[len*ovi->cvt.len_mult];
             ovi->cvt_len = len*ovi->cvt.len_mult;
         }
         buf = (char*)ovi->cvt.buf;
@@ -96,10 +96,9 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned
             if (music_struct->volume != DEFAULT_VOLUME){
                 // volume change under SOUND_OGG_STREAMING
                 for (int i=0 ; i<dst_len ; i+=2){
-                    short a = buf_dst[i+1]<<8|buf_dst[i];
+                    short a = *(short*)(buf_dst+i);
                     a = a*music_struct->volume/100;
-                    buf_dst[i  ] = a & 0xff;
-                    buf_dst[i+1] = a>>8;
+                    *(short*)(buf_dst+i) = a;
                 }
             }
             buf_dst += ovi->cvt.len_cvt;
@@ -108,10 +107,9 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, unsigned
             if (do_rate_conversion && music_struct->volume != DEFAULT_VOLUME){ 
                 // volume change under SOUND_OGG_STREAMING
                 for (int i=0 ; i<dst_len ; i+=2){
-                    short a = buf_dst[i+1]<<8|buf_dst[i];
+                    short a = *(short*)(buf_dst+i);
                     a = a*music_struct->volume/100;
-                    buf_dst[i  ] = a & 0xff;
-                    buf_dst[i+1] = a>>8;
+                    *(short*)(buf_dst+i) = a;
                 }
             }
             buf += dst_len;

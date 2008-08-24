@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -262,28 +262,13 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 {
     if (refresh_mode == REFRESH_NONE_MODE) return;
 
-    bool windowchip_sprite_visible = false;
-    if (windowchip_sprite_no >= 0){
-        windowchip_sprite_visible = sprite_info[windowchip_sprite_no].visible;
-        if (refresh_mode & REFRESH_TEXT_MODE) 
-            sprite_info[windowchip_sprite_no].visible = true;
-        else
-            sprite_info[windowchip_sprite_no].visible = false;
-    }
-
     SDL_Rect clip = {0, 0, surface->w, surface->h};
     if (clip_src) if ( AnimationInfo::doClipping( &clip, clip_src ) ) return;
 
-    bool is_drawable = true;
-    if (refresh_mode & REFRESH_COMP_MODE) is_drawable = false;
-
     int i, top;
-    if (is_drawable){
-        SDL_FillRect( surface, &clip, SDL_MapRGB( surface->format, 0, 0, 0) );
-        drawTaggedSurface( surface, &bg_info, clip );
-    }
+    SDL_BlitSurface( bg_info.image_surface, &clip, surface, &clip );
     
-    if ( !all_sprite_hide_flag && is_drawable ){
+    if ( !all_sprite_hide_flag ){
         if ( z_order < 10 && refresh_mode & REFRESH_SAYA_MODE )
             top = 9;
         else
@@ -295,22 +280,18 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
     }
 
-    if ( is_drawable ){
-        for ( i=0 ; i<3 ; i++ ){
-            if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
-                drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
-            }
+    for ( i=0 ; i<3 ; i++ ){
+        if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
+            drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
         }
     }
 
     if ( windowback_flag ){
-        if (is_drawable){
-            if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
-            if ( monocro_flag )   makeMonochromeSurface( surface, clip );
-            if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
-        }
+        if ( nega_mode == 1 ) makeNegaSurface( surface, clip );
+        if ( monocro_flag )   makeMonochromeSurface( surface, clip );
+        if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
 
-        if (!all_sprite2_hide_flag && is_drawable){
+        if (!all_sprite2_hide_flag){
             for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
                 if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
@@ -318,18 +299,13 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
             }
         }
     
-        if (is_drawable)
-            SDL_BlitSurface( surface, &clip, accumulation_comp_surface, &clip );
-            
         if (refresh_mode & REFRESH_SHADOW_MODE)
             shadowTextDisplay( surface, clip );
         if (refresh_mode & REFRESH_TEXT_MODE)
             text_info.blendOnSurface( surface, 0, 0, clip );
-
-        is_drawable = true;
     }
 
-    if ( !all_sprite_hide_flag && is_drawable ){
+    if ( !all_sprite_hide_flag ){
         if ( refresh_mode & REFRESH_SAYA_MODE )
             top = 10;
         else
@@ -341,8 +317,8 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
     }
 
-    if ( !windowback_flag && is_drawable ){
-        if (!all_sprite2_hide_flag && is_drawable){
+    if ( !windowback_flag ){
+        if (!all_sprite2_hide_flag){
             for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
                 if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
@@ -355,7 +331,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
     }
     
-    if ( !( refresh_mode & REFRESH_SAYA_MODE ) && is_drawable ){
+    if ( !( refresh_mode & REFRESH_SAYA_MODE ) ){
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
             if ( bar_info[i] ) {
                 drawTaggedSurface( surface, bar_info[i], clip );
@@ -369,15 +345,10 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
     }
 
     if ( !windowback_flag ){
-        if (is_drawable)
-            SDL_BlitSurface( surface, &clip, accumulation_comp_surface, &clip );
-        
         if (refresh_mode & REFRESH_SHADOW_MODE)
             shadowTextDisplay( surface, clip );
         if (refresh_mode & REFRESH_TEXT_MODE)
             text_info.blendOnSurface( surface, 0, 0, clip );
-
-        is_drawable = true;
     }
 
     if ( refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label ){
@@ -394,9 +365,6 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
         p_button_link = p_button_link->next;
     }
-
-    if (windowchip_sprite_no >= 0)
-        sprite_info[windowchip_sprite_no].visible = windowchip_sprite_visible;
 }
 
 void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_no,
@@ -419,7 +387,11 @@ void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_n
 
 void ONScripterLabel::createBackground()
 {
-    bg_effect_image = COLOR_EFFECT_IMAGE;
+    bg_info.num_of_cells = 1;
+    bg_info.trans_mode = AnimationInfo::TRANS_COPY;
+    bg_info.pos.x = 0;
+    bg_info.pos.y = 0;
+    bg_info.allocImage( screen_width, screen_height );
 
     if ( !strcmp( bg_info.file_name, "white" ) ){
         bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
@@ -427,30 +399,26 @@ void ONScripterLabel::createBackground()
     else if ( !strcmp( bg_info.file_name, "black" ) ){
         bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
     }
-    else{
-        if ( bg_info.file_name[0] == '#' ){
+    else if ( bg_info.file_name[0] == '#' ){
             readColor( &bg_info.color, bg_info.file_name );
+    }
+    else{
+        AnimationInfo anim;
+        setStr( &anim.image_name, bg_info.file_name );
+        parseTaggedString( &anim );
+        anim.trans_mode = AnimationInfo::TRANS_COPY;
+        setupAnimationInfo( &anim );
+
+        bg_info.fill(0, 0, 0, 0xff);
+        if (anim.image_surface){
+            SDL_Rect src_rect = {0, 0, anim.image_surface->w, anim.image_surface->h};
+            SDL_Rect dst_rect;
+            dst_rect.x = (screen_width  - anim.image_surface->w) / 2;
+            dst_rect.y = (screen_height - anim.image_surface->h) / 2;
+            bg_info.copySurface(anim.image_surface, &src_rect, &dst_rect);
         }
-        else{
-            bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
-            setStr( &bg_info.image_name, bg_info.file_name );
-            parseTaggedString( &bg_info );
-            bg_info.trans_mode = AnimationInfo::TRANS_COPY;
-            setupAnimationInfo( &bg_info );
-            if (bg_info.image_surface){
-                bg_info.pos.x = (screen_width - bg_info.image_surface->w) / 2;
-                bg_info.pos.y = (screen_height - bg_info.image_surface->h) / 2;
-            }
-            bg_effect_image = BG_EFFECT_IMAGE;
-        }
+        return;
     }
 
-    if (bg_effect_image == COLOR_EFFECT_IMAGE){
-        bg_info.num_of_cells = 1;
-        bg_info.trans_mode = AnimationInfo::TRANS_COPY;
-        bg_info.pos.x = 0;
-        bg_info.pos.y = 0;
-        bg_info.allocImage( screen_width, screen_height );
-        bg_info.fill(bg_info.color[0], bg_info.color[1], bg_info.color[2], 0xff);
-    }
+    bg_info.fill(bg_info.color[0], bg_info.color[1], bg_info.color[2], 0xff);
 }
