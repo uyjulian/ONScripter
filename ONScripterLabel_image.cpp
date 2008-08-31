@@ -292,7 +292,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         if ( nega_mode == 2 ) makeNegaSurface( surface, clip );
 
         if (!all_sprite2_hide_flag){
-            for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
+            for ( i=MAX_SPRITE2_NUM-1 ; i>=0 ; i-- ){
                 if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
                 }
@@ -319,7 +319,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 
     if ( !windowback_flag ){
         if (!all_sprite2_hide_flag){
-            for ( i=MAX_SPRITE2_NUM-1 ; i>0 ; i-- ){
+            for ( i=MAX_SPRITE2_NUM-1 ; i>=0 ; i-- ){
                 if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
                 }
