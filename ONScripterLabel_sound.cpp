@@ -287,7 +287,7 @@ int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, boo
         MusicStruct ms;
         ms.ovi = ovi;
         ms.volume = DEFAULT_VOLUME;
-        decodeOggVorbis(&ms, buffer2+sizeof(WAVE_HEADER), ovi->decoded_length, false);
+        decodeOggVorbis(&ms, (Uint8*)(buffer2+sizeof(WAVE_HEADER)), ovi->decoded_length, false);
         setupWaveHeader(buffer2, channels, rate, ovi->decoded_length);
         Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer2, sizeof(WAVE_HEADER)+ovi->decoded_length), 1);
         delete[] buffer2;
@@ -590,9 +590,9 @@ static size_t oc_read_func(void *ptr, size_t size, size_t nmemb, void *datasourc
 {
     OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
 
-    ogg_int64_t len = size*nmemb;
+    size_t len = size*nmemb;
     if (ogg_vorbis_info->pos+len > ogg_vorbis_info->length) 
-        len = ogg_vorbis_info->length - ogg_vorbis_info->pos;
+        len = (size_t)(ogg_vorbis_info->length - ogg_vorbis_info->pos);
     memcpy(ptr, ogg_vorbis_info->buf+ogg_vorbis_info->pos, len);
     ogg_vorbis_info->pos += len;
 
@@ -627,7 +627,7 @@ static long oc_tell_func(void *datasource)
 {
     OVInfo *ogg_vorbis_info = (OVInfo*)datasource;
 
-    return ogg_vorbis_info->pos;
+    return (long)ogg_vorbis_info->pos;
 }
 #endif
 OVInfo *ONScripterLabel::openOggVorbis( unsigned char *buf, long len, int &channels, int &rate )
@@ -670,7 +670,7 @@ OVInfo *ONScripterLabel::openOggVorbis( unsigned char *buf, long len, int &chann
     ovi->mult1 = 10;
     ovi->mult2 = (int)(ovi->cvt.len_ratio*10.0);
     
-    ovi->decoded_length = ov_pcm_total(&ovi->ovf, -1) * channels * 2;
+    ovi->decoded_length = (long)(ov_pcm_total(&ovi->ovf, -1) * channels * 2);
 #endif
 
     return ovi;
