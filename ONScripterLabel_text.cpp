@@ -350,12 +350,12 @@ void ONScripterLabel::restoreTextBuffer()
                 out_text[1] = current_page->text[i+1];
                 
                 if (IS_KINSOKU( current_page->text+i+2 )){
-                    int i = 2;
-                    while (!f_info.isEndOfLine(i) &&
-                           IS_KINSOKU( current_page->text+i+2 )){
-                        i += 2;
+                    int j = 2;
+                    while (!f_info.isEndOfLine(j) &&
+                           IS_KINSOKU( current_page->text+i+j+2 )){
+                        j += 2;
                     }
-                    if (f_info.isEndOfLine(i)) f_info.newLine();
+                    if (f_info.isEndOfLine(j)) f_info.newLine();
                 }
             }
             else{
