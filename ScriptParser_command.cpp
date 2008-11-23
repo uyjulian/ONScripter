@@ -177,15 +177,17 @@ int ScriptParser::soundpressplginCommand()
     char buf2[12];
     memcpy(buf2, buf, 12);
     // only nbzplgin.dll is supported
-    for (unsigned int i=0 ; i<strlen(buf) ; i++)
+    for (int i=0 ; i<12 ; i++)
         if (buf2[i] >= 'A' && buf2[i] <= 'Z') buf2[i] += 'a' - 'A';
     if (strncmp(buf2, "nbzplgin.dll", 12)){
         fprintf( stderr, " *** plugin %s is not available, ignored. ***\n", buf);
         return RET_CONTINUE;
     }
-    while( *buf != '|' ) buf++;
-    buf++;
 
+    while(*buf && *buf != '|') buf++;
+    if (*buf == 0) return RET_CONTINUE;
+    
+    buf++;
     script_h.cBR->registerCompressionType( buf, BaseReader::NBZ_COMPRESSION );
 
     return RET_CONTINUE;

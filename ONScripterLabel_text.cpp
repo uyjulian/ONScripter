@@ -393,7 +393,7 @@ int ONScripterLabel::enterTextDisplayMode(bool text_flag)
             dirty_rect.clear();
             dirty_rect.add( sentence_font_info.pos );
 
-            return setEffect( &window_effect, EFFECT_DST_GIVEN, true );
+            return setEffect( &window_effect, false, true );
         }
     }
     
@@ -416,7 +416,7 @@ int ONScripterLabel::leaveTextDisplayMode(bool force_leave_flag)
             SDL_BlitSurface( backup_surface, NULL, effect_dst_surface, NULL );
             dirty_rect.add( sentence_font_info.pos );
             
-            return setEffect( &window_effect, EFFECT_DST_GIVEN, false );
+            return setEffect( &window_effect, false, false );
         }
     }
 
@@ -600,6 +600,11 @@ void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *
 
 int ONScripterLabel::textCommand()
 {
+    if (line_enter_status <= 1 && saveon_flag && internal_saveon_flag){
+        saveSaveFile( -1 );
+        internal_saveon_flag = false;
+    }
+
     char *start_buf = script_h.getCurrent();
 
     if (pretextgosub_label && 

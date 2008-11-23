@@ -251,7 +251,7 @@ int ONScripterLabel::talCommand()
             dirty_rect.add( tachi_info[ no ].pos );
         }
 
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
    }
 }
 
@@ -465,7 +465,12 @@ int ONScripterLabel::splitCommand()
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
 
         unsigned int c=0;
-        while( save_buf[c] != delimiter && save_buf[c] != '\0' ) c++;
+        while(save_buf[c] != delimiter && save_buf[c] != '\0'){
+            if (IS_TWO_BYTE(save_buf[c]))
+                c += 2;
+            else
+                c++;
+        }
         memcpy( token, save_buf, c );
         token[c] = '\0';
         
@@ -1010,7 +1015,7 @@ int ONScripterLabel::quakeCommand()
         dirty_rect.fill( screen_width, screen_height );
         SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
 
-        return setEffect( &tmp_effect, EFFECT_DST_GIVEN, true ); // 2 is dummy value
+        return setEffect( &tmp_effect, false, true );
     }
 }
 
@@ -1101,7 +1106,7 @@ int ONScripterLabel::printCommand()
         return doEffect( parseEffect(false) );
     }
     else{
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
     }
 }
 
@@ -1600,7 +1605,7 @@ int ONScripterLabel::ldCommand()
             }
         }
 
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
     }
 }
 
@@ -1726,7 +1731,7 @@ int ONScripterLabel::humanorderCommand()
         for ( i=0 ; i<3 ; i++ )
             dirty_rect.add( tachi_info[i].pos );
 
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
     }
 }
 
@@ -2689,7 +2694,7 @@ int ONScripterLabel::clCommand()
             tachi_info[2].remove();
         }
 
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
     }
 }
 
@@ -3111,7 +3116,7 @@ int ONScripterLabel::bgCommand()
         createBackground();
         dirty_rect.fill( screen_width, screen_height );
 
-        return setEffect( parseEffect(true), EFFECT_DST_GENERATE, true );
+        return setEffect( parseEffect(true), true, true );
     }
 }
 

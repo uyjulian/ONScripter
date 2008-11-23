@@ -27,7 +27,7 @@
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
 #define EFFECT_QUAKE_AMP (12 * screen_ratio1 / screen_ratio2)
 
-int ONScripterLabel::setEffect( EffectLink *effect, int effect_dst, bool update_backup_surface )
+int ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
 {
     if ( effect->effect == 0 ) return RET_CONTINUE;
 
@@ -39,11 +39,7 @@ int ONScripterLabel::setEffect( EffectLink *effect, int effect_dst, bool update_
 
     SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
         
-    switch( effect_dst ){
-      case EFFECT_DST_GIVEN:
-        break;
-            
-      case EFFECT_DST_GENERATE:
+    if (generate_effect_dst){
         int refresh_mode = refreshMode();
         if (update_backup_surface && refresh_mode == REFRESH_NORMAL_MODE){
             SDL_BlitSurface( backup_surface, &dirty_rect.bounding_box, effect_dst_surface, &dirty_rect.bounding_box );
@@ -54,7 +50,6 @@ int ONScripterLabel::setEffect( EffectLink *effect, int effect_dst, bool update_
             else
                 refreshSurface( effect_dst_surface, NULL, refresh_mode );
         }
-        break;
     }
     
     /* Load mask image */

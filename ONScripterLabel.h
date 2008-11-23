@@ -302,9 +302,6 @@ private:
            WAIT_VOICE_MODE      = 128,
            WAIT_TEXT_MODE       = 256 // clickwait, newpage, select
     };
-    typedef enum { EFFECT_DST_GIVEN    = 0,
-                   EFFECT_DST_GENERATE = 1
-    };
     enum { ALPHA_BLEND_CONST          = 1,
            ALPHA_BLEND_MULTIPLE       = 2,
            ALPHA_BLEND_FADE_MASK      = 3,
@@ -561,7 +558,7 @@ private:
     int effect_start_time;
     int effect_start_time_old;
     
-    int  setEffect( EffectLink *effect, int effect_dst, bool update_backup_surface );
+    int  setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface );
     int  doEffect( EffectLink *effect, bool clear_dirty_region=true );
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
