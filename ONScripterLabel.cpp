@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -510,6 +510,12 @@ int ONScripterLabel::init()
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
     screenshot_surface   = NULL;
+
+    tmp_image_buf = NULL;
+    tmp_image_buf_length = 0;
+    mean_size_of_loaded_images = 0;
+    num_loaded_images = 10; // to suppress temporal increase at the start-up
+
     text_info.num_of_cells = 1;
     text_info.allocImage( screen_width, screen_height );
     text_info.fill(0, 0, 0, 0);
@@ -612,7 +618,6 @@ void ONScripterLabel::reset()
     current_over_button = 0;
     variable_edit_mode = NOT_EDIT_MODE;
 
-    refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE | REFRESH_TEXT_MODE;
     new_line_skip_flag = false;
     text_on_flag = true;
     draw_cursor_flag = false;
@@ -650,6 +655,7 @@ void ONScripterLabel::resetSub()
 
     for ( i=0 ; i<3 ; i++ ) human_order[i] = 2-i; // "rcl"
 
+    refresh_shadow_text_mode = REFRESH_NORMAL_MODE | REFRESH_SHADOW_MODE | REFRESH_TEXT_MODE;
     erase_text_window_mode = 1;
     skip_mode = SKIP_NONE;
     monocro_flag = false;
@@ -971,21 +977,38 @@ SDL_Surface *ONScripterLabel::loadImage( char *file_name, bool *has_alpha )
     if ( filelog_flag )
         script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], file_name, true );
     //printf(" ... loading %s length %ld\n", file_name, length );
-    unsigned char *buffer = new unsigned char[length];
-    int location;
-    script_h.cBR->getFile( file_name, buffer, &location );
-    SDL_Surface *tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ), 1);
 
-    char *ext = strrchr(file_name, '.');
-    if ( !tmp && ext && (!strcmp( ext+1, "JPG" ) || !strcmp( ext+1, "jpg" ) ) ){
-        fprintf( stderr, " *** force-loading a JPG image [%s]\n", file_name );
-        SDL_RWops *src = SDL_RWFromMem( buffer, length );
-        tmp = IMG_LoadJPG_RW(src);
-        SDL_RWclose(src);
+    mean_size_of_loaded_images += length*6/5; // reserve 20% larger size
+    num_loaded_images++;
+    if (tmp_image_buf_length < mean_size_of_loaded_images/num_loaded_images){
+        tmp_image_buf_length = mean_size_of_loaded_images/num_loaded_images;
+        if (tmp_image_buf) delete[] tmp_image_buf;
+        tmp_image_buf = NULL;
     }
 
-    delete[] buffer;
-    if ( !tmp ){
+    unsigned char *buffer = NULL;
+    if (length > tmp_image_buf_length){
+        buffer = new unsigned char[length];
+    }
+    else{
+        if (!tmp_image_buf) tmp_image_buf = new unsigned char[tmp_image_buf_length];
+        buffer = tmp_image_buf;
+    }
+        
+    int location;
+    script_h.cBR->getFile( file_name, buffer, &location );
+    char *ext = strrchr(file_name, '.');
+
+    SDL_RWops *src = SDL_RWFromMem(buffer, length);
+    SDL_Surface *tmp = IMG_Load_RW(src, 0);
+    if (!tmp && ext && (!strcmp(ext+1, "JPG") || !strcmp(ext+1, "jpg"))){
+        fprintf(stderr, " *** force-loading a JPG image [%s]\n", file_name);
+        tmp = IMG_LoadJPG_RW(src);
+    }
+    SDL_RWclose(src);
+
+    if (buffer != tmp_image_buf) delete[] buffer;
+    if (!tmp){
         fprintf( stderr, " *** can't load file [%s] ***\n", file_name );
         return NULL;
     }

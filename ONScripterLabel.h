@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -381,6 +381,11 @@ private:
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
     SDL_Surface *screenshot_surface; // Screenshot
     SDL_Surface *image_surface; // Reference for loadImage()
+
+    unsigned char *tmp_image_buf;
+    unsigned long tmp_image_buf_length;
+    unsigned long mean_size_of_loaded_images;
+    unsigned long num_loaded_images;
     
     /* ---------------------------------------- */
     /* Button related variables */
