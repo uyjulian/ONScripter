@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -366,7 +366,7 @@ int ONScripterLabel::playMIDI(bool loop_flag)
     return 0;
 }
 
-int ONScripterLabel::playMPEG( const char *filename, bool click_flag )
+int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 {
     int ret = 0;
 #ifndef MP3_MAD        
@@ -385,6 +385,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool click_flag )
         SMPEG_enablevideo( mpeg_sample, 1 );
         SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
         SMPEG_setvolume( mpeg_sample, music_struct.volume );
+        SMPEG_loop(mpeg_sample, loop_flag);
 
         Mix_HookMusic( mp3callback, mpeg_sample );
         SMPEG_play( mpeg_sample );

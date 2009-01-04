@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1256,6 +1256,51 @@ int ONScripterLabel::mp3Command()
                   music_play_loop_flag, MIX_BGM_CHANNEL);
     }
         
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::movieCommand()
+{
+    script_h.readStr();
+    const char *filename = script_h.saveStringBuffer();
+    
+    stopBGM(false);
+
+    bool click_flag = false;
+    bool loop_flag = false;
+
+    while (script_h.getEndStatus() & ScriptHandler::END_COMMA){
+        if (script_h.compareString("pos")){ // not supported yet
+            script_h.readLabel();
+            script_h.readInt();
+            script_h.readInt();
+            script_h.readInt();
+            script_h.readInt();
+            fprintf(stderr, " [movie pos] is not supported yet!!\n");
+        }
+        else if (script_h.compareString("click")){
+            script_h.readLabel();
+            click_flag = true;
+        }
+        else if (script_h.compareString("loop")){
+            script_h.readLabel();
+            loop_flag = true;
+        }
+        else if (script_h.compareString("async")){ // not supported yet
+            script_h.readLabel();
+            fprintf(stderr, " [movie async] is not supported yet!!\n");
+        }
+        else if (script_h.compareString("stop")){ // not supported yet
+            script_h.readLabel();
+            fprintf(stderr, " [movie stop] is not supported yet!!\n");
+        }
+        else{
+            script_h.readLabel();
+        }
+    }
+    
+    if (playMPEG(filename, click_flag, loop_flag)) endCommand();
+
     return RET_CONTINUE;
 }
 

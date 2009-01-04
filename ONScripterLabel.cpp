@@ -113,6 +113,7 @@ static struct FuncLUT{
     {"mp3save", &ONScripterLabel::mp3Command},
     {"mp3loop", &ONScripterLabel::mp3Command},
     {"mp3", &ONScripterLabel::mp3Command},
+    {"movie", &ONScripterLabel::movieCommand},
     {"movemousecursor", &ONScripterLabel::movemousecursorCommand},
     {"monocro", &ONScripterLabel::monocroCommand},
     {"menu_window", &ONScripterLabel::menu_windowCommand},

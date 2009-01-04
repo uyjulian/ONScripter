@@ -151,6 +151,7 @@ public:
     int mpegplayCommand();
     int mp3volCommand();
     int mp3Command();
+    int movieCommand();
     int movemousecursorCommand();
     int monocroCommand();
     int menu_windowCommand();
@@ -642,7 +643,7 @@ private:
     int playExternalMusic(bool loop_flag);
     int playMIDI(bool loop_flag);
     
-    int playMPEG( const char *filename, bool click_flag );
+    int playMPEG(const char *filename, bool click_flag, bool loop_flag=false);
     void playAVI( const char *filename, bool click_flag );
     enum { WAVE_PLAY        = 0,
            WAVE_PRELOAD     = 1,
