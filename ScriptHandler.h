@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -222,7 +222,8 @@ public:
                 str = NULL;
             }
         };
-    } *variable_data;
+    };
+    VariableData &getVariableData(int no);
     
     VariableInfo current_variable, pushed_variable;
     
@@ -288,6 +289,14 @@ private:
 
     /* ---------------------------------------- */
     /* Variable */
+    struct VariableData *variable_data;
+    struct ExtendedVariableData{
+        int no;
+        VariableData vd;
+    } *extended_variable_data;
+    int num_extended_variable_data;
+    int max_extended_variable_data;
+
     Alias root_num_alias, *last_num_alias;
     Alias root_str_alias, *last_str_alias;
     

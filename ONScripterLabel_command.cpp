@@ -480,7 +480,7 @@ int ONScripterLabel::splitCommand()
             script_h.setInt( &script_h.current_variable, atoi(token) );
         }
         else if ( script_h.current_variable.type & ScriptHandler::VAR_STR ){
-            setStr( &script_h.variable_data[ script_h.current_variable.var_no ].str, token );
+            setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, token );
         }
 
         save_buf += c;
@@ -1732,7 +1732,7 @@ int ONScripterLabel::inputCommand()
 
     script_h.readStr(); // description
     const char *buf = script_h.readStr(); // default value
-    setStr( &script_h.variable_data[no].str, buf );
+    setStr( &script_h.getVariableData(no).str, buf );
 
     printf( "*** inputCommand(): $%d is set to the default value: %s\n",
             no, buf );
@@ -1837,7 +1837,7 @@ int ONScripterLabel::gettextCommand()
     }
     buf[j] = '\0';
 
-    setStr( &script_h.variable_data[no].str, buf );
+    setStr( &script_h.getVariableData(no).str, buf );
     delete[] buf;
     
     return RET_CONTINUE;
@@ -1857,9 +1857,9 @@ int ONScripterLabel::gettaglogCommand()
     }
 
     if (page->tag)
-        setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, page->tag);
+        setStr(&script_h.getVariableData(script_h.pushed_variable.var_no).str, page->tag);
     else
-        setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
+        setStr(&script_h.getVariableData(script_h.pushed_variable.var_no).str, NULL);
 
     return RET_CONTINUE;
 }
@@ -1893,10 +1893,10 @@ int ONScripterLabel::gettagCommand()
                     else
                         buf++;
                 }
-                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, buf_start, buf-buf_start );
+                setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, buf_start, buf-buf_start );
             }
             else{
-                setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL);
+                setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, NULL);
             }
         }
 
@@ -2002,7 +2002,7 @@ int ONScripterLabel::getretCommand()
     }
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         int no = script_h.current_variable.var_no;
-        setStr( &script_h.variable_data[no].str, getret_str );
+        setStr( &script_h.getVariableData(no).str, getret_str );
     }
     else errorAndExit( "getret: no variable." );
     
@@ -2056,9 +2056,9 @@ int ONScripterLabel::getregCommand()
                     script_h.setCurrent(script_h.getNext()+1);
 
                     buf = script_h.readStr();
-                    setStr( &script_h.variable_data[no].str, buf );
+                    setStr( &script_h.getVariableData(no).str, buf );
                     script_h.popCurrent();
-                    printf("  $%d = %s\n", no, script_h.variable_data[no].str );
+                    printf("  $%d = %s\n", no, script_h.getVariableData(no).str );
                     found_flag = true;
                     break;
                 }
@@ -2104,9 +2104,9 @@ int ONScripterLabel::getlogCommand()
     }
 
     if (page_no > 0)
-        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, NULL );
+        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, NULL );
     else
-        setStr( &script_h.variable_data[ script_h.pushed_variable.var_no ].str, page->text, page->text_count );
+        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, page->text, page->text_count );
 
     return RET_CONTINUE;
 }
@@ -2168,7 +2168,7 @@ int ONScripterLabel::getcselstrCommand()
         link = link->next;
     }
     if (!link) errorAndExit("getcselstr: no select link");
-    setStr(&script_h.variable_data[ script_h.pushed_variable.var_no ].str, link->text);
+    setStr(&script_h.getVariableData(script_h.pushed_variable.var_no).str, link->text);
 
     return RET_CONTINUE;
 }
@@ -2236,7 +2236,7 @@ int ONScripterLabel::gameCommand()
     /* ---------------------------------------- */
     /* Initialize local variables */
     for ( i=0 ; i<script_h.global_variable_border ; i++ )
-        script_h.variable_data[i].reset(false);
+        script_h.getVariableData(i).reset(false);
 
     setCurrentLabel( "start" );
     saveSaveFile(-1);

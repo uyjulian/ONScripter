@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2007 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -41,7 +41,10 @@ ScriptHandler::ScriptHandler()
     str_string_buffer   = new char[STRING_BUFFER_LENGTH];
     saved_string_buffer = new char[STRING_BUFFER_LENGTH];
 
-    variable_data = new VariableData[VARIABLE_RANGE+1]; // the last one is a sink
+    variable_data = new VariableData[VARIABLE_RANGE];
+    extended_variable_data = NULL;
+    num_extended_variable_data = 0;
+    max_extended_variable_data = 1;
     root_array_variable = NULL;
     
     screen_size = SCREEN_SIZE_640x480;
@@ -65,6 +68,11 @@ void ScriptHandler::reset()
 {
     for (int i=0 ; i<VARIABLE_RANGE ; i++)
         variable_data[i].reset(true);
+
+    if (extended_variable_data) delete[] extended_variable_data;
+    extended_variable_data = NULL;
+    num_extended_variable_data = 0;
+    max_extended_variable_data = 1;
 
     ArrayVariable *av = root_array_variable;
     while(av){
@@ -571,7 +579,7 @@ void ScriptHandler::addStrVariable(char **buf)
 {
     (*buf)++;
     int no = parseInt(buf);
-    VariableData &vd = variable_data[no];
+    VariableData &vd = getVariableData(no);
     if ( vd.str ){
         for (unsigned int i=0 ; i<strlen( vd.str ) ; i++){
             addStringBuffer( vd.str[i] );
@@ -632,7 +640,7 @@ int ScriptHandler::getIntVariable( VariableInfo *var_info )
     if ( var_info == NULL ) var_info = &current_variable;
     
     if ( var_info->type == VAR_INT )
-        return variable_data[var_info->var_no].num;
+        return getVariableData(var_info->var_no).num;
     else if ( var_info->type == VAR_ARRAY )
         return *getArrayPtr( var_info->var_no, var_info->array, 0 );
     return 0;
@@ -657,9 +665,6 @@ void ScriptHandler::readVariable( bool reread_flag )
     if ( *buf == '%' ){
         buf++;
         current_variable.var_no = parseInt(&buf);
-        if (current_variable.var_no < 0 ||
-            current_variable.var_no >= VARIABLE_RANGE)
-            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_INT;
     }
     else if ( *buf == '?' ){
@@ -671,9 +676,6 @@ void ScriptHandler::readVariable( bool reread_flag )
     else if ( *buf == '$' ){
         buf++;
         current_variable.var_no = parseInt(&buf);
-        if (current_variable.var_no < 0 ||
-            current_variable.var_no >= VARIABLE_RANGE)
-            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_STR;
     }
 
@@ -702,10 +704,7 @@ void ScriptHandler::pushVariable()
 
 void ScriptHandler::setNumVariable( int no, int val )
 {
-    if ( no < 0 || no >= VARIABLE_RANGE )
-        no = VARIABLE_RANGE;
-
-    VariableData &vd = variable_data[no];
+    VariableData &vd = getVariableData(no);
     if ( vd.num_limit_flag ){
         if      ( val < vd.num_limit_lower ) val = vd.num;
         else if ( val > vd.num_limit_upper ) val = vd.num;
@@ -1074,6 +1073,33 @@ void ScriptHandler::addStringBuffer( char ch )
     string_buffer[string_counter] = '\0';
 }
 
+ScriptHandler::VariableData &ScriptHandler::getVariableData(int no)
+{
+    if (no >= 0 && no < VARIABLE_RANGE)
+        return variable_data[no];
+
+    int i;
+    for (i=0 ; i<num_extended_variable_data ; i++)
+        if (extended_variable_data[i].no == no) break;
+    if (i != num_extended_variable_data)
+        return extended_variable_data[i].vd;
+        
+    num_extended_variable_data++;
+    if (num_extended_variable_data == max_extended_variable_data){
+        ExtendedVariableData *tmp = extended_variable_data;
+        extended_variable_data = new ExtendedVariableData[max_extended_variable_data*2];
+        if (tmp){
+            memcpy(extended_variable_data, tmp, sizeof(ExtendedVariableData)*max_extended_variable_data);
+            delete[] tmp;
+        }
+        max_extended_variable_data *= 2;
+    }
+
+    extended_variable_data[i].no = no;
+
+    return extended_variable_data[i].vd;
+}
+
 // ----------------------------------------
 // Private methods
 
@@ -1138,15 +1164,14 @@ void ScriptHandler::parseStr( char **buf )
     else if ( **buf == '$' ){
         (*buf)++;
         int no = parseInt(buf);
-        if ( variable_data[no].str )
-            strcpy( str_string_buffer, variable_data[no].str );
+        VariableData &vd = getVariableData(no);
+
+        if ( vd.str )
+            strcpy( str_string_buffer, vd.str );
         else
             str_string_buffer[0] = '\0';
         current_variable.type = VAR_STR;
         current_variable.var_no = no;
-        if (current_variable.var_no < 0 ||
-            current_variable.var_no >= VARIABLE_RANGE)
-            current_variable.var_no = VARIABLE_RANGE;
     }
     else if ( **buf == '"' ){
         int c=0;
@@ -1249,11 +1274,8 @@ int ScriptHandler::parseInt( char **buf )
     if ( **buf == '%' ){
         (*buf)++;
         current_variable.var_no = parseInt(buf);
-        if (current_variable.var_no < 0 ||
-            current_variable.var_no >= VARIABLE_RANGE)
-            current_variable.var_no = VARIABLE_RANGE;
         current_variable.type = VAR_INT;
-        return variable_data[ current_variable.var_no ].num;
+        return getVariableData(current_variable.var_no).num;
     }
     else if ( **buf == '?' ){
         ArrayVariable av;
