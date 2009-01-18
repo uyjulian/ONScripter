@@ -1078,11 +1078,9 @@ ScriptHandler::VariableData &ScriptHandler::getVariableData(int no)
     if (no >= 0 && no < VARIABLE_RANGE)
         return variable_data[no];
 
-    int i;
-    for (i=0 ; i<num_extended_variable_data ; i++)
-        if (extended_variable_data[i].no == no) break;
-    if (i != num_extended_variable_data)
-        return extended_variable_data[i].vd;
+    for (int i=0 ; i<num_extended_variable_data ; i++)
+        if (extended_variable_data[i].no == no) 
+            return extended_variable_data[i].vd;
         
     num_extended_variable_data++;
     if (num_extended_variable_data == max_extended_variable_data){
@@ -1095,9 +1093,9 @@ ScriptHandler::VariableData &ScriptHandler::getVariableData(int no)
         max_extended_variable_data *= 2;
     }
 
-    extended_variable_data[i].no = no;
+    extended_variable_data[num_extended_variable_data-1].no = no;
 
-    return extended_variable_data[i].vd;
+    return extended_variable_data[num_extended_variable_data-1].vd;
 }
 
 // ----------------------------------------

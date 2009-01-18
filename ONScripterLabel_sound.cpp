@@ -342,18 +342,6 @@ int ONScripterLabel::playMIDI(bool loop_flag)
 
     int midi_looping = loop_flag ? -1 : 0;
 
-#if defined(EXTERNAL_MIDI_PROGRAM)
-    FILE *com_file;
-    if ( midi_play_loop_flag ){
-        if( (com_file = fopen("play_midi", "wb")) != NULL )
-            fclose(com_file);
-    }
-    else{
-        if( (com_file = fopen("playonce_midi", "wb")) != NULL )
-            fclose(com_file);
-    }
-#endif
-
 #if defined(LINUX)
     signal(SIGCHLD, midiCallback);
     if (midi_cmd) midi_looping = 0;
@@ -458,12 +446,6 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 
 void ONScripterLabel::stopBGM( bool continue_flag )
 {
-#if defined(EXTERNAL_MIDI_PROGRAM)
-    FILE *com_file;
-    if( (com_file = fopen("stop_bgm", "wb")) != NULL )
-        fclose(com_file);
-#endif
-
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
 
