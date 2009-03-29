@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file2.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -363,6 +363,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
             else
                 sprite2_info[i].trans = j;
             sprite2_info[i].blending_mode = readInt();
+            sprite2_info[i].calcAffineMatrix();
         }
         
         readInt();
@@ -373,6 +374,14 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         readInt();
         readInt();
         if (file_version >= 205) readChar(); // 0
+    }
+
+    if (file_version >= 206){
+        readInt(); // 0
+        readInt(); // 160
+        readInt(); // 320
+        readInt(); // 480
+        readInt(); // 480
     }
     
     int text_num = readInt();
@@ -637,6 +646,12 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
     writeChar( 0, output_flag ); // added in version 205
+
+    writeInt(   0, output_flag ); // added in version 206
+    writeInt( 160, output_flag ); // added in version 206
+    writeInt( 320, output_flag ); // added in version 206
+    writeInt( 480, output_flag ); // added in version 206
+    writeInt( 480, output_flag ); // added in version 206
     
     Page *page = current_page;
     int num_page = 0;

@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -408,7 +408,7 @@ void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf, si
 #else
     src_len++;
     size_t dst_len = src_len*2+1;
-    int ret = iconv(iconv_cd, (char**)&src_buf, &src_len, &dst_buf, &dst_len);
+    int ret = iconv(iconv_cd, &src_buf, &src_len, &dst_buf, &dst_len);
     if (ret == -1) strcpy(dst_buf, src_buf);
 #endif
 #endif

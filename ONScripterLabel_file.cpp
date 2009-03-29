@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,7 +40,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 5
+#define SAVEFILE_VERSION_MINOR 6
 
 #define READ_LENGTH 4096
 

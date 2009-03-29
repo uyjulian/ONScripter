@@ -706,8 +706,8 @@ void ScriptHandler::setNumVariable( int no, int val )
 {
     VariableData &vd = getVariableData(no);
     if ( vd.num_limit_flag ){
-        if      ( val < vd.num_limit_lower ) val = vd.num;
-        else if ( val > vd.num_limit_upper ) val = vd.num;
+        if      ( val < vd.num_limit_lower ) val = vd.num_limit_lower;
+        else if ( val > vd.num_limit_upper ) val = vd.num_limit_upper;
     }
     vd.num = val;
 }

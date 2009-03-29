@@ -660,6 +660,7 @@ void ONScripterLabel::resetSub()
     erase_text_window_mode = 1;
     skip_mode = SKIP_NONE;
     monocro_flag = false;
+    monocro_color[0] = monocro_color[1] = monocro_color[2] = 0;
     nega_mode = 0;
     clickstr_state = CLICK_NONE;
     trap_mode = TRAP_NONE;
