@@ -749,7 +749,7 @@ int ScriptParser::incCommand()
 int ScriptParser::ifCommand()
 {
     //printf("ifCommand\n");
-    bool if_flag, condition_flag = true, f = false;
+    bool if_flag, f = false;
     char *op_buf;
     const char *buf;
 
@@ -763,13 +763,13 @@ int ScriptParser::ifCommand()
             script_h.readLabel();
             buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], buf, false ) != NULL);
-            //printf("fchk %s(%d,%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )), condition_flag );
+            //printf("fchk %s(%d) ", tmp_string_buffer, (findAndAddFileLog( tmp_string_buffer, fasle )) );
         }
         else if (script_h.compareString("lchk")){
             script_h.readLabel();
             buf = script_h.readStr();
             f = (script_h.findAndAddLog( script_h.log_info[ScriptHandler::LABEL_LOG], buf+1, false ) != NULL);
-            //printf("lchk %s (%d,%d)\n", buf, f, condition_flag );
+            //printf("lchk %s (%d)\n", buf, f );
         }
         else{
             int no = script_h.readInt();
@@ -834,7 +834,8 @@ int ScriptParser::ifCommand()
                 else if (op_buf[0] == '=')                     f = (val == 0);
             }
         }
-        condition_flag &= (if_flag)?(f):(!f);
+        
+        if (!((if_flag)?(f):(!f))) return RET_SKIP_LINE;
 
         op_buf = script_h.getNext();
         if ( op_buf[0] == '&' ){
@@ -846,8 +847,7 @@ int ScriptParser::ifCommand()
     };
 
     /* Execute command */
-    if ( condition_flag ) return RET_CONTINUE;
-    else                  return RET_SKIP_LINE;
+    return RET_CONTINUE;
 }
 
 int ScriptParser::humanzCommand()

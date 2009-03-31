@@ -19,7 +19,7 @@
 了承下さい。<br>
 
 Since: Feb. 6, 2002<br>
-Last updated: Mar. 29, 2009 [ソース更新]<br>
+Last updated: Mar. 31, 2009 [ソース更新]<br>
 <!--Last updated: Feb. 14, 2006 [バイナリパッケージ追加]<br>-->
 <!--Last updated: Aug. 23, 2008 [Experimental ソース更新]<br>-->
 <a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
@@ -100,8 +100,8 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20090329.tar.gz">onscripter-20090329.tar.gz</a>
-  <li> <a href="onscripter-20090118.tar.gz">onscripter-20090118.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20090331.tar.gz">onscripter-20090331.tar.gz</a>
+  <li> <a href="onscripter-20090329.tar.gz">onscripter-20090329.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20060812.tar.gz">onscripter-exp-20060812.tar.gz</a>(実験版, ２種類目の画像バッファ生成効率アップ)-->
 </ul>
 </div> <!-- sub-content -->
@@ -147,6 +147,7 @@ HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
         <li><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2"> インストールのしかたやバイナリパッケージ </a>
       </ul>
   <li> Playstation3 版 <a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a>（rerofumiさん）
+  <li> Wii 版 <a href="http://wiibrew.org/wiki/ONScripter">ONScripter WiiBrew</a>
   <li> FreeBSD 版 <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a>（藤田さん）
   <li> Dreamcast 版 <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a>（bero さん）
   <li> その他募集中。
@@ -174,7 +175,7 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
   <li> 現時点(2009/03/23)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。<br>
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
   <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
-  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Android, GP2X, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
+  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="zaurus/index.html">Zaurus(SL-5500,SL-A300,SL-B500,SL-C700)</a>, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Wii, Android, GP2X, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
   <li> コンパイル時に ENABLE_1BYTE_CHAR を指定することで、英語ノベル(1byte 文字)に対応します。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
@@ -239,7 +240,7 @@ href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;acti
 </dl>
 
 <p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
-また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Android, GP2X, Dreamcast での動作報告をいただいております。<br>
+また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Wii, Android, GP2X, Dreamcast での動作報告をいただいております。<br>
 
 その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</p>
 
