@@ -426,7 +426,6 @@ int ONScripterLabel::loadSaveFile2( int file_version )
 
     display_mode = shelter_display_mode = DISPLAY_MODE_TEXT;
     clickstr_state = CLICK_NONE;
-    event_mode = 0;//WAIT_SLEEP_MODE;
     draw_cursor_flag = false;
     
     return 0;

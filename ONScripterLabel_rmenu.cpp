@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -53,8 +53,6 @@ void ONScripterLabel::enterSystemCall()
     shelter_mouse_state.x = last_mouse_state.x;
     shelter_mouse_state.y = last_mouse_state.y;
     event_mode = IDLE_EVENT_MODE;
-    system_menu_enter_flag = true;
-    yesno_caller = SYSTEM_NULL;
     shelter_display_mode = display_mode;
     display_mode = DISPLAY_MODE_TEXT;
     shelter_draw_cursor_flag = draw_cursor_flag;
@@ -65,9 +63,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
     current_font = &sentence_font;
     display_mode = shelter_display_mode;
-    system_menu_mode = SYSTEM_NULL;
-    system_menu_enter_flag = false;
-    yesno_caller = SYSTEM_NULL;
     key_pressed_flag = false;
 
     if ( restore_flag ){
@@ -89,129 +84,118 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
 
     refreshMouseOverButton();
-    advancePhase();
+
+    system_menu_mode = SYSTEM_NULL;
 }
 
-void ONScripterLabel::executeSystemCall()
+bool ONScripterLabel::executeSystemCall()
 {
-    //printf("*****  executeSystemCall %d %d %d*****\n", system_menu_enter_flag, volatile_button_state.button, system_menu_mode );
-    dirty_rect.fill( screen_width, screen_height );
-    
-    if ( !system_menu_enter_flag ){
-        enterSystemCall();
+    enterSystemCall();
+
+    while(system_menu_mode != SYSTEM_NULL){
+        dirty_rect.fill( screen_width, screen_height );
+        switch(system_menu_mode){
+          case SYSTEM_SKIP:
+            executeSystemSkip();
+            return true;
+            break;
+          case SYSTEM_RESET:
+            if (executeSystemReset()) return true;
+            break;
+          case SYSTEM_SAVE:
+            executeSystemSave();
+            break;
+          case SYSTEM_LOAD:
+            if (executeSystemLoad()) return true;
+            break;
+          case SYSTEM_LOOKBACK:
+            executeSystemLookback();
+            break;
+          case SYSTEM_WINDOWERASE:
+            executeWindowErase();
+            break;
+          case SYSTEM_MENU:
+            executeSystemMenu();
+            break;
+          case SYSTEM_AUTOMODE:
+            executeSystemAutomode();
+            return true;
+            break;
+          case SYSTEM_END:
+            executeSystemEnd();
+            break;
+          default:
+            leaveSystemCall();
+        }
     }
-    
-    switch( system_menu_mode ){
-      case SYSTEM_SKIP:
-        executeSystemSkip();
-        break;
-      case SYSTEM_RESET:
-        executeSystemReset();
-        break;
-      case SYSTEM_SAVE:
-        executeSystemSave();
-        break;
-      case SYSTEM_YESNO:
-        executeSystemYesNo();
-        break;
-      case SYSTEM_LOAD:
-        executeSystemLoad();
-        break;
-      case SYSTEM_LOOKBACK:
-        executeSystemLookback();
-        break;
-      case SYSTEM_WINDOWERASE:
-        executeWindowErase();
-        break;
-      case SYSTEM_MENU:
-        executeSystemMenu();
-        break;
-      case SYSTEM_AUTOMODE:
-        executeSystemAutomode();
-        break;
-      case SYSTEM_END:
-        executeSystemEnd();
-        break;
-      default:
-        leaveSystemCall();
-    }
+
+    return false;
 }
 
 void ONScripterLabel::executeSystemMenu()
 {
-    RMenuLink *link;
-    int counter = 1;
-
     current_font = &menu_font;
-    if ( event_mode & WAIT_BUTTON_MODE ){
 
-        if ( current_button_state.button == 0 ) return;
-        event_mode = IDLE_EVENT_MODE;
+    if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
+        playSound(menuselectvoice_file_name[MENUSELECTVOICE_OPEN],
+                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
 
-        deleteButtonLink();
+    text_info.fill( 0, 0, 0, 0 );
+    flush( refreshMode() );
 
-        if ( current_button_state.button == -1 ){
-            if ( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL] )
-                playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], 
-                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
-            leaveSystemCall();
-            return;
-        }
-    
-        if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
-            playSound(menuselectvoice_file_name[MENUSELECTVOICE_CLICK], 
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+    menu_font.num_xy[0] = rmenu_link_width;
+    menu_font.num_xy[1] = rmenu_link_num;
+    menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+    menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+    menu_font.setXY( (menu_font.num_xy[0] - rmenu_link_width) / 2,
+                     (menu_font.num_xy[1] - rmenu_link_num) / 2 );
 
-        link = root_rmenu_link.next;
-        while ( link ){
-            if ( current_button_state.button == counter++ ){
-                system_menu_mode = link->system_call_no;
-                break;
-            }
-            link = link->next;
-        }
+    RMenuLink *link = root_rmenu_link.next;
+    int counter = 1;
+    while( link ){
+        ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
+        root_button_link.insert( button );
+        button->no = counter++;
 
-        advancePhase();
-    }
-    else{
-        if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
-            playSound(menuselectvoice_file_name[MENUSELECTVOICE_OPEN],
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
-
-        system_menu_mode = SYSTEM_MENU;
-        yesno_caller = SYSTEM_MENU;
-
-        text_info.fill( 0, 0, 0, 0 );
+        link = link->next;
         flush( refreshMode() );
+    }
 
-        menu_font.num_xy[0] = rmenu_link_width;
-        menu_font.num_xy[1] = rmenu_link_num;
-        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
-        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-        menu_font.setXY( (menu_font.num_xy[0] - rmenu_link_width) / 2,
-                         (menu_font.num_xy[1] - rmenu_link_num) / 2 );
+    flushEvent();
+    refreshMouseOverButton();
 
-        link = root_rmenu_link.next;
-        while( link ){
-            ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
-            root_button_link.insert( button );
-            button->no = counter++;
+    event_mode = WAIT_BUTTON_MODE;
+    do waitEventSub(-1);
+    while (current_button_state.button == 0);
 
-            link = link->next;
-            flush( refreshMode() );
+    deleteButtonLink();
+
+    if ( current_button_state.button == -1 ){
+        if ( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL] )
+            playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], 
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+        leaveSystemCall();
+        return;
+    }
+    
+    if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
+        playSound(menuselectvoice_file_name[MENUSELECTVOICE_CLICK], 
+                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+
+    link = root_rmenu_link.next;
+    counter = 1;
+    while ( link ){
+        if ( current_button_state.button == counter++ ){
+            system_menu_mode = link->system_call_no;
+            break;
         }
-
-        flushEvent();
-        event_mode = WAIT_BUTTON_MODE;
-        refreshMouseOverButton();
+        link = link->next;
     }
 }
 
 void ONScripterLabel::executeSystemSkip()
 {
     skip_mode |= SKIP_NORMAL;
-    if ( !(shelter_event_mode & WAIT_BUTTON_MODE) )
-        shelter_event_mode &= ~WAIT_TIMER_MODE;
     leaveSystemCall();
 }
 
@@ -223,318 +207,281 @@ void ONScripterLabel::executeSystemAutomode()
     leaveSystemCall();
 }
 
-void ONScripterLabel::executeSystemReset()
+bool ONScripterLabel::executeSystemReset()
 {
-    if ( yesno_caller == SYSTEM_RESET ){
-        leaveSystemCall();
+    if ( executeSystemYesNo( SYSTEM_RESET ) ){
+        resetCommand();
+        leaveSystemCall( false );
+        
+        return true;
     }
-    else{
-        yesno_caller = SYSTEM_RESET;
-        system_menu_mode = SYSTEM_YESNO;
-        advancePhase();
-    }
+
+    leaveSystemCall();
+
+    return false;
 }
 
 void ONScripterLabel::executeSystemEnd()
 {
-    if ( yesno_caller == SYSTEM_END ){
+    if ( executeSystemYesNo( SYSTEM_END ) )
+        endCommand();
+    else
         leaveSystemCall();
-    }
-    else{
-        yesno_caller = SYSTEM_END;
-        system_menu_mode = SYSTEM_YESNO;
-        advancePhase();
-    }
 }
 
 void ONScripterLabel::executeWindowErase()
 {
-    if ( event_mode & WAIT_BUTTON_MODE ){
-        event_mode = IDLE_EVENT_MODE;
+    if (windowchip_sprite_no >= 0)
+        sprite_info[windowchip_sprite_no].visible = false;
 
-        if (windowchip_sprite_no >= 0)
-            sprite_info[windowchip_sprite_no].visible = true;
+    display_mode = DISPLAY_MODE_NORMAL;
+    flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
 
-        leaveSystemCall();
-    }
-    else{
-        if (windowchip_sprite_no >= 0)
-            sprite_info[windowchip_sprite_no].visible = false;
+    event_mode = WAIT_TIMER_MODE | WAIT_BUTTON_MODE;
+    waitEventSub(-1);
+        
+    if (windowchip_sprite_no >= 0)
+        sprite_info[windowchip_sprite_no].visible = true;
 
-        display_mode = DISPLAY_MODE_NORMAL;
-        flush(mode_saya_flag ? REFRESH_SAYA_MODE : REFRESH_NORMAL_MODE);
-
-        event_mode = WAIT_BUTTON_MODE;
-        system_menu_mode = SYSTEM_WINDOWERASE;
-    }
+    leaveSystemCall();
 }
 
-void ONScripterLabel::executeSystemLoad()
+bool ONScripterLabel::executeSystemLoad()
 {
-    SaveFileInfo save_file_info;
-    
     current_font = &menu_font;
-    if ( event_mode & WAIT_BUTTON_MODE ){
 
-        if ( current_button_state.button == 0 ) return;
-        event_mode = IDLE_EVENT_MODE;
+    text_info.fill( 0, 0, 0, 0 );
+        
+    menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
+    menu_font.num_xy[1] = num_save_file+2;
+    menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+    menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+    menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
+    uchar3 color = {0xff, 0xff, 0xff};
+    drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
+    menu_font.newLine();
+    menu_font.newLine();
+        
+    flush( refreshMode() );
+        
+    bool nofile_flag;
+    char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
 
-        if ( current_button_state.button > 0 ){
-            searchSaveFile( save_file_info, current_button_state.button );
-            if ( !save_file_info.valid ){
-                event_mode  = WAIT_BUTTON_MODE;
-                refreshMouseOverButton();
-                return;
-            }
-            deleteButtonLink();
-            yesno_selected_file_no = current_button_state.button;
-            yesno_caller = SYSTEM_LOAD;
-            system_menu_mode = SYSTEM_YESNO;
-            advancePhase();
+    SaveFileInfo save_file_info;
+    for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
+        searchSaveFile( save_file_info, i );
+        menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
+
+        if ( save_file_info.valid ){
+            sprintf( buffer, MESSAGE_SAVE_EXIST,
+                     save_item_name,
+                     save_file_info.sjis_no,
+                     save_file_info.sjis_month,
+                     save_file_info.sjis_day,
+                     save_file_info.sjis_hour,
+                     save_file_info.sjis_minute );
+            nofile_flag = false;
         }
         else{
-            deleteButtonLink();
-            leaveSystemCall();
+            sprintf( buffer, MESSAGE_SAVE_EMPTY,
+                     save_item_name,
+                     save_file_info.sjis_no );
+            nofile_flag = true;
         }
-    }
-    else{
-        system_menu_mode = SYSTEM_LOAD;
-
-        text_info.fill( 0, 0, 0, 0 );
-        
-        menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
-        menu_font.num_xy[1] = num_save_file+2;
-        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
-        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-        menu_font.setXY( (menu_font.num_xy[0] - strlen( load_menu_name ) / 2) / 2, 0 );
-        uchar3 color = {0xff, 0xff, 0xff};
-        drawString( load_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
-        menu_font.newLine();
-        menu_font.newLine();
-        
+        ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
+        root_button_link.insert( button );
+        button->no = i;
         flush( refreshMode() );
-        
-        bool nofile_flag;
-        char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
-
-        for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
-            searchSaveFile( save_file_info, i );
-            menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
-
-            if ( save_file_info.valid ){
-                sprintf( buffer, MESSAGE_SAVE_EXIST,
-                         save_item_name,
-                         save_file_info.sjis_no,
-                         save_file_info.sjis_month,
-                         save_file_info.sjis_day,
-                         save_file_info.sjis_hour,
-                         save_file_info.sjis_minute );
-                nofile_flag = false;
-            }
-            else{
-                sprintf( buffer, MESSAGE_SAVE_EMPTY,
-                         save_item_name,
-                         save_file_info.sjis_no );
-                nofile_flag = true;
-            }
-            ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
-            root_button_link.insert( button );
-            button->no = i;
-            flush( refreshMode() );
-        }
-        delete[] buffer;
-
-        event_mode = WAIT_BUTTON_MODE;
-        refreshMouseOverButton();
     }
+    delete[] buffer;
+
+    refreshMouseOverButton();
+
+    event_mode = WAIT_BUTTON_MODE;
+    do waitEventSub(-1);
+    while (current_button_state.button == 0);
+
+    if ( current_button_state.button > 0 ){
+        int file_no = current_button_state.button;
+        searchSaveFile( save_file_info, file_no );
+        if ( !save_file_info.valid ){
+            refreshMouseOverButton();
+            return false;
+        }
+        deleteButtonLink();
+
+        if (executeSystemYesNo( SYSTEM_LOAD, file_no )){
+            current_font = &sentence_font;
+            if ( loadSaveFile( file_no ) )
+                return false;
+
+            leaveSystemCall( false );
+            saveon_flag = true;
+            internal_saveon_flag = true;
+            text_on_flag = false;
+            indent_offset = 0;
+            line_enter_status = 0;
+            page_enter_status = 0;
+            string_buffer_offset = 0;
+            break_flag = false;
+
+            if (loadgosub_label)
+                gosubReal( loadgosub_label, script_h.getCurrent() );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    deleteButtonLink();
+    leaveSystemCall();
+    
+    return false;
 }
 
 void ONScripterLabel::executeSystemSave()
 {
     current_font = &menu_font;
-    if ( event_mode & WAIT_BUTTON_MODE ){
 
-        if ( current_button_state.button == 0 ) return;
-        event_mode = IDLE_EVENT_MODE;
+    text_info.fill( 0, 0, 0, 0 );
 
-        deleteButtonLink();
-
-        if ( current_button_state.button > 0 ){
-            yesno_selected_file_no = current_button_state.button;
-            yesno_caller = SYSTEM_SAVE;
-            system_menu_mode = SYSTEM_YESNO;
-            advancePhase();
-            return;
-        }
-        leaveSystemCall();
-    }
-    else{
-        system_menu_mode = SYSTEM_SAVE;
-
-        text_info.fill( 0, 0, 0, 0 );
-
-        menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
-        menu_font.num_xy[1] = num_save_file+2;
-        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
-        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-        menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
-        uchar3 color = {0xff, 0xff, 0xff};
-        drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
-        menu_font.newLine();
-        menu_font.newLine();
+    menu_font.num_xy[0] = (strlen(save_item_name)+1)/2+2+13;
+    menu_font.num_xy[1] = num_save_file+2;
+    menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+    menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+    menu_font.setXY((menu_font.num_xy[0] - strlen( save_menu_name ) / 2 ) / 2, 0);
+    uchar3 color = {0xff, 0xff, 0xff};
+    drawString( save_menu_name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
+    menu_font.newLine();
+    menu_font.newLine();
         
-        flush( refreshMode() );
+    flush( refreshMode() );
         
-        bool nofile_flag;
-        char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
+    bool nofile_flag;
+    char *buffer = new char[ strlen( save_item_name ) + 31 + 1 ];
     
-        for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
-            SaveFileInfo save_file_info;
-            searchSaveFile( save_file_info, i );
-            menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
+    for ( unsigned int i=1 ; i<=num_save_file ; i++ ){
+        SaveFileInfo save_file_info;
+        searchSaveFile( save_file_info, i );
+        menu_font.setXY( (menu_font.num_xy[0] - (strlen( save_item_name ) / 2 + 15) ) / 2 );
 
-            if ( save_file_info.valid ){
-                sprintf( buffer, MESSAGE_SAVE_EXIST,
-                         save_item_name,
-                         save_file_info.sjis_no,
-                         save_file_info.sjis_month,
-                         save_file_info.sjis_day,
-                         save_file_info.sjis_hour,
-                         save_file_info.sjis_minute );
-                nofile_flag = false;
-            }
-            else{
-                sprintf( buffer, MESSAGE_SAVE_EMPTY,
-                         save_item_name,
-                         save_file_info.sjis_no );
-                nofile_flag = true;
-            }
-            ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
-            root_button_link.insert( button );
-            button->no = i;
-            flush( refreshMode() );
-        }
-        delete[] buffer;
-
-        event_mode = WAIT_BUTTON_MODE;
-        refreshMouseOverButton();
-    }
-}
-
-void ONScripterLabel::executeSystemYesNo()
-{
-    char name[64] = {'\0'};
-	
-    current_font = &menu_font;
-    if ( event_mode & WAIT_BUTTON_MODE ){
-
-        if ( current_button_state.button == 0 ) return;
-        event_mode = IDLE_EVENT_MODE;
-
-        deleteButtonLink();
-
-        if ( current_button_state.button == 1 ){ // yes is selected
-            if ( menuselectvoice_file_name[MENUSELECTVOICE_YES] )
-                playSound(menuselectvoice_file_name[MENUSELECTVOICE_YES],
-                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
-            if ( yesno_caller == SYSTEM_SAVE ){
-                saveSaveFile( yesno_selected_file_no );
-                leaveSystemCall();
-            }
-            else if ( yesno_caller == SYSTEM_LOAD ){
-
-                current_font = &sentence_font;
-                if ( loadSaveFile( yesno_selected_file_no ) ){
-                    system_menu_mode = yesno_caller;
-                    advancePhase();
-                    return;
-                }
-                leaveSystemCall( false );
-                saveon_flag = true;
-                internal_saveon_flag = true;
-                text_on_flag = false;
-                indent_offset = 0;
-                line_enter_status = 0;
-                page_enter_status = 0;
-                string_buffer_offset = 0;
-                break_flag = false;
-
-                if (loadgosub_label)
-                    gosubReal( loadgosub_label, script_h.getCurrent() );
-                readToken();
-            }
-            else if ( yesno_caller ==  SYSTEM_RESET ){
-                resetCommand();
-                readToken();
-                event_mode = IDLE_EVENT_MODE;
-                leaveSystemCall( false );
-            }
-            else if ( yesno_caller ==  SYSTEM_END ){
-
-                endCommand();
-            }
+        if ( save_file_info.valid ){
+            sprintf( buffer, MESSAGE_SAVE_EXIST,
+                     save_item_name,
+                     save_file_info.sjis_no,
+                     save_file_info.sjis_month,
+                     save_file_info.sjis_day,
+                     save_file_info.sjis_hour,
+                     save_file_info.sjis_minute );
+            nofile_flag = false;
         }
         else{
-            if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
-                playSound(menuselectvoice_file_name[MENUSELECTVOICE_NO],
-                          SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
-            system_menu_mode = yesno_caller & 0xf;
-            if (yesno_caller == SYSTEM_RESET)
-                leaveSystemCall();
-            advancePhase();
+            sprintf( buffer, MESSAGE_SAVE_EMPTY,
+                     save_item_name,
+                     save_file_info.sjis_no );
+            nofile_flag = true;
         }
+        ButtonLink *button = getSelectableSentence( buffer, &menu_font, false, nofile_flag );
+        root_button_link.insert( button );
+        button->no = i;
+        flush( refreshMode() );
+    }
+    delete[] buffer;
+
+    refreshMouseOverButton();
+
+    event_mode = WAIT_BUTTON_MODE;
+    do waitEventSub(-1);
+    while (current_button_state.button == 0);
+
+    deleteButtonLink();
+
+    if ( current_button_state.button > 0 ){
+        int file_no = current_button_state.button;
+        if (executeSystemYesNo( SYSTEM_SAVE, file_no )){
+            saveSaveFile( file_no );
+            leaveSystemCall();
+        }
+        return;
+    }
+
+    leaveSystemCall();
+}
+
+bool ONScripterLabel::executeSystemYesNo( int caller, int file_no )
+{
+    current_font = &menu_font;
+
+    text_info.fill( 0, 0, 0, 0 );
+    dirty_rect.fill( screen_width, screen_height );
+
+    char name[64] = {'\0'};
+    if ( caller == SYSTEM_SAVE ){
+        SaveFileInfo save_file_info;
+        searchSaveFile( save_file_info, file_no );
+        sprintf( name, MESSAGE_SAVE_CONFIRM,
+                 save_item_name,
+                 save_file_info.sjis_no );
+    }
+    else if ( caller == SYSTEM_LOAD ){
+        SaveFileInfo save_file_info;
+        searchSaveFile( save_file_info, file_no );
+        sprintf( name, MESSAGE_LOAD_CONFIRM,
+                 save_item_name,
+                 save_file_info.sjis_no );
+    }
+    else if ( caller ==  SYSTEM_RESET )
+        strcpy( name, MESSAGE_RESET_CONFIRM );
+    else if ( caller ==  SYSTEM_END )
+        strcpy( name, MESSAGE_END_CONFIRM );
+        
+        
+    menu_font.num_xy[0] = strlen(name)/2;
+    menu_font.num_xy[1] = 3;
+    menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
+    menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
+    menu_font.setXY(0, 0);
+    uchar3 color = {0xff, 0xff, 0xff};
+    drawString( name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
+
+    flush( refreshMode() );
+        
+    int offset1 = strlen(name)/5;
+    int offset2 = strlen(name)/2 - offset1;
+    strcpy( name, MESSAGE_YES );
+    menu_font.setXY(offset1-2, 2);
+    ButtonLink *button = getSelectableSentence( name, &menu_font, false );
+    root_button_link.insert( button );
+    button->no = 1;
+
+    strcpy( name, MESSAGE_NO );
+    menu_font.setXY(offset2, 2);
+    button = getSelectableSentence( name, &menu_font, false );
+    root_button_link.insert( button );
+    button->no = 2;
+        
+    flush( refreshMode() );
+        
+    refreshMouseOverButton();
+
+    event_mode = WAIT_BUTTON_MODE;
+    do waitEventSub(-1);
+    while (current_button_state.button == 0);
+        
+    deleteButtonLink();
+
+    if ( current_button_state.button == 1 ){ // yes is selected
+        if ( menuselectvoice_file_name[MENUSELECTVOICE_YES] )
+            playSound(menuselectvoice_file_name[MENUSELECTVOICE_YES],
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+        return true;
     }
     else{
-        text_info.fill( 0, 0, 0, 0 );
-
-        if ( yesno_caller == SYSTEM_SAVE ){
-            SaveFileInfo save_file_info;
-            searchSaveFile( save_file_info, yesno_selected_file_no );
-            sprintf( name, MESSAGE_SAVE_CONFIRM,
-                     save_item_name,
-                     save_file_info.sjis_no );
-        }
-        else if ( yesno_caller == SYSTEM_LOAD ){
-            SaveFileInfo save_file_info;
-            searchSaveFile( save_file_info, yesno_selected_file_no );
-            sprintf( name, MESSAGE_LOAD_CONFIRM,
-                     save_item_name,
-                     save_file_info.sjis_no );
-        }
-        else if ( yesno_caller ==  SYSTEM_RESET )
-            strcpy( name, MESSAGE_RESET_CONFIRM );
-        else if ( yesno_caller ==  SYSTEM_END )
-            strcpy( name, MESSAGE_END_CONFIRM );
-        
-        
-        menu_font.num_xy[0] = strlen(name)/2;
-        menu_font.num_xy[1] = 3;
-        menu_font.top_xy[0] = (screen_width * screen_ratio2 / screen_ratio1 - menu_font.num_xy[0] * menu_font.pitch_xy[0]) / 2;
-        menu_font.top_xy[1] = (screen_height * screen_ratio2 / screen_ratio1  - menu_font.num_xy[1] * menu_font.pitch_xy[1]) / 2;
-        menu_font.setXY(0, 0);
-        uchar3 color = {0xff, 0xff, 0xff};
-        drawString( name, color, &menu_font, true, accumulation_surface, NULL, &text_info );
-
-        flush( refreshMode() );
-        
-        int offset1 = strlen(name)/5;
-        int offset2 = strlen(name)/2 - offset1;
-        strcpy( name, MESSAGE_YES );
-        menu_font.setXY(offset1-2, 2);
-        ButtonLink *button = getSelectableSentence( name, &menu_font, false );
-        root_button_link.insert( button );
-        button->no = 1;
-
-        strcpy( name, MESSAGE_NO );
-        menu_font.setXY(offset2, 2);
-        button = getSelectableSentence( name, &menu_font, false );
-        root_button_link.insert( button );
-        button->no = 2;
-        
-        flush( refreshMode() );
-        
-        event_mode = WAIT_BUTTON_MODE;
-        refreshMouseOverButton();
+        if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
+            playSound(menuselectvoice_file_name[MENUSELECTVOICE_NO],
+                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+        return false;
     }
 }
 
@@ -620,48 +567,60 @@ void ONScripterLabel::executeSystemLookback()
     uchar3 color;
     
     current_font = &sentence_font;
-    if ( event_mode & WAIT_BUTTON_MODE ){
-        if ( current_button_state.button == 0 ||
-             ( current_page == start_page &&
-               current_button_state.button == -2 ) )
-            return;
-        if ( current_button_state.button == -1 ||
-             ( current_button_state.button == -3 &&
-               current_page->next == cached_page ) ||
-             current_button_state.button <= -4 )
-        {
-            event_mode = IDLE_EVENT_MODE;
-            deleteButtonLink();
-            if ( lookback_sp[0] >= 0 )
-                sprite_info[ lookback_sp[0] ].visible = false;
-            if ( lookback_sp[1] >= 0 )
-                sprite_info[ lookback_sp[1] ].visible = false;
-            leaveSystemCall();
-            return;
-        }
+
+    current_page = current_page->previous;
+    if ( current_page->text_count == 0 ){
+        if ( lookback_sp[0] >= 0 )
+            sprite_info[ lookback_sp[0] ].visible = false;
+        if ( lookback_sp[1] >= 0 )
+            sprite_info[ lookback_sp[1] ].visible = false;
+        leaveSystemCall();
+        return;
+    }
+
+    setupLookbackButton();
+    refreshMouseOverButton();
+
+    for ( i=0 ; i<3 ; i++ ){
+        color[i] = sentence_font.color[i];
+        sentence_font.color[i] = lookback_color[i];
+    }
+    restoreTextBuffer();
+    for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
+    
+    dirty_rect.fill( screen_width, screen_height );
+    flush( refreshMode() );
+
+    event_mode = WAIT_BUTTON_MODE;
+    waitEventSub(-1);
+    
+    if ( current_button_state.button == 0 ||
+         ( current_page == start_page &&
+           current_button_state.button == -2 ) )
+        return;
+    if ( current_button_state.button == -1 ||
+         ( current_button_state.button == -3 &&
+           current_page->next == cached_page ) ||
+         current_button_state.button <= -4 )
+    {
+        event_mode = IDLE_EVENT_MODE;
+        deleteButtonLink();
+        if ( lookback_sp[0] >= 0 )
+            sprite_info[ lookback_sp[0] ].visible = false;
+        if ( lookback_sp[1] >= 0 )
+            sprite_info[ lookback_sp[1] ].visible = false;
+        leaveSystemCall();
+        return;
+    }
         
-        if ( current_button_state.button == 1 ||
-             current_button_state.button == -2 ){
-            current_page = current_page->previous;
-        }
-        else
-            current_page = current_page->next;
-    }
-    else{
+    if ( current_button_state.button == 1 ||
+         current_button_state.button == -2 ){
         current_page = current_page->previous;
-        if ( current_page->text_count == 0 ){
-            if ( lookback_sp[0] >= 0 )
-                sprite_info[ lookback_sp[0] ].visible = false;
-            if ( lookback_sp[1] >= 0 )
-                sprite_info[ lookback_sp[1] ].visible = false;
-            leaveSystemCall();
-            return;
-        }
-
-        event_mode = WAIT_BUTTON_MODE;
-        system_menu_mode = SYSTEM_LOOKBACK;
     }
+    else
+        current_page = current_page->next;
 
+    // the code below appears twice
     setupLookbackButton();
     refreshMouseOverButton();
 

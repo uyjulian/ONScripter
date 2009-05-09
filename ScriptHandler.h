@@ -41,7 +41,8 @@ class ScriptHandler
 public:
     enum { END_NONE       = 0,
            END_COMMA      = 1,
-           END_1BYTE_CHAR = 2
+           END_1BYTE_CHAR = 2,
+           END_COMMA_READ = 4 // for LUA
     };
     struct LabelInfo{
         char *name;
@@ -126,6 +127,10 @@ public:
     void pushCurrent( char *pos );
     void popCurrent();
 
+    void enterExternalScript(char *pos); // LUA
+    void leaveExternalScript();
+    bool isExternalScript();
+
     int  getOffset( char *pos );
     char *getAddress( int offset );
     int  getLineByAddress( char *address );
@@ -136,6 +141,7 @@ public:
     bool isName( const char *name );
     bool isText();
     bool compareString( const char *buf );
+    void setEndStatus(int val){ end_status |= val; };
     inline int getEndStatus(){ return end_status; };
     void skipLine( int no=1 );
     void setLinepage( bool val );
@@ -330,6 +336,11 @@ private:
 
     char *pushed_current_script;
     char *pushed_next_script;
+
+    char *internal_current_script;
+    char *internal_next_script;
+    int  internal_end_status;
+    VariableInfo internal_current_variable, internal_pushed_variable;
 
     unsigned char key_table[256];
     bool key_table_flag;

@@ -496,7 +496,9 @@ int ONScripterLabel::init()
     }
 
     if ( open() ) return -1;
-    
+#ifdef USE_LUA
+    lua_handler.init(this, &script_h);
+#endif    
 
     initSDL();
 
@@ -593,7 +595,6 @@ void ONScripterLabel::reset()
     automode_flag = false;
     automode_time = 3000;
     autoclick_time = 0;
-    remaining_time = -1;
     btntime2_flag = false;
     btntime_value = 0;
     btnwait_time = 0;
@@ -878,7 +879,6 @@ void ONScripterLabel::executeLabel()
 
         if ( kidokuskip_flag && skip_mode & SKIP_NORMAL && kidokumode_flag && !script_h.isKidoku() ) skip_mode &= ~SKIP_NORMAL;
 
-        char *current = script_h.getCurrent();
         int ret = ScriptParser::parseLine();
         if ( ret == RET_NOMATCH ) ret = this->parseLine();
 
@@ -887,17 +887,11 @@ void ONScripterLabel::executeLabel()
             if (++current_line >= current_label_info.num_of_lines) break;
         }
         
-        if ( ret & RET_REREAD ) script_h.setCurrent( current );
-        
-        if (!(ret & RET_NOREAD)){
-            if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
-                string_buffer_offset = 0;
-                if (++current_line >= current_label_info.num_of_lines) break;
-            }
-            readToken();
+        if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
+            string_buffer_offset = 0;
+            if (++current_line >= current_label_info.num_of_lines) break;
         }
-        
-        if ( ret & RET_WAIT ) return;
+        readToken();
     }
 
     current_label_info = script_h.lookupLabelNext( current_label_info.name );
@@ -911,6 +905,14 @@ void ONScripterLabel::executeLabel()
     
     fprintf( stderr, " ***** End *****\n");
     endCommand();
+}
+
+void ONScripterLabel::runScript()
+{
+    readToken();
+
+    int ret = ScriptParser::parseLine();
+    if ( ret == RET_NOMATCH ) ret = this->parseLine();
 }
 
 int ONScripterLabel::parseLine( )
@@ -961,85 +963,8 @@ int ONScripterLabel::parseLine( )
     if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
         ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
         processEOL();
-        //event_mode = IDLE_EVENT_MODE;
         line_enter_status = 0;
     }
-
-    return ret;
-}
-
-SDL_Surface *ONScripterLabel::loadImage( char *file_name, bool *has_alpha )
-{
-    if ( !file_name ) return NULL;
-    unsigned long length = script_h.cBR->getFileLength( file_name );
-    if ( length == 0 ){
-        fprintf( stderr, " *** can't find file [%s] ***\n", file_name );
-        return NULL;
-    }
-    if ( filelog_flag )
-        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], file_name, true );
-    //printf(" ... loading %s length %ld\n", file_name, length );
-
-    mean_size_of_loaded_images += length*6/5; // reserve 20% larger size
-    num_loaded_images++;
-    if (tmp_image_buf_length < mean_size_of_loaded_images/num_loaded_images){
-        tmp_image_buf_length = mean_size_of_loaded_images/num_loaded_images;
-        if (tmp_image_buf) delete[] tmp_image_buf;
-        tmp_image_buf = NULL;
-    }
-
-    unsigned char *buffer = NULL;
-    if (length > tmp_image_buf_length){
-        buffer = new unsigned char[length];
-    }
-    else{
-        if (!tmp_image_buf) tmp_image_buf = new unsigned char[tmp_image_buf_length];
-        buffer = tmp_image_buf;
-    }
-        
-    int location;
-    script_h.cBR->getFile( file_name, buffer, &location );
-    char *ext = strrchr(file_name, '.');
-
-    SDL_RWops *src = SDL_RWFromMem(buffer, length);
-    SDL_Surface *tmp = IMG_Load_RW(src, 0);
-    if (!tmp && ext && (!strcmp(ext+1, "JPG") || !strcmp(ext+1, "jpg"))){
-        fprintf(stderr, " *** force-loading a JPG image [%s]\n", file_name);
-        tmp = IMG_LoadJPG_RW(src);
-    }
-    SDL_RWclose(src);
-
-    if (buffer != tmp_image_buf) delete[] buffer;
-    if (!tmp){
-        fprintf( stderr, " *** can't load file [%s] ***\n", file_name );
-        return NULL;
-    }
-
-    if (has_alpha){
-        if (tmp->format->Amask)
-            *has_alpha = true;
-        else
-            *has_alpha = false;
-    }
-    
-    SDL_Surface *ret = SDL_ConvertSurface( tmp, image_surface->format, SDL_SWSURFACE );
-    if ( ret &&
-         screen_ratio2 != screen_ratio1 &&
-         (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE) )
-    {
-        SDL_Surface *src_s = ret;
-
-        int w, h;
-        if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
-        if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
-        SDL_PixelFormat *fmt = image_surface->format;
-        ret = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
-                                    fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
-        
-        resizeSurface( src_s, ret );
-        SDL_FreeSurface( src_s );
-    }
-    SDL_FreeSurface( tmp );
 
     return ret;
 }

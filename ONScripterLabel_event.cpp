@@ -33,11 +33,13 @@
 #define ONS_MIDI_EVENT    (SDL_USEREVENT+3)
 #define ONS_WAVE_EVENT    (SDL_USEREVENT+4)
 #define ONS_MUSIC_EVENT   (SDL_USEREVENT+5)
+#define ONS_BREAK_EVENT   (SDL_USEREVENT+6)
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)"
 
 static SDL_TimerID timer_id = NULL;
+static SDL_TimerID break_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 bool ext_music_play_once_flag = false;
 
@@ -62,6 +64,18 @@ extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
         event.type = ONS_SOUND_EVENT;
         SDL_PushEvent(&event);
     }
+}
+
+extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
+{
+    SDL_RemoveTimer(break_id);
+    break_id = NULL;
+
+	SDL_Event event;
+	event.type = ONS_BREAK_EVENT;
+	SDL_PushEvent(&event);
+
+    return interval;
 }
 
 extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
@@ -282,26 +296,11 @@ void ONScripterLabel::flushEvent()
         flushEventSub( event );
 }
 
-void ONScripterLabel::startTimer( int count )
-{
-    int duration = proceedAnimation();
-    
-    if ( duration > 0 && duration < count ){
-        resetRemainingTime( duration );
-        advancePhase( duration );
-        remaining_time = count;
-    }
-    else{
-        advancePhase( count );
-        remaining_time = 0;
-    }
-    event_mode |= WAIT_TIMER_MODE;
-}
-
 void ONScripterLabel::advancePhase( int count )
 {
     if ( timer_id != NULL ){
         SDL_RemoveTimer( timer_id );
+        timer_id = NULL;
     }
 
     if (count > 0){
@@ -312,6 +311,52 @@ void ONScripterLabel::advancePhase( int count )
     SDL_Event event;
     event.type = ONS_TIMER_EVENT;
     SDL_PushEvent( &event );
+}
+
+void ONScripterLabel::waitEventSub(int count)
+{
+    if (break_id != NULL) // already in wait queue
+        return;
+
+    if (count != 0){
+        if (event_mode & WAIT_TIMER_MODE){
+            int duration = proceedAnimation();
+            if (duration > 0){
+                if (count == -1 || duration < count){
+                    resetRemainingTime( duration );
+                    advancePhase( duration );
+                }
+                else{
+                    resetRemainingTime( count );
+                }
+            }
+        }
+            
+        if (count > 0)
+            break_id = SDL_AddTimer(count, breakCallback, NULL);
+    }
+    
+    if (count >= 0 && break_id == NULL){
+        SDL_Event event;
+        event.type = ONS_BREAK_EVENT;
+        SDL_PushEvent( &event );
+    }
+ 
+    runEventLoop();
+    
+    if (break_id) SDL_RemoveTimer(break_id);
+    break_id = NULL;
+}
+
+bool ONScripterLabel::waitEvent( int count )
+{
+    while(1){
+        waitEventSub( count );
+        if ( system_menu_mode == SYSTEM_NULL ) break;
+        if ( executeSystemCall() ) return true;
+    }
+
+    return false;
 }
 
 void midiCallback( int sig )
@@ -351,11 +396,8 @@ void musicCallback( int sig )
 void ONScripterLabel::trapHandler()
 {
     trap_mode = TRAP_NONE;
-    setCurrentLabel( trap_dist );
-    readToken();
     stopAnimation( clickstr_state );
-    event_mode = IDLE_EVENT_MODE;
-    advancePhase();
+    setCurrentLabel( trap_dist );
 }
 
 /* **************************************** *
@@ -370,24 +412,25 @@ void ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
         mouseOverCheck( current_button_state.x, current_button_state.y );
 }
 
-void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
+bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 {
-    if ( variable_edit_mode ) return;
+    if ( variable_edit_mode ) return false;
     
     if ( automode_flag ){
-        remaining_time = -1;
         automode_flag = false;
-        return;
+        return false;
     }
     if ( event->button == SDL_BUTTON_RIGHT &&
          trap_mode & TRAP_RIGHT_CLICK ){
         trapHandler();
-        return;
+
+        return true;
     }
     else if ( event->button == SDL_BUTTON_LEFT &&
               trap_mode & TRAP_LEFT_CLICK ){
         trapHandler();
-        return;
+
+        return true;
     }
 
     current_button_state.x = event->x;
@@ -438,15 +481,14 @@ void ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         }
     }
 #endif
-    else return;
+    else return false;
     
-    if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)){
-        if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
-            skip_mode |= SKIP_TO_EOL;
-        playClickVoice();
-        stopAnimation( clickstr_state );
-        advancePhase();
-    }
+    if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+        skip_mode |= SKIP_TO_EOL;
+    playClickVoice();
+    stopAnimation( clickstr_state );
+
+    return true;
 }
 
 void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
@@ -618,7 +660,7 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
     }
 }
 
-void ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
+bool ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
 {
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
@@ -637,15 +679,15 @@ void ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
         break;
     }
 
-    return;
+    return false;
 
   ctrl_pressed:
     current_button_state.button  = 0;
     volatile_button_state.button = 0;
     playClickVoice();
     stopAnimation( clickstr_state );
-    advancePhase();
-    return;
+
+    return true;
 }
 
 void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
@@ -668,20 +710,19 @@ void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
     }
 }
 
-void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
+bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
     current_button_state.down_flag = false;
     if ( automode_flag ){
-        remaining_time = -1;
         automode_flag = false;
-        return;
+        return false;
     }
     
     if ( event->type == SDL_KEYUP ){
         if ( variable_edit_mode ){
             variableEditMode( event );
-            return;
+            return false;
         }
 
         if ( edit_flag && event->keysym.sym == SDLK_z ){
@@ -709,12 +750,12 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
           event->keysym.sym == SDLK_KP_ENTER ||
           event->keysym.sym == SDLK_SPACE ) ){
         trapHandler();
-        return;
+        return true;
     }
     else if ( (trap_mode & TRAP_RIGHT_CLICK) && 
               (event->keysym.sym == SDLK_ESCAPE) ){
         trapHandler();
-        return;
+        return true;
     }
     
     if ( event_mode & WAIT_BUTTON_MODE &&
@@ -737,11 +778,11 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
         playClickVoice();
         stopAnimation( clickstr_state );
-        advancePhase();
-        return;
+
+        return true;
     }
 
-    if ( event->type == SDL_KEYDOWN ) return;
+    if ( event->type == SDL_KEYDOWN ) return false;
     
     if ( ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ) &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
@@ -788,14 +829,14 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
                   event->keysym.sym == SDLK_p) &&
                  event_mode & WAIT_BUTTON_MODE){
             shiftCursorOnButton(1);
-            return;
+            return false;
         }
         else if ((!getcursor_flag && event->keysym.sym == SDLK_DOWN ||
                   event->keysym.sym == SDLK_j ||
                   event->keysym.sym == SDLK_n) &&
                  event_mode & WAIT_BUTTON_MODE){
             shiftCursorOnButton(-1);
-            return;
+            return false;
         }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){
             current_button_state.button  = -12;
@@ -863,8 +904,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         if ( current_button_state.button != 0 ){
             volatile_button_state.button = current_button_state.button;
             stopAnimation( clickstr_state );
-            advancePhase();
-            return;
+
+            return true;
         }
     }
 
@@ -878,7 +919,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             key_pressed_flag = true;
             playClickVoice();
             stopAnimation( clickstr_state );
-            advancePhase();
+
+            return true;
         }
     }
     
@@ -889,7 +931,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             printf("toggle skip to true\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
-            advancePhase();
+
+            return true;
         }
         else if (event->keysym.sym == SDLK_o){
             if (skip_mode & SKIP_TO_EOP)
@@ -899,7 +942,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             printf("toggle draw one page flag to %s\n", (skip_mode & SKIP_TO_EOP?"true":"false") );
             if ( skip_mode & SKIP_TO_EOP ){
                 stopAnimation( clickstr_state );
-                advancePhase();
+
+                return true;
             }
         }
         else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
@@ -908,7 +952,8 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             printf("change to automode\n");
             key_pressed_flag = true;
             stopAnimation( clickstr_state );
-            advancePhase();
+
+            return true;
         }
         else if ( event->keysym.sym == SDLK_0 ){
             if (++text_speed_no > 2) text_speed_no = 0;
@@ -934,104 +979,28 @@ void ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             else                   menu_fullCommand();
         }
     }
+
+    return false;
 }
 
 void ONScripterLabel::timerEvent( void )
 {
-  timerEventTop:
-
-    int ret;
-
-    if ( event_mode & WAIT_TIMER_MODE ){
-        int duration = proceedAnimation();
-        
-        if ( duration == 0 ||
-             ( remaining_time >= 0 &&
-               remaining_time-duration <= 0 ) ){
-
-            bool end_flag = true;
-            bool loop_flag = false;
-            if ( remaining_time >= 0 ){
-                remaining_time = -1;
-                if ( event_mode & WAIT_VOICE_MODE && wave_sample[0] ){
-                    end_flag = false;
-                    if ( duration > 0 ){
-                        resetRemainingTime( duration );
-                        advancePhase( duration );
-                    }
-                }
-                else{
-                    loop_flag = true;
-                    if (automode_flag || autoclick_time>0)
-                        current_button_state.button = 0;
-                    else if ( usewheel_flag )
-                        current_button_state.button = -5;
-                    else
-                        current_button_state.button = -2;
-                }
-            }
-
-            if ( end_flag &&
-                 event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) && 
-                 ( clickstr_state == CLICK_WAIT || 
-                   clickstr_state == CLICK_NEWPAGE ) ){
-                playClickVoice(); 
-                stopAnimation( clickstr_state ); 
-            } 
-
-            if ( end_flag || duration == 0 )
-                event_mode &= ~WAIT_TIMER_MODE;
-            if ( loop_flag ) goto timerEventTop;
-        }
-        else{
-            if ( remaining_time > 0 )
-                remaining_time -= duration;
-            resetRemainingTime( duration );
-            advancePhase( duration );
-        }
+    int duration = proceedAnimation();
+            
+    if (duration > 0){
+        resetRemainingTime( duration );
+        advancePhase( duration );
     }
-    else if ( event_mode & EFFECT_EVENT_MODE ){
-        char *current = script_h.getCurrent();
-        ret = this->parseLine();
-        
-        if ( ret & RET_CONTINUE ){
-            if ( ret == RET_CONTINUE ){
-                readToken(); // skip tailing \0 and mark kidoku
-            }
-            if ( effect_blank == 0 || effect_counter == 0 ) goto timerEventTop;
-            startTimer( effect_blank );
-        }
-        else{
-            script_h.setCurrent( current );
-            readToken();
-            advancePhase();
-        }
-        return;
-    }
-    else{
-        if ( system_menu_mode != SYSTEM_NULL || 
-             ( event_mode & WAIT_INPUT_MODE && 
-               volatile_button_state.button == -1 ) ){
-            if ( !system_menu_enter_flag )
-                event_mode |= WAIT_TIMER_MODE;
-            executeSystemCall();
-        }
-        else
-            executeLabel();
-    }
+
     volatile_button_state.button = 0;
 }
 
-/* **************************************** *
- * Event loop
- * **************************************** */
-int ONScripterLabel::eventLoop()
+void ONScripterLabel::runEventLoop()
 {
     SDL_Event event, tmp_event;
 
-    advancePhase();
-
     while ( SDL_WaitEvent(&event) ) {
+        bool ret = false;
         // ignore continous SDL_MOUSEMOTION
         while (event.type == SDL_MOUSEMOTION){
             if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_ALLEVENTS ) == 0 ) break;
@@ -1048,7 +1017,8 @@ int ONScripterLabel::eventLoop()
           case SDL_MOUSEBUTTONDOWN:
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
-            mousePressEvent( (SDL_MouseButtonEvent*)&event );
+            ret = mousePressEvent( (SDL_MouseButtonEvent*)&event );
+            if (ret) return;
             break;
 
           case SDL_JOYBUTTONDOWN:
@@ -1059,9 +1029,10 @@ int ONScripterLabel::eventLoop()
             
           case SDL_KEYDOWN:
             event.key.keysym.sym = transKey(event.key.keysym.sym);
-            keyDownEvent( (SDL_KeyboardEvent*)&event );
+            ret = keyDownEvent( (SDL_KeyboardEvent*)&event );
             if ( btndown_flag )
-                keyPressEvent( (SDL_KeyboardEvent*)&event );
+                ret |= keyPressEvent( (SDL_KeyboardEvent*)&event );
+            if (ret) return;
             break;
 
           case SDL_JOYBUTTONUP:
@@ -1073,7 +1044,8 @@ int ONScripterLabel::eventLoop()
           case SDL_KEYUP:
             event.key.keysym.sym = transKey(event.key.keysym.sym);
             keyUpEvent( (SDL_KeyboardEvent*)&event );
-            keyPressEvent( (SDL_KeyboardEvent*)&event );
+            ret = keyPressEvent( (SDL_KeyboardEvent*)&event );
+            if (ret) return;
             break;
 
           case SDL_JOYAXISMOTION:
@@ -1092,11 +1064,11 @@ int ONScripterLabel::eventLoop()
               }
               break;
           }
-             
+
           case ONS_TIMER_EVENT:
             timerEvent();
             break;
-                
+
           case ONS_SOUND_EVENT:
           case ONS_CDAUDIO_EVENT:
           case ONS_MIDI_EVENT:
@@ -1110,19 +1082,30 @@ int ONScripterLabel::eventLoop()
             if ( event.user.code != 0 ||
                  !(event_mode & WAIT_VOICE_MODE) ) break;
 
-            if ( remaining_time <= 0 ){
-                event_mode &= ~WAIT_VOICE_MODE;
-                if ( automode_flag )
-                    current_button_state.button = 0;
-                else if ( usewheel_flag )
-                    current_button_state.button = -5;
-                else
-                    current_button_state.button = -2;
-                stopAnimation( clickstr_state );
-                advancePhase();
-            }
-            break;
+            event_mode &= ~WAIT_VOICE_MODE;
 
+          case ONS_BREAK_EVENT:
+            if (event_mode & WAIT_VOICE_MODE && wave_sample[0]){
+                timerEvent();
+                break;
+            }
+
+            if (automode_flag || autoclick_time>0)
+                current_button_state.button = 0;
+            else if ( usewheel_flag )
+                current_button_state.button = -5;
+            else
+                current_button_state.button = -2;
+
+            if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) && 
+                ( clickstr_state == CLICK_WAIT || 
+                  clickstr_state == CLICK_NEWPAGE ) ){
+                playClickVoice(); 
+                stopAnimation( clickstr_state ); 
+            }
+
+            return;
+            
           case SDL_ACTIVEEVENT:
             if ( !event.active.gain ) break;
           case SDL_VIDEOEXPOSE:
@@ -1137,7 +1120,6 @@ int ONScripterLabel::eventLoop()
             break;
         }
     }
-    return -1;
 }
 
 

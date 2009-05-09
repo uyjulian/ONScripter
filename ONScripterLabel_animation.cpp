@@ -61,7 +61,28 @@ int ONScripterLabel::proceedAnimation()
             minimum_duration = estimateNextDuration( anim, dst_rect, minimum_duration );
         }
     }
-
+#ifdef USE_LUA
+    if (lua_handler.is_animatable && !script_h.isExternalScript()){
+        if (lua_handler.remaining_time == 0){
+            lua_handler.remaining_time = lua_handler.duration_time;
+            if (minimum_duration == -1 || 
+                minimum_duration > lua_handler.remaining_time)
+                minimum_duration = lua_handler.remaining_time;
+            int lua_event_mode = event_mode;
+            int tmp_string_buffer_offset = string_buffer_offset;
+            char *current = script_h.getCurrent();
+            lua_handler.callback(LUAHandler::LUA_ANIMATION);
+            script_h.setCurrent(current);
+            readToken();
+            string_buffer_offset = tmp_string_buffer_offset;
+            event_mode = lua_event_mode;
+        }
+        else if (minimum_duration == -1 || 
+                 minimum_duration > lua_handler.remaining_time){
+            minimum_duration = lua_handler.remaining_time;
+        }
+    }
+#endif
     if ( minimum_duration == -1 ) minimum_duration = 0;
 
     return minimum_duration;
@@ -104,7 +125,10 @@ void ONScripterLabel::resetRemainingTime( int t )
             anim->remaining_time -= t;
         }
     }
-
+#ifdef USE_LUA
+    if (lua_handler.is_animatable && !script_h.isExternalScript())
+        lua_handler.remaining_time -= t;
+#endif
     if ( !textgosub_label &&
          ( clickstr_state == CLICK_WAIT ||
            clickstr_state == CLICK_NEWPAGE ) ){
@@ -343,10 +367,6 @@ void ONScripterLabel::stopAnimation( int click )
 {
     int no;
 
-    if ( !(event_mode & WAIT_TIMER_MODE) ) return;
-    
-    event_mode &= ~WAIT_TIMER_MODE;
-    remaining_time = -1;
     if ( textgosub_label ) return;
 
     if      ( click == CLICK_WAIT )    no = CURSOR_WAIT_NO;

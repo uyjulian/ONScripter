@@ -85,7 +85,7 @@ public:
     void setKeyEXE(const char *path);
     
     int  init();
-    int  eventLoop();
+    void runEventLoop();
 
     void reset(); // used if definereset
     void resetSub(); // used if reset
@@ -274,16 +274,17 @@ protected:
     int  ctrl_pressed_status;
     
     void variableEditMode( SDL_KeyboardEvent *event );
-    void keyDownEvent( SDL_KeyboardEvent *event );
+    bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
-    void keyPressEvent( SDL_KeyboardEvent *event );
-    void mousePressEvent( SDL_MouseButtonEvent *event );
+    bool keyPressEvent( SDL_KeyboardEvent *event );
+    bool mousePressEvent( SDL_MouseButtonEvent *event );
     void mouseMoveEvent( SDL_MouseMotionEvent *event );
     void timerEvent();
     void flushEventSub( SDL_Event &event );
     void flushEvent();
-    void startTimer( int count );
     void advancePhase( int count=0 );
+    void waitEventSub(int count);
+    bool waitEvent(int count);
     void trapHandler();
     void initSDL();
     void openAudio();
@@ -294,7 +295,6 @@ private:
            DISPLAY_MODE_UPDATED = 2
     };
     enum { IDLE_EVENT_MODE      = 0,
-           EFFECT_EVENT_MODE    = 1,
            WAIT_BUTTON_MODE     = 2, // For select, btnwait and rmenu.
            WAIT_INPUT_MODE      = (4|8),  // can be skipped by a click
            WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
@@ -328,12 +328,9 @@ private:
     bool automode_flag;
     long automode_time;
     long autoclick_time;
-    long remaining_time;
 
     bool saveon_flag;
     bool internal_saveon_flag; // to saveoff at the head of text
-    int yesno_caller;
-    int yesno_selected_file_no;
 
     bool monocro_flag;
     uchar3 monocro_color;
@@ -536,16 +533,16 @@ private:
     void drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, AnimationInfo *cache_info=NULL );
     void restoreTextBuffer();
-    int  enterTextDisplayMode(bool text_flag = true);
-    int  leaveTextDisplayMode(bool force_leave_flag = false);
-    void doClickEnd();
-    int  clickWait( char *out_text );
-    int  clickNewPage( char *out_text );
+    void enterTextDisplayMode(bool text_flag = true);
+    void leaveTextDisplayMode(bool force_leave_flag = false);
+    bool doClickEnd();
+    bool clickWait( char *out_text );
+    bool clickNewPage( char *out_text );
     void startRuby(const char *buf, FontInfo &info);
     void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info);
     int  textCommand();
     void processEOL();
-    int  processText();
+    bool processText();
     
     /* ---------------------------------------- */
     /* Skip mode */
@@ -564,8 +561,8 @@ private:
     int effect_start_time;
     int effect_start_time_old;
     
-    int  setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface );
-    int  doEffect( EffectLink *effect, bool clear_dirty_region=true );
+    bool setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface );
+    bool doEffect( EffectLink *effect, bool clear_dirty_region=true );
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     
@@ -668,8 +665,10 @@ private:
     
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
+public:
     void executeLabel();
-    SDL_Surface *loadImage( char *file_name, bool *has_alpha=NULL );
+    void runScript();
+private:
     int parseLine();
 
     void mouseOverCheck( int x, int y );
@@ -699,6 +698,10 @@ private:
     unsigned char *resize_buffer;
     size_t resize_buffer_size;
 
+    SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL);
+    SDL_Surface *createRectangleSurface(char *filename);
+    SDL_Surface *createSurfaceFromFile(char *filename);
+
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );
     void shiftCursorOnButton( int diff );
     void alphaBlend( SDL_Surface *mask_surface,
@@ -722,17 +725,17 @@ private:
     
     void enterSystemCall();
     void leaveSystemCall( bool restore_flag = true );
-    void executeSystemCall();
+    bool executeSystemCall();
     
     void executeSystemMenu();
     void executeSystemSkip();
     void executeSystemAutomode();
-    void executeSystemReset();
+    bool executeSystemReset();
     void executeSystemEnd();
     void executeWindowErase();
-    void executeSystemLoad();
+    bool executeSystemLoad();
     void executeSystemSave();
-    void executeSystemYesNo();
+    bool executeSystemYesNo( int caller, int file_no=0 );
     void setupLookbackButton();
     void executeSystemLookback();
 };

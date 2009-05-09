@@ -611,6 +611,27 @@ int ScriptParser::maxkaisoupageCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::luasubCommand()
+{
+    last_user_func->next = new UserFuncLUT();
+    last_user_func = last_user_func->next;
+    last_user_func->lua_flag = true;
+    setStr( &last_user_func->command, script_h.readLabel() );
+    
+    return RET_CONTINUE;
+}
+
+int ScriptParser::luacallCommand()
+{
+    const char *label = script_h.readLabel();
+
+#ifdef USE_LUA
+    lua_handler.addCallback(label);
+#endif
+    
+    return RET_CONTINUE;
+}
+
 int ScriptParser::lookbackspCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "lookbacksp: not in the define section" );

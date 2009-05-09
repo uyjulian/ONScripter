@@ -99,6 +99,8 @@ static struct FuncLUT{
     {"menuselectvoice",      &ScriptParser::menuselectvoiceCommand},
     {"menuselectcolor",      &ScriptParser::menuselectcolorCommand},
     {"maxkaisoupage",      &ScriptParser::maxkaisoupageCommand},
+    {"luasub",      &ScriptParser::luasubCommand},
+    {"luacall",      &ScriptParser::luacallCommand},
     {"lookbacksp",      &ScriptParser::lookbackspCommand},
     {"lookbackcolor",      &ScriptParser::lookbackcolorCommand},
     //{"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
@@ -414,9 +416,17 @@ int ScriptParser::parseLine()
     const char *cmd = script_h.getStringBuffer();
     if (cmd[0] != '_'){
         UserFuncLUT *uf = root_user_func.next;
-        while( uf ){
-            if ( !strcmp( uf->command, cmd ) ){
-                gosubReal( cmd, script_h.getNext() );
+        while(uf){
+            if (!strcmp( uf->command, cmd )){
+                if (uf->lua_flag){
+#ifdef USE_LUA
+                    if (lua_handler.callFunction(false, cmd))
+                        errorAndExit( lua_handler.error_str );
+#endif
+                }
+                else{
+                    gosubReal( cmd, script_h.getNext() );
+                }
                 return RET_CONTINUE;
             }
             uf = uf->next;

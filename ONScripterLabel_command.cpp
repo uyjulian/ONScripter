@@ -63,22 +63,25 @@ int ONScripterLabel::wavestopCommand()
 int ONScripterLabel::waittimerCommand()
 {
     int count = script_h.readInt() + internal_timer - SDL_GetTicks();
-    startTimer( count );
+    if (count < 0) count = 0;
+
+    event_mode = WAIT_TIMER_MODE;
+    waitEvent( count );
     
-    return RET_WAIT;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::waitCommand()
 {
-    startTimer( script_h.readInt() );
+    event_mode = WAIT_TIMER_MODE;
+    waitEvent( script_h.readInt() );
 
-    return RET_WAIT;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::vspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool vsp2_flag = false;
     if (script_h.isName("vsp2")) vsp2_flag = true;
@@ -164,8 +167,7 @@ int ONScripterLabel::textonCommand()
     if (windowchip_sprite_no >= 0)
         sprite_info[windowchip_sprite_no].visible = true;
 
-    int ret = enterTextDisplayMode();
-    if (ret != RET_NOMATCH) return ret;
+    enterTextDisplayMode();
 
     text_on_flag = true;
 
@@ -178,8 +180,7 @@ int ONScripterLabel::textoffCommand()
         sprite_info[windowchip_sprite_no].visible = false;
     refreshSurface(backup_surface, NULL, REFRESH_NORMAL_MODE);
 
-    int ret = leaveTextDisplayMode(true);
-    if (ret != RET_NOMATCH) return ret;
+    leaveTextDisplayMode(true);
 
     text_on_flag = false;
 
@@ -227,8 +228,7 @@ int ONScripterLabel::tateyokoCommand()
 
 int ONScripterLabel::talCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     char loc = script_h.readLabel()[0];
     int no = -1, trans = 0;
@@ -242,17 +242,16 @@ int ONScripterLabel::talCommand()
         else if (trans < 0  ) trans = 0;
     }
 
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
+    if (no >= 0){
+        tachi_info[ no ].trans = trans;
+        dirty_rect.add( tachi_info[ no ].pos );
     }
-    else{
-        if (no >= 0){
-            tachi_info[ no ].trans = trans;
-            dirty_rect.add( tachi_info[ no ].pos );
-        }
 
-        return setEffect( parseEffect(true), true, true );
-   }
+    EffectLink *el = parseEffect(true);
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::tablegotoCommand()
@@ -274,16 +273,15 @@ int ONScripterLabel::tablegotoCommand()
 int ONScripterLabel::systemcallCommand()
 {
     system_menu_mode = getSystemCallNo( script_h.readLabel() );
-    enterSystemCall();
-    advancePhase();
+
+    executeSystemCall();
     
-    return RET_WAIT;
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::strspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     int sprite_no = script_h.readInt();
     AnimationInfo *ai = &sprite_info[sprite_no];
@@ -664,8 +662,7 @@ int ONScripterLabel::setcursorCommand()
 
 int ONScripterLabel::selectCommand()
 {
-    int ret = enterTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    enterTextDisplayMode();
 
     int select_mode = SELECT_GOTO_MODE;
     SelectLink *last_select_link;
@@ -684,152 +681,144 @@ int ONScripterLabel::selectCommand()
         script_h.pushVariable();
     }
 
-    if ( event_mode & WAIT_BUTTON_MODE ){
-        
-        if ( current_button_state.button <= 0 ) return RET_WAIT | RET_REREAD;
-        
-        if ( selectvoice_file_name[SELECTVOICE_SELECT] )
-            playSound(selectvoice_file_name[SELECTVOICE_SELECT], 
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
-
-        event_mode = IDLE_EVENT_MODE;
-
-        deleteButtonLink();
-
-        int counter = 1;
-        last_select_link = root_select_link.next;
-        while ( last_select_link ){
-            if ( current_button_state.button == counter++ ) break;
-            last_select_link = last_select_link->next;
-        }
-
-        if ( select_mode  == SELECT_GOTO_MODE ){
-            setCurrentLabel( last_select_link->label );
-        }
-        else if ( select_mode == SELECT_GOSUB_MODE ){
-            gosubReal( last_select_link->label, select_label_info.next_script );
-        }
-        else{ // selnum
-            script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
-            current_label_info = script_h.getLabelByAddress( select_label_info.next_script );
-            current_line = script_h.getLineByAddress( select_label_info.next_script );
-            script_h.setCurrent( select_label_info.next_script );
-        }
-        deleteSelectLink();
-
-        newPage( true );
-
-        return RET_CONTINUE;
+    bool comma_flag = true;
+    if ( select_mode == SELECT_CSEL_MODE ){
+        saveoffCommand();
     }
-    else{
-        bool comma_flag = true;
-        if ( select_mode == SELECT_CSEL_MODE ){
-            saveoffCommand();
+    shortcut_mouse_line = -1;
+
+    int xy[2];
+    xy[0] = sentence_font.xy[0];
+    xy[1] = sentence_font.xy[1];
+
+    if ( selectvoice_file_name[SELECTVOICE_OPEN] )
+        playSound(selectvoice_file_name[SELECTVOICE_OPEN],
+                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
+
+    last_select_link = &root_select_link;
+
+    while(1){
+        if ( script_h.getNext()[0] != 0x0a && comma_flag == true ){
+
+            const char *buf = script_h.readStr();
+            comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
+            if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
+
+            // Text part
+            SelectLink *slink = new SelectLink();
+            setStr( &slink->text, buf );
+            //printf("Select text %s\n", slink->text);
+
+            // Label part
+            if (select_mode != SELECT_NUM_MODE){
+                script_h.readStr();
+                setStr( &slink->label, script_h.getStringBuffer()+1 );
+                //printf("Select label %s\n", slink->label );
+            }
+            last_select_link->next = slink;
+            last_select_link = last_select_link->next;
+
+            comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
+            //printf("2 comma %d %c %x\n", comma_flag, script_h.getCurrent()[0], script_h.getCurrent()[0]);
         }
-        shortcut_mouse_line = -1;
+        else if (script_h.getNext()[0] == 0x0a){
+            //printf("comma %d\n", comma_flag);
+            char *buf = script_h.getNext() + 1; // consume eol
+            while ( *buf == ' ' || *buf == '\t' ) buf++;
+                
+            if (comma_flag && *buf == ',')
+                errorAndExit( "select: double comma." );
 
-        int xy[2];
-        xy[0] = sentence_font.xy[0];
-        xy[1] = sentence_font.xy[1];
-
-        if ( selectvoice_file_name[SELECTVOICE_OPEN] )
-            playSound(selectvoice_file_name[SELECTVOICE_OPEN],
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
-
-        last_select_link = &root_select_link;
-
-        while(1){
-            if ( script_h.getNext()[0] != 0x0a && comma_flag == true ){
-
-                const char *buf = script_h.readStr();
-                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
-                if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
-
-                // Text part
-                SelectLink *slink = new SelectLink();
-                setStr( &slink->text, buf );
-                //printf("Select text %s\n", slink->text);
-
-                // Label part
-                if (select_mode != SELECT_NUM_MODE){
-                    script_h.readStr();
-                    setStr( &slink->label, script_h.getStringBuffer()+1 );
-                    //printf("Select label %s\n", slink->label );
-                }
-                last_select_link->next = slink;
-                last_select_link = last_select_link->next;
-
-                comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
-                //printf("2 comma %d %c %x\n", comma_flag, script_h.getCurrent()[0], script_h.getCurrent()[0]);
-            }
-            else if (script_h.getNext()[0] == 0x0a){
-                //printf("comma %d\n", comma_flag);
-                char *buf = script_h.getNext() + 1; // consume eol
+            bool comma2_flag = false;
+            if (*buf == ','){
+                comma2_flag = true;
+                buf++;
                 while ( *buf == ' ' || *buf == '\t' ) buf++;
-                
-                if (comma_flag && *buf == ',')
-                    errorAndExit( "select: double comma." );
-
-                bool comma2_flag = false;
-                if (*buf == ','){
-                    comma2_flag = true;
-                    buf++;
-                    while ( *buf == ' ' || *buf == '\t' ) buf++;
-                }
-                script_h.setCurrent(buf);
-                
-                if (*buf == 0x0a){
-                    comma_flag |= comma2_flag;
-                    continue;
-                }
-                
-                if (!comma_flag && !comma2_flag){
-                    select_label_info.next_script = buf;
-                    //printf("select: stop at the end of line\n");
-                    break;
-                }
-
-                //printf("continue\n");
-                comma_flag = true;
             }
-            else{ // if select ends at the middle of the line
-                select_label_info.next_script = script_h.getNext();
-                //printf("select: stop at the middle of the line\n");
+            script_h.setCurrent(buf);
+                
+            if (*buf == 0x0a){
+                comma_flag |= comma2_flag;
+                continue;
+            }
+                
+            if (!comma_flag && !comma2_flag){
+                select_label_info.next_script = buf;
+                //printf("select: stop at the end of line\n");
                 break;
             }
+
+            //printf("continue\n");
+            comma_flag = true;
         }
-
-        if ( select_mode != SELECT_CSEL_MODE ){
-            last_select_link = root_select_link.next;
-            int counter = 1;
-            while( last_select_link ){
-                if ( *last_select_link->text ){
-                    ButtonLink *button = getSelectableSentence( last_select_link->text, &sentence_font );
-                    root_button_link.insert( button );
-                    button->no = counter;
-                }
-                counter++;
-                last_select_link = last_select_link->next;
-            }
+        else{ // if select ends at the middle of the line
+            select_label_info.next_script = script_h.getNext();
+            //printf("select: stop at the middle of the line\n");
+            break;
         }
-
-        if ( select_mode == SELECT_CSEL_MODE ){
-            setCurrentLabel( "customsel" );
-            return RET_CONTINUE;
-        }
-        skip_mode &= ~SKIP_NORMAL;
-        automode_flag = false;
-        sentence_font.xy[0] = xy[0];
-        sentence_font.xy[1] = xy[1];
-
-        flush( refreshMode() );
-        
-        event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
-        advancePhase();
-        refreshMouseOverButton();
-
-        return RET_WAIT | RET_REREAD;
     }
+
+    if ( select_mode != SELECT_CSEL_MODE ){
+        last_select_link = root_select_link.next;
+        int counter = 1;
+        while( last_select_link ){
+            if ( *last_select_link->text ){
+                ButtonLink *button = getSelectableSentence( last_select_link->text, &sentence_font );
+                root_button_link.insert( button );
+                button->no = counter;
+            }
+            counter++;
+            last_select_link = last_select_link->next;
+        }
+    }
+
+    if ( select_mode == SELECT_CSEL_MODE ){
+        setCurrentLabel( "customsel" );
+        return RET_CONTINUE;
+    }
+    skip_mode &= ~SKIP_NORMAL;
+    automode_flag = false;
+    sentence_font.xy[0] = xy[0];
+    sentence_font.xy[1] = xy[1];
+
+    flush( refreshMode() );
+        
+    refreshMouseOverButton();
+
+    event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
+    do waitEvent(-1);
+    while(current_button_state.button <= 0);
+        
+    if ( selectvoice_file_name[SELECTVOICE_SELECT] )
+        playSound(selectvoice_file_name[SELECTVOICE_SELECT], 
+                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
+
+    deleteButtonLink();
+
+    int counter = 1;
+    last_select_link = root_select_link.next;
+    while ( last_select_link ){
+        if ( current_button_state.button == counter++ ) break;
+        last_select_link = last_select_link->next;
+    }
+
+    if ( select_mode  == SELECT_GOTO_MODE ){
+        setCurrentLabel( last_select_link->label );
+    }
+    else if ( select_mode == SELECT_GOSUB_MODE ){
+        gosubReal( last_select_link->label, select_label_info.next_script );
+    }
+    else{ // selnum
+        script_h.setInt( &script_h.pushed_variable, current_button_state.button - 1 );
+        current_label_info = script_h.getLabelByAddress( select_label_info.next_script );
+        current_line = script_h.getLineByAddress( select_label_info.next_script );
+        script_h.setCurrent( select_label_info.next_script );
+    }
+    deleteSelectLink();
+
+    newPage( true );
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::savetimeCommand()
@@ -910,10 +899,8 @@ int ONScripterLabel::savegameCommand()
 
     if ( no < 0 )
         errorAndExit("savegame: the specified number is less than 0.");
-    else{
-        shelter_event_mode = event_mode;
+    else
         saveSaveFile( no, savestr ); 
-    }
 
     return RET_CONTINUE;
 }
@@ -967,6 +954,7 @@ int ONScripterLabel::rmodeCommand()
 int ONScripterLabel::resettimerCommand()
 {
     internal_timer = SDL_GetTicks();
+
     return RET_CONTINUE;
 }
 
@@ -1008,21 +996,18 @@ int ONScripterLabel::quakeCommand()
     if ( tmp_effect.duration < tmp_effect.no * 4 ) tmp_effect.duration = tmp_effect.no * 4;
     tmp_effect.effect   = CUSTOM_EFFECT_NO + quake_type;
 
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( &tmp_effect );
-    }
-    else{
-        dirty_rect.fill( screen_width, screen_height );
-        SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
+    dirty_rect.fill( screen_width, screen_height );
+    SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );
 
-        return setEffect( &tmp_effect, false, true );
-    }
+    if (setEffect(&tmp_effect, true, true)) return RET_CONTINUE;
+    while (doEffect(&tmp_effect));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::puttextCommand()
 {
-    int ret = enterTextDisplayMode(false);
-    if ( ret != RET_NOMATCH ) return ret;
+    enterTextDisplayMode(false);
 
     script_h.readStr();
     script_h.addStringBuffer(0x0a);
@@ -1030,15 +1015,9 @@ int ONScripterLabel::puttextCommand()
         string_buffer_offset == 0)
         string_buffer_offset = 1; // skip the heading `
 
-    ret = processText();
-    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
-        ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
+    while(processText());
+    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a)
         processEOL();
-    }
-    if (ret != RET_CONTINUE){
-        ret &= ~RET_NOREAD;
-        return ret | RET_REREAD;
-    }
 
     string_buffer_offset = 0;
 
@@ -1059,8 +1038,7 @@ int ONScripterLabel::prnumclearCommand()
 
 int ONScripterLabel::prnumCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     int no = script_h.readInt();
     if ( prnum_info[no] ){
@@ -1094,20 +1072,16 @@ int ONScripterLabel::prnumCommand()
 
 int ONScripterLabel::printCommand()
 {
-    if (!(display_mode & DISPLAY_MODE_UPDATED)){
-        parseEffect(true);
-        return RET_CONTINUE;
-    }
+    EffectLink *el = parseEffect(true);
+    
+    if (!(display_mode & DISPLAY_MODE_UPDATED)) return RET_CONTINUE;
+    
+    leaveTextDisplayMode();
 
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
 
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
-    }
-    else{
-        return setEffect( parseEffect(true), true, true );
-    }
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::playstopCommand()
@@ -1167,8 +1141,7 @@ int ONScripterLabel::negaCommand()
 
 int ONScripterLabel::mspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool msp2_flag = false;
     if (script_h.isName("msp2")) msp2_flag = true;
@@ -1381,8 +1354,7 @@ int ONScripterLabel::menu_automodeCommand()
 
 int ONScripterLabel::lsp2Command()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool v=true;
 
@@ -1420,8 +1392,7 @@ int ONScripterLabel::lsp2Command()
 
 int ONScripterLabel::lspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool v=true;
 
@@ -1509,8 +1480,7 @@ int ONScripterLabel::lookbackbuttonCommand()
 
 int ONScripterLabel::logspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool logsp2_flag = false;
 
@@ -1612,17 +1582,14 @@ int ONScripterLabel::loadgameCommand()
 
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
-        readToken();
         
-        if ( event_mode & WAIT_INPUT_MODE ) return RET_WAIT | RET_NOREAD;
-        return RET_CONTINUE | RET_NOREAD;
+        return RET_CONTINUE;
     }
 }
 
 int ONScripterLabel::ldCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     char loc = script_h.readLabel()[0];
     int no = -1;
@@ -1633,25 +1600,24 @@ int ONScripterLabel::ldCommand()
     const char *buf = NULL;
     if (no >= 0) buf = script_h.readStr();
     
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
-    }
-    else{
-        if (no >= 0){
+    if (no >= 0){
+        dirty_rect.add( tachi_info[ no ].pos );
+        tachi_info[ no ].setImageName( buf );
+        parseTaggedString( &tachi_info[ no ] );
+        setupAnimationInfo( &tachi_info[ no ] );
+        if ( tachi_info[ no ].image_surface ){
+            tachi_info[ no ].visible = true;
+            tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
+            tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
             dirty_rect.add( tachi_info[ no ].pos );
-            tachi_info[ no ].setImageName( buf );
-            parseTaggedString( &tachi_info[ no ] );
-            setupAnimationInfo( &tachi_info[ no ] );
-            if ( tachi_info[ no ].image_surface ){
-                tachi_info[ no ].visible = true;
-                tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
-                tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
-                dirty_rect.add( tachi_info[ no ].pos );
-            }
         }
-
-        return setEffect( parseEffect(true), true, true );
     }
+
+    EffectLink *el = parseEffect(true);
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::jumpfCommand()
@@ -1757,8 +1723,7 @@ int ONScripterLabel::indentCommand()
 
 int ONScripterLabel::humanorderCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     const char *buf = script_h.readStr();
     int i;
@@ -1769,15 +1734,14 @@ int ONScripterLabel::humanorderCommand()
         else                    human_order[i] = -1;
     }
 
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
-    }
-    else{
-        for ( i=0 ; i<3 ; i++ )
-            dirty_rect.add( tachi_info[i].pos );
+    for ( i=0 ; i<3 ; i++ )
+        dirty_rect.add( tachi_info[i].pos );
 
-        return setEffect( parseEffect(true), true, true );
-    }
+    EffectLink *el = parseEffect(true);
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::getzxcCommand()
@@ -2577,18 +2541,12 @@ int ONScripterLabel::drawCommand()
 
 int ONScripterLabel::delayCommand()
 {
-    int t = script_h.readInt();
+    key_pressed_flag = false;
 
-    if ( event_mode & WAIT_INPUT_MODE ){
-        event_mode = IDLE_EVENT_MODE;
-        return RET_CONTINUE;
-    }
-    else{
-        event_mode = WAIT_INPUT_MODE;
-        key_pressed_flag = false;
-        startTimer( t );
-        return RET_WAIT | RET_REREAD;
-    }
+    event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
+    waitEvent( script_h.readInt() );
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::defineresetCommand()
@@ -2604,8 +2562,7 @@ int ONScripterLabel::defineresetCommand()
 
 int ONScripterLabel::cspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     bool csp2_flag = false;
     if (script_h.isName("csp2")) csp2_flag = true;
@@ -2703,44 +2660,39 @@ int ONScripterLabel::cselbtnCommand()
 
 int ONScripterLabel::clickCommand()
 {
-    if ( event_mode & WAIT_INPUT_MODE ){
-        event_mode = IDLE_EVENT_MODE;
-        return RET_CONTINUE;
-    }
-    else{
-        skip_mode &= ~SKIP_NORMAL;
-        event_mode = WAIT_INPUT_MODE;
-        key_pressed_flag = false;
-        return RET_WAIT | RET_REREAD;
-    }
+    skip_mode &= ~SKIP_NORMAL;
+    key_pressed_flag = false;
+
+    event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
+    waitEvent(-1);
+        
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::clCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
     
     char loc = script_h.readLabel()[0];
     
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
+    if ( loc == 'l' || loc == 'a' ){
+        dirty_rect.add( tachi_info[0].pos );
+        tachi_info[0].remove();
     }
-    else{
-        if ( loc == 'l' || loc == 'a' ){
-            dirty_rect.add( tachi_info[0].pos );
-            tachi_info[0].remove();
-        }
-        if ( loc == 'c' || loc == 'a' ){
-            dirty_rect.add( tachi_info[1].pos );
-            tachi_info[1].remove();
-        }
-        if ( loc == 'r' || loc == 'a' ){
-            dirty_rect.add( tachi_info[2].pos );
-            tachi_info[2].remove();
-        }
+    if ( loc == 'c' || loc == 'a' ){
+        dirty_rect.add( tachi_info[1].pos );
+        tachi_info[1].remove();
+    }
+    if ( loc == 'r' || loc == 'a' ){
+        dirty_rect.add( tachi_info[2].pos );
+        tachi_info[2].remove();
+    }
 
-        return setEffect( parseEffect(true), true, true );
-    }
+    EffectLink *el = parseEffect(true);
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::chvolCommand()
@@ -2844,41 +2796,9 @@ int ONScripterLabel::btnwaitCommand()
 
     script_h.readInt();
 
-    if ( event_mode & WAIT_BUTTON_MODE ||
-         (textbtn_flag && (skip_mode & SKIP_NORMAL || 
+    if (!(textbtn_flag && (skip_mode & SKIP_NORMAL || 
                            (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
-                           ctrl_pressed_status)) )
-    {
-        btnwait_time = SDL_GetTicks() - internal_button_timer;
-        btntime_value = 0;
-        num_chars_in_sentence = 0;
-
-        if ( textbtn_flag && (skip_mode & SKIP_NORMAL || 
-                              (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
-                              ctrl_pressed_status))
-            current_button_state.button = 0;
-        script_h.setInt( &script_h.current_variable, current_button_state.button );
-
-        if ( current_button_state.button >= 1 && del_flag ){
-            deleteButtonLink();
-            if ( exbtn_d_button_link.exbtn_ctl ){
-                delete[] exbtn_d_button_link.exbtn_ctl;
-                exbtn_d_button_link.exbtn_ctl = NULL;
-            }
-        }
-
-        event_mode = IDLE_EVENT_MODE;
-        disableGetButtonFlag();
-        
-        ButtonLink *p_button_link = root_button_link.next;
-        while( p_button_link ){
-            p_button_link->show_flag = 0;
-            p_button_link = p_button_link->next;
-        }
-            
-        return RET_CONTINUE;
-    }
-    else{
+                           ctrl_pressed_status)) ){
         shortcut_mouse_line = 0;
         skip_mode &= ~SKIP_NORMAL;
 
@@ -2907,10 +2827,11 @@ int ONScripterLabel::btnwaitCommand()
         event_mode = WAIT_BUTTON_MODE;
         refreshMouseOverButton();
 
+        int t = -1;
         if ( btntime_value > 0 ){
             if ( btntime2_flag )
                 event_mode |= WAIT_VOICE_MODE;
-            startTimer( btntime_value );
+            t = btntime_value;
             //if ( usewheel_flag ) current_button_state.button = -5;
             //else                 current_button_state.button = -2;
         }
@@ -2921,25 +2842,55 @@ int ONScripterLabel::btnwaitCommand()
             if ( btntime_value == 0 ){
                 if ( automode_flag ){
                     event_mode |= WAIT_VOICE_MODE;
-                    if ( automode_time < 0 )
-                        startTimer( -automode_time * num_chars_in_sentence );
-                    else
-                        startTimer( automode_time );
+                    if ( automode_time < 0 ){
+                        if (t == -1 || t > -automode_time * num_chars_in_sentence)
+                            t = -automode_time * num_chars_in_sentence;
+                    }
+                    else{
+                        if (t == -1 || t > automode_time)
+                            t = automode_time;
+                    }
                     //current_button_state.button = 0;
                 }
-                else if (autoclick_time > 0){
-                    startTimer( autoclick_time );
+                else if (autoclick_time > 0)
+                    if (t == -1 || t > autoclick_time){
+                    t = autoclick_time;
                 }
             }
         }
-        
-        if ((event_mode & WAIT_TIMER_MODE) == 0){
-            event_mode |= WAIT_TIMER_MODE;
-            advancePhase();
-        }
-        
-        return RET_WAIT | RET_REREAD;
+
+        event_mode |= WAIT_TIMER_MODE;
+        if (waitEvent(t)) return RET_CONTINUE;
     }
+
+    btnwait_time = SDL_GetTicks() - internal_button_timer;
+    btntime_value = 0;
+    num_chars_in_sentence = 0;
+
+    if ( textbtn_flag && (skip_mode & SKIP_NORMAL || 
+                          (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
+                          ctrl_pressed_status))
+        current_button_state.button = 0;
+    script_h.setInt( &script_h.current_variable, current_button_state.button );
+
+    if ( current_button_state.button >= 1 && del_flag ){
+        deleteButtonLink();
+        if ( exbtn_d_button_link.exbtn_ctl ){
+            delete[] exbtn_d_button_link.exbtn_ctl;
+            exbtn_d_button_link.exbtn_ctl = NULL;
+        }
+    }
+
+    event_mode = IDLE_EVENT_MODE;
+    disableGetButtonFlag();
+        
+    ButtonLink *p_button_link = root_button_link.next;
+    while( p_button_link ){
+        p_button_link->show_flag = 0;
+        p_button_link = p_button_link->next;
+    }
+            
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::btntimeCommand()
@@ -3028,8 +2979,7 @@ int ONScripterLabel::btnCommand()
 
 int ONScripterLabel::brCommand()
 {
-    int ret = enterTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    enterTextDisplayMode();
 
     sentence_font.newLine();
     current_page->add( 0x0a );
@@ -3131,8 +3081,7 @@ int ONScripterLabel::bgcopyCommand()
 
 int ONScripterLabel::bgCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     const char *buf;
     if (script_h.compareString("white")){
@@ -3145,24 +3094,22 @@ int ONScripterLabel::bgCommand()
     }
     else{
         buf = script_h.readStr();
-        setStr( &bg_info.file_name, buf );
     }
 
-    if ( event_mode & EFFECT_EVENT_MODE ){
-        return doEffect( parseEffect(false) );
-    }
-    else{
-        for ( int i=0 ; i<3 ; i++ )
-            tachi_info[i].remove();
+    for ( int i=0 ; i<3 ; i++ )
+        tachi_info[i].remove();
 
-        bg_info.remove();
-        setStr( &bg_info.file_name, buf );
+    bg_info.remove();
+    setStr( &bg_info.file_name, buf );
 
-        createBackground();
-        dirty_rect.fill( screen_width, screen_height );
+    createBackground();
+    dirty_rect.fill( screen_width, screen_height );
 
-        return setEffect( parseEffect(true), true, true );
-    }
+    EffectLink *el = parseEffect(true);
+    if (setEffect(el, true, true)) return RET_CONTINUE;
+    while (doEffect(el));
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::barclearCommand()
@@ -3242,8 +3189,7 @@ int ONScripterLabel::autoclickCommand()
 
 int ONScripterLabel::amspCommand()
 {
-    int ret = leaveTextDisplayMode();
-    if ( ret != RET_NOMATCH ) return ret;
+    leaveTextDisplayMode();
 
     bool amsp2_flag = false;
     if (script_h.isName("amsp2")) amsp2_flag = true;

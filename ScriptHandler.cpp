@@ -118,6 +118,7 @@ void ScriptHandler::reset()
         delete[] clickstr_list;
         clickstr_list = NULL;
     }
+    internal_current_script = NULL;
 }
 
 FILE *ScriptHandler::fopen( const char *path, const char *mode )
@@ -421,6 +422,32 @@ void ScriptHandler::popCurrent()
     next_script = pushed_next_script;
 }
 
+void ScriptHandler::enterExternalScript(char *pos)
+{
+    internal_current_script = current_script;
+    current_script = pos;
+    internal_next_script = next_script;
+    next_script = pos;
+    internal_end_status = end_status;
+    internal_current_variable = current_variable;
+    internal_pushed_variable = pushed_variable;
+}
+
+void ScriptHandler::leaveExternalScript()
+{
+    current_script = internal_current_script;
+    internal_current_script = NULL;
+    next_script = internal_next_script;
+    end_status = internal_end_status;
+    current_variable = internal_current_variable;
+    pushed_variable = internal_pushed_variable;
+}
+
+bool ScriptHandler::isExternalScript()
+{
+    return (internal_current_script != NULL);
+}
+
 int ScriptHandler::getOffset( char *pos )
 {
     return pos - script_buffer;
@@ -522,7 +549,8 @@ bool ScriptHandler::isKidoku()
 
 void ScriptHandler::markAsKidoku( char *address )
 {
-    if ( !kidokuskip_flag ) return;
+    if (!kidokuskip_flag || internal_current_script != NULL) return;
+
     int offset = current_script - script_buffer;
     if ( address ) offset = address - script_buffer;
     //printf("mark (%c)%x:%x = %d\n", *current_script, offset /8, offset%8, kidoku_buffer[ offset/8 ] & ((char)1 << (offset % 8)));

@@ -35,6 +35,9 @@
 #include "DirectReader.h"
 #include "AnimationInfo.h"
 #include "FontInfo.h"
+#ifdef USE_LUA
+#include "LUAHandler.h"
+#endif
 
 #if defined(USE_OGG_VORBIS)
 #if defined(INTEGER_OGG_VORBIS)
@@ -132,6 +135,8 @@ public:
     int menuselectvoiceCommand();
     int menuselectcolorCommand();
     int maxkaisoupageCommand();
+    int luasubCommand();
+    int luacallCommand();
     int lookbackspCommand();
     int lookbackcolorCommand();
     //int lookbackbuttonCommand();
@@ -179,9 +184,11 @@ protected:
     struct UserFuncLUT{
         struct UserFuncLUT *next;
         char *command;
+        bool lua_flag;
         UserFuncLUT(){
             next = NULL;
             command = NULL;
+            lua_flag = false;
         };
         ~UserFuncLUT(){
             if (command) delete[] command;
@@ -216,10 +223,7 @@ protected:
     };
     enum { RET_NOMATCH   = 0,
            RET_SKIP_LINE = 1,
-           RET_CONTINUE  = 2,
-           RET_WAIT      = 4,
-           RET_NOREAD    = 8,
-           RET_REREAD    = 16
+           RET_CONTINUE  = 2
     };
     enum { CLICK_NONE    = 0,
            CLICK_WAIT    = 1,
@@ -257,6 +261,10 @@ protected:
     NestInfo root_nest_info, *last_nest_info;
     ScriptHandler::LabelInfo current_label_info;
     int current_line;
+
+#ifdef USE_LUA
+    LUAHandler lua_handler;
+#endif
 
     /* ---------------------------------------- */
     /* Global definitions */

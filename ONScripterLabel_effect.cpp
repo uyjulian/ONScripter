@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_effect.cpp - Effect executer of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -27,9 +27,9 @@
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
 #define EFFECT_QUAKE_AMP (12 * screen_ratio1 / screen_ratio2)
 
-int ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
+bool ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
 {
-    if ( effect->effect == 0 ) return RET_CONTINUE;
+    if ( effect->effect == 0 ) return true;
 
     if (update_backup_surface)
         refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
@@ -64,13 +64,11 @@ int ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, bo
         dirty_rect.fill( screen_width, screen_height );
 
     effect_counter = 0;
-    event_mode = EFFECT_EVENT_MODE;
-    advancePhase();
     
-    return RET_WAIT | RET_REREAD;
+    return false;
 }
 
-int ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
+bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
 {
     effect_start_time = SDL_GetTicks();
     if ( effect_counter == 0 ) effect_start_time_old = effect_start_time - 1;
@@ -326,18 +324,24 @@ int ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     effect_counter += effect_timer_resolution;
     if ( effect_counter < effect->duration && effect_no != 1 ){
         if ( effect_no != 0 ) flush( REFRESH_NONE_MODE, NULL, false );
-        
-        return RET_WAIT | RET_REREAD;
+    
+        event_mode = IDLE_EVENT_MODE;
+        waitEvent(0);
+
+        return true;
     }
     else{
         SDL_BlitSurface( effect_dst_surface, &dirty_rect.bounding_box, accumulation_surface, &dirty_rect.bounding_box );
 
         if ( effect_no != 0 ) flush(REFRESH_NONE_MODE, NULL, clear_dirty_region);
         if ( effect_no == 1 ) effect_counter = 0;
-        event_mode = IDLE_EVENT_MODE;
         display_mode &= ~DISPLAY_MODE_UPDATED;
+
+        event_mode = IDLE_EVENT_MODE;
+        if (effect_blank != 0 && effect_counter != 0)
+            waitEvent(effect_blank);
         
-        return RET_CONTINUE;
+        return false;
     }
 }
 

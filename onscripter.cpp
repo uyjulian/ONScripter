@@ -2,7 +2,7 @@
  * 
  *  onscripter.cpp -- main function of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -95,7 +95,7 @@ void optionHelp()
 void optionVersion()
 {
     printf("Written by Ogapee <ogapee@aqua.dti2.ne.jp>\n\n");
-    printf("Copyright (c) 2001-2008 Ogapee.\n");
+    printf("Copyright (c) 2001-2009 Ogapee.\n");
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }
@@ -207,7 +207,7 @@ int main( int argc, char **argv )
     // Run ONScripter
 
     if (ons.init()) exit(-1);
-    ons.eventLoop();
+    ons.executeLabel();
     
     exit(0);
 }

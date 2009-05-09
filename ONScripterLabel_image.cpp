@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -23,6 +23,134 @@
 
 #include "ONScripterLabel.h"
 #include "resize_image.h"
+
+SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha)
+{
+    if (!filename) return NULL;
+
+    SDL_Surface *tmp = NULL;
+    int location = BaseReader::ARCHIVE_TYPE_NONE;
+
+    if (filename[0] == '>')
+        tmp = createRectangleSurface(filename);
+    else
+        tmp = createSurfaceFromFile(filename);
+    if (tmp == NULL) return NULL;
+
+    if (has_alpha){
+        if (tmp->format->Amask)
+            *has_alpha = true;
+        else
+            *has_alpha = false;
+    }
+    
+    SDL_Surface *ret = SDL_ConvertSurface(tmp, image_surface->format, SDL_SWSURFACE);
+    if (ret &&
+        screen_ratio2 != screen_ratio1 &&
+        (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE))
+    {
+        SDL_Surface *src_s = ret;
+
+        int w, h;
+        if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
+        if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
+        SDL_PixelFormat *fmt = image_surface->format;
+        ret = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
+                                    fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
+        
+        resizeSurface(src_s, ret);
+        SDL_FreeSurface(src_s);
+    }
+
+    SDL_FreeSurface(tmp);
+
+    return ret;
+}
+
+SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
+{
+    int c=1, w=0, h=0;
+    while (filename[c] != 0x0a && filename[c] != 0x00){
+        if (filename[c] >= '0' && filename[c] <= '9')
+            w = w*10 + filename[c]-'0';
+        if (filename[c] == ','){
+            c++;
+            break;
+        }
+        c++;
+    }
+
+    while (filename[c] != 0x0a && filename[c] != 0x00){
+        if (filename[c] >= '0' && filename[c] <= '9')
+            h = h*10 + filename[c]-'0';
+        if (filename[c] == ','){
+            c++;
+            break;
+        }
+        c++;
+    }
+        
+    while (filename[c] == ' ' || filename[c] == '\t') c++;
+    uchar3 col;
+    readColor(&col, filename+c);
+        
+    SDL_PixelFormat *fmt = image_surface->format;
+    SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
+                                            fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
+    SDL_FillRect(tmp, NULL, SDL_MapRGBA( accumulation_surface->format, col[0], col[1], col[2], 0xff));
+    
+    return tmp;
+}
+
+SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename)
+{
+    unsigned long length = script_h.cBR->getFileLength( filename );
+
+    if (length == 0){
+        fprintf( stderr, " *** can't find file [%s] ***\n", filename );
+        return NULL;
+    }
+
+    if (filelog_flag)
+        script_h.findAndAddLog(script_h.log_info[ScriptHandler::FILE_LOG], filename, true);
+    //printf(" ... loading %s length %ld\n", filename, length );
+
+    mean_size_of_loaded_images += length*6/5; // reserve 20% larger size
+    num_loaded_images++;
+    if (tmp_image_buf_length < mean_size_of_loaded_images/num_loaded_images){
+        tmp_image_buf_length = mean_size_of_loaded_images/num_loaded_images;
+        if (tmp_image_buf) delete[] tmp_image_buf;
+        tmp_image_buf = NULL;
+    }
+
+    unsigned char *buffer = NULL;
+    if (length > tmp_image_buf_length){
+        buffer = new unsigned char[length];
+    }
+    else{
+        if (!tmp_image_buf) tmp_image_buf = new unsigned char[tmp_image_buf_length];
+        buffer = tmp_image_buf;
+    }
+        
+    int location;
+    script_h.cBR->getFile(filename, buffer, &location);
+    char *ext = strrchr(filename, '.');
+
+    SDL_RWops *src = SDL_RWFromMem(buffer, length);
+    SDL_Surface *tmp = IMG_Load_RW(src, 0);
+    if (!tmp && ext && (!strcmp(ext+1, "JPG") || !strcmp(ext+1, "jpg"))){
+        fprintf(stderr, " *** force-loading a JPG image [%s]\n", filename);
+        tmp = IMG_LoadJPG_RW(src);
+    }
+    SDL_RWclose(src);
+
+    if (buffer != tmp_image_buf) delete[] buffer;
+
+    if (!tmp)
+        fprintf( stderr, " *** can't load file [%s] ***\n", filename );
+
+    return tmp;
+}
 
 // resize 32bit surface to 32bit surface
 int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
