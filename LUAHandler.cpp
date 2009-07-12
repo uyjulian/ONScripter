@@ -172,15 +172,72 @@ int NSCheckComma(lua_State *state)
     return 1;
 }
 
+int NSSetIntValue(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    int no  = luaL_checkint( state, 1 );
+    int val = luaL_checkint( state, 2 );
+    
+    lh->sh->setNumVariable( no, val );
+    
+    return 0;
+}
+
+int NSSetStrValue(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    int no = luaL_checkint( state, 1 );
+    const char *str = luaL_checkstring( state, 2 );
+    
+    if (lh->sh->getVariableData(no).str)
+        delete[] lh->sh->getVariableData(no).str;
+    lh->sh->getVariableData(no).str = NULL;
+    
+    if (str){
+        lh->sh->getVariableData(no).str = new char[strlen(str) + 1];
+        strcpy(lh->sh->getVariableData(no).str, str);
+    }
+    
+    return 0;
+}
+
+int NSGetIntValue(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    int no = luaL_checkint( state, 1 );
+    
+    lua_pushnumber( state, lh->sh->getVariableData(no).num );
+    
+    return 1;
+}
+
+int NSGetStrValue(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    int no = luaL_checkint( state, 1 );
+    
+    lua_pushstring( state, lh->sh->getVariableData(no).str );
+    
+    return 1;
+}
+
 int NSExec(lua_State *state)
 {
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    
     const char *str = lua_tostring(state, 1);
     char str2[256];
     strcpy(str2, str);
     //printf("NSExec [%s]\n", str);
-    
-    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
     
     lh->sh->enterExternalScript(str2);
     lh->onsl->runScript();
@@ -189,13 +246,45 @@ int NSExec(lua_State *state)
     return 0;
 }
 
+int NSGoto(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    
+    const char *str = luaL_checkstring( state, 1 );
+    lh->onsl->setCurrentLabel( str+1 );
+
+    return 0;
+}
+
+int NSGosub(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    
+    const char *str = luaL_checkstring( state, 1 );
+    lh->onsl->gosubReal( str+1, lh->sh->getNext() );
+
+    return 0;
+}
+
+int NSReturn(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    
+    lh->onsl->returnCommand();
+
+    return 0;
+}
+
 int NSLuaAnimationInterval(lua_State *state)
 {
-    int val = lua_tointeger(state, 1);
-    
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
+    int val = lua_tointeger(state, 1);
+    
     lh->duration_time = val;
 
     return 0;
@@ -203,28 +292,36 @@ int NSLuaAnimationInterval(lua_State *state)
 
 int NSLuaAnimationMode(lua_State *state)
 {
-    int val = lua_toboolean(state, 1);
-    
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
 
+    int val = lua_toboolean(state, 1);
+    
     lh->is_animatable = (val==1);
 
     return 0;
 }
 
+#define LUA_FUNC_LUT(s) {#s, s}
 static const struct luaL_Reg lua_lut[] = {
-    {"NSPopInt", NSPopInt},
-    {"NSPopIntRef", NSPopIntRef},
-    {"NSPopStr", NSPopStr},
-    {"NSPopStrRef", NSPopStrRef},
-    {"NSPopLabel", NSPopLabel},
-    {"NSPopID", NSPopID},
-    {"NSPopComma", NSPopComma},
-    {"NSCheckComma", NSCheckComma},
-    {"NSExec", NSExec},
-    {"NSLuaAnimationMode", NSLuaAnimationMode},
-    {"NSLuaAnimationInterval", NSLuaAnimationInterval},
+    LUA_FUNC_LUT(NSPopInt),
+    LUA_FUNC_LUT(NSPopIntRef),
+    LUA_FUNC_LUT(NSPopStr),
+    LUA_FUNC_LUT(NSPopStrRef),
+    LUA_FUNC_LUT(NSPopLabel),
+    LUA_FUNC_LUT(NSPopID),
+    LUA_FUNC_LUT(NSPopComma),
+    LUA_FUNC_LUT(NSCheckComma),
+    LUA_FUNC_LUT(NSSetIntValue),
+    LUA_FUNC_LUT(NSSetStrValue),
+    LUA_FUNC_LUT(NSGetIntValue),
+    LUA_FUNC_LUT(NSGetStrValue),
+    LUA_FUNC_LUT(NSExec),
+    LUA_FUNC_LUT(NSGoto),
+    LUA_FUNC_LUT(NSGosub),
+    LUA_FUNC_LUT(NSReturn),
+    LUA_FUNC_LUT(NSLuaAnimationMode),
+    LUA_FUNC_LUT(NSLuaAnimationInterval),
     {NULL, NULL}
 };
 

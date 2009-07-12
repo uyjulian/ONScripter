@@ -578,59 +578,48 @@ void ONScripterLabel::executeSystemLookback()
         return;
     }
 
-    setupLookbackButton();
-    refreshMouseOverButton();
+    while(1){
+        setupLookbackButton();
+        refreshMouseOverButton();
 
-    for ( i=0 ; i<3 ; i++ ){
-        color[i] = sentence_font.color[i];
-        sentence_font.color[i] = lookback_color[i];
-    }
-    restoreTextBuffer();
-    for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
+        for ( i=0 ; i<3 ; i++ ){
+            color[i] = sentence_font.color[i];
+            sentence_font.color[i] = lookback_color[i];
+        }
+        restoreTextBuffer();
+        for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
     
-    dirty_rect.fill( screen_width, screen_height );
-    flush( refreshMode() );
+        dirty_rect.fill( screen_width, screen_height );
+        flush( refreshMode() );
 
-    event_mode = WAIT_BUTTON_MODE;
-    waitEventSub(-1);
+        event_mode = WAIT_BUTTON_MODE;
+        waitEventSub(-1);
     
-    if ( current_button_state.button == 0 ||
-         ( current_page == start_page &&
-           current_button_state.button == -2 ) )
-        return;
-    if ( current_button_state.button == -1 ||
-         ( current_button_state.button == -3 &&
-           current_page->next == cached_page ) ||
-         current_button_state.button <= -4 )
-    {
-        event_mode = IDLE_EVENT_MODE;
-        deleteButtonLink();
-        if ( lookback_sp[0] >= 0 )
-            sprite_info[ lookback_sp[0] ].visible = false;
-        if ( lookback_sp[1] >= 0 )
-            sprite_info[ lookback_sp[1] ].visible = false;
-        leaveSystemCall();
-        return;
-    }
+        if ( current_button_state.button == 0 ||
+             ( current_page == start_page &&
+               current_button_state.button == -2 ) ){
+            continue;
+        }
+        if ( current_button_state.button == -1 ||
+             ( current_button_state.button == -3 &&
+               current_page->next == cached_page ) ||
+             current_button_state.button <= -4 )
+        {
+            event_mode = IDLE_EVENT_MODE;
+            deleteButtonLink();
+            if ( lookback_sp[0] >= 0 )
+                sprite_info[ lookback_sp[0] ].visible = false;
+            if ( lookback_sp[1] >= 0 )
+                sprite_info[ lookback_sp[1] ].visible = false;
+            leaveSystemCall();
+            return;
+        }
         
-    if ( current_button_state.button == 1 ||
-         current_button_state.button == -2 ){
-        current_page = current_page->previous;
+        if ( current_button_state.button == 1 ||
+             current_button_state.button == -2 ){
+            current_page = current_page->previous;
+        }
+        else
+            current_page = current_page->next;
     }
-    else
-        current_page = current_page->next;
-
-    // the code below appears twice
-    setupLookbackButton();
-    refreshMouseOverButton();
-
-    for ( i=0 ; i<3 ; i++ ){
-        color[i] = sentence_font.color[i];
-        sentence_font.color[i] = lookback_color[i];
-    }
-    restoreTextBuffer();
-    for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
-    
-    dirty_rect.fill( screen_width, screen_height );
-    flush( refreshMode() );
 }

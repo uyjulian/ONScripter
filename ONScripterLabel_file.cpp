@@ -149,6 +149,33 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     script_h.getStringFromInteger( save_file_info.sjis_minute, save_file_info.minute, 2, true );
 }
 
+char *ONScripterLabel::readSaveStrFromFile( int no )
+{
+    char filename[16];
+    sprintf( filename, "save%d.dat", no );
+    if (loadFileIOBuf( filename )){
+        fprintf( stderr, "readSaveStrFromFile: can't open save file %s\n", filename );
+        return NULL;
+    }
+
+    int p = file_io_buf_len - 1;
+    if ( p < 3 || file_io_buf[p] != '*' || file_io_buf[p-1] != '"' ) return NULL;
+    p -= 2;
+    
+    while( file_io_buf[p] != '"' && p>0 ) p--;
+    if ( file_io_buf[p] != '"' ) return NULL;
+
+    int len = file_io_buf_len - p - 3;
+    char *buf = new char[len+1];
+    
+    int i;
+    for (i=0 ; i<len ; i++)
+        buf[i] = file_io_buf[p+i+1];
+    buf[i] = 0;
+
+    return buf;
+}
+
 int ONScripterLabel::loadSaveFile( int no )
 {
     char filename[16];

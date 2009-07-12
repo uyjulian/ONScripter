@@ -408,13 +408,13 @@ int ScriptParser::parseLine()
 {
     if ( debug_level > 0 ) printf("ScriptParser::Parseline %s\n", script_h.getStringBuffer() );
 
-    if ( script_h.getStringBuffer()[0] == ';' ) return RET_CONTINUE;
-    else if ( script_h.getStringBuffer()[0] == '*' ) return RET_CONTINUE;
-    else if ( script_h.getStringBuffer()[0] == ':' ) return RET_CONTINUE;
+    const char *cmd = script_h.getStringBuffer();
+    if ( cmd[string_buffer_offset] == ';' ) return RET_CONTINUE;
+    else if ( cmd[string_buffer_offset] == '*' ) return RET_CONTINUE;
+    else if ( cmd[string_buffer_offset] == ':' ) return RET_CONTINUE;
     else if ( script_h.isText() ) return RET_NOMATCH;
 
-    const char *cmd = script_h.getStringBuffer();
-    if (cmd[0] != '_'){
+    if (cmd[string_buffer_offset] != '_'){
         UserFuncLUT *uf = root_user_func.next;
         while(uf){
             if (!strcmp( uf->command, cmd )){
@@ -793,7 +793,7 @@ void ScriptParser::setCurrentLabel( const char *label )
 void ScriptParser::readToken()
 {
     script_h.readToken();
-    if (script_h.isText()) string_buffer_offset = 0;
+    string_buffer_offset = 0;
 
     if (script_h.isText() && linepage_mode > 0){
         char ch = '@'; // click wait

@@ -124,6 +124,7 @@ static struct FuncLUT{
     {"lsp2", &ONScripterLabel::lsp2Command},
     {"lsp", &ONScripterLabel::lspCommand},
     {"lr_trap",   &ONScripterLabel::trapCommand},
+    {"lrclick",   &ONScripterLabel::clickCommand},
     {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
     {"loopbgm", &ONScripterLabel::loopbgmCommand},
     {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
@@ -146,14 +147,15 @@ static struct FuncLUT{
     {"getvoicevol", &ONScripterLabel::getvoicevolCommand},
     {"getversion", &ONScripterLabel::getversionCommand},
     {"gettimer", &ONScripterLabel::gettimerCommand},
-    {"getspsize", &ONScripterLabel::getspsizeCommand},
-    {"getspmode", &ONScripterLabel::getspmodeCommand},
-    {"getsevol", &ONScripterLabel::getsevolCommand},
-    {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
     {"gettext", &ONScripterLabel::gettextCommand},
     {"gettaglog", &ONScripterLabel::gettaglogCommand},
     {"gettag", &ONScripterLabel::gettagCommand},
     {"gettab", &ONScripterLabel::gettabCommand},
+    {"getspsize", &ONScripterLabel::getspsizeCommand},
+    {"getspmode", &ONScripterLabel::getspmodeCommand},
+    {"getsevol", &ONScripterLabel::getsevolCommand},
+    {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
+    {"getsavestr", &ONScripterLabel::getsavestrCommand},
     {"getret", &ONScripterLabel::getretCommand},
     {"getreg", &ONScripterLabel::getregCommand},
     {"getpageup", &ONScripterLabel::getpageupCommand},
@@ -882,16 +884,14 @@ void ONScripterLabel::executeLabel()
         int ret = ScriptParser::parseLine();
         if ( ret == RET_NOMATCH ) ret = this->parseLine();
 
-        if ( ret & RET_SKIP_LINE ){
-            script_h.skipLine();
+        if ( ret & (RET_SKIP_LINE | RET_EOL) ){
+            if (ret & RET_SKIP_LINE) script_h.skipLine();
             if (++current_line >= current_label_info.num_of_lines) break;
         }
+
+        if ( ret & RET_EOT ) processEOT();
         
-        if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
-            string_buffer_offset = 0;
-            if (++current_line >= current_label_info.num_of_lines) break;
-        }
-        readToken();
+        if (!(ret & RET_NO_READ)) readToken();
     }
 
     current_label_info = script_h.lookupLabelNext( current_label_info.name );
@@ -931,7 +931,7 @@ int ONScripterLabel::parseLine( )
         }
 
         if ( s_buf[0] == 0x0a )
-            return RET_CONTINUE;
+            return RET_CONTINUE | RET_EOL;
         else if ( s_buf[0] == 'v' && s_buf[1] >= '0' && s_buf[1] <= '9' )
             return vCommand();
         else if ( s_buf[0] == 'd' && s_buf[1] == 'v' && s_buf[2] >= '0' && s_buf[2] <= '9' )
@@ -947,24 +947,6 @@ int ONScripterLabel::parseLine( )
     /* Text */
     if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
     ret = textCommand();
-
-#if defined(ENABLE_1BYTE_CHAR) && defined(FORCE_1BYTE_CHAR)
-    if (script_h.getStringBuffer()[string_buffer_offset] == ' '){
-        char *tmp = strchr(script_h.getStringBuffer()+string_buffer_offset+1, ' ');
-        if (!tmp)
-            tmp = script_h.getStringBuffer() + strlen(script_h.getStringBuffer());
-        int len = tmp - script_h.getStringBuffer() - string_buffer_offset - 1;
-        if (len > 0 && sentence_font.isEndOfLine(len)){
-            current_page->add( 0x0a );
-            sentence_font.newLine();
-        }
-    }
-#endif    
-    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a){
-        ret = RET_CONTINUE; // suppress RET_CONTINUE | RET_NOREAD
-        processEOL();
-        line_enter_status = 0;
-    }
 
     return ret;
 }
@@ -1089,7 +1071,6 @@ void ONScripterLabel::newPage( bool next_flag )
 
     if ( next_flag ){
         indent_offset = 0;
-        //line_enter_status = 0;
         page_enter_status = 0;
     }
     

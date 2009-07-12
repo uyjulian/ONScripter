@@ -303,14 +303,7 @@ void ONScripterLabel::advancePhase( int count )
         timer_id = NULL;
     }
 
-    if (count > 0){
-        timer_id = SDL_AddTimer( count, timerCallback, NULL );
-        if (timer_id != NULL) return;
-    }
-
-    SDL_Event event;
-    event.type = ONS_TIMER_EVENT;
-    SDL_PushEvent( &event );
+    timer_id = SDL_AddTimer( count, timerCallback, NULL );
 }
 
 void ONScripterLabel::waitEventSub(int count)
@@ -420,16 +413,9 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         automode_flag = false;
         return false;
     }
-    if ( event->button == SDL_BUTTON_RIGHT &&
-         trap_mode & TRAP_RIGHT_CLICK ){
+    if ( event->button == SDL_BUTTON_RIGHT && trap_mode & TRAP_RIGHT_CLICK ||
+         event->button == SDL_BUTTON_LEFT  && trap_mode & TRAP_LEFT_CLICK ){
         trapHandler();
-
-        return true;
-    }
-    else if ( event->button == SDL_BUTTON_LEFT &&
-              trap_mode & TRAP_LEFT_CLICK ){
-        trapHandler();
-
         return true;
     }
 
@@ -441,7 +427,7 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     if ( event->button == SDL_BUTTON_RIGHT &&
          event->type == SDL_MOUSEBUTTONUP &&
          (rmode_flag && event_mode & WAIT_TEXT_MODE ||
-          event_mode & WAIT_BUTTON_MODE) ){
+          event_mode & (WAIT_BUTTON_MODE | WAIT_RCLICK_MODE)) ){
         current_button_state.button = -1;
         volatile_button_state.button = -1;
         if (event_mode & WAIT_TEXT_MODE){

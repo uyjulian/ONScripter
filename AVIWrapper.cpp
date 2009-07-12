@@ -26,11 +26,16 @@
 #include <audiodecoder.h>
 #include <avm_cpuinfo.h>
 #include <avm_output.h>
+#include <avifile.h>
+#include <videodecoder.h>
+#include <image.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define DEFAULT_AUDIOBUF 4096
 #define AVI_FINISH_EVENT 12345
+
+#define AVIFILE_VERSION 747
 
 AVIWrapper::AVIWrapper()
 {
@@ -56,7 +61,11 @@ AVIWrapper::~AVIWrapper()
 int AVIWrapper::init( char *filename, bool debug_flag )
 {
     this->debug_flag = debug_flag;
+#if AVIFILE_VERSION >= 747
+    if ( !debug_flag ) avm::AvmOutput::singleton()->resetDebugLevels(-1);
+#else
     if ( !debug_flag ) avm::out.resetDebugLevels(-1);
+#endif
 
     i_avi = CreateIAviReadFile( filename );
     if ( i_avi == NULL || i_avi->IsValid() == false ){
@@ -182,13 +191,21 @@ double AVIWrapper::getAudioTime()
     if ( time_start == 0 )
     {
         frame_start = (v_stream) ? v_stream->GetTime() : 0.;
+#if AVIFILE_VERSION >= 747
+        time_start = avm_get_time_us();
+#else
         time_start = longcount();
+#endif
     }
 
     if ( a_stream )
         return a_stream->GetTime();
     else
+#if AVIFILE_VERSION >= 747
+        return frame_start + to_float(avm_get_time_us(), time_start);
+#else
         return frame_start + to_float(longcount(), time_start);
+#endif
 }
 
 static int playVideo( void *userdata )

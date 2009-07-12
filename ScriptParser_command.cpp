@@ -350,11 +350,21 @@ int ScriptParser::returnCommand()
         script_h.setCurrent( last_nest_info->next_script );
     else
         setCurrentLabel( label+1);
-    
+
+    bool textgosub_flag = last_nest_info->textgosub_flag;
+
     last_nest_info = last_nest_info->previous;
     delete last_nest_info->next;
     last_nest_info->next = NULL;
     
+    if (textgosub_flag){
+        string_buffer_offset = script_h.popStringBuffer();
+        if (script_h.getStringBuffer()[string_buffer_offset] != 0)
+            return RET_NO_READ;
+        else
+            return RET_CONTINUE | RET_EOT;
+    }
+
     return RET_CONTINUE;
 }
 
@@ -885,13 +895,18 @@ int ScriptParser::gotoCommand()
     return RET_CONTINUE;
 }
 
-void ScriptParser::gosubReal( const char *label, char *next_script )
+void ScriptParser::gosubReal( const char *label, char *next_script, bool textgosub_flag )
 {
     last_nest_info->next = new NestInfo();
     last_nest_info->next->previous = last_nest_info;
 
     last_nest_info = last_nest_info->next;
     last_nest_info->next_script = next_script;
+
+    if (textgosub_flag){
+        script_h.pushStringBuffer(string_buffer_offset);
+        last_nest_info->textgosub_flag = true;
+    }
 
     setCurrentLabel( label );
 }

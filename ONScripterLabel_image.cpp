@@ -91,13 +91,34 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
     }
         
     while (filename[c] == ' ' || filename[c] == '\t') c++;
-    uchar3 col;
-    readColor(&col, filename+c);
-        
+    int n=0, c2 = c;
+    while(filename[c] == '#'){
+        uchar3 col;
+        readColor(&col, filename+c);
+        n++;
+        c += 7;
+        while (filename[c] == ' ' || filename[c] == '\t') c++;
+    }
+
     SDL_PixelFormat *fmt = image_surface->format;
     SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h,
                                             fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask);
-    SDL_FillRect(tmp, NULL, SDL_MapRGBA( accumulation_surface->format, col[0], col[1], col[2], 0xff));
+
+    c = c2;
+    for (int i=0 ; i<n ; i++){
+        uchar3 col;
+        readColor(&col, filename+c);
+        c += 7;
+        while (filename[c] == ' ' || filename[c] == '\t') c++;
+        
+        SDL_Rect rect;
+        rect.x = w*i/n;
+        rect.y = 0;
+        rect.w = w*(i+1)/n - rect.x;
+        if (i == n-1) rect.w = w - rect.x;
+        rect.h = h;
+        SDL_FillRect(tmp, &rect, SDL_MapRGBA( accumulation_surface->format, col[0], col[1], col[2], 0xff));
+    }
     
     return tmp;
 }

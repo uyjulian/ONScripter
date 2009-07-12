@@ -204,17 +204,8 @@ int ONScripterLabel::textclearCommand()
 
 int ONScripterLabel::texecCommand()
 {
-    if ( textgosub_clickstr_state == CLICK_NEWPAGE ){
+    if ( textgosub_clickstr_state == CLICK_NEWPAGE )
         newPage( true );
-    }
-    else if ( textgosub_clickstr_state == (CLICK_WAIT | CLICK_EOL) ){
-        if ( !sentence_font.isLineEmpty() && !new_line_skip_flag ){
-            indent_offset = 0;
-            line_enter_status = 0;
-            current_page->add( 0x0a );
-            sentence_font.newLine();
-        }
-    }
     
     return RET_CONTINUE;
 }
@@ -1010,16 +1001,13 @@ int ONScripterLabel::puttextCommand()
     enterTextDisplayMode(false);
 
     script_h.readStr();
-    script_h.addStringBuffer(0x0a);
-    if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR &&
-        string_buffer_offset == 0)
+
+    string_buffer_offset = 0;
+    if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)
         string_buffer_offset = 1; // skip the heading `
 
     while(processText());
-    if (script_h.getStringBuffer()[string_buffer_offset] == 0x0a)
-        processEOL();
-
-    string_buffer_offset = 0;
+    processEOT();
 
     return RET_CONTINUE;
 }
@@ -1833,7 +1821,7 @@ int ONScripterLabel::gettagCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    char *buf = current_tag.tag;
+    char *buf = current_page->tag;
     
     int end_status;
     do{
@@ -1937,6 +1925,23 @@ int ONScripterLabel::getscreenshotCommand()
     SDL_Surface *surface = SDL_ConvertSurface( screen_surface, image_surface->format, SDL_SWSURFACE );
     resizeSurface( surface, screenshot_surface );
     SDL_FreeSurface( surface );
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::getsavestrCommand()
+{
+    script_h.readVariable();
+    if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
+        errorAndExit( "not a string variable" );
+        
+    script_h.pushVariable();
+
+    int no = script_h.readInt();
+    char *buf = readSaveStrFromFile( no );
+
+    setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, buf );
+    if (buf) delete[] buf;
 
     return RET_CONTINUE;
 }
@@ -2660,11 +2665,18 @@ int ONScripterLabel::cselbtnCommand()
 
 int ONScripterLabel::clickCommand()
 {
+    bool lrclick_flag = false;
+    if ( script_h.isName( "lrclick" ) ) lrclick_flag = true;
+
     skip_mode &= ~SKIP_NORMAL;
     key_pressed_flag = false;
 
     event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
+    if (lrclick_flag) event_mode |= WAIT_RCLICK_MODE;
     waitEvent(-1);
+
+    if (lrclick_flag)
+        getret_int = (current_button_state.button == -1)?0:1;
         
     return RET_CONTINUE;
 }

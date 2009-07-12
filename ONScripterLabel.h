@@ -188,6 +188,7 @@ public:
     int getspmodeCommand();
     int getsevolCommand();
     int getscreenshotCommand();
+    int getsavestrCommand();
     int getretCommand();
     int getregCommand();
     int getpageupCommand();
@@ -295,6 +296,7 @@ private:
            DISPLAY_MODE_UPDATED = 2
     };
     enum { IDLE_EVENT_MODE      = 0,
+           WAIT_RCLICK_MODE     = 1, // for lrclick
            WAIT_BUTTON_MODE     = 2, // For select, btnwait and rmenu.
            WAIT_INPUT_MODE      = (4|8),  // can be skipped by a click
            WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
@@ -541,7 +543,7 @@ private:
     void startRuby(const char *buf, FontInfo &info);
     void endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info);
     int  textCommand();
-    void processEOL();
+    void processEOT();
     bool processText();
     
     /* ---------------------------------------- */
@@ -686,6 +688,7 @@ private:
     /* ---------------------------------------- */
     /* File I/O */
     void searchSaveFile( SaveFileInfo &info, int no );
+    char *readSaveStrFromFile( int no );
     int  loadSaveFile( int no );
     void saveMagicNumber( bool output_flag );
     int  saveSaveFile( int no, const char *savestr=NULL );
