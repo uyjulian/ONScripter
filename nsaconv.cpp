@@ -105,8 +105,8 @@ int main( int argc, char **argv )
         }
 
         sFI.offset = offset;
-        if ( (strlen( sFI.name ) > 3 && !strcmp( sFI.name + strlen( sFI.name ) - 3, "JPG") ||
-              strlen( sFI.name ) > 4 && !strcmp( sFI.name + strlen( sFI.name ) - 4, "JPEG") ) ){
+        if ( (strlen( sFI.name ) > 3 && !strcmp( sFI.name + strlen( sFI.name ) - 3, "JPG")) ||
+             (strlen( sFI.name ) > 4 && !strcmp( sFI.name + strlen( sFI.name ) - 4, "JPEG")) ){
             if ( cSR.getFile( sFI.name, buffer ) != length ){
                 fprintf( stderr, "file %s can't be retrieved %ld\n", sFI.name, length );
                 continue;

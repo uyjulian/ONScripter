@@ -413,8 +413,8 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
         automode_flag = false;
         return false;
     }
-    if ( event->button == SDL_BUTTON_RIGHT && trap_mode & TRAP_RIGHT_CLICK ||
-         event->button == SDL_BUTTON_LEFT  && trap_mode & TRAP_LEFT_CLICK ){
+    if ( (event->button == SDL_BUTTON_RIGHT && trap_mode & TRAP_RIGHT_CLICK) ||
+         (event->button == SDL_BUTTON_LEFT  && trap_mode & TRAP_LEFT_CLICK) ){
         trapHandler();
         return true;
     }
@@ -426,8 +426,8 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 
     if ( event->button == SDL_BUTTON_RIGHT &&
          event->type == SDL_MOUSEBUTTONUP &&
-         (rmode_flag && event_mode & WAIT_TEXT_MODE ||
-          event_mode & (WAIT_BUTTON_MODE | WAIT_RCLICK_MODE)) ){
+         ((rmode_flag && event_mode & WAIT_TEXT_MODE) ||
+          (event_mode & (WAIT_BUTTON_MODE | WAIT_RCLICK_MODE))) ){
         current_button_state.button = -1;
         volatile_button_state.button = -1;
         if (event_mode & WAIT_TEXT_MODE){
@@ -446,16 +446,16 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     }
 #if SDL_VERSION_ATLEAST(1, 2, 5)
     else if (event->button == SDL_BUTTON_WHEELUP &&
-             (event_mode & WAIT_TEXT_MODE ||
-              usewheel_flag && event_mode & WAIT_BUTTON_MODE || 
+             ((event_mode & WAIT_TEXT_MODE) ||
+              (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
               system_menu_mode == SYSTEM_LOOKBACK)){
         current_button_state.button = -2;
         volatile_button_state.button = -2;
         if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
     }
     else if ( event->button == SDL_BUTTON_WHEELDOWN &&
-              (enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE ||
-               usewheel_flag && event_mode & WAIT_BUTTON_MODE|| 
+              ((enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
+               (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
                system_menu_mode == SYSTEM_LOOKBACK ) ){
         if (event_mode & WAIT_TEXT_MODE){
             current_button_state.button = 0;
@@ -480,7 +480,8 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
 void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
 {
     int  i;
-    char *var_name, var_index[12];
+    const char *var_name;
+    char var_index[12];
 
     switch ( event->keysym.sym ) {
       case SDLK_m:
@@ -745,14 +746,13 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     }
     
     if ( event_mode & WAIT_BUTTON_MODE &&
-         ((event->type == SDL_KEYUP || btndown_flag) &&
-          (!getenter_flag  && event->keysym.sym == SDLK_RETURN  ||
-           !getenter_flag  && event->keysym.sym == SDLK_KP_ENTER ) ||
-           (spclclk_flag || !useescspc_flag) && event->keysym.sym == SDLK_SPACE) ){
-        
+         (((event->type == SDL_KEYUP || btndown_flag) &&
+           ((!getenter_flag && event->keysym.sym == SDLK_RETURN) ||
+            (!getenter_flag && event->keysym.sym == SDLK_KP_ENTER))) ||
+          ((spclclk_flag || !useescspc_flag) && event->keysym.sym == SDLK_SPACE)) ){
         if ( event->keysym.sym == SDLK_RETURN ||
              event->keysym.sym == SDLK_KP_ENTER ||
-             spclclk_flag && event->keysym.sym == SDLK_SPACE ){
+             (spclclk_flag && event->keysym.sym == SDLK_SPACE) ){
             current_button_state.button = current_over_button;
             volatile_button_state.button = current_over_button;
             if ( event->type == SDL_KEYDOWN )
@@ -787,10 +787,10 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( !spclclk_flag && useescspc_flag && event->keysym.sym == SDLK_SPACE ){
             current_button_state.button  = -11;
         }
-        else if ((!getcursor_flag && event->keysym.sym == SDLK_LEFT ||
+        else if (((!getcursor_flag && event->keysym.sym == SDLK_LEFT) ||
                   event->keysym.sym == SDLK_h) &&
                  (event_mode & WAIT_TEXT_MODE ||
-                  usewheel_flag && !getcursor_flag && event_mode & WAIT_BUTTON_MODE || 
+                  (usewheel_flag && !getcursor_flag && event_mode & WAIT_BUTTON_MODE) || 
                   system_menu_mode == SYSTEM_LOOKBACK)){
             current_button_state.button = -2;
             volatile_button_state.button = -2;

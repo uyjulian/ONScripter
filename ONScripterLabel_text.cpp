@@ -26,22 +26,22 @@
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
 #define IS_KINSOKU(x)	\
-        ( *(x) == (char)0x81 && *((x)+1) == (char)0x41 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x42 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x48 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x49 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x76 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x78 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x5b )
+    ((*(x) == (char)0x81 && *((x)+1) == (char)0x41) ||  \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x42) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x48) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x49) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x76) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x78) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x5b) )
 
 #define IS_ROTATION_REQUIRED(x)	\
-        ( !IS_TWO_BYTE(*(x)) || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x50 || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x51 || \
-          *(x) == (char)0x81 && *((x)+1) >= 0x5b && *((x)+1) <= 0x5d || \
-          *(x) == (char)0x81 && *((x)+1) >= 0x60 && *((x)+1) <= 0x64 || \
-          *(x) == (char)0x81 && *((x)+1) >= 0x69 && *((x)+1) <= 0x7a || \
-          *(x) == (char)0x81 && *((x)+1) == (char)0x80 )
+    (!IS_TWO_BYTE(*(x)) ||                                              \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x50) ||                  \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x51) ||                  \
+     (*(x) == (char)0x81 && *((x)+1) >= 0x5b && *((x)+1) <= 0x5d) ||    \
+     (*(x) == (char)0x81 && *((x)+1) >= 0x60 && *((x)+1) <= 0x64) ||    \
+     (*(x) == (char)0x81 && *((x)+1) >= 0x69 && *((x)+1) <= 0x7a) ||    \
+     (*(x) == (char)0x81 && *((x)+1) == (char)0x80) )
 
 #define IS_TRANSLATION_REQUIRED(x)	\
         ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
@@ -277,17 +277,25 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 
         if ( IS_TWO_BYTE(*str) ){
             /* Kinsoku process */
-            if (info->isEndOfLine(2) && IS_KINSOKU( str+2 )){
-                info->newLine();
-                for (int i=0 ; i<indent_offset ; i++){
-                    sentence_font.advanceCharInHankaku(2);
+            if (IS_KINSOKU( str+2 )){
+                int i = 2;
+                while (!info->isEndOfLine(i) &&
+                       IS_KINSOKU( str+2+i )){
+                    i += 2;
+                }
+                if (info->isEndOfLine(i)){
+                    info->newLine();
+                    for (int i=0 ; i<indent_offset ; i++){
+                        sentence_font.advanceCharInHankaku(2);
+                    }
                 }
             }
+
             text[0] = *str++;
             text[1] = *str++;
             drawChar( text, info, false, false, surface, cache_info );
         }
-        else if (*str == 0x0a || *str == '\\' && info->is_newline_accepted){
+        else if (*str == 0x0a || (*str == '\\' && info->is_newline_accepted)){
             info->newLine();
             str++;
         }
@@ -352,7 +360,7 @@ void ONScripterLabel::restoreTextBuffer()
                 if (IS_KINSOKU( current_page->text+i+2 )){
                     int j = 2;
                     while (!f_info.isEndOfLine(j) &&
-                           IS_KINSOKU( current_page->text+i+j+2 )){
+                           IS_KINSOKU( current_page->text+i+2+j )){
                         j += 2;
                     }
                     if (f_info.isEndOfLine(j)) f_info.newLine();
@@ -720,7 +728,7 @@ bool ONScripterLabel::processText()
         if (IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2)){
             int i = 2;
             while (!sentence_font.isEndOfLine(i) &&
-                   IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + i + 2)){
+                   IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2 + i)){
                 i += 2;
             }
 

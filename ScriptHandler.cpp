@@ -1058,7 +1058,7 @@ void ScriptHandler::addStrAlias( const char *str1, const char *str2 )
     last_str_alias = last_str_alias->next;
 }
 
-void ScriptHandler::errorAndExit( char *str )
+void ScriptHandler::errorAndExit( const char *str )
 {
     fprintf( stderr, " **** Script error, %s [%s] ***\n", str, string_buffer );
     exit(-1);

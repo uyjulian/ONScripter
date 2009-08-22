@@ -241,8 +241,8 @@ int AVIWrapper::playVideo( void *userdata )
         for ( i=0 ; i<NUM_CACHES ; i++ ){
             if ( cache[i].valid ){
                 if ( nearest_cache == -1 ||
-                     nearest_cache >= 0 &&
-                     cache[i].time < cache[nearest_cache].time ){
+                     (nearest_cache >= 0 &&
+                      cache[i].time < cache[nearest_cache].time) ){
                     nearest_cache = i;
                     if ( minimum_time > cache[nearest_cache].time )
                         minimum_time = cache[nearest_cache].time;
@@ -258,7 +258,7 @@ int AVIWrapper::playVideo( void *userdata )
                 SDL_Delay( (int)(-async*1000) );
             }
         }
-        if ( async < -0.01 && remaining_cache > 0 ||
+        if ( (async < -0.01 && remaining_cache > 0) ||
              nearest_cache >= 0 ){
             // add cache
             for ( i=0 ; i<NUM_CACHES ; i++ ){

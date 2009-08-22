@@ -176,7 +176,7 @@ public:
 
     LabelInfo lookupLabel( const char* label );
     LabelInfo lookupLabelNext( const char* label );
-    void errorAndExit( char *str );
+    void errorAndExit( const char *str );
 
     ArrayVariable *getRootArrayVariable();
     void loadArrayVariable( FILE *fp );
@@ -184,8 +184,8 @@ public:
     void addNumAlias( const char *str, int no );
     void addStrAlias( const char *str1, const char *str2 );
 
-    typedef enum { LABEL_LOG = 0,
-                   FILE_LOG = 1
+    enum { LABEL_LOG = 0,
+           FILE_LOG = 1
     };
     struct LogLink{
         LogLink *next;
@@ -203,7 +203,7 @@ public:
         LogLink root_log;
         LogLink *current_log;
         int num_logs;
-        char *filename;
+        const char *filename;
     } log_info[2];
     LogLink *findAndAddLog( LogInfo &info, const char *name, bool add_flag );
     void resetLog( LogInfo &info );
