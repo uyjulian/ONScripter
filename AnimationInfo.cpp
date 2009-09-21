@@ -345,10 +345,10 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
             if (corner_xy[i][1] == corner_xy[(i+1)%4][1]) continue;
             x = (corner_xy[(i+1)%4][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[(i+1)%4][1] - corner_xy[i][1]) + corner_xy[i][0];
             if (corner_xy[(i+1)%4][1] - corner_xy[i][1] > 0){
-                if (raster_min < x) raster_min = x;
+                if (raster_min > x) raster_min = x;
             }
             else{
-                if (raster_max > x) raster_max = x;
+                if (raster_max < x) raster_max = x;
             }
         }
 
