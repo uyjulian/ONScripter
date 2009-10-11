@@ -703,7 +703,7 @@ private:
 
     SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL);
     SDL_Surface *createRectangleSurface(char *filename);
-    SDL_Surface *createSurfaceFromFile(char *filename);
+    SDL_Surface *createSurfaceFromFile(char *filename, int *location);
 
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );
     void shiftCursorOnButton( int diff );

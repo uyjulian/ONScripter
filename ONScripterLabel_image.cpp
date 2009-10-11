@@ -34,7 +34,7 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha)
     if (filename[0] == '>')
         tmp = createRectangleSurface(filename);
     else
-        tmp = createSurfaceFromFile(filename);
+        tmp = createSurfaceFromFile(filename, &location);
     if (tmp == NULL) return NULL;
 
     if (has_alpha){
@@ -123,7 +123,7 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
     return tmp;
 }
 
-SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename)
+SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *location)
 {
     unsigned long length = script_h.cBR->getFileLength( filename );
 
@@ -153,8 +153,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename)
         buffer = tmp_image_buf;
     }
         
-    int location;
-    script_h.cBR->getFile(filename, buffer, &location);
+    script_h.cBR->getFile(filename, buffer, location);
     char *ext = strrchr(filename, '.');
 
     SDL_RWops *src = SDL_RWFromMem(buffer, length);
