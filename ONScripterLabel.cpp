@@ -919,8 +919,12 @@ int ONScripterLabel::parseLine( )
 {
     int ret, lut_counter = 0;
     const char *s_buf = script_h.getStringBuffer();
-    const char *cmd = script_h.getStringBuffer();
-    if (cmd[0] == '_') cmd++;
+    char *cmd = script_h.getStringBuffer();
+    if (cmd[0] == '_'){
+        int c=1;
+        do cmd[c-1] = cmd[c];
+        while( cmd[c++] != 0 );
+    }
 
     if ( !script_h.isText() ){
         while( func_lut[ lut_counter ].method ){

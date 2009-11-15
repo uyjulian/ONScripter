@@ -1176,6 +1176,8 @@ int ONScripterLabel::mpegplayCommand()
     stopBGM( false );
     if (playMPEG( save_buf, click_flag )) endCommand();
 
+    repaintCommand();
+    
     return RET_CONTINUE;
 }
 
@@ -3181,7 +3183,10 @@ int ONScripterLabel::aviCommand()
     bool click_flag = (script_h.readInt()==1)?true:false;
 
     stopBGM( false );
-    playAVI( save_buf, click_flag );
+    if (playAVI( save_buf, click_flag )) endCommand();
+
+    // should be commented out
+    //repaintCommand();
 
     return RET_CONTINUE;
 }

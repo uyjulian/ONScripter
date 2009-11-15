@@ -384,7 +384,7 @@ int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_f
 
             while( SDL_PollEvent( &event ) ){
                 switch (event.type){
-                  case SDL_KEYDOWN:
+                  case SDL_KEYUP:
                     if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_SPACE ||
                          ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
@@ -392,7 +392,7 @@ int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_f
                     break;
                   case SDL_QUIT:
                     ret = 1;
-                  case SDL_MOUSEBUTTONDOWN:
+                  case SDL_MOUSEBUTTONUP:
                     done_flag = true;
                     break;
                   default:
@@ -415,7 +415,7 @@ int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_f
     return ret;
 }
 
-void ONScripterLabel::playAVI( const char *filename, bool click_flag )
+int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
 #if defined(USE_AVIFILE)
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
@@ -430,7 +430,7 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
     AVIWrapper *avi = new AVIWrapper();
     if ( avi->init( absolute_filename, false ) == 0 &&
          avi->initAV( screen_surface, audio_open_flag ) == 0 ){
-        if (avi->play( click_flag )) endCommand();
+        if (avi->play( click_flag )) return 1;
     }
     delete avi;
     delete[] absolute_filename;
@@ -442,6 +442,8 @@ void ONScripterLabel::playAVI( const char *filename, bool click_flag )
 #else
     fprintf( stderr, "avi command is disabled.\n" );
 #endif
+
+    return 0;
 }
 
 void ONScripterLabel::stopBGM( bool continue_flag )

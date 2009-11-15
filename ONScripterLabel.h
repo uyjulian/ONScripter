@@ -643,7 +643,7 @@ private:
     int playMIDI(bool loop_flag);
     
     int playMPEG(const char *filename, bool click_flag, bool loop_flag=false);
-    void playAVI( const char *filename, bool click_flag );
+    int playAVI( const char *filename, bool click_flag );
     enum { WAVE_PLAY        = 0,
            WAVE_PRELOAD     = 1,
            WAVE_PLAY_LOADED = 2
