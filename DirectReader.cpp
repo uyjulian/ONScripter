@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -301,6 +301,7 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
 
     for ( i=0 ; i<len ; i++ ){
         if ( capital_name[i] == '/' || capital_name[i] == '\\' ) capital_name[i] = (char)DELIMITER;
+        if ( (unsigned char)capital_name[i] > 0x80 ) i++;
     }
 
 #if defined(UTF8_FILESYSTEM)

@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -57,7 +57,6 @@ extern void midiCallback( int sig );
 extern void musicCallback( int sig );
 extern SDL_TimerID timer_cdaudio_id;
 
-#define TMP_MIDI_FILE "tmp.mid"
 #define TMP_MUSIC_FILE "tmp.mus"
 
 extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *buf_dst, long len, bool do_rate_conversion)
@@ -192,8 +191,8 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     if (format & SOUND_MIDI){
         FILE *fp;
-        if ( (fp = fopen(TMP_MIDI_FILE, "wb")) == NULL){
-            fprintf(stderr, "can't open temporaly MIDI file %s\n", TMP_MIDI_FILE);
+        if ( (fp = fopen(TMP_MUSIC_FILE, "wb")) == NULL){
+            fprintf(stderr, "can't open temporaly MIDI file %s\n", TMP_MUSIC_FILE);
         }
         else{
             fwrite(buffer, 1, length, fp);
@@ -337,7 +336,7 @@ int ONScripterLabel::playMIDI(bool loop_flag)
     Mix_SetMusicCMD(midi_cmd);
     
     char midi_filename[256];
-    sprintf(midi_filename, "%s%s", archive_path, TMP_MIDI_FILE);
+    sprintf(midi_filename, "%s%s", archive_path, TMP_MUSIC_FILE);
     if ((midi_info = Mix_LoadMUS(midi_filename)) == NULL) return -1;
 
     int midi_looping = loop_flag ? -1 : 0;

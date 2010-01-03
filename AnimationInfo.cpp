@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -97,10 +97,10 @@ void AnimationInfo::reset()
     font_size_xy[0] = font_size_xy[1] = -1;
     font_pitch = -1;
 
-    mat[0][0] = 1000;
+    mat[0][0] = 1024;
     mat[0][1] = 0;
     mat[1][0] = 0;
-    mat[1][1] = 1000;
+    mat[1][1] = 1024;
 }
 
 void AnimationInfo::deleteImageName(){
@@ -355,11 +355,11 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
         ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
         // inverse-projection
-        int x_offset = inv_mat[0][1] * (y-dst_y) / 1000 + pos.w/2;
-        int y_offset = inv_mat[1][1] * (y-dst_y) / 1000 + pos.h/2;
+        int x_offset = (inv_mat[0][1] * (y-dst_y) >> 10) + pos.w/2;
+        int y_offset = (inv_mat[1][1] * (y-dst_y) >> 10) + pos.h/2;
         for (x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
-            int x2 = inv_mat[0][0] * x / 1000 + x_offset;
-            int y2 = inv_mat[1][0] * x / 1000 + y_offset;
+            int x2 = (inv_mat[0][0] * x >> 10) + x_offset;
+            int y2 = (inv_mat[1][0] * x >> 10) + y_offset;
 
             if (x2 < 0 || x2 >= pos.w ||
                 y2 < 0 || y2 >= pos.h) continue;
@@ -496,10 +496,10 @@ void AnimationInfo::calcAffineMatrix()
     // calculate forward matrix
     // |mat[0][0] mat[0][1]|
     // |mat[1][0] mat[1][1]|
-    int cos_i = 1000, sin_i = 0;
+    int cos_i = 1024, sin_i = 0;
     if (rot != 0){
-        cos_i = (int)(1000.0 * cos(-M_PI*rot/180));
-        sin_i = (int)(1000.0 * sin(-M_PI*rot/180));
+        cos_i = (int)(1024.0 * cos(-M_PI*rot/180));
+        sin_i = (int)(1024.0 * sin(-M_PI*rot/180));
     }
     mat[0][0] =  cos_i*scale_x/100;
     mat[0][1] = -sin_i*scale_y/100;
@@ -511,8 +511,8 @@ void AnimationInfo::calcAffineMatrix()
     for (int i=0 ; i<4 ; i++){
         int c_x = (i<2)?(-pos.w/2):(pos.w/2);
         int c_y = ((i+1)&2)?(pos.h/2):(-pos.h/2);
-        corner_xy[i][0] = (mat[0][0] * c_x + mat[0][1] * c_y) / 1000 + pos.x;
-        corner_xy[i][1] = (mat[1][0] * c_x + mat[1][1] * c_y) / 1000 + pos.y;
+        corner_xy[i][0] = (mat[0][0] * c_x + mat[0][1] * c_y) / 1024 + pos.x;
+        corner_xy[i][1] = (mat[1][0] * c_x + mat[1][1] * c_y) / 1024 + pos.y;
 
         if (i==0 || min_xy[0] > corner_xy[i][0]) min_xy[0] = corner_xy[i][0];
         if (i==0 || max_xy[0] < corner_xy[i][0]) max_xy[0] = corner_xy[i][0];
