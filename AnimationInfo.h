@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.h - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -115,8 +115,8 @@ public:
                          SDL_Rect &clip, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           SDL_Rect &clip, int alpha=256 );
-    void blendBySurface( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
-                         SDL_Rect *clip, bool rotate_flag );
+    void blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
+                    SDL_Rect *clip, bool rotate_flag );
     void calcAffineMatrix();
     
     static SDL_Surface *allocSurface( int w, int h );

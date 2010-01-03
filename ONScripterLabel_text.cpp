@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_text.cpp - Text parser of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -132,10 +132,10 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
         }
 
         if (cache_info)
-            cache_info->blendBySurface( tmp_surface, dst_rect.x, dst_rect.y, color, clip, rotate_flag );
+            cache_info->blendText( tmp_surface, dst_rect.x, dst_rect.y, color, clip, rotate_flag );
         
         if (dst_surface)
-            alphaBlend32( dst_surface, dst_rect, tmp_surface, color, clip, rotate_flag );
+            alphaBlendText( dst_surface, dst_rect, tmp_surface, color, clip, rotate_flag );
     }
 }
 

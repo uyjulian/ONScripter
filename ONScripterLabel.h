@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -709,8 +709,8 @@ private:
     void shiftCursorOnButton( int diff );
     void alphaBlend( SDL_Surface *mask_surface,
                      int trans_mode, Uint32 mask_value = 255, SDL_Rect *clip=NULL );
-    void alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
-                       SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
+    void alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
+                         SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
     void makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip );
     void makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &clip );
     void refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int refresh_mode = REFRESH_NORMAL_MODE );

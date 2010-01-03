@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -198,21 +198,19 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
 }
 
 #if defined(BPP16)
-#define blend_pixel(){\
+#define BLEND_PIXEL_MASK(){\
     Uint32 s1 = (*src1_buffer | *src1_buffer << 16) & 0x07e0f81f; \
     Uint32 s2 = (*src2_buffer | *src2_buffer << 16) & 0x07e0f81f; \
-    src1_buffer++; \
-    src2_buffer++; \
-    mask_rb = (s1 + ((s2-s1) * mask2 >> 5)) & 0x07e0f81f; \
-    *dst_buffer++ = mask_rb | mask_rb >> 16; \
+    Uint32 mask_rb = (s1 + ((s2-s1) * mask2 >> 5)) & 0x07e0f81f; \
+    *dst_buffer = mask_rb | mask_rb >> 16; \
 }
 #else
-#define blend_pixel(){\
-    mask_rb =  (((*src1_buffer & 0xff00ff) * mask1 + \
-                 (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;\
-    mask  = (((*src1_buffer++ & 0x00ff00) * mask1 +\
-              (*src2_buffer++ & 0x00ff00) * mask2) >> 8) & 0x00ff00;\
-    *dst_buffer++ = mask_rb | mask;\
+#define BLEND_PIXEL_MASK(){\
+    Uint32 mask_rb = (((*src1_buffer & 0xff00ff) * mask1 +                 \
+                       (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; \
+    Uint32 mask_g  = (((*src1_buffer & 0x00ff00) * mask1 +\
+                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; \
+    *dst_buffer = mask_rb | mask_g;\
 }
 #endif
 
@@ -225,8 +223,6 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
 {
     SDL_Rect rect = {0, 0, screen_width, screen_height};
     int i, j;
-    Uint32 mask, mask1, mask2, mask_rb;
-    ONSBuf *mask_buffer=NULL;
 
     /* ---------------------------------------- */
     /* clipping */
@@ -253,35 +249,43 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
         overflow_mask = ~fmt->Bmask;
 
     mask_value >>= fmt->Bloss;
-    mask2 = mask_value & fmt->Bmask;
-    mask1 = mask2 ^ fmt->Bmask;
 
-    for ( i=0; i<rect.h ; i++ ) {
-        if (mask_surface) mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y+i)%mask_surface->h);
+    if ( (trans_mode == ALPHA_BLEND_FADE_MASK ||
+          trans_mode == ALPHA_BLEND_CROSSFADE_MASK) && mask_surface ){
+        for ( i=0; i<rect.h ; i++ ) {
+            ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y+i)%mask_surface->h);
 
-        if ( trans_mode == ALPHA_BLEND_FADE_MASK ||
-             trans_mode == ALPHA_BLEND_CROSSFADE_MASK ){
             for ( j=0 ; j<rect.w ; j++ ){
-                mask = *(mask_buffer + (rect.x+j)%mask_surface->w) & fmt->Bmask;
+                Uint32 mask2 = 0;
+                Uint32 mask = *(mask_buffer + (rect.x+j)%mask_surface->w) & fmt->Bmask;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
                     if ( mask2 & overflow_mask ) mask2 = fmt->Bmask;
                 }
-                else{
-                    mask2 = 0;
-                }
-                mask1 = mask2 ^ fmt->Bmask;
-                blend_pixel();
+#if !defined(BPP16)
+                Uint32 mask1 = mask2 ^ fmt->Bmask;
+#endif
+                BLEND_PIXEL_MASK();
+                src1_buffer++; src2_buffer++; dst_buffer++;
             }
+            src1_buffer += screen_width - rect.w;
+            src2_buffer += screen_width - rect.w;
+            dst_buffer  += screen_width - rect.w;
         }
-        else{ // ALPHA_BLEND_CONST
+    }else{ // ALPHA_BLEND_CONST
+        Uint32 mask2 = mask_value & fmt->Bmask;
+#if !defined(BPP16)
+        Uint32 mask1 = mask2 ^ fmt->Bmask;
+#endif
+        for ( i=0; i<rect.h ; i++ ) {
             for ( j=0 ; j<rect.w ; j++ ){
-                blend_pixel();
+                BLEND_PIXEL_MASK();
+                src1_buffer++; src2_buffer++; dst_buffer++;
             }
+            src1_buffer += screen_width - rect.w;
+            src2_buffer += screen_width - rect.w;
+            dst_buffer  += screen_width - rect.w;
         }
-        src1_buffer += screen_width - rect.w;
-        src2_buffer += screen_width - rect.w;
-        dst_buffer  += screen_width - rect.w;
     }
     
     if ( mask_surface ) SDL_UnlockSurface( mask_surface );
@@ -290,16 +294,39 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
     SDL_UnlockSurface( effect_src_surface );
 }
 
-// alphaBlend32
+#if defined(BPP16)
+#define BLEND_PIXEL_TEXT()\
+{\
+    Uint32 mask2 = *src_buffer >> 3;                                    \
+    if (mask2 != 0){                                                    \
+        Uint32 d1   = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;   \
+        Uint32 mask = (d1 + ((src_color-d1) * mask2 >> 5)) & 0x07e0f81f; \
+        *dst_buffer = mask | mask >> 16;                                \
+    }                                                                   \
+}
+#else
+#define BLEND_PIXEL_TEXT()\
+{\
+    Uint32 mask2 = *src_buffer;                                     \
+    if (mask2 != 0){                                                \
+        Uint32 mask1   = mask2 ^ 0xff;                              \
+        Uint32 mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +       \
+                           src_color1 * mask2) >> 8) & 0xff00ff;    \
+        Uint32 mask_g  = (((*dst_buffer & 0x00ff00) * mask1 +       \
+                           src_color2 * mask2) >> 8) & 0x00ff00;    \
+        *dst_buffer    = mask_rb | mask_g;                          \
+    }                                                               \
+}
+#endif        
+
+// alphaBlendText
 // dst: ONSBuf surface (accumulation_surface)
 // src: 8bit surface (TTF_RenderGlyph_Shaded())
-void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
-                                    SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag )
+void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
+                                      SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag )
 {
-    int i, j;
     int x2=0, y2=0;
     SDL_Rect clipped_rect;
-    Uint32 mask, mask1, mask2, mask_rb;
 
     /* ---------------------------------------- */
     /* 1st clipping */
@@ -323,8 +350,6 @@ void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( src_surface );
 
-    unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch * y2 + x2;
-    ONSBuf *dst_buffer = (AnimationInfo::ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x;
 #if defined(BPP16)    
     Uint32 src_color = ((color.r & 0xf8) << 8 |
                         (color.g & 0xfc) << 3 |
@@ -335,35 +360,30 @@ void ONScripterLabel::alphaBlend32( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     Uint32 src_color2 = color.g << 8;
 #endif    
 
-    SDL_PixelFormat *fmt = dst_surface->format;
-    for ( i=0 ; i<dst_rect.h ; i++ ){
-        if (rotate_flag)
-            src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch*(src_surface->h - x2 - 1) + y2 + i;
-        for ( j=0 ; j<dst_rect.w ; j++ ){
+    ONSBuf *dst_buffer = (AnimationInfo::ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x;
 
-            mask2 = *src_buffer >> fmt->Bloss;
-            mask1 = mask2 ^ fmt->Bmask;
-            
-#if defined(BPP16)
-            Uint32 d1 = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;
-
-            mask_rb = (d1 + ((src_color-d1) * mask2 >> 5)) & 0x07e0f81f; // red, green and blue pixel
-            *dst_buffer++ = mask_rb | mask_rb >> 16;
-#else            
-            mask_rb = (((*dst_buffer & 0xff00ff) * mask1 + 
-                        src_color1 * mask2) >> 8) & 0xff00ff;
-            mask = (((*dst_buffer & 0x00ff00) * mask1 +
-                     src_color2 * mask2) >> 8) & 0x00ff00;
-            *dst_buffer++ = mask_rb | mask;
-#endif            
-            if (rotate_flag)
-                src_buffer -= src_surface->pitch;
-            else
+    if (!rotate_flag){
+        unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch * y2 + x2;
+        for ( int i=0 ; i<dst_rect.h ; i++ ){
+            for ( int j=0 ; j<dst_rect.w ; j++ ){
+                BLEND_PIXEL_TEXT();
                 src_buffer++;
-        }
-        if (!rotate_flag)
+                dst_buffer++;
+            }
             src_buffer += src_surface->pitch - dst_rect.w;
-        dst_buffer += dst_surface->w - dst_rect.w;
+            dst_buffer += dst_surface->w - dst_rect.w;
+        }
+    }
+    else{
+        for ( int i=0 ; i<dst_rect.h ; i++ ){
+            unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch*(src_surface->h - x2 - 1) + y2 + i;
+            for ( int j=0 ; j<dst_rect.w ; j++ ){
+                BLEND_PIXEL_TEXT();
+                src_buffer -= src_surface->pitch;
+                dst_buffer++;
+            }
+            dst_buffer += dst_surface->w - dst_rect.w;
+        }
     }
     
     SDL_UnlockSurface( src_surface );
