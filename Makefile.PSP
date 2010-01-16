@@ -10,13 +10,13 @@ PSPSDK = $(shell psp-config --pspsdk-path)
 
 INCS  = $(shell $(PSPPRE)/bin/sdl-config --cflags) $(shell $(PSPPRE)/bin/freetype-config --cflags)
 LIBS  = $(shell $(PSPPRE)/bin/sdl-config --libs)
-LIBS += -lSDL_ttf -lSDL_image -lSDL_mixer -lSDL -lSDLmain -lfreetype -lbz2 -lm -ljpeg -lpng -lz -lmad -lvorbisidec
+LIBS += -lSDL_ttf -lfreetype -lSDL_mixer -lSDL_image -lSDL -lSDLmain -lbz2 -ljpeg -lpng -lz -lmad -lvorbisidec
 
 # Include PSPSDK and Libc Headers
 INCS += -I$(PSPSDK)/include -I$(PSPDEV)/include -I$(PSPPRE)/include
 
 # Link PSPSDK and Libc Libraries
-LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lstdc++ -lpspsdk -lpspgu -lpspdebug -lpspdisplay -lpsphprm -lpspaudio -lpspge -lpspctrl -lc -lpspnet_inet -lpspuser -lpspkernel -lpsppower
+LIBS += -L$(PSPSDK)/lib -L$(PSPDEV)/lib -lstdc++ -lc -lm -lpsppower -lpspnet_inet
 
 
 # with OggVorbis (Tremor) in PDA size (QVGA)
@@ -35,7 +35,7 @@ OBJSUFFIX = .o
 CC = psp-gcc 
 LD = psp-gcc -o
 
-CFLAGS = -g -G0 -O2 -Wall -Wpointer-arith -fno-exceptions -fno-rtti -fno-check-new -pipe -c $(INCS) $(DEFS)
+CFLAGS = -g -G0 -O3 -Wall -Wpointer-arith -fno-exceptions -fno-rtti -fno-check-new -pipe -c $(INCS) $(DEFS)
 RM = rm -f
 
 TARGET = EBOOT.PBP

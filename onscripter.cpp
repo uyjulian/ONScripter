@@ -26,26 +26,25 @@
 
 #if defined(PSP)
 #include <pspkernel.h>
-#include <pspdebug.h>
-#include <pspctrl.h>
-#include <pspdisplay.h>
-#include <stdio.h>
-#include <pspmoduleinfo.h>
+#include <psputility.h>
 #include <psppower.h>
+#include <ctype.h>
+
+PSP_HEAP_SIZE_KB(-1);
 
 int psp_power_resume_number = 0;
+ONScripterLabel *g_ons;
 
 int exit_callback(int arg1, int arg2, void *common)
 {
+    g_ons->endCommand();
     sceKernelExitGame();
     return 0;
 }
 
 int power_callback(int unknown, int pwrflags, void *common)
 {
-    if (pwrflags & PSP_POWER_CB_RESUMING)
-        psp_power_resume_number++;
-    
+    if (pwrflags & PSP_POWER_CB_RESUMING) psp_power_resume_number++;
     return 0;
 }
 
@@ -57,16 +56,13 @@ int CallbackThread(SceSize args, void *argp)
     cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
     scePowerRegisterCallback(0, cbid);
     sceKernelSleepThreadCB();
-
     return 0;
 }
 
 int SetupCallbacks(void)
 {
-    int thid = 0;
-    thid = sceKernelCreateThread("update_thread", CallbackThread, 0x11, 0xFA0, 0, 0);
-    if (thid >= 0)
-        sceKernelStartThread(thid, 0, 0);
+    int thid = sceKernelCreateThread("update_thread", CallbackThread, 0x11, 0xFA0, 0, 0);
+    if (thid >= 0) sceKernelStartThread(thid, 0, 0);
     return thid;
 }
 #endif
@@ -114,6 +110,7 @@ int main( int argc, char **argv )
 #if defined(PSP)
     ons.disableRescale();
     ons.enableButtonShortCut();
+    g_ons = &ons;
     SetupCallbacks();
 #elif defined(WINCE)
     char currentDir[256];

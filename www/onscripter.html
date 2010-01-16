@@ -114,61 +114,93 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <h3><a name="package-source">ソースパッケージ</a></h3>
 <div class="sub-content">
 <ul>
-  <li> <a href="onscripter-20100116.tar.gz">onscripter-20100116.tar.gz</a>
+  <li> <a href="onscripter-20100116a.tar.gz">onscripter-20100116a.tar.gz</a>
   <li> <a href="onscripter-20100103a.tar.gz">onscripter-20100103a.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
 
-<h3><a name="package-binary">バイナリパッケージ（Zaurus 版以外は当方では動作チェックをしておりません）</a></h3>
+<h3><a name="package-binary">バイナリパッケージ（Zaurus 以外は当方では動作確認をしておりません）</a></h3>
 <div class="sub-content">
 
 <ul>
-  <li> Zaurus (Linux) 版 <a href="zaurus/index.html#package-onscripter">SDL on Zaurus のページ</a> (Ogapee)
-  <li> Linux Debian 版
-       <ul>
-         <li> Unofficial Stable (Etch, Sarge, Woody) <a href="http://detroit.ddo.jp/"> detroit.ddo.jp </a> (みーさん)
-           <ul>
-             <li> deb http://detroit.ddo.jp/debian/etch/ ./ 
-             <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
-             <li> deb http://detroit.ddo.jp/debian/sarge/ ./ 
-           </ul>
-         <li> Official (Ying-Chun Liu (PaulLiu) さん)
-           <ul>
-             <li> <a href="http://packages.debian.org/lenny/onscripter"> Stable (Lenny) </a>
-             <li> <a href="http://packages.debian.org/squeeze/onscripter"> Testing (Squeeze) </a>
-             <li> <a href="http://packages.debian.org/sid/onscripter"> Unstable (Sid) </a>
-          </ul>
-       </ul>
-  <li> Linux RPM 版 <a href="http://abe.nwr.jp/onscripter/rpms/">ONScripter RPM パッケージ</a> (αβεさん)
-       <ul>
-         <li> rpm http://abe.nwr.jp/Vine/apt i386 nwr
-         <li> rpm-src http://abe.nwr.jp/Vine/apt i386 nwr
-      </ul>
-  <li> Windows 版
-      <ul>
-          <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
-      </ul>
-  <li> MacOSX 版
-      <ul>
-        <li> <a href="http://tmkk.hp.infoseek.co.jp/onscripter/">ONScripter Launcher and Binary for Mac OS X</a> (tmkkさん)
-        <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-        <li> <a href="http://homepage.mac.com/anmira/onscripter/">ONScripter for Mac OS X</a> (かつらさん)
-      </ul>
-  <li> PSP 版 <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
-  <li> iPod (5G, photo, nano, mini), iPhone &amp; iPod touch 版 <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-  <li> NetWalker 版 <a href="http://zero975.cocolog-nifty.com/qt_blog/">Qt 初心者の覚え書き</a>
-  <li> OS2/Warp 版 <a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a> (Sofiya猫さん)
-  <li> NetBSD 版 <a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a> (いしはらさん)
-      <ul>
-        <li><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2"> インストールのしかたやバイナリパッケージ </a>
-      </ul>
-  <li> Playstation3 版 <a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a> (rerofumiさん)
-  <li> Wii 版 <a href="http://wiibrew.org/wiki/ONScripter">ONScripter WiiBrew</a>
-  <li> FreeBSD 版 <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a> (藤田さん)
-  <li> Dreamcast 版 <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a> (bero さん)
+  <li> Zaurus (SL-C700, etc.)
+    <ul>
+      <li> <a href="zaurus/index.html#package-onscripter">SDL on Zaurus のページ</a> (Ogapee)
+    </ul>
+  <li> Linux
+    <ul>
+      <li> 公式 Debian パッケージ (Ying-Chun Liu (PaulLiu) さん)
+        <ul>
+          <li> <a href="http://packages.debian.org/lenny/onscripter"> Stable (Lenny) </a>
+          <li> <a href="http://packages.debian.org/squeeze/onscripter"> Testing (Squeeze) </a>
+          <li> <a href="http://packages.debian.org/sid/onscripter"> Unstable (Sid) </a>
+        </ul>
+      <li> Debian パッケージ (Etch, Sarge, Woody) <a href="http://detroit.ddo.jp/"> detroit.ddo.jp </a> (みーさん)
+        <ul>
+          <li> deb http://detroit.ddo.jp/debian/etch/ ./ 
+          <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
+          <li> deb http://detroit.ddo.jp/debian/sarge/ ./ 
+        </ul>
+      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
+    </ul>
+  <li> MacOSX
+    <ul>
+      <li> <a href="http://tmkk.hp.infoseek.co.jp/onscripter/">ONScripter Launcher and Binary for Mac OS X</a> (tmkkさん)
+      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
+      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
+    </ul>
+  <li> Windows
+    <ul>
+      <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
+      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
+      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です (下記参照）
+    </ul>
+  <li> PSP
+    <ul>
+      <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
+    </ul>
+  <li> iPhone, iPod (5G, photo, nano, mini, touch)
+    <ul>
+      <li> <a href="http://ipodons.hp.infoseek.co.jp/">iPodOns</a>
+      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
+    </ul>
+  <li> NetWalker
+    <ul>
+      <li> <a href="http://zero975.cocolog-nifty.com/qt_blog/">Qt 初心者の覚え書き</a>
+    </ul>
+  <li> NetBSD
+    <ul>
+      <li> <a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2"> pkgsrc-wip-jpめも </a> (いしはらさん) (<a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>)
+    </ul>
+  <li> OS2/Warp
+    <ul>
+      <li> <a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a> (Sofiya猫さん) (<a href="http://www.os2.jp/modules/search/index.php?query=onscripter&action=results&showcontext=1">package at OS2.jp</a>)
+    </ul>
+  <li> Playstation3
+    <ul>
+      <li> <a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a> (rerofumiさん)
+    </ul>
+  <li> Wii
+    <ul>
+      <li> <a href="http://wiibrew.org/wiki/ONScripter">ONScripter WiiBrew</a>
+    </ul>
+  <li> FreeBSD
+    <ul>
+      <li> <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a> (藤田さん)
+    </ul>
+  <li> Dreamcast
+    <ul>
+      <li> <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a> (bero さん)
+    </ul>
   <li> その他募集中
 </ul>
+
+<p>ONScripter-EN とは、Uncle Mion さんによって英語のスクリプトがうまく
+扱えるように拡張された ONScripter です。サポートされているコマンドも 
+ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
+できるようです。</p>
+
 </div> <!-- sub-content -->
 
 </div> <!-- content -->
@@ -247,10 +279,10 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
   <dd> Windows で最新の SDL を使用する場合に、正しくキャプションを表示するために必要になります。
 </dl>
 
-<p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-5500,SL-C700)</a>で動作確認をしています。<br>
+<p>当方では Windows, Linux, <a href="zaurus/index.html">Zaurus(SL-C700)</a>で動作確認をしています。<br>
 また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>および FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Wii, Android, GP2X, NetWalker, Dreamcast での動作報告をいただいております。<br>
 
-その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイル・実行できると思いますが、当方では確認できないので誰かやって下さい。</p>
+その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイルおよび実行できると思います。ぜひ試してみてください。</p>
 
 </div> <!-- sub-content -->
 
@@ -266,7 +298,7 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <h3><a name="run">実行</a></h3>
 <div class="sub-content">
 
-<p><FONT color="#ff0000">[必須]</FONT>まずゲームのアーカイブを一カ所にまとめます。通常は、スクリプト(0.txt もしくは nscript.dat)とアーカイブ(arc.sar もしくは arc.nsa)の２つのファイルがあれば十分なはずです。arc1.nsa 〜 arc9.nsa がある場合は、それも置いてください。またゲームによっては、アーカイブの外に一部の画像ファイルを置いていたりします。その場合は、それらのファイルも元と同じように置いてください。一番確実なのは、ディレクトリ毎全てのファイルをコピーしてくることです。</p>
+<p><FONT color="#ff0000">[必須]</FONT>まずゲームのアーカイブを一カ所にまとめます。通常は、スクリプト(0.txt もしくは nscript.dat)とアーカイブ(arc.sar もしくは arc.nsa)の２つのファイルがあれば十分なはずです。arc1.nsa 〜 arc9.nsa がある場合は、それも置いてください。またゲームによっては、アーカイブの外に一部の画像ファイルや音楽ファイルを置いていたりします。その場合は、それらのファイルも元と同じように置いてください。一番確実なのは、ディレクトリ毎全てのファイルをコピーしてくることです。</p>
 
 <p><FONT color="#ff0000">[必須]</FONT>下記の<a href="#truetype-font">TrueType font による漢字表示</a>を参考に、日本語 TrueType font を用意し、&quot;default.ttf&quot; という名前で置いてください。</p>
 
@@ -301,10 +333,6 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <p>お世話になっているページ、よく利用させていただいているページへのリンクです。</p>
 
 <dl>
-  <dt> ○<a href="http://onscripter.denpa.mobi/">ONScripter-EN</a>
-  <dd> Uncle Mion さんによる、英語のスクリプトを実行しやすいように拡張した ONScripter 英語版です。サポートされているコマンドも ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行できるようです。
-  <dt> ○<a href="http://chig.vis.ne.jp/m/port.html">娯楽用アプリケーションの異機種間データ共有の試み</a>
-  <dd> 千熊屋さんによる様々なゲーム互換エンジンへのリンク集です。ONScripter も紹介していただいてます。
   <dt> ○<a href="http://you-like.to/cgi-bin/ponytail/yukiwiki/wiki.cgi">技術屋きさらの箱庭</a>
   <dd> きさらさんが公開されている日記です。<br>
        <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;action=top">バグトラッキングシステム</a>を運用していただいております。</s>現在は、新バグトラッキングシステムに移行しています。<br>
@@ -313,11 +341,10 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
        ONScripter を開発する上でたいへんお世話になっております。<br>
        <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。現在は、きさらさんの新バグトラッキングシステムに移行しています。</s><br>
        ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
-  <dt> ○<a href="http://www.geocities.co.jp/Berkeley/2093/">Adas's Linux ゲームプログラム</a>
-  <dd> Mac OS X で検証していただいている adas さんページです。<br>
-       MacOS X 等に SDL をインストールする方法なども書かれています。
+<!--
   <dt> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
   <dd> αβεさんによる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。
+-->
 </dl>
 
 </div> <!-- content -->
