@@ -2,7 +2,7 @@
  * 
  *  resize_image.cpp - resize image using smoothing and resampling
  *
- *  Copyright (c) 2001-2005 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -44,7 +44,7 @@ static void calcWeightedSumColumnInit(unsigned char **src,
             unsigned long *pa = pixel_accum + image_width*s;
             unsigned long *pan = pixel_accum_num + image_width*s;
             unsigned char *p = *src+image_pixel_width*i+s;
-            for (int j=0 ; j<image_width ; j++, p+=byte_per_pixel){
+            for (int j=image_width ; j!=0 ; j--, p+=byte_per_pixel){
                 *pa++ += *p;
                 (*pan++)++;
             }
@@ -64,7 +64,7 @@ static void calcWeightedSumColumn(unsigned char **src, int y,
             unsigned long *pa = pixel_accum + image_width*s;
             unsigned long *pan = pixel_accum_num + image_width*s;
             unsigned char *p = *src+image_pixel_width*(y_start-1)+s;
-            for (int j=0 ; j<image_width ; j++, p+=byte_per_pixel){
+            for (int j=image_width ; j!=0 ; j--, p+=byte_per_pixel){
                 *pa++ -= *p;
                 (*pan++)--;
             }
@@ -74,7 +74,7 @@ static void calcWeightedSumColumn(unsigned char **src, int y,
             unsigned long *pa = pixel_accum + image_width*s;
             unsigned long *pan = pixel_accum_num + image_width*s;
             unsigned char *p = *src+image_pixel_width*(y_end-1)+s;
-            for (int j=0 ; j<image_width ; j++, p+=byte_per_pixel){
+            for (int j=image_width ; j!=0 ; j--, p+=byte_per_pixel){
                 *pa++ += *p;
                 (*pan++)++;
             }

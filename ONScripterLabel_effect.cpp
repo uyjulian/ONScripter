@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_effect.cpp - Effect executer of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -384,7 +384,7 @@ void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
             int width2 = width;
             if (j+width > screen_width) width2 = screen_width - j;
             for ( ii=0 ; ii<height2 ; ii++ ){
-                for ( jj=0 ; jj<width2 ; jj++ ){
+                for ( jj=width2 ; jj!=0 ; jj-- ){
                     *dst_buffer++ = p;
                 }
                 dst_buffer -= total_width + width2;

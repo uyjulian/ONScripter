@@ -206,12 +206,18 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
 }
 #else
 #define BLEND_PIXEL_MASK(){\
-    Uint32 mask_rb = (((*src1_buffer & 0xff00ff) * mask1 +                 \
-                       (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff; \
-    Uint32 mask_g  = (((*src1_buffer & 0x00ff00) * mask1 +\
-                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00; \
+    Uint32 temp = *src1_buffer & 0xff00ff;\
+    Uint32 mask_rb = (((((*src2_buffer & 0xff00ff) - temp ) * mask2 ) >> 8 ) + temp ) & 0xff00ff;\
+    temp = *src1_buffer & 0x00ff00;\
+    Uint32 mask_g  = (((((*src2_buffer & 0x00ff00) - temp ) * mask2 ) >> 8 ) + temp ) & 0x00ff00;\
     *dst_buffer = mask_rb | mask_g;\
 }
+// Originally, the above looks like this.
+//    mask1 = mask2 ^ 0xff;
+//    Uint32 mask_rb = (((*src1_buffer & 0xff00ff) * mask1 +
+//                       (*src2_buffer & 0xff00ff) * mask2) >> 8) & 0xff00ff;
+//    Uint32 mask_g  = (((*src1_buffer & 0x00ff00) * mask1 +
+//                       (*src2_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
 #endif
 
 // alphaBlend
@@ -255,18 +261,19 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
         for ( i=0; i<rect.h ; i++ ) {
             ONSBuf *mask_buffer = (ONSBuf *)mask_surface->pixels + mask_surface->w * ((rect.y+i)%mask_surface->h);
 
+            int j2 = rect.x;
             for ( j=0 ; j<rect.w ; j++ ){
                 Uint32 mask2 = 0;
-                Uint32 mask = *(mask_buffer + (rect.x+j)%mask_surface->w) & fmt->Bmask;
+                Uint32 mask = *(mask_buffer + j2) & fmt->Bmask;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
                     if ( mask2 & overflow_mask ) mask2 = fmt->Bmask;
                 }
-#if !defined(BPP16)
-                Uint32 mask1 = mask2 ^ fmt->Bmask;
-#endif
                 BLEND_PIXEL_MASK();
                 src1_buffer++; src2_buffer++; dst_buffer++;
+
+                if (j2 >= mask_surface->w) j2 = 0;
+                else                       j2++;
             }
             src1_buffer += screen_width - rect.w;
             src2_buffer += screen_width - rect.w;
@@ -274,11 +281,9 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
         }
     }else{ // ALPHA_BLEND_CONST
         Uint32 mask2 = mask_value & fmt->Bmask;
-#if !defined(BPP16)
-        Uint32 mask1 = mask2 ^ fmt->Bmask;
-#endif
+
         for ( i=0; i<rect.h ; i++ ) {
-            for ( j=0 ; j<rect.w ; j++ ){
+            for ( j=rect.w ; j!=0 ; j-- ){
                 BLEND_PIXEL_MASK();
                 src1_buffer++; src2_buffer++; dst_buffer++;
             }
@@ -365,7 +370,7 @@ void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rec
     if (!rotate_flag){
         unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch * y2 + x2;
         for ( int i=0 ; i<dst_rect.h ; i++ ){
-            for ( int j=0 ; j<dst_rect.w ; j++ ){
+            for ( int j=dst_rect.w ; j!=0 ; j-- ){
                 BLEND_PIXEL_TEXT();
                 src_buffer++;
                 dst_buffer++;
@@ -377,7 +382,7 @@ void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rec
     else{
         for ( int i=0 ; i<dst_rect.h ; i++ ){
             unsigned char *src_buffer = (unsigned char*)src_surface->pixels + src_surface->pitch*(src_surface->h - x2 - 1) + y2 + i;
-            for ( int j=0 ; j<dst_rect.w ; j++ ){
+            for ( int j=dst_rect.w ; j!=0 ; j-- ){
                 BLEND_PIXEL_TEXT();
                 src_buffer -= src_surface->pitch;
                 dst_buffer++;
