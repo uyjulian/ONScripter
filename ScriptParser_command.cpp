@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -868,7 +868,7 @@ int ScriptParser::ifCommand()
             }
         }
         
-        condition_flag |= ((if_flag)?(f):(!f));
+        condition_flag |= f;
         op_buf = script_h.getNext();
         if ( op_buf[0] == '|' ){
             if (condition_status == 1) errorAndExit( "& and | are not used at the same time." );
@@ -878,7 +878,7 @@ int ScriptParser::ifCommand()
             continue;
         }
 
-        if (condition_status == 2 && !condition_flag || 
+        if (condition_status == 2 && !((if_flag)?(condition_flag):(!condition_flag)) || 
             condition_status != 2 && !((if_flag)?(f):(!f))) 
             return RET_SKIP_LINE;
 
