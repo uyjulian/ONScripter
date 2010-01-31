@@ -780,6 +780,8 @@ int ScriptParser::incCommand()
 int ScriptParser::ifCommand()
 {
     //printf("ifCommand\n");
+    int condition_status = 0; // 0 ... none, 1 ... and, 2 ... or
+    bool condition_flag = false;
     bool if_flag, f = false;
     char *op_buf;
     const char *buf;
@@ -866,12 +868,25 @@ int ScriptParser::ifCommand()
             }
         }
         
-        if (!((if_flag)?(f):(!f))) return RET_SKIP_LINE;
-
+        condition_flag |= ((if_flag)?(f):(!f));
         op_buf = script_h.getNext();
+        if ( op_buf[0] == '|' ){
+            if (condition_status == 1) errorAndExit( "& and | are not used at the same time." );
+            while(*op_buf == '|') op_buf++;
+            script_h.setCurrent(op_buf);
+            condition_status = 2;
+            continue;
+        }
+
+        if (condition_status == 2 && !condition_flag || 
+            condition_status != 2 && !((if_flag)?(f):(!f))) 
+            return RET_SKIP_LINE;
+
         if ( op_buf[0] == '&' ){
+            if (condition_status == 2) errorAndExit( "& and | are not used at the same time." );
             while(*op_buf == '&') op_buf++;
             script_h.setCurrent(op_buf);
+            condition_status = 1;
             continue;
         }
         break;

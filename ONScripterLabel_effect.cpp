@@ -317,7 +317,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     }
 
     if (effect_counter == 0 && not_implemented)
-        printf("effect No. %d is not implemented. Crossfade is substituted for that.\n", effect_no);
+        printf("effect No. %d is not implemented. Crossfade is used instead.\n", effect_no);
 
     //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
     
