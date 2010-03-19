@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -315,6 +315,7 @@ int ONScripterLabel::strspCommand()
     ai->is_single_line = false;
     ai->is_tight_region = false;
     setupAnimationInfo(ai, &fi);
+    if ( ai->visible ) dirty_rect.add( ai->pos );
 
     return RET_CONTINUE;
 }

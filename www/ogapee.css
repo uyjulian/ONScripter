@@ -1,26 +1,19 @@
-a:link{
-text-decoration: none;
-color: #000080;
-}
+/* 
+ * CSS resource file for ONScripter web page
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  ogapee@aqua.dti2.ne.jp
+ */
 
-a:visited{
-text-decoration: none;
-color: #800000;
-}
-
-a:active{
-text-decoration: underline;
-color: #FF0000;
-}
-
-a:hover{
-/*text-decoration: underline;*/
-background-color: #ccffcc;
-}
+a { text-decoration: none; }
+a:link { color: #000080; }
+a:visited { color: #800000; }
+a:active{ color: #FF0000; text-decoration: underline; }
+a:hover{ background-color: #ccffcc; }
 
 body{
 text-align: left;
 font-size: medium;
+line-height: 1.4;
 color: black;
 background-color: gray;
 }
@@ -37,7 +30,8 @@ text-indent: 0em;
 
 /* -------------------- */
 /* general page */
-div.body{
+
+#body{
 position: absolute;
 left: 50%;
 width: 800px;
@@ -45,77 +39,106 @@ margin-left: -400px;
 background-color: white;
 }
 
-div.title{
+#header{
 text-align: left;
 margin: 5px;
 padding: 5px;
 border-bottom: solid 1px black;
 background-image: url(ons.png);
 background-repeat: no-repeat;
+color: white;
+//background-color: #cc4400;
+//background-color: #cc0044;
+background-color: #44cc00;
 }
 
-.title h1{
+#header h1{
 font-size: x-large;
 text-align: center;
 }
 
+//#header a {background-color: #ddffdd; }
+#header a:link{ color: #ccccff; }
+#header a:visited{ color: #ffcccc; }
+#header a:active{ color: #cc8888; text-decoration: underline; }
+#header a:hover{ background-color: #ff8844; }
+
 /* -------------------- */
 /* toc */
-div.toc-container{
+#toc-container{
 float: left;
 width: 180px;
 font-size: small;
 }
 
-div.toc{
+#toc{
 padding: 5px;
 text-align: left;
 }
 
-.toc h3{
+#toc h3{
 margin: 0px;
 padding: 5px;
 text-align: center;
 }
 
-.toc ul{
+#toc ul{
 margin: 0px;
+margin-bottom: 15px;
 padding: 5px;
 text-align: left;
 list-style: none;
 }
 
-.toc ul li ul{
+#toc ul li{ 
+margin: 0px;
+padding-bottom:15px;
+}
+
+#toc ul li a{
+display: block;
+border-bottom: solid 1px gray;
+padding: 0px;
+}
+
+#toc ul li ul{
 margin: 0px;
 margin-left: 1em;
 margin-bottom: 1em;
 padding: 0px;
 }
 
-.toc ul li ul li{
+#toc ul li ul li{
+display: list-item;
 margin: 0px;
-margin-bottom: 5px;
 padding: 0px;
+padding-bottom: 5px;
+border-bottom: solid 1px #ffffff;
+}
+
+#toc ul li ul li a{
+border: none;
 }
 
 /* -------------------- */
 /* main page */
-div.main-container{
+#main-container{
 margin-left: 180px;
 }
 
-div.main{
+#main{
 text-align: left;
 font-size: medium;
 }
 
-.main h2{
+#main h2{
 margin: 0px;
 padding: 5px;
 /*border: solid 1px #0000ff;*/
+font-family: sans-selif;
 }
 
-div.content{
+.content{
 margin: 5px;
 margin-bottom: 15px;
 padding: 5px;
@@ -124,10 +147,12 @@ border-bottom: solid 1px black;
 }
 
 .content h2{
-margin: 0px;
-margin-left: 5px;
-padding: 5px;
+margin: 5px;
+padding: 0px;
+padding-left: 10px;
 font-size: large;
+color: #000066;
+/*border-left: solid 5px #0000aa;*/
 }
 
 .content h3{
@@ -136,7 +161,8 @@ margin-top: 15px;
 padding: 0px;
 padding-left: 5px;
 font-size: midium;
-border-left: solid 5px #0000aa;
+/*border-left: solid 5px #0000aa;*/
+border-bottom: dashed 1px gray;
 }
 
 .content h4{
@@ -150,46 +176,48 @@ margin: 0px;
 padding: 0px 5px 0px 10px;
 }
 
-div.sub-content{
+.sub-content{
 margin: 5pt;
 padding: 0px;
-border-top: dashed 1px gray;
+/*border-top: dashed 1px gray;*/
 }
 
 /* -------------------- */
 /* diary page */
-div.diary-container{
+#diary-container{
 margin-left: 180px;
 }
 
-div.diary{
+#diary{
 text-align: left;
 font-size: medium;
 }
 
-.diary h2{
+#diary h2{
 margin: 0px;
 padding: 5px;
 text-align: center;
 /*border: solid 1px #0000ff;*/
 }
 
-div.diary-day{
+.diary-day{
 margin: 5px;
 margin-bottom: 25px;
 padding: 0px;
 font-size: medium;
-border-top: dashed 1px gray;
+/*border-top: dashed 1px gray;*/
 }
 
-div.diary-day h3{
+.diary-day h3{
+display: box;
 margin: 5px;
 padding: 0px;
 padding-left: 5px;
-border-left: solid 5px #0000aa;
+/*border-left: solid 5px #0000aa;*/
+border-bottom: dashed 1px gray;
 }
 
-div.diary-day h4{
+.diary-day h4{
 margin: 5px;
 text-decoration: underline;
 }
@@ -244,12 +272,13 @@ text-indent: 0;
 border-width: 1pt 1pt 1pt 1pt;
 border-color: #888888;
 border-style: solid;
+font-family: monospace;
 }
 
 /* -------------------- */
 /* footer */
 
-div.footer{
+#footer{
 clear: both;
 text-align: center;
 margin: 5px;

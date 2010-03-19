@@ -434,8 +434,8 @@ private:
             ButtonLink *p = this;
             while(p->next){
                 if ( p->next->sprite_no == no &&
-                     ( p->next->sprite_no == SPRITE_BUTTON ||
-                       p->next->sprite_no == EX_SPRITE_BUTTON ) ){
+                     ( p->next->button_type == SPRITE_BUTTON ||
+                       p->next->button_type == EX_SPRITE_BUTTON ) ){
                     ButtonLink *p2 = p->next;
                     p->next = p->next->next;
                     delete p2;
