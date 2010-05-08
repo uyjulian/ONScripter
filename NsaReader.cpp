@@ -2,7 +2,7 @@
  *
  *  NsaReader.cpp - Reader from a NSA archive
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,10 +26,11 @@
 #define NSA_ARCHIVE_NAME "arc"
 #define NSA_ARCHIVE_NAME2 "arc%d"
 
-NsaReader::NsaReader( char *path, const unsigned char *key_table )
+NsaReader::NsaReader( int nsa_offset, char *path, const unsigned char *key_table )
         :SarReader( path, key_table )
 {
     sar_flag = true;
+    this->nsa_offset = nsa_offset;
     num_of_nsa_archives = 0;
 
     if (key_table)
@@ -61,7 +62,7 @@ int NsaReader::open( char *nsa_path, int archive_type )
     archive_info.file_name = new char[strlen(archive_name)+1];
     memcpy(archive_info.file_name, archive_name, strlen(archive_name)+1);
     
-    readArchive( &archive_info, archive_type );
+    readArchive( &archive_info, archive_type, nsa_offset );
     
     for ( i=0 ; i<MAX_EXTRA_ARCHIVE ; i++ ){
         sprintf( archive_name2, NSA_ARCHIVE_NAME2, i+1 );
@@ -74,13 +75,13 @@ int NsaReader::open( char *nsa_path, int archive_type )
         memcpy(archive_info2[i].file_name, archive_name2, strlen(archive_name2)+1);
         
         num_of_nsa_archives = i+1;
-        readArchive( &archive_info2[i], archive_type );
+        readArchive( &archive_info2[i], archive_type, nsa_offset );
     }
 
     return 0;
 }
 
-int NsaReader::openForConvert( char *nsa_name, int archive_type )
+int NsaReader::openForConvert( char *nsa_name, int archive_type, int nsa_offset )
 {
     sar_flag = false;
     if ( ( archive_info.file_handle = ::fopen( nsa_name, "rb" ) ) == NULL ){
@@ -88,15 +89,15 @@ int NsaReader::openForConvert( char *nsa_name, int archive_type )
         return -1;
     }
 
-    readArchive( &archive_info, archive_type );
+    readArchive( &archive_info, archive_type, nsa_offset );
 
     return 0;
 }
 
-int NsaReader::writeHeader( FILE *fp, int archive_type )
+int NsaReader::writeHeader( FILE *fp, int archive_type, int nsa_offset )
 {
     ArchiveInfo *ai = &archive_info;
-    return writeHeaderSub( ai, fp, archive_type );
+    return writeHeaderSub( ai, fp, archive_type, nsa_offset );
 }
 
 size_t NsaReader::putFile( FILE *fp, int no, size_t offset, size_t length, size_t original_length, int compression_type, bool modified_flag, unsigned char *buffer )
@@ -124,10 +125,14 @@ size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
 
     if ( i == ai->num_of_files ) return 0;
 
-    if ( ai->fi_list[i].compression_type == NO_COMPRESSION ){
-        int type = getRegisteredCompressionType( file_name );
-        if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION )
-            return getDecompressedFileLength( type, ai->file_handle, ai->fi_list[i].offset );
+    if ( ai->fi_list[i].original_length != 0 )
+        return ai->fi_list[i].original_length;
+
+    int type = ai->fi_list[i].compression_type;
+    if ( type == NO_COMPRESSION )
+        type = getRegisteredCompressionType( file_name );
+    if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION ) {
+        ai->fi_list[i].original_length = getDecompressedFileLength( type, ai->file_handle, ai->fi_list[i].offset );
     }
     
     return ai->fi_list[i].original_length;

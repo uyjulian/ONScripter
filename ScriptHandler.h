@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -116,7 +116,7 @@ public:
     void skipToken();
 
     // function for string access
-    char *getStringBuffer(){ return string_buffer; };
+    inline char *getStringBuffer(){ return string_buffer; };
     char *saveStringBuffer();
     void addStringBuffer( char ch );
     void pushStringBuffer(int offset); // used in textgosub and pretextgosub

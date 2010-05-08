@@ -43,6 +43,11 @@
 #endif
 #define RGBMASK 0x00ffffff
 
+#if !defined(BPP16)
+static bool is_inv_alpha_lut_initialized = false;
+static Uint32 inv_alpha_lut[256];
+#endif
+
 AnimationInfo::AnimationInfo()
 {
     is_copy = false;
@@ -58,6 +63,15 @@ AnimationInfo::AnimationInfo()
 
     trans_mode = TRANS_TOPLEFT;
     affine_flag = false;
+
+#if !defined(BPP16)
+    if (!is_inv_alpha_lut_initialized){
+        inv_alpha_lut[0] = 255;
+        for (int i=1; i<255; i++)
+            inv_alpha_lut[i] = (Uint32)(0xffff / i);
+        is_inv_alpha_lut_initialized = true;
+    }
+#endif
 
     reset();
 }
@@ -361,9 +375,10 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
         // calculate the start and end point for each raster scan
         int raster_min = min_xy[0], raster_max = max_xy[0];
         for (i=0 ; i<4 ; i++){
-            if (corner_xy[i][1] == corner_xy[(i+1)%4][1]) continue;
-            x = (corner_xy[(i+1)%4][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[(i+1)%4][1] - corner_xy[i][1]) + corner_xy[i][0];
-            if (corner_xy[(i+1)%4][1] - corner_xy[i][1] > 0){
+            int i2 = (i+1)&3; // = (i+1)%4
+            if (corner_xy[i][1] == corner_xy[i2][1]) continue;
+            x = (corner_xy[i2][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
+            if (corner_xy[i2][1] - corner_xy[i][1] > 0){
                 if (raster_min > x) raster_min = x;
             }
             else{
@@ -422,19 +437,33 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 #define BLEND_TEXT_ALPHA()\
 {\
     Uint32 mask2 = *src_buffer;                                         \
-    if (mask2 != 0){                                                    \
+    if (mask2 == 255){													\
+    	*dst_buffer = src_color3;										\
+    }																	\
+    else if (mask2 != 0){                                               \
         Uint32 alpha = *dst_buffer >> 24;                               \
         Uint32 mask1 = ((0xff ^ mask2)*alpha) >> 8;                     \
-        alpha = 0xff ^ ((0xff ^ alpha)*(0xff ^ mask2) >> 8);            \
-        Uint32 mask_rb =  ((*dst_buffer & 0xff00ff) * mask1 +           \
-                           src_color1 * mask2);                         \
-        mask_rb = ((mask_rb / alpha) & 0x00ff0000) |                    \
-            (((mask_rb & 0xffff) / alpha) & 0xff);                      \
-        Uint32 mask_g  = (((*dst_buffer & 0x00ff00) * mask1 +           \
-                           src_color2 * mask2) / alpha) & 0x00ff00;     \
-        *dst_buffer = mask_rb | mask_g | (alpha << 24);                 \
+       	alpha = inv_alpha_lut[ mask1+mask2 ];                           \
+        Uint32 mask_rb = ((*dst_buffer & 0xff00ff) * mask1 +            \
+                          src_color1 * mask2);                          \
+        mask_rb = (((mask_rb >> 16) * alpha) & 0x00ff0000) |            \
+                  (((mask_rb & 0xffff) * alpha >> 16) & 0xff);          \
+        Uint32 mask_g = (((*dst_buffer & 0x00ff00) * mask1 +            \
+                         src_color2 * mask2) * alpha >> 16) & 0x00ff00; \
+        *dst_buffer = mask_rb | mask_g | ((mask1+mask2) << 24);         \
     }                                                                   \
 }
+// Originally, the above looks like this.
+//        Uint32 alpha = *dst_buffer >> 24;                             
+//        Uint32 mask1 = ((0xff ^ mask2)*alpha) >> 8;                     
+//        alpha = 0xff ^ ((0xff ^ alpha)*(0xff ^ mask2) >> 8);            
+//        Uint32 mask_rb =  ((*dst_buffer & 0xff00ff) * mask1 +           
+//                           src_color1 * mask2);                         
+//        mask_rb = ((mask_rb / alpha) & 0x00ff0000) |                    
+//            (((mask_rb & 0xffff) / alpha) & 0xff);                      
+//        Uint32 mask_g  = (((*dst_buffer & 0x00ff00) * mask1 +           
+//                           src_color2 * mask2) / alpha) & 0x00ff00;     
+//        *dst_buffer = mask_rb | mask_g | (alpha << 24);                 
 #endif
 
 // used to draw characters on text_surface
@@ -485,6 +514,7 @@ void AnimationInfo::blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_C
     int total_width = image_surface->pitch / 4;
     Uint32 src_color1 = color.r << 16 | color.b;
     Uint32 src_color2 = color.g << 8;
+    Uint32 src_color3 = src_color1 | src_color2 | 0xff000000;
 #endif    
 
     ONSBuf *dst_buffer = (ONSBuf *)image_surface->pixels + total_width * dst_rect.y + image_surface->w*current_cell/num_of_cells + dst_rect.x;

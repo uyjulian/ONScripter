@@ -321,7 +321,6 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
         else{
             fseek( fp, 0, SEEK_END );
             *length = ftell( fp );
-            fseek( fp, 0, SEEK_SET );
         }
     }
             
@@ -349,6 +348,7 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer, int 
         if      ( compression_type & NBZ_COMPRESSION ) return decodeNBZ( fp, 0, buffer );
         else if ( compression_type & SPB_COMPRESSION ) return decodeSPB( fp, 0, buffer );
 
+        fseek( fp, 0, SEEK_SET );
         total = len;
         while( len > 0 ){
             if ( len > READ_LENGTH ) c = READ_LENGTH;
@@ -621,9 +621,7 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
 
 size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offset )
 {
-    fpos_t pos;
     size_t length=0;
-    fgetpos( fp, &pos );
     fseek( fp, offset, SEEK_SET );
     
     if ( type == NBZ_COMPRESSION ){
@@ -636,7 +634,6 @@ size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offse
             
         length = (width * 3 +width_pad) * height + 54;
     }
-    fsetpos( fp, &pos );
 
     return length;
 }

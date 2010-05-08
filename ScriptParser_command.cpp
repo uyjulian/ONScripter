@@ -405,9 +405,7 @@ int ScriptParser::nsadirCommand()
 
     const char *buf = script_h.readStr();
     
-    if ( strlen(nsa_path) > 0 ){
-        delete[] nsa_path;
-    }
+    if ( nsa_path ) delete[] nsa_path;
     nsa_path = new char[ strlen(buf) + 2 ];
     sprintf( nsa_path, RELATIVEPATH "%s%c", buf, DELIMITER );
 
@@ -419,14 +417,14 @@ int ScriptParser::nsaCommand()
     int archive_type = NsaReader::ARCHIVE_TYPE_NSA;
     
     if ( script_h.isName("ns2") ){
-        archive_type = NsaReader::ARCHIVE_TYPE_NS2;
+        nsa_offset = 1;
     }
     else if ( script_h.isName("ns3") ){
-        archive_type = NsaReader::ARCHIVE_TYPE_NS3;
+        nsa_offset = 2;
     }
     
     delete script_h.cBR;
-    script_h.cBR = new NsaReader( archive_path, key_table );
+    script_h.cBR = new NsaReader( nsa_offset, archive_path, key_table );
     if ( script_h.cBR->open( nsa_path, archive_type ) ){
         fprintf( stderr, " *** failed to open Nsa archive, ignored.  ***\n");
     }

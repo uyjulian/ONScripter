@@ -2,7 +2,7 @@
  * 
  *  nsaconv.cpp - Images in NSA archive are re-scaled to 320x240 size
  *
- *  Copyright (c) 2001-2006 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -52,6 +52,7 @@ void help()
 int main( int argc, char **argv )
 {
     NsaReader cSR;
+    int nsa_offset = 0;
     unsigned long length, offset = 0, buffer_length = 0;
     unsigned char *buffer = NULL, *rescaled_buffer = NULL;
     unsigned int i, count;
@@ -66,8 +67,8 @@ int main( int argc, char **argv )
     while (argc > 4){
         if      ( !strcmp( argv[0], "-e" ) )    enhanced_flag = true;
         else if ( !strcmp( argv[0], "-j" ) )    bmp2jpeg_flag = true;
-        else if ( !strcmp( argv[0], "-ns2" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS2;
-        else if ( !strcmp( argv[0], "-ns3" ) )  archive_type = BaseReader::ARCHIVE_TYPE_NS3;
+        else if ( !strcmp( argv[0], "-ns2" ) )  nsa_offset = 1;
+        else if ( !strcmp( argv[0], "-ns3" ) )  nsa_offset = 2;
         else if ( !strcmp( argv[0], "-q" ) ){
             argc--;
             argv++;
@@ -88,7 +89,7 @@ int main( int argc, char **argv )
         fprintf( stderr, "can't open file %s for writing.\n", argv[3] );
         exit(-1);
     }
-    cSR.openForConvert( argv[2], archive_type );
+    cSR.openForConvert( argv[2], archive_type, nsa_offset );
     count = cSR.getNumFiles();
 
     SarReader::FileInfo sFI;
@@ -135,7 +136,7 @@ int main( int argc, char **argv )
         
         offset += sFI.length;
     }
-    cSR.writeHeader( fp, archive_type );
+    cSR.writeHeader( fp, archive_type, nsa_offset );
 
     fclose(fp);
 

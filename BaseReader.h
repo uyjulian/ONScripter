@@ -2,7 +2,7 @@
  *
  *  BaseReader.h - Base class of archive reader
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -59,8 +59,7 @@ struct BaseReader
         ARCHIVE_TYPE_NONE = 0,
         ARCHIVE_TYPE_SAR  = 1,
         ARCHIVE_TYPE_NSA  = 2,
-        ARCHIVE_TYPE_NS2  = 3,
-        ARCHIVE_TYPE_NS3  = 4
+        ARCHIVE_TYPE_NS2  = 3   //new format since NScr2.91, uses ext ".ns2"
     };
 
     struct FileInfo{
@@ -89,6 +88,12 @@ struct BaseReader
             fi_list = NULL;
             num_of_files = 0;
             name_buffer = NULL;
+        }
+        ~ArchiveInfo(){
+            if (file_handle) fclose( file_handle );
+            if (file_name)   delete[] file_name;
+            if (fi_list)     delete[] fi_list;
+            if (name_buffer) delete[] name_buffer;
         }
     };
 

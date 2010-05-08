@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -61,27 +61,17 @@ int SarReader::open( char *name, int archive_type )
     return 0;
 }
 
-void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type )
+void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int nsa_offset )
 {
-    unsigned int i=0;
-    
     /* Read header */
-    if ( archive_type == ARCHIVE_TYPE_NS2 ){
-        i = readChar( ai->file_handle ); // FIXME: for what ?
-    }
-    if ( archive_type == ARCHIVE_TYPE_NS3 ){
-        i = readChar( ai->file_handle ); // FIXME: for what ?
-        i = readChar( ai->file_handle ); // FIXME: for what ?
-    }
+    for (int i=0; i<nsa_offset; i++)
+        readChar( ai->file_handle ); // for commands "ns2" and "ns3"
+
     ai->num_of_files = readShort( ai->file_handle );
     ai->fi_list = new struct FileInfo[ ai->num_of_files ];
     
     ai->base_offset = readLong( ai->file_handle );
-    if ( archive_type == ARCHIVE_TYPE_NS2 )
-        ai->base_offset++;
-    if ( archive_type == ARCHIVE_TYPE_NS3 )
-        ai->base_offset += 2;
-    
+    ai->base_offset += nsa_offset;
     
     fpos_t pos;
     fgetpos(ai->file_handle, &pos);
@@ -137,30 +127,24 @@ int SarReader::readArchiveSub( struct ArchiveInfo *ai, int archive_type, bool ch
 
         if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ||
              ai->fi_list[i].compression_type == SPB_COMPRESSION ){
-            ai->fi_list[i].original_length = getDecompressedFileLength( ai->fi_list[i].compression_type, ai->file_handle, ai->fi_list[i].offset );
+            // Delaying checking decompressed file length to prevent
+            // massive random access in the archives at the start-up.
+            ai->fi_list[i].original_length = 0;
         }
     }
     
     return name_buffer_pos;
 }
 
-int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type )
+int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type, int nsa_offset )
 {
     unsigned int i, j;
 
     fseek( fp, 0L, SEEK_SET );
-    if ( archive_type == ARCHIVE_TYPE_NS2 ) fputc( 0, fp );
-    if ( archive_type == ARCHIVE_TYPE_NS3 ){
+    for (int k=0 ; k<nsa_offset ; k++)
         fputc( 0, fp );
-        fputc( 0, fp );
-    }
     writeShort( fp, ai->num_of_files  );
-    if ( archive_type == ARCHIVE_TYPE_NS2 )
-        writeLong( fp, ai->base_offset-1 );
-    else if ( archive_type == ARCHIVE_TYPE_NS3 )
-        writeLong( fp, ai->base_offset-2 );
-    else
-        writeLong( fp, ai->base_offset );
+    writeLong( fp, ai->base_offset-nsa_offset );
     
     for ( i=0 ; i<ai->num_of_files ; i++ ){
 
@@ -239,12 +223,6 @@ int SarReader::close()
     ArchiveInfo *info = archive_info.next;
     
     for ( int i=0 ; i<num_of_sar_archives ; i++ ){
-        if ( info->file_handle ){
-            fclose( info->file_handle );
-            delete[] info->file_name;
-            delete[] info->fi_list;
-            delete[] info->name_buffer;
-        }
         last_archive_info = info;
         info = info->next;
         delete last_archive_info;
@@ -303,10 +281,14 @@ size_t SarReader::getFileLength( const char *file_name )
     }
     if ( !info ) return 0;
     
-    if ( info->fi_list[j].compression_type == NO_COMPRESSION ){
-        int type = getRegisteredCompressionType( file_name );
-        if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION )
-            return getDecompressedFileLength( type, info->file_handle, info->fi_list[j].offset );
+    if ( info->fi_list[j].original_length != 0 )
+        return info->fi_list[j].original_length;
+
+    int type = info->fi_list[j].compression_type;
+    if ( type == NO_COMPRESSION )
+        type = getRegisteredCompressionType( file_name );
+    if ( type == NBZ_COMPRESSION || type == SPB_COMPRESSION ) {
+        info->fi_list[j].original_length = getDecompressedFileLength( type, info->file_handle, info->fi_list[j].offset );
     }
     
     return info->fi_list[j].original_length;

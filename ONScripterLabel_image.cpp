@@ -313,7 +313,10 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
 #define BLEND_PIXEL_TEXT()\
 {\
     Uint32 mask2 = *src_buffer;                                     \
-    if (mask2 != 0){                                                \
+    if (mask2 == 255){\
+    	*dst_buffer = src_color3;\
+    }\
+    else if (mask2 != 0){                                           \
         Uint32 mask1   = mask2 ^ 0xff;                              \
         Uint32 mask_rb = (((*dst_buffer & 0xff00ff) * mask1 +       \
                            src_color1 * mask2) >> 8) & 0xff00ff;    \
@@ -363,6 +366,7 @@ void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rec
 #else
     Uint32 src_color1 = color.r << 16 | color.b;
     Uint32 src_color2 = color.g << 8;
+    Uint32 src_color3 = src_color1 | src_color2;
 #endif    
 
     ONSBuf *dst_buffer = (AnimationInfo::ONSBuf *)dst_surface->pixels + dst_surface->w * dst_rect.y + dst_rect.x;

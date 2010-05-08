@@ -1,8 +1,8 @@
 /* -*- C++ -*-
  *
- *  SarReader.cpp - Reader from a SAR archive
+ *  SarReader.h - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -49,12 +49,12 @@ protected:
     struct ArchiveInfo *root_archive_info, *last_archive_info;
     int num_of_sar_archives;
 
-    void readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR );
+    void readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR, int nsa_offset=0 );
     int readArchiveSub( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR, bool check_size = true );
     int getIndexFromFile( ArchiveInfo *ai, const char *file_name );
     size_t getFileSub( ArchiveInfo *ai, const char *file_name, unsigned char *buf );
 
-    int writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type = ARCHIVE_TYPE_SAR );
+    int writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type = ARCHIVE_TYPE_SAR, int nsa_offset=0 );
     size_t putFileSub( ArchiveInfo *ai, FILE *fp, int no, size_t offset, size_t length, size_t original_length, int compression_type, bool modified_flag, unsigned char *buffer );
 };
 

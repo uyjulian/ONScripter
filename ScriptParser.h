@@ -2,7 +2,7 @@
  * 
  *  ScriptParser.h - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -243,6 +243,7 @@ protected:
 
     char *archive_path;
     char *nsa_path;
+    int nsa_offset;
     bool globalon_flag;
     bool labellog_flag;
     bool filelog_flag;
