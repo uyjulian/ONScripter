@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -35,7 +35,7 @@ extern "C" void waveCallback( int channel );
 
 typedef int (ONScripterLabel::*FuncList)();
 static struct FuncLUT{
-    char command[40];
+    char command[30];
     FuncList method;
 } func_lut[] = {
     {"wavestop",   &ONScripterLabel::wavestopCommand},
@@ -241,6 +241,11 @@ static struct FuncLUT{
     {"", NULL}
 };
 
+static struct FuncHash{
+    int start;
+    int end;
+} func_hash['z'-'a'+1];
+
 static void SDL_Quit_Wrapper()
 {
     SDL_Quit();
@@ -412,6 +417,18 @@ ONScripterLabel::ONScripterLabel()
     music_cmd = getenv("PLAYER_CMD");
     midi_cmd  = getenv("MUSIC_CMD");
 #endif
+
+    for (i='z'-'a' ; i>=0 ; i--){
+        func_hash[i].start = -1;
+        func_hash[i].end = -2;
+    }
+    int idx = 0;
+    while (func_lut[idx].method){
+        int j = func_lut[idx].command[0]-'a';
+        if (func_hash[j].start == -1) func_hash[j].start = idx;
+        func_hash[j].end = idx;
+        idx++;
+    }
 }
 
 ONScripterLabel::~ONScripterLabel()
@@ -927,11 +944,13 @@ int ONScripterLabel::parseLine( )
     }
 
     if ( !script_h.isText() ){
-        while( func_lut[ lut_counter ].method ){
-            if ( !strcmp( func_lut[ lut_counter ].command, cmd ) ){
-                return (this->*func_lut[ lut_counter ].method)();
+        if (cmd[0] >= 'a' && cmd[0] <= 'z'){
+            FuncHash &fh = func_hash[cmd[0]-'a'];
+            for (int i=fh.start ; i<=fh.end ; i++){
+                if ( !strcmp( func_lut[i].command, cmd ) ){
+                    return (this->*func_lut[i].method)();
+                }
             }
-            lut_counter++;
         }
 
         if ( s_buf[0] == 0x0a )

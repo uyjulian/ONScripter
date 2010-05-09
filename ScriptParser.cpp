@@ -38,7 +38,7 @@
 
 typedef int (ScriptParser::*FuncList)();
 static struct FuncLUT{
-    char command[40];
+    char command[30];
     FuncList method;
 } func_lut[] = {
     {"zenkakko", &ScriptParser::zenkakkoCommand},
@@ -149,6 +149,11 @@ static struct FuncLUT{
     {"", NULL}
 };
 
+static struct FuncHash{
+    int start;
+    int end;
+} func_hash['z'-'a'+1];
+
 ScriptParser::ScriptParser()
 {
     debug_level = 0;
@@ -172,7 +177,7 @@ ScriptParser::ScriptParser()
     save_data_len = 0;
 
     page_list = NULL;
-    
+
     /* ---------------------------------------- */
     /* Sound related variables */
     int i;
@@ -182,6 +187,18 @@ ScriptParser::ScriptParser()
             selectvoice_file_name[i] = NULL;
     for ( i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
         menuselectvoice_file_name[i] = NULL;
+
+    for (i='z'-'a' ; i>=0 ; i--){
+        func_hash[i].start = -1;
+        func_hash[i].end = -2;
+    }
+    int idx = 0;
+    while (func_lut[idx].method){
+        int j = func_lut[idx].command[0]-'a';
+        if (func_hash[j].start == -1) func_hash[j].start = idx;
+        func_hash[j].end = idx;
+        idx++;
+    }
 }
 
 ScriptParser::~ScriptParser()
@@ -199,14 +216,18 @@ ScriptParser::~ScriptParser()
 
 void ScriptParser::reset()
 {
-    UserFuncLUT *func = root_user_func.next;
-    while(func){
-        UserFuncLUT *tmp = func;
-        func = func->next;
-        delete tmp;
+    int i;
+    for (i='z'-'a' ; i>=0 ; i--){
+        UserFuncHash &ufh = user_func_hash[i];
+        UserFuncLUT *func = ufh.root.next;
+        while(func){
+            UserFuncLUT *tmp = func;
+            func = func->next;
+            delete tmp;
+        }
+        ufh.root.next = NULL;
+        ufh.last = &ufh.root;
     }
-    root_user_func.next = NULL;
-    last_user_func = &root_user_func;
 
     // reset misc variables
     if ( nsa_path ){
@@ -288,7 +309,6 @@ void ScriptParser::reset()
     
     /* ---------------------------------------- */
     /* Sound related variables */
-    int i;
     for ( i=0 ; i<     CLICKVOICE_NUM ; i++ )
         setStr(&clickvoice_file_name[i], NULL);
     for ( i=0 ; i<    SELECTVOICE_NUM ; i++ )
@@ -416,33 +436,37 @@ int ScriptParser::parseLine()
     else if ( script_h.isText() ) return RET_NOMATCH;
 
     if (cmd[string_buffer_offset] != '_'){
-        UserFuncLUT *uf = root_user_func.next;
-        while(uf){
-            if (!strcmp( uf->command, cmd )){
-                if (uf->lua_flag){
+        if (cmd[0] >= 'a' && cmd[0] <= 'z'){
+            UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
+            UserFuncLUT *uf = ufh.root.next;
+            while(uf){
+                if (!strcmp( uf->command, cmd )){
+                    if (uf->lua_flag){
 #ifdef USE_LUA
-                    if (lua_handler.callFunction(false, cmd))
-                        errorAndExit( lua_handler.error_str );
+                        if (lua_handler.callFunction(false, cmd))
+                            errorAndExit( lua_handler.error_str );
 #endif
+                    }
+                    else{
+                        gosubReal( cmd, script_h.getNext() );
+                    }
+                    return RET_CONTINUE;
                 }
-                else{
-                    gosubReal( cmd, script_h.getNext() );
-                }
-                return RET_CONTINUE;
+                uf = uf->next;
             }
-            uf = uf->next;
         }
     }
     else{
         cmd++;
     }
 
-    int lut_counter = 0;
-    while( func_lut[ lut_counter ].method ){
-        if ( !strcmp( func_lut[ lut_counter ].command, cmd ) ){
-            return (this->*func_lut[ lut_counter ].method)();
+    if (cmd[0] >= 'a' && cmd[0] <= 'z'){
+        FuncHash &fh = func_hash[cmd[0]-'a'];
+        for (int i=fh.start ; i<=fh.end ; i++){
+            if ( !strcmp( func_lut[i].command, cmd ) ){
+                return (this->*func_lut[i].method)();
+            }
         }
-        lut_counter++;
     }
 
     return RET_NOMATCH;

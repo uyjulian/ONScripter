@@ -621,10 +621,15 @@ int ScriptParser::maxkaisoupageCommand()
 
 int ScriptParser::luasubCommand()
 {
-    last_user_func->next = new UserFuncLUT();
-    last_user_func = last_user_func->next;
-    last_user_func->lua_flag = true;
-    setStr( &last_user_func->command, script_h.readLabel() );
+    const char *cmd = script_h.readLabel();
+
+    if (cmd[0] >= 'a' && cmd[0] <= 'z'){
+        UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
+        ufh.last->next = new UserFuncLUT();
+        ufh.last = ufh.last->next;
+        ufh.last->lua_flag = true;
+        setStr( &ufh.last->command, cmd );
+    }
     
     return RET_CONTINUE;
 }
@@ -1106,9 +1111,14 @@ int ScriptParser::defvoicevolCommand()
 
 int ScriptParser::defsubCommand()
 {
-    last_user_func->next = new UserFuncLUT();
-    setStr( &last_user_func->next->command, script_h.readLabel() );
-    last_user_func = last_user_func->next;
+    const char *cmd = script_h.readLabel();
+
+    if (cmd[0] >= 'a' && cmd[0] <= 'z'){
+        UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
+        ufh.last->next = new UserFuncLUT();
+        ufh.last = ufh.last->next;
+        setStr( &ufh.last->command, cmd );
+    }
     
     return RET_CONTINUE;
 }

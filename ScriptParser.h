@@ -195,7 +195,12 @@ protected:
         ~UserFuncLUT(){
             if (command) delete[] command;
         };
-    } root_user_func, *last_user_func;
+    };
+
+    struct UserFuncHash{
+        UserFuncLUT root;
+        UserFuncLUT *last;
+    } user_func_hash['z'-'a'+1];
 
     struct NestInfo{
         enum { LABEL = 0,
