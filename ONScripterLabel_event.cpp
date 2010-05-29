@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -108,6 +108,12 @@ extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 
 SDLKey transKey(SDLKey key)
 {
+#if defined(ANDROID) 
+    switch(key){
+      case SDLK_HOME:   key = SDLK_ESCAPE;  break; /* Home                   */
+      default: break;
+    }
+#endif 
 #if defined(IPODLINUX)
  	switch(key){
       case SDLK_m:      key = SDLK_UP;      break; /* Menu                   */

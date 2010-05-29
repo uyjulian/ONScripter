@@ -701,7 +701,7 @@ private:
     unsigned char *resize_buffer;
     size_t resize_buffer_size;
 
-    SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL);
+    SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL, int *location=NULL);
     SDL_Surface *createRectangleSurface(char *filename);
     SDL_Surface *createSurfaceFromFile(char *filename, int *location);
 

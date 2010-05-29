@@ -24,17 +24,17 @@
 #include "ONScripterLabel.h"
 #include "resize_image.h"
 
-SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha)
+SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *location)
 {
     if (!filename) return NULL;
 
     SDL_Surface *tmp = NULL;
-    int location = BaseReader::ARCHIVE_TYPE_NONE;
+    if (location) *location = BaseReader::ARCHIVE_TYPE_NONE;
 
     if (filename[0] == '>')
         tmp = createRectangleSurface(filename);
     else
-        tmp = createSurfaceFromFile(filename, &location);
+        tmp = createSurfaceFromFile(filename, location);
     if (tmp == NULL) return NULL;
 
     if (has_alpha){
@@ -45,25 +45,8 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha)
     }
     
     SDL_Surface *ret = SDL_ConvertSurface(tmp, image_surface->format, SDL_SWSURFACE);
-    if (ret &&
-        screen_ratio2 != screen_ratio1 &&
-        (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE))
-    {
-        SDL_Surface *src_s = ret;
-
-        int w, h;
-        if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
-        if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
-        SDL_PixelFormat *fmt = image_surface->format;
-        ret = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
-                                    fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
-        
-        resizeSurface(src_s, ret);
-        SDL_FreeSurface(src_s);
-    }
-
     SDL_FreeSurface(tmp);
-
+    
     return ret;
 }
 

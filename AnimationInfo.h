@@ -123,7 +123,8 @@ public:
     void allocImage( int w, int h );
     void copySurface( SDL_Surface *surface, SDL_Rect *src_rect, SDL_Rect *dst_rect = NULL );
     void fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a );
-    void setupImage( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha );
+    SDL_Surface *setupImageAlpha( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha );
+    void setImage( SDL_Surface *surface );
 };
 
 #endif // __ANIMATION_INFO_H__

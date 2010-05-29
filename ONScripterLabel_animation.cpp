@@ -2,7 +2,7 @@
  * 
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -204,15 +204,34 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     }
     else{
         bool has_alpha;
-        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha );
+        int location;
+        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha, &location );
 
         SDL_Surface *surface_m = NULL;
         if (anim->trans_mode == AnimationInfo::TRANS_MASK)
             surface_m = loadImage( anim->mask_file_name );
         
-        anim->setupImage(surface, surface_m, has_alpha);
+        surface = anim->setupImageAlpha(surface, surface_m, has_alpha);
 
-        if ( surface ) SDL_FreeSurface(surface);
+        if (surface &&
+            screen_ratio2 != screen_ratio1 &&
+            (!disable_rescale_flag || location == BaseReader::ARCHIVE_TYPE_NONE))
+        {
+            SDL_Surface *src_s = surface;
+
+            int w, h;
+            if ( (w = src_s->w * screen_ratio1 / screen_ratio2) == 0 ) w = 1;
+            if ( (h = src_s->h * screen_ratio1 / screen_ratio2) == 0 ) h = 1;
+            SDL_PixelFormat *fmt = image_surface->format;
+            surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h,
+                                            fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );
+        
+            resizeSurface(src_s, surface);
+            SDL_FreeSurface(src_s);
+        }
+
+        anim->setImage( surface );
+
         if ( surface_m ) SDL_FreeSurface(surface_m);
     }
 }
