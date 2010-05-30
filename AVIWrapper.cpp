@@ -2,7 +2,7 @@
  * 
  *  AVIWrapper.cpp - avifile library wrapper class to play AVI video & audio stream
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -145,9 +145,9 @@ void AVIWrapper::audioCallback( void *userdata, Uint8 *stream, int len )
     if ( len == 0 )
         status = AVI_STOP;
 
-    uint_t ocnt;
-    uint_t samples;
-    uint_t count = 0;
+    size_t ocnt;
+    size_t samples;
+    size_t count = 0;
 
     if ( remaining_count > 0 ){
         if ( remaining_count <= len ){
@@ -166,7 +166,7 @@ void AVIWrapper::audioCallback( void *userdata, Uint8 *stream, int len )
     }
         
     while ( len > 0 && !a_stream->Eof() ){
-        a_stream->ReadFrames( remaining_buffer, len, len, samples, ocnt );
+        a_stream->ReadFrames( remaining_buffer, (size_t)len, (size_t)len, samples, ocnt );
         if ( ocnt <= len ){
             memcpy( stream+count, remaining_buffer, ocnt );
             len -= ocnt;
