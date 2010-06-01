@@ -125,6 +125,9 @@ int main( int argc, char **argv )
     ons.setArchivePath(currentDir);
     ons.disableRescale();
     ons.enableButtonShortCut();
+#elif defined(ANDROID) 
+    ons.setArchivePath("/sdcard/ons");
+    ons.enableButtonShortCut();
 #endif
 
     // ----------------------------------------

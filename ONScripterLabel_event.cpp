@@ -108,12 +108,6 @@ extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 
 SDLKey transKey(SDLKey key)
 {
-#if defined(ANDROID) 
-    switch(key){
-      case SDLK_HOME:   key = SDLK_ESCAPE;  break; /* Home                   */
-      default: break;
-    }
-#endif 
 #if defined(IPODLINUX)
  	switch(key){
       case SDLK_m:      key = SDLK_UP;      break; /* Menu                   */

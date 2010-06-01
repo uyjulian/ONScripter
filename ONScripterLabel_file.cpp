@@ -57,7 +57,8 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
         save_file_info.valid = false;
         return;
     }
-    tm = localtime( &buf.st_mtime );
+    time_t mtime = buf.st_mtime;
+    tm = localtime( &mtime );
         
     save_file_info.month  = tm->tm_mon + 1;
     save_file_info.day    = tm->tm_mday;
