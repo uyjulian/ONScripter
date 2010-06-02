@@ -10,7 +10,7 @@ ONScripter
 	libjpeg 6b, bzip2-1.0.5, SDL-1.2.14, SDL_image-1.2.10, SDL_mixer-1.2.8, SDL_ttf-2.0.9, 及び SMPEG-0.4.5 が動作する環境です。
 	Linux 2.6.32 + Xvnc4 + g++ (gcc 4.4.4) で開発しています。
 	Linux, Windows Vista (Visual Studio 2008 C++), Android (Emulator), Zaurus (SL-5500,SL-C700)上で動作確認をしています。
-	その他、MacOS X, MacOS 9, FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/Warp, iPod, iPhone, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast 上での動作報告をいただいています。
+	その他、MacOS X, MacOS 9, Android(Nexus One (2.2), HTC Desire (2.1)), iPhone, PSP, FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast 上での動作報告をいただいています。
 
 
 2. コンパイル・起動方法
@@ -31,10 +31,6 @@ ONScripter
 	MacOS X の場合
 	$ make -f Makefile.MacOSX
 	$ onscripter
-
-	Android の場合
-	$ make -f Makefile.Android
-	$ onscripter_android
 
 	Zaurus (SL-5500, SL-A300, SL-B500, SL-C700) の場合
 	別のマシン(Linux 等)上でクロスコンパイル

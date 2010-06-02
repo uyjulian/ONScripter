@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *

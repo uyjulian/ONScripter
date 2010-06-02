@@ -99,6 +99,8 @@ void optionVersion()
 int SDL_main( int argc, char **argv )
 #elif defined(PSP)
 extern "C" int main( int argc, char **argv )
+#elif defined(ANDROID)
+extern "C" int main_android( int argc, char **argv )
 #else
 int main( int argc, char **argv )
 #endif
