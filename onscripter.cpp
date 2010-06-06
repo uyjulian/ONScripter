@@ -95,12 +95,10 @@ void optionVersion()
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }
-#if defined(QWS)
+#if defined(QWS) || defined(ANDROID)
 int SDL_main( int argc, char **argv )
 #elif defined(PSP)
 extern "C" int main( int argc, char **argv )
-#elif defined(ANDROID)
-extern "C" int main_android( int argc, char **argv )
 #else
 int main( int argc, char **argv )
 #endif
@@ -128,7 +126,6 @@ int main( int argc, char **argv )
     ons.disableRescale();
     ons.enableButtonShortCut();
 #elif defined(ANDROID) 
-    ons.setArchivePath("/sdcard/ons");
     ons.enableButtonShortCut();
 #endif
 
