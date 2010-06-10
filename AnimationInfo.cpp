@@ -812,7 +812,7 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
                 *alphap = *buffer >> 24;
         }
     }
-    else { // TRANS_COPY
+    else if ( trans_mode != TRANS_ALPHA ){ // TRANS_COPY
         for (i=0 ; i<h ; i++){
             for (j=w ; j!=0 ; j--, buffer++, alphap+=4)
                 *alphap = 0xff;

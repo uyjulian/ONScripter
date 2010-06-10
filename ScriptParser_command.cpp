@@ -784,15 +784,12 @@ int ScriptParser::ifCommand()
 {
     //printf("ifCommand\n");
     int condition_status = 0; // 0 ... none, 1 ... and, 2 ... or
-    bool condition_flag = false;
-    bool if_flag, f = false;
+    bool f = false, condition_flag = false;
     char *op_buf;
     const char *buf;
 
-    if ( script_h.isName( "notif" ) )
-        if_flag = false;
-    else
-        if_flag = true;
+    bool if_flag = true;
+    if ( script_h.isName( "notif" ) ) if_flag = false;
 
     while(1){
         if (script_h.compareString("fchk")){
@@ -871,6 +868,7 @@ int ScriptParser::ifCommand()
             }
         }
         
+        f = if_flag ? f : !f;
         condition_flag |= f;
         op_buf = script_h.getNext();
         if ( op_buf[0] == '|' ){
@@ -881,8 +879,8 @@ int ScriptParser::ifCommand()
             continue;
         }
 
-        if (condition_status == 2 && !((if_flag)?(condition_flag):(!condition_flag)) || 
-            condition_status != 2 && !((if_flag)?(f):(!f))) 
+        if (condition_status == 2 && !condition_flag || 
+            condition_status != 2 && !f)
             return RET_SKIP_LINE;
 
         if ( op_buf[0] == '&' ){
