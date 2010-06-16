@@ -1305,7 +1305,6 @@ int ONScripterLabel::menu_windowCommand()
     if ( fullscreen_mode ){
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
-            SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
@@ -1322,7 +1321,6 @@ int ONScripterLabel::menu_fullCommand()
     if ( !fullscreen_mode ){
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
-            SDL_FreeSurface(screen_surface);
             screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );

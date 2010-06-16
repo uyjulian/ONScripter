@@ -1095,8 +1095,13 @@ void ONScripterLabel::runEventLoop()
           case SDL_ACTIVEEVENT:
             if ( !event.active.gain ) break;
           case SDL_VIDEOEXPOSE:
-              SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
-              break;
+#ifdef ANDROID
+            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+            repaintCommand();
+#else
+            SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
+#endif
+            break;
 
           case SDL_QUIT:
             endCommand();
