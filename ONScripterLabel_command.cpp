@@ -1305,7 +1305,7 @@ int ONScripterLabel::menu_windowCommand()
     if ( fullscreen_mode ){
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
-            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+            screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
         }
@@ -1321,7 +1321,7 @@ int ONScripterLabel::menu_fullCommand()
     if ( !fullscreen_mode ){
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
-            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+            screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
             SDL_Rect rect = {0, 0, screen_width, screen_height};
             flushDirect( rect, refreshMode() );
         }
@@ -2447,7 +2447,7 @@ int ONScripterLabel::drawsp3Command()
         si.inv_mat[1][1] =  si.mat[0][0] * 1000 / denom;
     }
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = {0, 0, screen_width, screen_height};
     si.blendOnSurface2( accumulation_surface, x, y, clip, alpha );
     si.setCell(old_cell_no);
 
@@ -2469,7 +2469,7 @@ int ONScripterLabel::drawsp2Command()
     si.calcAffineMatrix();
     si.setCell(cell_no);
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = {0, 0, screen_width, screen_height};
     si.blendOnSurface2( accumulation_surface, si.pos.x, si.pos.y, clip, alpha );
 
     return RET_CONTINUE;
@@ -2529,7 +2529,7 @@ int ONScripterLabel::drawbg2Command()
     bi.rot = script_h.readInt();
     bi.calcAffineMatrix();
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = {0, 0, screen_width, screen_height};
     bi.blendOnSurface2( accumulation_surface, bi.pos.x, bi.pos.y,
                         clip, 256 );
 

@@ -315,7 +315,15 @@ void ONScripterLabel::initSDL()
     }
 #endif
 
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+#if defined(ANDROID)
+    screen_device_width  = 0;
+    screen_device_height = 0;
+#else
+    screen_device_width  = screen_width;
+    screen_device_height = screen_height;
+#endif
+
+    screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -324,7 +332,9 @@ void ONScripterLabel::initSDL()
         screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+        screen_device_width  = screen_width;
+        screen_device_height = screen_height;
+        screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
     underline_value = screen_height - 1;

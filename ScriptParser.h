@@ -282,7 +282,7 @@ protected:
     /* Global definitions */
     int screen_ratio1, screen_ratio2;
     int screen_width, screen_height;
-    int screen_texture_width, screen_texture_height;
+    int screen_device_width, screen_device_height;
     int screen_bpp;
     char *version_str;
     int underline_value;
