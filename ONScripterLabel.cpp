@@ -1071,16 +1071,16 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
         ONSBuf *buf = (ONSBuf *)surface->pixels + rect.y * surface->w + rect.x;
 
         SDL_PixelFormat *fmt = surface->format;
-        uchar3 color;
-        color[0] = current_font->window_color[0] >> fmt->Rloss;
-        color[1] = current_font->window_color[1] >> fmt->Gloss;
-        color[2] = current_font->window_color[2] >> fmt->Bloss;
-        
+        int color[3];
+        color[0] = current_font->window_color[0] + 1;
+        color[1] = current_font->window_color[1] + 1;
+        color[2] = current_font->window_color[2] + 1;
+
         for ( int i=rect.y ; i<rect.y + rect.h ; i++ ){
             for ( int j=rect.x ; j<rect.x + rect.w ; j++, buf++ ){
-                *buf = (((*buf & fmt->Rmask) >> fmt->Rshift) * color[0] >> (8-fmt->Rloss)) << fmt->Rshift |
-                    (((*buf & fmt->Gmask) >> fmt->Gshift) * color[1] >> (8-fmt->Gloss)) << fmt->Gshift |
-                    (((*buf & fmt->Bmask) >> fmt->Bshift) * color[2] >> (8-fmt->Bloss)) << fmt->Bshift;
+                *buf = (((*buf & fmt->Rmask) >> fmt->Rshift) * color[0] >> 8) << fmt->Rshift |
+                    (((*buf & fmt->Gmask) >> fmt->Gshift) * color[1] >> 8) << fmt->Gshift |
+                    (((*buf & fmt->Bmask) >> fmt->Bshift) * color[2] >> 8) << fmt->Bshift;
             }
             buf += surface->w - rect.w;
         }
