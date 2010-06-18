@@ -294,7 +294,7 @@ void ONScripterLabel::initSDL()
     screen_height  = screen_height * PDA_WIDTH / 320;
 #elif defined(PDA) && defined(PDA_AUTOSIZE)
     SDL_Rect **modes;
-    modes = SDL_ListModes(NULL, 0);
+    modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
     if (modes == (SDL_Rect **)0){
         fprintf(stderr, "No Video mode available.\n");
         exit(-1);
