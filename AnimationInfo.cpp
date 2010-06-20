@@ -348,17 +348,17 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
                    bounding_rect.y+bounding_rect.h-1};
 
     // clip bounding box
-    if (max_xy[0] < clip.x) return;
-    if (max_xy[0] >= clip.x+clip.w) max_xy[0] = clip.x+clip.w - 1;
-    if (min_xy[0] >= clip.x+clip.w) return;
-    if (min_xy[0] < clip.x) min_xy[0] = clip.x;
-    if (max_xy[1] < clip.y) return;
-    if (max_xy[1] >= clip.y+clip.h) max_xy[1] = clip.y+clip.h - 1;
-    if (min_xy[1] >= clip.y+clip.h) return;
-    if (min_xy[1] < clip.y) min_xy[1] = clip.y;
+    if (max_xy[0] <  clip.x) return;
+    if (max_xy[0] >= clip.x + clip.w) max_xy[0] = clip.x + clip.w - 1;
+    if (min_xy[0] >= clip.x + clip.w) return;
+    if (min_xy[0] <  clip.x) min_xy[0] = clip.x;
+    if (max_xy[1] <  clip.y) return;
+    if (max_xy[1] >= clip.y + clip.h) max_xy[1] = clip.y + clip.h - 1;
+    if (min_xy[1] >= clip.y + clip.h) return;
+    if (min_xy[1] <  clip.y) min_xy[1] = clip.y;
 
-    if (min_xy[1] < 0)               min_xy[1] = 0;
-    if (max_xy[1] >= dst_surface->h) max_xy[1] = dst_surface->h-1;
+    if (min_xy[1] <  0)               min_xy[1] = 0;
+    if (max_xy[1] >= dst_surface->h)  max_xy[1] = dst_surface->h - 1;
 
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( image_surface );
@@ -387,16 +387,16 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
         }
 
         if (raster_min < 0)               raster_min = 0;
-        if (raster_max >= dst_surface->w) raster_max = dst_surface->w-1;
+        if (raster_max >= dst_surface->w) raster_max = dst_surface->w - 1;
 
         ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
         // inverse-projection
-        int x_offset = (inv_mat[0][1] * (y-dst_y) >> 10) + pos.w/2;
-        int y_offset = (inv_mat[1][1] * (y-dst_y) >> 10) + pos.h/2;
+        int x_offset2 = (inv_mat[0][1] * (y-dst_y) >> 9) + pos.w;
+        int y_offset2 = (inv_mat[1][1] * (y-dst_y) >> 9) + pos.h;
         for (x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
-            int x2 = (inv_mat[0][0] * x >> 10) + x_offset;
-            int y2 = (inv_mat[1][0] * x >> 10) + y_offset;
+            int x2 = ((inv_mat[0][0] * x >> 9) + x_offset2) >> 1;
+            int y2 = ((inv_mat[1][0] * x >> 9) + y_offset2) >> 1;
 
             if (x2 < 0 || x2 >= pos.w ||
                 y2 < 0 || y2 >= pos.h) continue;
