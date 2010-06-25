@@ -39,7 +39,7 @@ CFLAGS = -g -G0 -O3 -Wall -Wpointer-arith -fno-exceptions -fno-rtti -fno-check-n
 RM = rm -f
 
 TARGET = EBOOT.PBP
-EXT_OBJS = MadWrapper$(OBJSUFFIX)
+EXT_OBJS = 
 
 
 # onscripter.elf -> EBOOT.PBP for PSP Firmware version 1.0

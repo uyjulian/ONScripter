@@ -138,7 +138,7 @@ void ONScripterLabel::executeSystemMenu()
 
     if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
         playSound(menuselectvoice_file_name[MENUSELECTVOICE_OPEN],
-                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                  SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
 
     text_info.fill( 0, 0, 0, 0 );
     flush( refreshMode() );
@@ -173,14 +173,14 @@ void ONScripterLabel::executeSystemMenu()
     if ( current_button_state.button == -1 ){
         if ( menuselectvoice_file_name[MENUSELECTVOICE_CANCEL] )
             playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL], 
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                      SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
         leaveSystemCall();
         return;
     }
     
     if ( menuselectvoice_file_name[MENUSELECTVOICE_CLICK] )
         playSound(menuselectvoice_file_name[MENUSELECTVOICE_CLICK], 
-                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                  SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
 
     link = root_rmenu_link.next;
     counter = 1;
@@ -474,13 +474,13 @@ bool ONScripterLabel::executeSystemYesNo( int caller, int file_no )
     if ( current_button_state.button == 1 ){ // yes is selected
         if ( menuselectvoice_file_name[MENUSELECTVOICE_YES] )
             playSound(menuselectvoice_file_name[MENUSELECTVOICE_YES],
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                      SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
         return true;
     }
     else{
         if ( menuselectvoice_file_name[MENUSELECTVOICE_NO] )
             playSound(menuselectvoice_file_name[MENUSELECTVOICE_NO],
-                      SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                      SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
         return false;
     }
 }

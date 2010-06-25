@@ -1130,7 +1130,7 @@ int ScriptParser::defsevolCommand()
 
 int ScriptParser::defmp3volCommand()
 {
-    music_struct.volume = script_h.readInt();
+    music_volume = script_h.readInt();
 
     return RET_CONTINUE;
 }

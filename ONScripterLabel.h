@@ -31,12 +31,6 @@
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 
-#if defined(MP3_MAD)
-#include "MadWrapper.h"
-#else
-#include <smpeg.h>
-#endif
-
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
 #define DEFAULT_BLIT_FLAG (0)
@@ -594,14 +588,12 @@ private:
     /* ---------------------------------------- */
     /* Sound related variables */
     enum{
-        SOUND_NONE          =  0,
-        SOUND_PRELOAD       =  1,
-        SOUND_WAVE          =  2,
-        SOUND_OGG           =  4,
-        SOUND_OGG_STREAMING =  8,
-        SOUND_MP3           = 16,
-        SOUND_MIDI          = 32,
-        SOUND_OTHER         = 64
+        SOUND_NONE    =  0,
+        SOUND_PRELOAD =  1,
+        SOUND_CHUNK   =  2, // WAV, Ogg Vorbis
+        SOUND_MUSIC   =  4, // WAV, MP3, Ogg Vorbis (streaming)
+        SOUND_MIDI    =  8,
+        SOUND_OTHER   = 16
     };
     int  cdrom_drive_number;
     char *default_cdrom_drive;
@@ -625,7 +617,6 @@ private:
     char *music_file_name;
     unsigned char *music_buffer; // for looped music
     long music_buffer_length;
-    SMPEG *mp3_sample;
     Mix_Music *music_info;
     char *loop_bgm_name[2];
     
@@ -637,9 +628,6 @@ private:
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
     int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
-    int playMP3();
-    int playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel);
-    int playExternalMusic(bool loop_flag);
     int playMIDI(bool loop_flag);
     
     int playMPEG(const char *filename, bool click_flag, bool loop_flag=false);
@@ -651,9 +639,6 @@ private:
     void stopBGM( bool continue_flag );
     void stopAllDWAVE();
     void playClickVoice();
-    void setupWaveHeader( unsigned char *buffer, int channels, int rate, unsigned long data_length );
-    OVInfo *openOggVorbis(unsigned char *buf, long len, int &channels, int &rate);
-    int  closeOggVorbis(OVInfo *ovi);
     
     /* ---------------------------------------- */
     /* Text event related variables */

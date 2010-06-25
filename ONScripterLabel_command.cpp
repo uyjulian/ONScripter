@@ -43,7 +43,7 @@ int ONScripterLabel::waveCommand()
     wavestopCommand();
 
     setStr(&wave_file_name, script_h.readStr());
-    playSound(wave_file_name, SOUND_WAVE|SOUND_OGG, wave_play_loop_flag, MIX_WAVE_CHANNEL);
+    playSound(wave_file_name, SOUND_CHUNK, wave_play_loop_flag, MIX_WAVE_CHANNEL);
         
     return RET_CONTINUE;
 }
@@ -104,8 +104,7 @@ int ONScripterLabel::vspCommand()
 int ONScripterLabel::voicevolCommand()
 {
     voice_volume = script_h.readInt();
-
-    if ( wave_sample[0] ) Mix_Volume( 0, se_volume * 128 / 100 );
+    if ( wave_sample[0] ) Mix_Volume( 0, voice_volume * MIX_MAX_VOLUME / 100 );
     
     return RET_CONTINUE;
 }
@@ -115,7 +114,7 @@ int ONScripterLabel::vCommand()
     char buf[256];
     
     sprintf(buf, RELATIVEPATH "wav%c%s.wav", DELIMITER, script_h.getStringBuffer()+1);
-    playSound(buf, SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+    playSound(buf, SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
     
     return RET_CONTINUE;
 }
@@ -533,10 +532,10 @@ int ONScripterLabel::sevolCommand()
     se_volume = script_h.readInt();
 
     for ( int i=1 ; i<ONS_MIX_CHANNELS ; i++ )
-        if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
+        if ( wave_sample[i] ) Mix_Volume( i, se_volume * MIX_MAX_VOLUME / 100 );
 
-    if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * 128 / 100 );
-    if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * 128 / 100 );
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * MIX_MAX_VOLUME / 100 );
+    if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * MIX_MAX_VOLUME / 100 );
     
     return RET_CONTINUE;
 }
@@ -685,7 +684,7 @@ int ONScripterLabel::selectCommand()
 
     if ( selectvoice_file_name[SELECTVOICE_OPEN] )
         playSound(selectvoice_file_name[SELECTVOICE_OPEN],
-                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
+                  SOUND_CHUNK, false, MIX_WAVE_CHANNEL );
 
     last_select_link = &root_select_link;
 
@@ -783,7 +782,7 @@ int ONScripterLabel::selectCommand()
         
     if ( selectvoice_file_name[SELECTVOICE_SELECT] )
         playSound(selectvoice_file_name[SELECTVOICE_SELECT], 
-                  SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL );
+                  SOUND_CHUNK, false, MIX_WAVE_CHANNEL );
 
     deleteButtonLink();
 
@@ -1184,9 +1183,8 @@ int ONScripterLabel::mpegplayCommand()
 
 int ONScripterLabel::mp3volCommand()
 {
-    music_struct.volume = script_h.readInt();
-
-    if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_struct.volume );
+    music_volume = script_h.readInt();
+    Mix_VolumeMusic( music_volume * MIX_MAX_VOLUME / 100 );
 
     return RET_CONTINUE;
 }
@@ -1216,7 +1214,7 @@ int ONScripterLabel::mp3Command()
     if (buf[0] != '\0'){
         setStr(&music_file_name, buf);
         playSound(music_file_name, 
-                  SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3 | SOUND_MIDI,
+                  SOUND_MUSIC | SOUND_MIDI,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
     }
         
@@ -1436,9 +1434,9 @@ int ONScripterLabel::loopbgmCommand()
     setStr( &loop_bgm_name[1], buf );
 
     playSound(loop_bgm_name[1],
-              SOUND_PRELOAD|SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL1);
+              SOUND_PRELOAD|SOUND_CHUNK, false, MIX_LOOPBGM_CHANNEL1);
     playSound(loop_bgm_name[0],
-              SOUND_WAVE|SOUND_OGG, false, MIX_LOOPBGM_CHANNEL0);
+              SOUND_CHUNK, false, MIX_LOOPBGM_CHANNEL0);
     
     return RET_CONTINUE;
 }
@@ -2045,7 +2043,7 @@ int ONScripterLabel::getregCommand()
 int ONScripterLabel::getmp3volCommand()
 {
     script_h.readInt();
-    script_h.setInt( &script_h.current_variable, music_struct.volume );
+    script_h.setInt( &script_h.current_variable, music_volume );
     return RET_CONTINUE;
 }
 
@@ -2396,7 +2394,7 @@ int ONScripterLabel::dwaveCommand()
     }
     else{
         const char *buf = script_h.readStr();
-        int fmt = SOUND_WAVE|SOUND_OGG;
+        int fmt = SOUND_CHUNK;
         if (play_mode == WAVE_PRELOAD) fmt |= SOUND_PRELOAD;
         playSound(buf, fmt, loop_flag, ch);
     }
@@ -2409,7 +2407,7 @@ int ONScripterLabel::dvCommand()
     char buf[256];
     
     sprintf(buf, RELATIVEPATH "voice%c%s.wav", DELIMITER, script_h.getStringBuffer()+2);
-    playSound(buf, SOUND_WAVE|SOUND_OGG, false, 0);
+    playSound(buf, SOUND_CHUNK, false, 0);
     
     return RET_CONTINUE;
 }
@@ -2714,11 +2712,9 @@ int ONScripterLabel::chvolCommand()
     int ch  = script_h.readInt();
     if      (ch < 0) ch = 0;
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
-    int vol = script_h.readInt();
 
-    if ( wave_sample[ch] ){
-        Mix_Volume( ch, vol * 128 / 100 );
-    }
+    int vol = script_h.readInt();
+    if ( wave_sample[ch] ) Mix_Volume( ch, vol * MIX_MAX_VOLUME / 100 );
     
     return RET_CONTINUE;
 }

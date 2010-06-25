@@ -2,7 +2,7 @@
  * 
  *  DirtyRect.cpp - Invalid region on text_surface which should be updated
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -83,17 +83,19 @@ void DirtyRect::add( SDL_Rect src )
     bounding_box = calcBoundingBox( bounding_box, src );
 
     int i, min_is=0, min_hist=-1;
+    SDL_Rect min_rect;
     for (i=0 ; i<num_history ; i++){
         SDL_Rect rect = calcBoundingBox(src, history[i]);
         if (i==0 || rect.w*rect.h < min_is){
             min_is = rect.w*rect.h;
             min_hist = i;
+            min_rect = rect;
         }
     }
     if (min_hist >= 0 &&
         history[min_hist].w * history[min_hist].h + src.w * src.h > min_is ){
         area -= history[min_hist].w * history[min_hist].h;
-        history[min_hist] = calcBoundingBox(src, history[min_hist]);
+        history[min_hist] = min_rect;
         area += history[min_hist].w * history[min_hist].h;
         return;
     }
@@ -118,8 +120,7 @@ SDL_Rect DirtyRect::calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 )
         return src1;
     }
     if ( src1.w == 0 || src1.h == 0 ){
-        src1 = src2;
-        return src1;
+        return src2;
     }
 
     if ( src1.x > src2.x ){

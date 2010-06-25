@@ -583,11 +583,9 @@ int ONScripterLabel::init()
     wave_file_name = NULL;
     midi_file_name = NULL;
     midi_info  = NULL;
-    mp3_sample = NULL;
     music_file_name = NULL;
     music_buffer = NULL;
     music_info = NULL;
-    music_struct.ovi = NULL;
 
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
@@ -840,12 +838,12 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
             if ( system_menu_mode != SYSTEM_NULL ){
                 if ( menuselectvoice_file_name[MENUSELECTVOICE_OVER] )
                     playSound(menuselectvoice_file_name[MENUSELECTVOICE_OVER], 
-                              SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                              SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
             }
             else{
                 if ( selectvoice_file_name[SELECTVOICE_OVER] )
                     playSound(selectvoice_file_name[SELECTVOICE_OVER], 
-                              SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
+                              SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
             }
             check_dst_rect = p_button_link->image_rect;
             if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
@@ -944,7 +942,7 @@ void ONScripterLabel::runScript()
 
 int ONScripterLabel::parseLine( )
 {
-    int ret, lut_counter = 0;
+    int ret;
     const char *s_buf = script_h.getStringBuffer();
     char *cmd = script_h.getStringBuffer();
     if (cmd[0] == '_'){
@@ -1193,7 +1191,7 @@ void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_s
             char *buf = sound_name;
             while (*ctl_str != ')' && *ctl_str != '\0' ) *buf++ = *ctl_str++;
             *buf++ = '\0';
-            playSound(sound_name, SOUND_WAVE|SOUND_OGG, false, sprite_no);
+            playSound(sound_name, SOUND_CHUNK, false, sprite_no);
             if ( *ctl_str == ')' ) ctl_str++;
         }
         else if (com == 'M' || com == 'm'){
@@ -1260,12 +1258,12 @@ void ONScripterLabel::loadEnvData()
         readStr( &default_cdrom_drive );
         voice_volume = DEFAULT_VOLUME - readInt();
         se_volume = DEFAULT_VOLUME - readInt();
-        music_struct.volume = DEFAULT_VOLUME - readInt();
+        music_volume = DEFAULT_VOLUME - readInt();
         if (readInt() == 0) kidokumode_flag = false;
     }
     else{
         setStr( &default_env_font, DEFAULT_ENV_FONT );
-        voice_volume = se_volume = music_struct.volume = DEFAULT_VOLUME;
+        voice_volume = se_volume = music_volume = DEFAULT_VOLUME;
     }
 }
 
@@ -1283,7 +1281,7 @@ void ONScripterLabel::saveEnvData()
         writeStr( default_cdrom_drive, output_flag );
         writeInt( DEFAULT_VOLUME - voice_volume, output_flag );
         writeInt( DEFAULT_VOLUME - se_volume, output_flag );
-        writeInt( DEFAULT_VOLUME - music_struct.volume, output_flag );
+        writeInt( DEFAULT_VOLUME - music_volume, output_flag );
         writeInt( kidokumode_flag?1:0, output_flag );
         writeInt( 0, output_flag ); // ?
         writeChar( 0, output_flag ); // ?

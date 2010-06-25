@@ -503,8 +503,7 @@ int ONScripterLabel::loadSaveFile( int no )
         playSound(midi_file_name, SOUND_MIDI, midi_play_loop_flag);
     }
     else if ( music_file_name && music_play_loop_flag ){
-        playSound(music_file_name,
-                  SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3,
+        playSound(music_file_name, SOUND_MUSIC,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
     }
 

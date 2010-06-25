@@ -28,12 +28,11 @@
 #endif
 
 #define ONS_TIMER_EVENT   (SDL_USEREVENT)
-#define ONS_SOUND_EVENT   (SDL_USEREVENT+1)
+#define ONS_MUSIC_EVENT   (SDL_USEREVENT+1)
 #define ONS_CDAUDIO_EVENT (SDL_USEREVENT+2)
 #define ONS_MIDI_EVENT    (SDL_USEREVENT+3)
-#define ONS_WAVE_EVENT    (SDL_USEREVENT+4)
-#define ONS_MUSIC_EVENT   (SDL_USEREVENT+5)
-#define ONS_BREAK_EVENT   (SDL_USEREVENT+6)
+#define ONS_CHUNK_EVENT   (SDL_USEREVENT+4)
+#define ONS_BREAK_EVENT   (SDL_USEREVENT+5)
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)"
@@ -43,27 +42,14 @@ static SDL_TimerID break_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
 bool ext_music_play_once_flag = false;
 
-extern long decodeOggVorbis(ONScripterLabel::MusicStruct *username, Uint8 *buf_dst, long len, bool do_rate_conversion);
-
 /* **************************************** *
  * Callback functions
  * **************************************** */
-extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
+extern "C" void musicFinishCallback()
 {
-    if ( SMPEG_playAudio( (SMPEG*)userdata, stream, len ) == 0 ){
-        SDL_Event event;
-        event.type = ONS_SOUND_EVENT;
-        SDL_PushEvent(&event);
-    }
-}
-
-extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
-{
-    if (decodeOggVorbis((ONScripterLabel::MusicStruct*)userdata, stream, len, true) == 0){
-        SDL_Event event;
-        event.type = ONS_SOUND_EVENT;
-        SDL_PushEvent(&event);
-    }
+    SDL_Event event;
+    event.type = ONS_MUSIC_EVENT;
+    SDL_PushEvent(&event);
 }
 
 extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
@@ -244,12 +230,12 @@ SDL_KeyboardEvent transJoystickAxis(SDL_JoyAxisEvent &jaxis)
 
 void ONScripterLabel::flushEventSub( SDL_Event &event )
 {
-    if ( event.type == ONS_SOUND_EVENT ){
+    if ( event.type == ONS_MUSIC_EVENT ){
         if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );
             if (music_file_name)
-                playSound(music_file_name, SOUND_OGG_STREAMING|SOUND_MP3, true);
+                playSound(music_file_name, SOUND_MUSIC, true);
             else
                 playCDAudio();
         }
@@ -271,12 +257,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
         Mix_FreeMusic( midi_info );
         playMIDI(midi_play_loop_flag);
     }
-    else if ( event.type == ONS_MUSIC_EVENT ){
-        ext_music_play_once_flag = !music_play_loop_flag;
-        Mix_FreeMusic(music_info);
-        playExternalMusic(music_play_loop_flag);
-    }
-    else if ( event.type == ONS_WAVE_EVENT ){ // for processing btntim2 and automode correctly
+    else if ( event.type == ONS_CHUNK_EVENT ){ // for processing btntim2 and automode correctly
         if ( wave_sample[event.user.code] ){
             Mix_FreeChunk( wave_sample[event.user.code] );
             wave_sample[event.user.code] = NULL;
@@ -368,7 +349,7 @@ void midiCallback( int sig )
 extern "C" void waveCallback( int channel )
 {
     SDL_Event event;
-    event.type = ONS_WAVE_EVENT;
+    event.type = ONS_CHUNK_EVENT;
     event.user.code = channel;
     SDL_PushEvent(&event);
 }
@@ -487,7 +468,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
       case SDLK_m:
         if ( variable_edit_mode != EDIT_SELECT_MODE ) return;
         variable_edit_mode = EDIT_MP3_VOLUME_MODE;
-        variable_edit_num = music_struct.volume;
+        variable_edit_num = music_volume;
         break;
 
       case SDLK_s:
@@ -548,21 +529,21 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             break;
 
           case EDIT_MP3_VOLUME_MODE:
-            music_struct.volume = variable_edit_num;
-            if ( mp3_sample ) SMPEG_setvolume( mp3_sample, music_struct.volume );
+            music_volume = variable_edit_num;
+            Mix_VolumeMusic( music_volume * MIX_MAX_VOLUME / 100 );
             break;
 
           case EDIT_SE_VOLUME_MODE:
             se_volume = variable_edit_num;
             for ( i=1 ; i<ONS_MIX_CHANNELS ; i++ )
-                if ( wave_sample[i] ) Mix_Volume( i, se_volume * 128 / 100 );
-            if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * 128 / 100 );
-            if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * 128 / 100 );
+                if ( wave_sample[i] ) Mix_Volume( i, se_volume * MIX_MAX_VOLUME / 100 );
+            if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ) Mix_Volume( MIX_LOOPBGM_CHANNEL0, se_volume * MIX_MAX_VOLUME / 100 );
+            if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ) Mix_Volume( MIX_LOOPBGM_CHANNEL1, se_volume * MIX_MAX_VOLUME / 100 );
             break;
 
           case EDIT_VOICE_VOLUME_MODE:
             voice_volume = variable_edit_num;
-            if ( wave_sample[0] ) Mix_Volume( 0, se_volume * 128 / 100 );
+            if ( wave_sample[0] ) Mix_Volume( 0, se_volume * MIX_MAX_VOLUME / 100 );
 
           default:
             break;
@@ -603,7 +584,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             var_name = var_index; p = script_h.getVariableData(variable_edit_index).num; break;
 
           case EDIT_MP3_VOLUME_MODE:
-            var_name = "MP3 Volume"; p = music_struct.volume; break;
+            var_name = "MP3 Volume"; p = music_volume; break;
 
           case EDIT_VOICE_VOLUME_MODE:
             var_name = "Voice Volume"; p = voice_volume; break;
@@ -1055,16 +1036,15 @@ void ONScripterLabel::runEventLoop()
             timerEvent();
             break;
 
-          case ONS_SOUND_EVENT:
+          case ONS_MUSIC_EVENT:
           case ONS_CDAUDIO_EVENT:
           case ONS_MIDI_EVENT:
-          case ONS_MUSIC_EVENT:
             flushEventSub( event );
             break;
 
-          case ONS_WAVE_EVENT:
+          case ONS_CHUNK_EVENT:
             flushEventSub( event );
-            //printf("ONS_WAVE_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
+            //printf("ONS_CHUNK_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
             if ( event.user.code != 0 ||
                  !(event_mode & WAIT_VOICE_MODE) ) break;
 
