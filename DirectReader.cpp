@@ -27,15 +27,11 @@
 #include <dirent.h>
 #endif
 
-#if defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)
-#if defined(MACOSX)
-#include <CoreFoundation/CoreFoundation.h>
-#else
-#include <iconv.h>
-static int iconv_ref_count = 0;
-static iconv_t iconv_cd = NULL;
-#endif
-#endif
+#define IS_TWO_BYTE(x) \
+        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
+
+extern unsigned short convSJIS2UTF16( unsigned short in );
+extern int convUTF16ToUTF8( unsigned char dst[4], unsigned short src );
 
 #ifndef SEEK_END
 #define SEEK_END 2
@@ -57,11 +53,7 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
     file_path_len = 0;
 
     capital_name = new char[MAX_FILE_NAME_LENGTH*2+1];
-    capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*2+1];
-#if (defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)) && !defined(MACOSX)
-    if (iconv_cd == NULL) iconv_cd = iconv_open("UTF-8", "SJIS");
-    iconv_ref_count++;
-#endif
+    capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*3+1];
 
     if ( path ){
         archive_path = new char[ strlen(path) + 1 ];
@@ -98,12 +90,6 @@ DirectReader::~DirectReader()
 
     delete[] capital_name;
     delete[] capital_name_tmp;
-#if (defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)) && !defined(MACOSX)
-    if (--iconv_ref_count == 0){
-        iconv_close(iconv_cd);
-        iconv_cd = NULL;
-    }
-#endif
     delete[] read_buf;
     delete[] decomp_buffer;
     
@@ -305,7 +291,7 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     }
 
 #if defined(UTF8_FILESYSTEM)
-    convertFromSJISToUTF8(capital_name_tmp, capital_name, len);
+    convertFromSJISToUTF8(capital_name_tmp, capital_name);
     strcpy(capital_name, capital_name_tmp);
     len = strlen(capital_name);
 #elif defined(LINUX)
@@ -394,25 +380,26 @@ void DirectReader::convertFromSJISToEUC( char *buf )
     }
 }
 
-void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf, size_t src_len )
+void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf )
 {
-#if defined(UTF8_FILESYSTEM) || defined(UTF8_CAPTION)
-#if defined(MACOSX)
-    CFStringRef unicodeStrRef = CFStringCreateWithBytes(nil, (const UInt8*)src_buf, src_len, 
-                                                        kCFStringEncodingShiftJIS, false);
-    if(unicodeStrRef) {
-        Boolean ret = CFStringGetCString(unicodeStrRef, dst_buf, src_len*2+1, kCFStringEncodingUTF8);
-        CFRelease(unicodeStrRef);
-        if (!ret) strcpy(dst_buf, src_buf);
+    int i, c;
+    unsigned short unicode;
+    unsigned char utf8_buf[4];
+    
+    while(*src_buf){
+        if (IS_TWO_BYTE(*src_buf)){
+            unsigned short index = *src_buf++;
+            index = index << 8 | (*src_buf++);
+            unicode = convSJIS2UTF16( index );
+            c = convUTF16ToUTF8(utf8_buf, unicode);
+            for (i=0 ; i<c ; i++)
+                *dst_buf++ = utf8_buf[i];
+        }
+        else{
+            *dst_buf++ = *src_buf++;
+        }
     }
-    else strcpy(dst_buf, src_buf);
-#else
-    src_len++;
-    size_t dst_len = src_len*2+1;
-    int ret = iconv(iconv_cd, &src_buf, &src_len, &dst_buf, &dst_len);
-    if (ret == -1) strcpy(dst_buf, src_buf);
-#endif
-#endif
+    *dst_buf++ = 0;
 }
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )

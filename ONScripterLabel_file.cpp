@@ -154,19 +154,20 @@ char *ONScripterLabel::readSaveStrFromFile( int no )
 {
     char filename[16];
     sprintf( filename, "save%d.dat", no );
-    if (loadFileIOBuf( filename )){
+    size_t len = loadFileIOBuf( filename );
+    if (len == 0){
         fprintf( stderr, "readSaveStrFromFile: can't open save file %s\n", filename );
         return NULL;
     }
 
-    int p = file_io_buf_len - 1;
+    int p = len - 1;
     if ( p < 3 || file_io_buf[p] != '*' || file_io_buf[p-1] != '"' ) return NULL;
     p -= 2;
     
     while( file_io_buf[p] != '"' && p>0 ) p--;
     if ( file_io_buf[p] != '"' ) return NULL;
 
-    int len = file_io_buf_len - p - 3;
+    len = len - p - 3;
     char *buf = new char[len+1];
     
     int i;
@@ -181,7 +182,7 @@ int ONScripterLabel::loadSaveFile( int no )
 {
     char filename[16];
     sprintf( filename, "save%d.dat", no );
-    if (loadFileIOBuf( filename )){
+    if (loadFileIOBuf( filename ) == 0){
         fprintf( stderr, "can't open save file %s\n", filename );
         return -1;
     }

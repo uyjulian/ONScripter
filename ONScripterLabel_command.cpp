@@ -2760,18 +2760,12 @@ int ONScripterLabel::captionCommand()
     const char* buf = script_h.readStr();
     size_t len = strlen(buf);
 
-    char *buf2 = new char[len*2+3];
+    char *buf2 = new char[len*3+1];
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    char *buf1 = new char[len+1];
-    strcpy(buf1, buf);
-    DirectReader::convertFromSJISToUTF8(buf2, buf1, len);
-    delete[] buf1;
+    DirectReader::convertFromSJISToUTF8(buf2, buf);
 #elif defined(LINUX) || (defined(WIN32) && defined(UTF8_CAPTION))
 #if defined(UTF8_CAPTION)
-    char *buf1 = new char[len+1];
-    strcpy(buf1, buf);
-    DirectReader::convertFromSJISToUTF8(buf2, buf1, len);
-    delete[] buf1;
+    DirectReader::convertFromSJISToUTF8(buf2, buf);
 #else
     strcpy(buf2, buf);
     DirectReader::convertFromSJISToEUC(buf2);

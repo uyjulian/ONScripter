@@ -1,5 +1,5 @@
 /* sjis 0x8140 - 0xfcfc */
-unsigned short sjis_2_utf16[0xfcfc - 0x8140 + 1];
+static unsigned short *sjis_2_utf16;
 
 static unsigned short sjis_2_utf16_org[][2] = {
 	{0x8140,0x3000},
@@ -11384,6 +11384,8 @@ void initSJIS2UTF16()
 {
     int i = 0;
 
+    sjis_2_utf16 = new unsigned short[0xfcfc - 0x8140 + 1];
+
     while( sjis_2_utf16_org[i][0] ){
         sjis_2_utf16[sjis_2_utf16_org[i][0] - 0x8140] = sjis_2_utf16_org[i][1];
         i++;
@@ -11395,3 +11397,30 @@ unsigned short convSJIS2UTF16( unsigned short in )
     return sjis_2_utf16[ in - 0x8140 ];
 }
 
+int convUTF16ToUTF8( unsigned char dst[4], unsigned short src )
+{
+    if (src & 0xff80){
+        if (src & 0xf800){
+            // UCS-2 = U+0800 - U+FFFF -> UTF-8 (3 bytes)
+            dst[0] = 0xe0 | (src >> 12);
+            dst[1] = 0x80 | ((src >> 6) & 0x3f);
+            dst[2] = 0x80 | (src & 0x3f);
+            dst[3] = 0;
+
+            return 3;
+        }
+
+        // UCS-2 = U+0080 - U+07FF -> UTF-8 (2 bytes)
+        dst[0] = 0xc0 | (src >> 6);
+        dst[1] = 0x80 | (src & 0x3f);
+        dst[2] = 0;
+
+        return 2;
+    }
+
+    // UCS-2 = U+0000 - U+007F -> UTF-8 (1 byte)
+    dst[0] = src;
+    dst[1] = 0;
+
+    return 1;
+}

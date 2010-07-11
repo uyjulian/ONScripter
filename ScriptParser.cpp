@@ -556,11 +556,11 @@ int ScriptParser::saveFileIOBuf( const char *filename, int offset, const char *s
     return 0;
 }
 
-int ScriptParser::loadFileIOBuf( const char *filename )
+size_t ScriptParser::loadFileIOBuf( const char *filename )
 {
     FILE *fp;
     if ( (fp = fopen( filename, "rb" )) == NULL )
-        return -1;
+        return 0;
     
     fseek(fp, 0, SEEK_END);
     size_t len = ftell(fp);
@@ -571,9 +571,7 @@ int ScriptParser::loadFileIOBuf( const char *filename )
     size_t ret = fread(file_io_buf, 1, len, fp);
     fclose(fp);
 
-    if (ret != len) return -2;
-    
-    return 0;
+    return ret;
 }
 
 void ScriptParser::writeChar(char c, bool output_flag)
@@ -744,7 +742,7 @@ void ScriptParser::readLog( ScriptHandler::LogInfo &info )
 {
     script_h.resetLog( info );
     
-    if (loadFileIOBuf( info.filename ) == 0){
+    if (loadFileIOBuf( info.filename ) > 0){
         int i, j, ch, count = 0;
         char buf[100];
 

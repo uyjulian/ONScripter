@@ -1077,6 +1077,44 @@ void ONScripterLabel::runEventLoop()
           case SDL_VIDEOEXPOSE:
 #ifdef ANDROID
             screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+            // draw buttons
+            if (screen_surface->w > screen_width){
+                int w = screen_surface->w - screen_width;
+                int h = screen_height/3;
+
+                AnimationInfo anim;
+                anim.allocImage(w, h);
+
+                SDL_Rect rect_src={0, 0, w, h};
+                SDL_Rect rect_dst={screen_width, 0, w, h};
+
+                FontInfo f_info = sentence_font;
+                f_info.color[0] = f_info.color[1] = f_info.color[2] = 0xff;
+                f_info.top_xy[0] = (w-f_info.font_size_xy[0])/2;
+                if (f_info.top_xy[0] < 0) f_info.top_xy[0] = 0;
+                f_info.top_xy[1] = (h-f_info.font_size_xy[1])/2;
+                if (f_info.top_xy[1] < 0) f_info.top_xy[1] = 0;
+
+                anim.fill(0, 0, 0, 0);
+                f_info.clear();
+                drawChar( (char*)"Esc", &f_info, false, false, NULL, &anim );
+                SDL_BlitSurface( anim.image_surface, &rect_src, screen_surface, &rect_dst );
+
+                anim.fill(0, 0, 0, 0);
+                f_info.clear();
+                drawChar( (char*)"S", &f_info, false, false, NULL, &anim );
+                rect_dst.y += h;
+                SDL_BlitSurface( anim.image_surface, &rect_src, screen_surface, &rect_dst );
+
+                anim.fill(0, 0, 0, 0);
+                f_info.clear();
+                drawChar( (char*)"O", &f_info, false, false, NULL, &anim );
+                rect_dst.y += h;
+                SDL_BlitSurface( anim.image_surface, &rect_src, screen_surface, &rect_dst );
+
+                SDL_UpdateRect( screen_surface, screen_width, 0, w, screen_height);
+            }
+            
             repaintCommand();
 #else
             SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );

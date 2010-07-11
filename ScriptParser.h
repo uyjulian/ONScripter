@@ -445,7 +445,7 @@ protected:
 
     void allocFileIOBuf();
     int saveFileIOBuf( const char *filename, int offset=0, const char *savestr=NULL );
-    int loadFileIOBuf( const char *filename );
+    size_t loadFileIOBuf( const char *filename );
 
     void writeChar( char c, bool output_flag );
     char readChar();

@@ -670,8 +670,8 @@ void ONScripterLabel::reset()
 
     /* ---------------------------------------- */
     /* Load global variables if available */
-    if ( loadFileIOBuf( "gloval.sav" ) == 0 ||
-         loadFileIOBuf( "global.sav" ) == 0 )
+    if ( loadFileIOBuf( "gloval.sav" ) > 0 ||
+         loadFileIOBuf( "global.sav" ) > 0 )
         readVariables( script_h.global_variable_border, VARIABLE_RANGE );
 }
 
@@ -1246,7 +1246,7 @@ void ONScripterLabel::loadEnvData()
     default_cdrom_drive = NULL;
     kidokumode_flag = true;
     
-    if (loadFileIOBuf( "envdata" ) == 0){
+    if (loadFileIOBuf( "envdata" ) > 0){
         if (readInt() == 1 && window_mode == false) menu_fullCommand();
         if (readInt() == 0) volume_on_flag = false;
         text_speed_no = readInt();
