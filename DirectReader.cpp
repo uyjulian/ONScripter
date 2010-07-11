@@ -388,8 +388,8 @@ void DirectReader::convertFromSJISToUTF8( char *dst_buf, const char *src_buf )
     
     while(*src_buf){
         if (IS_TWO_BYTE(*src_buf)){
-            unsigned short index = *src_buf++;
-            index = index << 8 | (*src_buf++);
+            unsigned short index = *(unsigned char*)src_buf++;
+            index = index << 8 | (*(unsigned char*)src_buf++);
             unicode = convSJIS2UTF16( index );
             c = convUTF16ToUTF8(utf8_buf, unicode);
             for (i=0 ; i<c ; i++)
