@@ -174,8 +174,11 @@ void AnimationInfo::removeTag(){
 // 1 ... stop at the end
 // 2 ... reverse at the end
 // 3 ... no animation
-bool AnimationInfo::proceedAnimation()
+bool AnimationInfo::proceedAnimation(int t)
 {
+    remaining_time -= t;
+    if (remaining_time > 0) return false;
+    
     bool is_changed = false;
     
     if ( loop_mode != 3 && num_of_cells > 1 ){

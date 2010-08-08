@@ -43,9 +43,19 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *lo
         else
             *has_alpha = false;
     }
-    
-    SDL_Surface *ret = SDL_ConvertSurface(tmp, image_surface->format, SDL_SWSURFACE);
-    SDL_FreeSurface(tmp);
+
+    SDL_Surface *ret;
+    if((tmp->w * tmp->format->BytesPerPixel == tmp->pitch) &&
+       (tmp->format->BitsPerPixel == image_surface->format->BitsPerPixel) && 
+       (tmp->format->Rmask == image_surface->format->Rmask) &&
+       (tmp->format->Gmask == image_surface->format->Gmask) &&
+       (tmp->format->Bmask == image_surface->format->Bmask)){
+        ret = tmp;
+    }
+    else{
+        ret = SDL_ConvertSurface(tmp, image_surface->format, SDL_SWSURFACE);
+        SDL_FreeSurface(tmp);
+    }
     
     return ret;
 }

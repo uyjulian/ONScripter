@@ -734,6 +734,7 @@ bool ONScripterLabel::processText()
 
             if (sentence_font.isEndOfLine(i)){
                 sentence_font.newLine();
+                current_page->add( 0x0a );
                 for (int i=0 ; i<indent_offset ; i++){
                     current_page->add(((char*)"@")[0]);
                     current_page->add(((char*)"@")[1]);

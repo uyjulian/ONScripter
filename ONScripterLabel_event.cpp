@@ -1089,7 +1089,7 @@ void ONScripterLabel::runEventLoop()
                 SDL_Rect rect_dst={screen_width, 0, w, h};
 
                 FontInfo f_info = sentence_font;
-                f_info.color[0] = f_info.color[1] = f_info.color[2] = 0xff;
+                f_info.color[0] = f_info.color[1] = f_info.color[2] = 0x80;
                 f_info.top_xy[0] = (w-f_info.font_size_xy[0])/2;
                 if (f_info.top_xy[0] < 0) f_info.top_xy[0] = 0;
                 f_info.top_xy[1] = (h-f_info.font_size_xy[1])/2;

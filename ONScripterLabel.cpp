@@ -1100,10 +1100,8 @@ void ONScripterLabel::newPage( bool next_flag )
             start_page = start_page->next;
     }
 
-    if ( next_flag ){
-        indent_offset = 0;
+    if ( next_flag )
         page_enter_status = 0;
-    }
     
     clearCurrentPage();
 

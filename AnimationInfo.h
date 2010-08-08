@@ -107,7 +107,7 @@ public:
     void remove();
     void removeTag();
 
-    bool proceedAnimation();
+    bool proceedAnimation(int t);
 
     void setCell(int cell);
     static int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );

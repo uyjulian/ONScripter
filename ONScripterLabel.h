@@ -663,7 +663,6 @@ private:
     /* ---------------------------------------- */
     /* Animation */
     int  proceedAnimation();
-    int  estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum );
     void resetRemainingTime( int t );
     void setupAnimationInfo( AnimationInfo *anim, FontInfo *info=NULL );
     void parseTaggedString( AnimationInfo *anim );

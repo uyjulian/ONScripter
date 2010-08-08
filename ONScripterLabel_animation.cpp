@@ -25,20 +25,22 @@
 
 int ONScripterLabel::proceedAnimation()
 {
-    int i, minimum_duration = -1;
+    int i, min = -1; // minimum duration
     AnimationInfo *anim;
     
     for ( i=0 ; i<3 ; i++ ){
         anim = &tachi_info[i];
         if ( anim->visible && anim->is_animatable ){
-            minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
+            if (min == -1 || min > anim->remaining_time)
+                min = anim->remaining_time;
         }
     }
 
     for ( i=MAX_SPRITE_NUM-1 ; i>=0 ; i-- ){
         anim = &sprite_info[i];
         if ( anim->visible && anim->is_animatable ){
-            minimum_duration = estimateNextDuration( anim, anim->pos, minimum_duration );
+            if (min == -1 || min > anim->remaining_time)
+                min = anim->remaining_time;
         }
     }
 
@@ -52,59 +54,21 @@ int ONScripterLabel::proceedAnimation()
             anim = &cursor_info[CURSOR_NEWPAGE_NO];
 
         if ( anim->visible && anim->is_animatable ){
-            SDL_Rect dst_rect = anim->pos;
-            if ( !anim->abs_flag ){
-                dst_rect.x += sentence_font.x() * screen_ratio1 / screen_ratio2;
-                dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
-            }
-
-            minimum_duration = estimateNextDuration( anim, dst_rect, minimum_duration );
+            if (min == -1 || min > anim->remaining_time)
+                min = anim->remaining_time;
         }
     }
+
 #ifdef USE_LUA
     if (lua_handler.is_animatable && !script_h.isExternalScript()){
-        if (lua_handler.remaining_time == 0){
-            lua_handler.remaining_time = lua_handler.duration_time;
-            if (minimum_duration == -1 || 
-                minimum_duration > lua_handler.remaining_time)
-                minimum_duration = lua_handler.remaining_time;
-            int lua_event_mode = event_mode;
-            int tmp_string_buffer_offset = string_buffer_offset;
-            char *current = script_h.getCurrent();
-            lua_handler.callback(LUAHandler::LUA_ANIMATION);
-            script_h.setCurrent(current);
-            readToken();
-            string_buffer_offset = tmp_string_buffer_offset;
-            event_mode = lua_event_mode;
-        }
-        else if (minimum_duration == -1 || 
-                 minimum_duration > lua_handler.remaining_time){
-            minimum_duration = lua_handler.remaining_time;
-        }
+        if (min == -1 || min > lua_handler.remaining_time)
+            min = lua_handler.remaining_time;
     }
 #endif
-    if ( minimum_duration == -1 ) minimum_duration = 0;
 
-    return minimum_duration;
-}
+    if ( min == -1 ) min = 0;
 
-int ONScripterLabel::estimateNextDuration( AnimationInfo *anim, SDL_Rect &rect, int minimum )
-{
-    if ( anim->remaining_time == 0 ){
-        if ( minimum == -1 ||
-             minimum > anim->duration_list[ anim->current_cell ] )
-            minimum = anim->duration_list[ anim->current_cell ];
-
-        if ( anim->proceedAnimation() )
-            flushDirect( rect, refreshMode() | (draw_cursor_flag?REFRESH_CURSOR_MODE:0) );
-    }
-    else{
-        if ( minimum == -1 ||
-             minimum > anim->remaining_time )
-            minimum = anim->remaining_time;
-    }
-
-    return minimum;
+    return min;
 }
 
 void ONScripterLabel::resetRemainingTime( int t )
@@ -115,19 +79,35 @@ void ONScripterLabel::resetRemainingTime( int t )
     for ( i=0 ; i<3 ; i++ ){
         anim = &tachi_info[i];
         if ( anim->visible && anim->is_animatable){
-            anim->remaining_time -= t;
+            if (anim->proceedAnimation(t))
+                flushDirect( anim->pos, refreshMode() | (draw_cursor_flag?REFRESH_CURSOR_MODE:0) );
         }
     }
         
     for ( i=MAX_SPRITE_NUM-1 ; i>=0 ; i-- ){
         anim = &sprite_info[i];
         if ( anim->visible && anim->is_animatable ){
-            anim->remaining_time -= t;
+            if (anim->proceedAnimation(t))
+                flushDirect( anim->pos, refreshMode() | (draw_cursor_flag?REFRESH_CURSOR_MODE:0) );
         }
     }
 #ifdef USE_LUA
-    if (lua_handler.is_animatable && !script_h.isExternalScript())
+    if (lua_handler.is_animatable && !script_h.isExternalScript()){
         lua_handler.remaining_time -= t;
+
+        if (lua_handler.remaining_time == 0){
+            lua_handler.remaining_time = lua_handler.duration_time;
+
+            int lua_event_mode = event_mode;
+            int tmp_string_buffer_offset = string_buffer_offset;
+            char *current = script_h.getCurrent();
+            lua_handler.callback(LUAHandler::LUA_ANIMATION);
+            script_h.setCurrent(current);
+            readToken();
+            string_buffer_offset = tmp_string_buffer_offset;
+            event_mode = lua_event_mode;
+        }
+    }
 #endif
     if ( !textgosub_label &&
          ( clickstr_state == CLICK_WAIT ||
@@ -138,7 +118,14 @@ void ONScripterLabel::resetRemainingTime( int t )
             anim = &cursor_info[CURSOR_NEWPAGE_NO];
         
         if ( anim->visible && anim->is_animatable ){
-            anim->remaining_time -= t;
+            if (anim->proceedAnimation(t)){
+                SDL_Rect dst_rect = anim->pos;
+                if ( !anim->abs_flag ){
+                    dst_rect.x += sentence_font.x() * screen_ratio1 / screen_ratio2;
+                    dst_rect.y += sentence_font.y() * screen_ratio1 / screen_ratio2;
+                }
+                flushDirect( dst_rect, refreshMode() | (draw_cursor_flag?REFRESH_CURSOR_MODE:0) );
+            }
         }
     }
 }
@@ -347,6 +334,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
                 anim->duration_list[i] = anim->duration_list[0];
             buffer++;
         }
+        anim->remaining_time = anim->duration_list[0];
         
         anim->loop_mode = *buffer++ - '0'; // 3...no animation
         if ( anim->loop_mode != 3 ) anim->is_animatable = true;
