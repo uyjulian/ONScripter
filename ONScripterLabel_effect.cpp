@@ -79,11 +79,12 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     int effect_no = effect->effect;
     if ( effect_cut_flag && skip_mode & SKIP_NORMAL ) effect_no = 1;
 
-    int i;
+    int i, amp;
     int width, width2;
     int height, height2;
     SDL_Rect src_rect={0, 0, screen_width, screen_height};
     SDL_Rect dst_rect={0, 0, screen_width, screen_height};
+    SDL_Rect quake_rect={0, 0, screen_width, screen_height};
 
     /* ---------------------------------------- */
     /* Execute effect */
@@ -292,20 +293,41 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
       case (CUSTOM_EFFECT_NO + 0 ): // quakey
         if ( effect_timer_resolution > effect->duration / 4 / effect->no )
             effect_timer_resolution = effect->duration / 4 / effect->no;
-        dst_rect.x = 0;
-        dst_rect.y = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
+        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
-        SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
+        dst_rect.x = 0;
+        dst_rect.y = amp;
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
+
+        if (amp >= 0){
+            quake_rect.y = 0;
+            quake_rect.h = amp;
+        }
+        else{
+            quake_rect.y = screen_height + amp;
+            quake_rect.h = -amp;
+        }
+        SDL_FillRect( accumulation_surface, &quake_rect, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         break;
         
       case (CUSTOM_EFFECT_NO + 1 ): // quakex
         if ( effect_timer_resolution > effect->duration / 4 / effect->no )
             effect_timer_resolution = effect->duration / 4 / effect->no;
-        dst_rect.x = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
+        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
                               EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
+        dst_rect.x = amp;
         dst_rect.y = 0;
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
+
+        if (amp >= 0){
+            quake_rect.x = 0;
+            quake_rect.w = amp;
+        }
+        else{
+            quake_rect.x = screen_width + amp;
+            quake_rect.w = -amp;
+        }
+        SDL_FillRect( accumulation_surface, &quake_rect, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         break;
         
       case (CUSTOM_EFFECT_NO + 2 ): // quake
