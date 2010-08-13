@@ -322,11 +322,12 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
     
     effect_counter += effect_timer_resolution;
+    if (waitEvent(0, true)) effect_counter = effect->duration;
+
     if ( effect_counter < effect->duration && effect_no != 1 ){
         if ( effect_no != 0 ) flush( REFRESH_NONE_MODE, NULL, false );
     
         event_mode = IDLE_EVENT_MODE;
-        waitEvent(0);
 
         return true;
     }

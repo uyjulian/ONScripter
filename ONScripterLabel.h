@@ -79,7 +79,7 @@ public:
     void setKeyEXE(const char *path);
     
     int  init();
-    void runEventLoop();
+    bool runEventLoop();
 
     void reset(); // used if definereset
     void resetSub(); // used if reset
@@ -274,12 +274,12 @@ protected:
     bool keyPressEvent( SDL_KeyboardEvent *event );
     bool mousePressEvent( SDL_MouseButtonEvent *event );
     void mouseMoveEvent( SDL_MouseMotionEvent *event );
-    void timerEvent();
+    void timerEvent(int count=-1);
     void flushEventSub( SDL_Event &event );
     void flushEvent();
     void advancePhase( int count=0 );
-    void waitEventSub(int count);
-    bool waitEvent(int count);
+    bool waitEventSub(int count);
+    bool waitEvent(int count, bool check_interruption = false);
     void trapHandler();
     void initSDL();
     void openAudio();
@@ -388,7 +388,7 @@ private:
     struct ButtonState{
         int x, y, button;
         bool down_flag;
-    } current_button_state, volatile_button_state, last_mouse_state, shelter_mouse_state;
+    } current_button_state, last_mouse_state, shelter_mouse_state;
 
     struct ButtonLink{
         typedef enum { NORMAL_BUTTON        = 0,
