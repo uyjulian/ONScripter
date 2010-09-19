@@ -985,7 +985,7 @@ int ONScripterLabel::quakeCommand()
     tmp_effect.no       = script_h.readInt();
     tmp_effect.duration = script_h.readInt();
     if ( tmp_effect.duration < tmp_effect.no * 4 ) tmp_effect.duration = tmp_effect.no * 4;
-    tmp_effect.effect   = CUSTOM_EFFECT_NO + quake_type;
+    tmp_effect.effect   = MAX_EFFECT_NUM + quake_type;
 
     dirty_rect.fill( screen_width, screen_height );
     SDL_BlitSurface( accumulation_surface, NULL, effect_dst_surface, NULL );

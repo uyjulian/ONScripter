@@ -17,12 +17,12 @@
 
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
-Last updated: Aug. 13, 2010 (ソース更新)<br>
+<!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
+Last updated: Sep. 18, 2010 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
-[<a href="http://ogapee.at.infoseek.co.jp/onscripter.html">メインサイト
-</a>] [<a href="http://onscripter.sourceforge.jp/onscripter.html">
-ミラーサイト</a>]<br>
+[<a href="http://onscripter.sourceforge.jp/onscripter.html">
+新メインサイト</a>]<br>
 </div> <!-- header -->
 
 <div id="toc-container">
@@ -66,7 +66,7 @@ Last updated: Aug. 13, 2010 (ソース更新)<br>
       <li> <a href="#midi">MIDI 演奏機能</a>
       <li> <a href="#archive-compression">アーカイブ圧縮</a>
       <li> <a href="#mp3-on-windows">Windows 上で MP3 の音がぶつぶつとぎれる問題</a>
-      <li> <a href="#enable-1byte">英語ノベル作成</a>
+      <li> <a href="#enable-1byte">英語ノベル作成(Obsolete)</a>
       <li> <a href="#memo">開発メモ</a>
     </ul>
   <li> <a href="index.html">戻る</a>
@@ -78,6 +78,18 @@ Last updated: Aug. 13, 2010 (ソース更新)<br>
 
 <div id="main-container">
 <div id="main">
+
+<h2><FONT color="#ff0000">サーバ移行のお知らせ</font> </h2> <p>
+<a
+href="http://isweb.www.infoseek.co.jp/info/information.html">isweb ラ
+イトサービス終了</a>に伴い旧メインサイト
+<a href="http://ogapee.at.infoseek.co.jp/onscripter.html">
+http://ogapee.at.infoseek.co.jp/onscripter.html</a>
+は2010年10月31日をもって使用できなくなります。
+今後は旧ミラーサイト
+<a href="http://onscripter.sourceforge.jp/onscripter.html">
+http://onscripter.sourceforge.jp/onscripter.html</a>をお使い下さい。ま
+た、お手数ですが旧サイトへのリンクは変更してください。</p>
 
 <div class="content">
 <h2 id="introduction">はじめに</h2>
@@ -106,8 +118,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20100813a.tar.gz">onscripter-20100813a.tar.gz</a>
-  <li> <a href="onscripter-20100808.tar.gz">onscripter-20100808.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20100918.tar.gz">onscripter-20100918.tar.gz</a>
+  <li> <a href="onscripter-20100813a.tar.gz">onscripter-20100813a.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -138,20 +150,20 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
           <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
           <li> deb http://detroit.ddo.jp/debian/sarge/ ./ 
         </ul>
-      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
+      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
     </ul>
   <li> MacOSX
     <ul>
-      <li> <a href="http://tmkk.hp.infoseek.co.jp/onscripter/">ONScripter Launcher and Binary for Mac OS X</a> (tmkkさん)
+      <li> <a href="http://tmkk.pv.land.to/onscripter/">ONScripter Launcher and Binary for Mac OS X</a> (tmkkさん)
       <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
+      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
     </ul>
   <li> Windows
     <ul>
       <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
       <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
       <li> <a href="http://logue.be/ONScripter.html">ONScripter/SDL for Win32 (MinGW)</a> (Logueさん)
-      <li> <a href="http://onscripter.denpa.mobi/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です (下記参照）
+      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です (下記参照）
     </ul>
   <li> PSP
     <ul>
@@ -159,7 +171,7 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
     </ul>
   <li> iPhone, iPod touch (iPhoneOS)
     <ul>
-      <li> <a href="http://ipodons.hp.infoseek.co.jp/">iPodOns</a>
+      <li> <a href="http://ipodons.web.fc2.com/index.html">iPodOns</a>
       <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
     </ul>
   <li> iPod 5G, photo, nano, mini (iPodLinux)
@@ -754,7 +766,7 @@ void MPEGaudio::layer3reorderandantialias(int ch,int gr,
 
 
 <div class="sub-content">
-<h3 id="enable-1byte">英語ノベル作成</h3>
+<h3 id="enable-1byte">英語ノベル作成(Obsolete)</h3>
 
 <p>これは Chend さん(chendo[at]gmail.com)からの要望に基づく ONScripter 
 独自の拡張です。これまで、仕様の提案やパッチなど多くの協力をしていただ

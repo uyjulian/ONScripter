@@ -7,6 +7,7 @@ GUI_OBJS = ONScripterLabel$(OBJSUFFIX) \
 	ONScripterLabel_animation$(OBJSUFFIX) \
 	ONScripterLabel_command$(OBJSUFFIX) \
 	ONScripterLabel_effect$(OBJSUFFIX) \
+	ONScripterLabel_effect_breakup$(OBJSUFFIX) \
 	ONScripterLabel_event$(OBJSUFFIX) \
 	ONScripterLabel_file$(OBJSUFFIX) \
 	ONScripterLabel_file2$(OBJSUFFIX) \
@@ -110,6 +111,7 @@ ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
 ONScripterLabel_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripterLabel_effect_breakup$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_event$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_rmenu$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripterLabel_animation$(OBJSUFFIX): $(ONSCRIPTER_HEADER)

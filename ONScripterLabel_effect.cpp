@@ -63,7 +63,29 @@ bool ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, b
          effect_no == 16 || effect_no == 17 )
         dirty_rect.fill( screen_width, screen_height );
 
+    if (effect_no == 99){ // dll-based
+        if (effect->anim.image_name != NULL){
+            printf("dll effect: Got dll '%s'\n", effect->anim.image_name);
+            if (!strncmp(effect->anim.image_name, "breakup.dll", 11))
+                initBreakup(effect->anim.image_name);
+            dirty_rect.fill( screen_width, screen_height );
+        }
+    }
+
     effect_counter = 0;
+
+    effect_duration = effect->duration;
+    if (skip_mode & SKIP_NORMAL){
+        // shorten the duration of effects while skipping
+        if ( effect_cut_flag ) effect_duration = 0;
+        else if (effect_duration > 100){
+            effect_duration = effect_duration / 10;
+        } else if (effect_duration > 10){
+            effect_duration = 10;
+        } else {
+            effect_duration = 1;
+        }
+    }
     
     return false;
 }
@@ -88,7 +110,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
 
     /* ---------------------------------------- */
     /* Execute effect */
-    //printf("Effect number %d %d\n", effect_no, effect->duration );
+    //printf("Effect number %d %d\n", effect_no, effect_duration );
 
     bool not_implemented = false;
     switch ( effect_no ){
@@ -98,7 +120,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 2: // Left shutter
-        width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
+        width = EFFECT_STRIPE_WIDTH * effect_counter / effect_duration;
         for ( i=0 ; i<screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = i * EFFECT_STRIPE_WIDTH;
             src_rect.y = 0;
@@ -109,7 +131,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 3: // Right shutter
-        width = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
+        width = EFFECT_STRIPE_WIDTH * effect_counter / effect_duration;
         for ( i=1 ; i<=screen_width/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = i * EFFECT_STRIPE_WIDTH - width - 1;
             src_rect.y = 0;
@@ -120,7 +142,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 4: // Top shutter
-        height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
+        height = EFFECT_STRIPE_WIDTH * effect_counter / effect_duration;
         for ( i=0 ; i<screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = 0;
             src_rect.y = i * EFFECT_STRIPE_WIDTH;
@@ -131,7 +153,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 5: // Bottom shutter
-        height = EFFECT_STRIPE_WIDTH * effect_counter / effect->duration;
+        height = EFFECT_STRIPE_WIDTH * effect_counter / effect_duration;
         for ( i=1 ; i<=screen_height/EFFECT_STRIPE_WIDTH ; i++ ){
             src_rect.x = 0;
             src_rect.y = i * EFFECT_STRIPE_WIDTH - height - 1;
@@ -142,7 +164,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 6: // Left curtain
-        width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
+        width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect_duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
             if ( width2 >= 0 ){
@@ -156,7 +178,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 7: // Right curtain
-        width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
+        width = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect_duration;
         for ( i=0 ; i<=screen_width/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             width2 = width - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_width;
             if ( width2 >= 0 ){
@@ -171,7 +193,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 8: // Top curtain
-        height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
+        height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect_duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
             if ( height2 >= 0 ){
@@ -185,7 +207,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 9: // Bottom curtain
-        height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect->duration;
+        height = EFFECT_STRIPE_CURTAIN_WIDTH * effect_counter * 2 / effect_duration;
         for ( i=0 ; i<=screen_height/EFFECT_STRIPE_CURTAIN_WIDTH ; i++ ){
             height2 = height - EFFECT_STRIPE_CURTAIN_WIDTH * EFFECT_STRIPE_CURTAIN_WIDTH * i / screen_height;
             if ( height2 >= 0 ){
@@ -202,12 +224,12 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         not_implemented = true;
         
       case 10: // Cross fade
-        height = 256 * effect_counter / effect->duration;
+        height = 256 * effect_counter / effect_duration;
         alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
         break;
         
       case 11: // Left scroll
-        width = screen_width * effect_counter / effect->duration;
+        width = screen_width * effect_counter / effect_duration;
         src_rect.x = 0;
         dst_rect.x = width;
         src_rect.y = dst_rect.y = 0;
@@ -224,7 +246,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 12: // Right scroll
-        width = screen_width * effect_counter / effect->duration;
+        width = screen_width * effect_counter / effect_duration;
         src_rect.x = width;
         dst_rect.x = 0;
         src_rect.y = dst_rect.y = 0;
@@ -241,7 +263,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 13: // Top scroll
-        width = screen_height * effect_counter / effect->duration;
+        width = screen_height * effect_counter / effect_duration;
         src_rect.x = dst_rect.x = 0;
         src_rect.y = 0;
         dst_rect.y = width;
@@ -258,7 +280,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 14: // Bottom scroll
-        width = screen_height * effect_counter / effect->duration;
+        width = screen_height * effect_counter / effect_duration;
         src_rect.x = dst_rect.x = 0;
         src_rect.y = width;
         dst_rect.y = 0;
@@ -275,26 +297,26 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         break;
 
       case 15: // Fade with mask
-        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect->duration, &dirty_rect.bounding_box );
+        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_FADE_MASK, 256 * effect_counter / effect_duration, &dirty_rect.bounding_box );
         break;
 
       case 16: // Mosaic out
-        generateMosaic( effect_src_surface, 5 - 6 * effect_counter / effect->duration );
+        generateMosaic( effect_src_surface, 5 - 6 * effect_counter / effect_duration );
         break;
         
       case 17: // Mosaic in
-        generateMosaic( effect_dst_surface, 6 * effect_counter / effect->duration );
+        generateMosaic( effect_dst_surface, 6 * effect_counter / effect_duration );
         break;
         
       case 18: // Cross fade with mask
-        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect->duration, &dirty_rect.bounding_box );
+        alphaBlend( effect->anim.image_surface, ALPHA_BLEND_CROSSFADE_MASK, 256 * effect_counter * 2 / effect_duration, &dirty_rect.bounding_box );
         break;
 
-      case (CUSTOM_EFFECT_NO + 0 ): // quakey
-        if ( effect_timer_resolution > effect->duration / 4 / effect->no )
-            effect_timer_resolution = effect->duration / 4 / effect->no;
-        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
-                              EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
+      case (MAX_EFFECT_NUM + 0): // quakey
+        if ( effect_timer_resolution > effect_duration / 4 / effect->no )
+            effect_timer_resolution = effect_duration / 4 / effect->no;
+        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect_duration) *
+                              EFFECT_QUAKE_AMP * effect->no * (effect_duration -  effect_counter) / effect_duration);
         dst_rect.x = 0;
         dst_rect.y = amp;
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
@@ -310,11 +332,11 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         SDL_FillRect( accumulation_surface, &quake_rect, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         break;
         
-      case (CUSTOM_EFFECT_NO + 1 ): // quakex
-        if ( effect_timer_resolution > effect->duration / 4 / effect->no )
-            effect_timer_resolution = effect->duration / 4 / effect->no;
-        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect->duration) *
-                              EFFECT_QUAKE_AMP * effect->no * (effect->duration -  effect_counter) / effect->duration);
+      case (MAX_EFFECT_NUM + 1): // quakex
+        if ( effect_timer_resolution > effect_duration / 4 / effect->no )
+            effect_timer_resolution = effect_duration / 4 / effect->no;
+        amp = (Sint16)(sin(M_PI * 2.0 * effect->no * effect_counter / effect_duration) *
+                              EFFECT_QUAKE_AMP * effect->no * (effect_duration -  effect_counter) / effect_duration);
         dst_rect.x = amp;
         dst_rect.y = 0;
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
@@ -330,23 +352,41 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         SDL_FillRect( accumulation_surface, &quake_rect, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         break;
         
-      case (CUSTOM_EFFECT_NO + 2 ): // quake
+      case (MAX_EFFECT_NUM + 2): // quake
         dst_rect.x = effect->no*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         dst_rect.y = effect->no*((int)(3.0*rand()/(RAND_MAX+1.0)) - 1) * 2;
         SDL_FillRect( accumulation_surface, NULL, SDL_MapRGBA( accumulation_surface->format, 0, 0, 0, 0xff ) );
         drawEffect(&dst_rect, &src_rect, effect_dst_surface);
+        break;
+
+      case 99: // dll-based
+        if (effect->anim.image_name != NULL){
+            if (!strncmp(effect->anim.image_name, "breakup.dll", 11)){
+                effectBreakup(effect->anim.image_name, effect_duration);
+            } else {
+                printf("dll effect '%s' not implemented; substituting crossfade\n", effect->anim.image_name);
+                // do crossfade
+                height = 256 * effect_counter / effect_duration;
+                alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
+            }
+        } else { //just in case no dll is given
+            printf("no dll provided for effect %d; substituting crossfade\n", effect_no);
+            // do crossfade
+            height = 256 * effect_counter / effect_duration;
+            alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
+        }
         break;
     }
 
     if (effect_counter == 0 && not_implemented)
         printf("effect No. %d is not implemented. Crossfade is used instead.\n", effect_no);
 
-    //printf("effect conut %d / dur %d\n", effect_counter, effect->duration);
+    //printf("effect conut %d / dur %d\n", effect_counter, effect_duration);
     
     effect_counter += effect_timer_resolution;
-    if (waitEvent(0, true)) effect_counter = effect->duration;
+    if (waitEvent(0, true)) effect_counter = effect_duration;
 
-    if ( effect_counter < effect->duration && effect_no != 1 ){
+    if ( effect_counter < effect_duration && effect_no != 1 ){
         if ( effect_no != 0 ) flush( REFRESH_NONE_MODE, NULL, false );
     
         event_mode = IDLE_EVENT_MODE;

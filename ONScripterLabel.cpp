@@ -596,6 +596,9 @@ int ONScripterLabel::init()
     // ----------------------------------------
     // Initialize misc variables
     
+    breakup_cells = NULL;
+    breakup_mask = breakup_cellforms = NULL;
+
     internal_timer = SDL_GetTicks();
 
     trap_dist = NULL;
@@ -637,6 +640,10 @@ void ONScripterLabel::reset()
     event_mode = IDLE_EVENT_MODE;
     all_sprite_hide_flag = false;
     all_sprite2_hide_flag = false;
+
+    if (breakup_cells) delete[] breakup_cells;
+    if (breakup_mask) delete[] breakup_mask;
+    if (breakup_cellforms) delete[] breakup_cellforms;
 
     if (resize_buffer_size != 16){
         delete[] resize_buffer;

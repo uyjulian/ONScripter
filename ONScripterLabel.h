@@ -39,7 +39,7 @@
 #define MAX_SPRITE_NUM 1000
 #define MAX_SPRITE2_NUM 256
 #define MAX_PARAM_NUM 100
-#define CUSTOM_EFFECT_NO 100
+#define MAX_EFFECT_NUM 256
 
 #define DEFAULT_VOLUME 100
 #define ONS_MIX_CHANNELS 50
@@ -552,7 +552,7 @@ private:
     /* ---------------------------------------- */
     /* Effect related variables */
     DirtyRect dirty_rect, dirty_rect_tmp; // only this region is updated
-    int effect_counter; // counter in each effect
+    int effect_counter, effect_duration; // counter in each effect
     int effect_timer_resolution;
     int effect_start_time;
     int effect_start_time_old;
@@ -562,6 +562,20 @@ private:
     void drawEffect( SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface );
     void generateMosaic( SDL_Surface *src_surface, int level );
     
+    struct BreakupCell {
+        int cell_x, cell_y;
+        int dir;
+        int state;
+        int radius;
+        BreakupCell(): cell_x(0), cell_y(0),
+                       dir(0), state(0), radius(0){}
+    } *breakup_cells;
+    bool *breakup_cellforms, *breakup_mask;
+    void buildBreakupCellforms();
+    void buildBreakupMask();
+    void initBreakup( char *params );
+    void effectBreakup( char *params, int duration );
+
     /* ---------------------------------------- */
     /* Select related variables */
     enum { SELECT_GOTO_MODE=0, SELECT_GOSUB_MODE=1, SELECT_NUM_MODE=2, SELECT_CSEL_MODE=3 };

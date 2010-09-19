@@ -107,7 +107,7 @@ public:
     void setKeyTable( const unsigned char *key_table );
 
     // basic parser function
-    const char *readToken(bool text_translation_flag=true);
+    const char *readToken();
     const char *readLabel();
     void readVariable( bool reread_flag=false );
     const char *readStr();
@@ -147,6 +147,7 @@ public:
     inline int getEndStatus(){ return end_status; };
     void skipLine( int no=1 );
     void setLinepage( bool val );
+    void setEnglishMode( bool val ){ english_mode = val; };
 
     // function for kidoku history
     bool isKidoku();
@@ -334,6 +335,7 @@ private:
     bool linepage_flag;
     bool textgosub_flag;
     char *clickstr_list;
+    bool english_mode;
 
     char *current_script;
     char *next_script;

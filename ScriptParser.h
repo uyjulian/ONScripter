@@ -133,6 +133,7 @@ public:
     //int gameCommand();
     int forCommand();
     int filelogCommand();
+    int englishCommand();
     int effectcutCommand();
     int effectblankCommand();
     int effectCommand();
@@ -359,6 +360,7 @@ protected:
     int  clickstr_state;
     int  linepage_mode;
     int  num_chars_in_sentence;
+    bool english_mode;
     
     /* ---------------------------------------- */
     /* Sound related variables */

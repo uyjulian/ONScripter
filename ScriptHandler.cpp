@@ -114,6 +114,7 @@ void ScriptHandler::reset()
     kidokuskip_flag = false;
     text_flag = true;
     linepage_flag = false;
+    english_mode = false;
     textgosub_flag = false;
     skip_enabled = false;
     if (clickstr_list){
@@ -148,7 +149,7 @@ void ScriptHandler::setKeyTable( const unsigned char *key_table )
 }
 
 // basic parser function
-const char *ScriptHandler::readToken(bool text_translation_flag)
+const char *ScriptHandler::readToken()
 {
     current_script = next_script;
     char *buf = current_script;
@@ -175,9 +176,7 @@ const char *ScriptHandler::readToken(bool text_translation_flag)
              ch == '@' || ch == '\\' || ch == '/' ||
              ch == '%' || ch == '?' || ch == '$' ||
              ch == '[' || ch == '(' ||
-#ifndef ENABLE_1BYTE_CHAR
-             ch == '`' ||
-#endif             
+             (!english_mode && ch == '>') ||
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
         while(1){
             if ( IS_TWO_BYTE(ch) ){
@@ -188,11 +187,11 @@ const char *ScriptHandler::readToken(bool text_translation_flag)
                 buf++;
             }
             else{
-                if (text_translation_flag && (ch == '%' || ch == '?')){
+                if (ch == '%' || ch == '?'){
                     addIntVariable(&buf);
                     SKIP_SPACE(buf);
                 }
-                else if (text_translation_flag && ch == '$'){
+                else if (ch == '$'){
                     addStrVariable(&buf);
                     SKIP_SPACE(buf);
                 }
@@ -207,23 +206,19 @@ const char *ScriptHandler::readToken(bool text_translation_flag)
 
         text_flag = true;
     }
-#ifdef ENABLE_1BYTE_CHAR
-    else if (ch == '`'){
+    else if (english_mode && ch == '>'){
         ch = *++buf;
-        while (ch != '`' && ch != 0x0a && ch !='\0'){
-            if ( IS_TWO_BYTE(ch) ){
+        while (1){
+            if (ch == 0x0a || ch =='\0') break;
+
+            if (ch != '\t') 
                 addStringBuffer( ch );
-                ch = *++buf;
-            }
-            addStringBuffer( ch );
             ch = *++buf;
         }
-        if (ch == '`') buf++;
         
         text_flag = true;
         end_status |= END_1BYTE_CHAR;
     }
-#endif
     else if ((ch >= 'a' && ch <= 'z') || 
              (ch >= 'A' && ch <= 'Z') ||
              ch == '_'){ // command

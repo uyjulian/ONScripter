@@ -345,19 +345,6 @@ extern "C" void waveCallback( int channel )
     SDL_PushEvent(&event);
 }
 
-void musicCallback( int sig )
-{
-#if defined(LINUX)
-    int status;
-    wait( &status );
-#endif
-    if ( !ext_music_play_once_flag ){
-        SDL_Event event;
-        event.type = ONS_MUSIC_EVENT;
-        SDL_PushEvent(&event);
-    }
-}
-
 void ONScripterLabel::trapHandler()
 {
     trap_mode = TRAP_NONE;

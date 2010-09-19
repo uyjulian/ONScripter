@@ -124,6 +124,7 @@ static struct FuncLUT{
     //{"game",    &ScriptParser::gameCommand},
     {"for",   &ScriptParser::forCommand},
     {"filelog",   &ScriptParser::filelogCommand},
+    {"english",   &ScriptParser::englishCommand},
     {"effectcut",   &ScriptParser::effectcutCommand},
     {"effectblank",   &ScriptParser::effectblankCommand},
     {"effect",   &ScriptParser::effectCommand},
@@ -306,6 +307,7 @@ void ScriptParser::reset()
     clickstr_line = 0;
     clickstr_state = CLICK_NONE;
     linepage_mode = 0;
+    english_mode = false;
     
     /* ---------------------------------------- */
     /* Sound related variables */

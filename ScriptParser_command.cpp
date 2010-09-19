@@ -1039,6 +1039,16 @@ int ScriptParser::filelogCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::englishCommand()
+{
+    if ( current_mode != DEFINE_MODE ) errorAndExit( "english: not in the define section." );
+    
+    //english_mode = true;
+    script_h.setEnglishMode(true);
+    
+    return RET_CONTINUE;
+}
+
 int ScriptParser::effectcutCommand()
 {
     if ( current_mode != DEFINE_MODE ) errorAndExit( "effectcut: not in the define section." );
