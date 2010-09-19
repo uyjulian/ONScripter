@@ -364,22 +364,22 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
             if (!strncmp(effect->anim.image_name, "breakup.dll", 11)){
                 effectBreakup(effect->anim.image_name, effect_duration);
             } else {
-                printf("dll effect '%s' not implemented; substituting crossfade\n", effect->anim.image_name);
                 // do crossfade
                 height = 256 * effect_counter / effect_duration;
                 alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
+                not_implemented = true;
             }
         } else { //just in case no dll is given
-            printf("no dll provided for effect %d; substituting crossfade\n", effect_no);
             // do crossfade
             height = 256 * effect_counter / effect_duration;
             alphaBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );
+            not_implemented = true;
         }
         break;
     }
 
     if (effect_counter == 0 && not_implemented)
-        printf("effect No. %d is not implemented. Crossfade is used instead.\n", effect_no);
+        printf("effect No. %d not implemented; substituting crossfade\n", effect_no);
 
     //printf("effect conut %d / dur %d\n", effect_counter, effect_duration);
     

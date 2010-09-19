@@ -25,15 +25,6 @@
 
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
-#define IS_KINSOKU(x)	\
-    ((*(x) == (char)0x81 && *((x)+1) == (char)0x41) ||  \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x42) ||    \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x48) ||    \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x49) ||    \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x76) ||    \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x78) ||    \
-     (*(x) == (char)0x81 && *((x)+1) == (char)0x5b) )
-
 #define IS_ROTATION_REQUIRED(x)	\
     (!IS_TWO_BYTE(*(x)) ||                                              \
      (*(x) == (char)0x81 && *((x)+1) == (char)0x50) ||                  \
@@ -162,8 +153,8 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
 
         if ( lookback_flag ){
             for (int i=0 ; i<indent_offset ; i++){
-                current_page->add(((char*)"　")[0]);
-                current_page->add(((char*)"　")[1]);
+                current_page->add(0x81);
+                current_page->add(0x40);
             }
         }
     }
@@ -276,18 +267,10 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 #endif
 
         if ( IS_TWO_BYTE(*str) ){
-            /* Kinsoku process */
-            if (IS_KINSOKU( str+2 )){
-                int i = 2;
-                while (!info->isEndOfLine(i) &&
-                       IS_KINSOKU( str+2+i )){
-                    i += 2;
-                }
-                if (info->isEndOfLine(i)){
-                    info->newLine();
-                    for (int i=0 ; i<indent_offset ; i++){
-                        sentence_font.advanceCharInHankaku(2);
-                    }
+            if ( checkLineBreak( str, info ) ){
+                info->newLine();
+                for (int i=0 ; i<indent_offset ; i++){
+                    sentence_font.advanceCharInHankaku(2);
                 }
             }
 
@@ -357,14 +340,8 @@ void ONScripterLabel::restoreTextBuffer()
             if ( IS_TWO_BYTE(out_text[0]) ){
                 out_text[1] = current_page->text[i+1];
                 
-                if (IS_KINSOKU( current_page->text+i+2 )){
-                    int j = 2;
-                    while (!f_info.isEndOfLine(j) &&
-                           IS_KINSOKU( current_page->text+i+2+j )){
-                        j += 2;
-                    }
-                    if (f_info.isEndOfLine(j)) f_info.newLine();
-                }
+                if ( checkLineBreak( current_page->text, &f_info ) )
+                    f_info.newLine();
             }
             else{
                 out_text[1] = '\0';
@@ -679,6 +656,39 @@ int ONScripterLabel::textCommand()
     return RET_CONTINUE;
 }
 
+bool ONScripterLabel::checkLineBreak(const char *buf, FontInfo *fi)
+{
+    // check start kinsoku
+    if (isStartKinsoku( buf+2 )){
+        const char *buf2 = buf;
+        int i = 2;
+        while (!fi->isEndOfLine(i)){
+            if      ( buf2[i+2] == 0x0a || buf2[i+2] == 0 ) break;
+            else if ( !IS_TWO_BYTE( buf2[i+2] ) ) buf2++;
+            else if ( isStartKinsoku( buf2+i+2 ) ) i += 2;
+            else break;
+        }
+
+        if (fi->isEndOfLine(i)) return true;
+    }
+        
+    // check end kinsoku
+    if (isEndKinsoku( buf )){
+        const char *buf2 = buf;
+        int i = 2;
+        while (!fi->isEndOfLine(i)){
+            if      ( buf2[i+2] == 0x0a || buf2[i+2] == 0 ) break;
+            else if ( !IS_TWO_BYTE( buf2[i+2] ) ) buf2++;
+            else if ( isEndKinsoku( buf2+i ) ) i += 2;
+            else break;
+        }
+
+        if (fi->isEndOfLine(i)) return true;
+    }
+
+    return false;
+}
+
 void ONScripterLabel::processEOT()
 {
     int i, n;
@@ -688,8 +698,8 @@ void ONScripterLabel::processEOT()
         if (page_enter_status == 1){
             n = sentence_font.num_xy[0] - sentence_font.xy[0]/2;
             for (i=0 ; i<n ; i++){
-                current_page->add(((char*)"　")[0]);
-                current_page->add(((char*)"　")[1]);
+                current_page->add(0x81);
+                current_page->add(0x40);
                 sentence_font.advanceCharInHankaku(2);
             }
         }
@@ -725,21 +735,13 @@ bool ONScripterLabel::processText()
     if ( IS_TWO_BYTE(ch) ){ // Shift jis
         /* ---------------------------------------- */
         /* Kinsoku process */
-        if (IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2)){
-            int i = 2;
-            while (!sentence_font.isEndOfLine(i) &&
-                   IS_KINSOKU( script_h.getStringBuffer() + string_buffer_offset + 2 + i)){
-                i += 2;
-            }
-
-            if (sentence_font.isEndOfLine(i)){
-                sentence_font.newLine();
-                current_page->add( 0x0a );
-                for (int i=0 ; i<indent_offset ; i++){
-                    current_page->add(((char*)"　")[0]);
-                    current_page->add(((char*)"　")[1]);
-                    sentence_font.advanceCharInHankaku(2);
-                }
+        if ( checkLineBreak( script_h.getStringBuffer() + string_buffer_offset, &sentence_font ) ){
+            sentence_font.newLine();
+            current_page->add( 0x0a );
+            for (int i=0 ; i<indent_offset ; i++){
+                current_page->add(0x81);
+                current_page->add(0x40);
+                sentence_font.advanceCharInHankaku(2);
             }
         }
         

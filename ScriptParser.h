@@ -50,6 +50,9 @@
 #define DEFAULT_LOOKBACK_NAME2 "doncur.bmp"
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
+#define DEFAULT_START_KINSOKU "」』）］｝、。，．・？！ヽヾゝゞ々ー"
+#define DEFAULT_END_KINSOKU   "「『（［｛"
+
 typedef unsigned char uchar3[3];
 
 class ScriptParser
@@ -85,6 +88,7 @@ public:
     int skipCommand();
     int sinCommand();
     int shadedistanceCommand();
+    int setkinsokuCommand();
     int selectvoiceCommand();
     int selectcolorCommand();
     int savenumberCommand();
@@ -154,6 +158,7 @@ public:
     int breakCommand();
     int atoiCommand();
     int arcCommand();
+    int addkinsokuCommand();
     int addCommand();
     
 protected:
@@ -361,6 +366,14 @@ protected:
     int  linepage_mode;
     int  num_chars_in_sentence;
     bool english_mode;
+
+    struct Kinsoku {
+        char chr[2];
+    } *start_kinsoku, *end_kinsoku;
+    int num_start_kinsoku, num_end_kinsoku;
+    void setKinsoku(const char *start_chrs, const char *end_chrs, bool add);
+    bool isStartKinsoku(const char *str);
+    bool isEndKinsoku(const char *str);
     
     /* ---------------------------------------- */
     /* Sound related variables */
