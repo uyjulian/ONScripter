@@ -849,14 +849,16 @@ bool ONScripterLabel::processText()
         string_buffer_offset += 7;
         return true;
     }
-    else if ( ch == '(' && !english_mode){
+    else if ( ch == '(' && 
+              (!english_mode ||
+               !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)) ){
         current_page->add('(');
         startRuby( script_h.getStringBuffer() + string_buffer_offset + 1, sentence_font );
         
         string_buffer_offset++;
         return true;
     }
-    else if ( ch == '/'){
+    else if ( ch == '/' && !(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) ){
         if ( ruby_struct.stage == RubyStruct::BODY ){
             current_page->add('/');
             sentence_font.addLineOffset(ruby_struct.margin);

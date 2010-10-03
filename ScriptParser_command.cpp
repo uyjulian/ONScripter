@@ -30,7 +30,8 @@
 
 int ScriptParser::zenkakkoCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "zenkakko: not in the define section" );
     zenkakko_flag = true;
     
     return RET_CONTINUE;
@@ -38,7 +39,8 @@ int ScriptParser::zenkakkoCommand()
 
 int ScriptParser::windowchipCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "windowchip: not in the define section" );
     windowchip_sprite_no = script_h.readInt();
 
     return RET_CONTINUE;
@@ -46,7 +48,8 @@ int ScriptParser::windowchipCommand()
 
 int ScriptParser::windowbackCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "windowback: not in the define section" );
     windowback_flag = true;
 
     return RET_CONTINUE;
@@ -68,7 +71,8 @@ int ScriptParser::versionstrCommand()
 
 int ScriptParser::usewheelCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "usewheel: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "usewheel: not in the define section" );
 
     usewheel_flag = true;
 
@@ -77,7 +81,8 @@ int ScriptParser::usewheelCommand()
 
 int ScriptParser::useescspcCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "useescspc: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "useescspc: not in the define section" );
 
     if ( !force_button_shortcut_flag )
         useescspc_flag = true;
@@ -87,7 +92,8 @@ int ScriptParser::useescspcCommand()
 
 int ScriptParser::underlineCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "underline: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "underline: not in the define section" );
 
     underline_value = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
@@ -96,7 +102,8 @@ int ScriptParser::underlineCommand()
 
 int ScriptParser::transmodeCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "transmode: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "transmode: not in the define section" );
 
     if      ( script_h.compareString("leftup") )   trans_mode = AnimationInfo::TRANS_TOPLEFT;
     else if ( script_h.compareString("copy") )     trans_mode = AnimationInfo::TRANS_COPY;
@@ -126,7 +133,8 @@ int ScriptParser::timeCommand()
 
 int ScriptParser::textgosubCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "textgosub: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "textgosub: not in the define section" );
 
     setStr( &textgosub_label, script_h.readStr()+1 );
     script_h.enableTextgosub(true);
@@ -158,7 +166,8 @@ int ScriptParser::subCommand()
 
 int ScriptParser::straliasCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "stralias: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "stralias: not in the define section" );
     
     script_h.readLabel();
     const char *save_buf = script_h.saveStringBuffer();
@@ -171,7 +180,8 @@ int ScriptParser::straliasCommand()
 
 int ScriptParser::soundpressplginCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "soundpressplgin: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "soundpressplgin: not in the define section" );
 
     const char *buf = script_h.readStr();
     char buf2[12];
@@ -230,7 +240,8 @@ int ScriptParser::shadedistanceCommand()
 
 int ScriptParser::setkinsokuCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "setkinsoku: not in the define section" );
 
     script_h.readStr();
     char *start = script_h.saveStringBuffer();
@@ -242,7 +253,8 @@ int ScriptParser::setkinsokuCommand()
 
 int ScriptParser::selectvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "selectvoice: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "selectvoice: not in the define section" );
 
     for ( int i=0 ; i<SELECTVOICE_NUM ; i++ )
         setStr( &selectvoice_file_name[i], script_h.readStr() );
@@ -318,7 +330,8 @@ int ScriptParser::rubyoffCommand()
 
 int ScriptParser::roffCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "roff: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "roff: not in the define section" );
     rmode_flag = false;
 
     return RET_CONTINUE;
@@ -361,7 +374,7 @@ int ScriptParser::returnCommand()
     if (label[0] != '*')
         script_h.setCurrent( last_nest_info->next_script );
     else
-        setCurrentLabel( label+1);
+        setCurrentLabel( label+1 );
 
     bool textgosub_flag = last_nest_info->textgosub_flag;
 
@@ -382,7 +395,8 @@ int ScriptParser::returnCommand()
 
 int ScriptParser::pretextgosubCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "pretextgosub: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "pretextgosub: not in the define section" );
 
     setStr( &pretextgosub_label, script_h.readStr()+1 );
     
@@ -391,7 +405,8 @@ int ScriptParser::pretextgosubCommand()
 
 int ScriptParser::pagetagCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "pagetag: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "pagetag: not in the define section" );
 
     pagetag_flag = true;
     
@@ -400,7 +415,8 @@ int ScriptParser::pagetagCommand()
 
 int ScriptParser::numaliasCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "numalias: numalias: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "numalias: numalias: not in the define section" );
 
     script_h.readLabel();
     const char *save_buf = script_h.saveStringBuffer();
@@ -413,7 +429,8 @@ int ScriptParser::numaliasCommand()
 
 int ScriptParser::nsadirCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "nsadir: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "nsadir: not in the define section" );
 
     const char *buf = script_h.readStr();
     
@@ -525,7 +542,8 @@ int ScriptParser::movCommand()
 
 int ScriptParser::mode_sayaCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "mode_saya: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "mode_saya: not in the define section" );
     mode_saya_flag = true;
 
     return RET_CONTINUE;
@@ -533,7 +551,8 @@ int ScriptParser::mode_sayaCommand()
 
 int ScriptParser::mode_extCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "mode_ext: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "mode_ext: not in the define section" );
     mode_ext_flag = true;
 
     return RET_CONTINUE;
@@ -601,7 +620,8 @@ int ScriptParser::menusetwindowCommand()
 
 int ScriptParser::menuselectvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "menuselectvoice: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "menuselectvoice: not in the define section" );
 
     for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
         setStr( &menuselectvoice_file_name[i], script_h.readStr() );
@@ -625,7 +645,8 @@ int ScriptParser::menuselectcolorCommand()
 
 int ScriptParser::maxkaisoupageCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "maxkaisoupage: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "maxkaisoupage: not in the define section" );
     max_page_list = script_h.readInt()+1;
 
     return RET_CONTINUE;
@@ -659,7 +680,8 @@ int ScriptParser::luacallCommand()
 
 int ScriptParser::lookbackspCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "lookbacksp: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "lookbacksp: not in the define section" );
 
     for ( int i=0 ; i<2 ; i++ )
         lookback_sp[i] = script_h.readInt();
@@ -684,7 +706,8 @@ int ScriptParser::lookbackcolorCommand()
 
 int ScriptParser::loadgosubCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "loadgosub: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "loadgosub: not in the define section" );
 
     setStr( &loadgosub_label, script_h.readStr()+1 );
 
@@ -693,7 +716,8 @@ int ScriptParser::loadgosubCommand()
 
 int ScriptParser::linepageCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "linepage: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "linepage: not in the define section" );
 
     if ( script_h.isName( "linepage2" ) ){
         linepage_mode = 2;
@@ -721,7 +745,8 @@ int ScriptParser::lenCommand()
 
 int ScriptParser::labellogCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "labellog: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "labellog: not in the define section" );
 
     labellog_flag = true;
 
@@ -773,7 +798,8 @@ int ScriptParser::itoaCommand()
 
 int ScriptParser::intlimitCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "intlimit: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "intlimit: not in the define section" );
     
     int no = script_h.readInt();
 
@@ -949,7 +975,8 @@ int ScriptParser::gosubCommand()
 
 int ScriptParser::globalonCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "globalon: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "globalon: not in the define section" );
     globalon_flag = true;
     
     return RET_CONTINUE;
@@ -958,7 +985,7 @@ int ScriptParser::globalonCommand()
 int ScriptParser::getparamCommand()
 {
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
-        errorAndExit( "getpapam: not in a subroutine" );
+        errorAndExit( "getparam: not in a subroutine" );
 
     int end_status;
     do{
@@ -1007,14 +1034,14 @@ int ScriptParser::forCommand()
     script_h.pushVariable();
 
     if ( !script_h.compareString("=") ) 
-        errorAndExit( "for: no =" );
+        errorAndExit( "for: missing '='" );
 
     script_h.setCurrent(script_h.getNext() + 1);
     int from = script_h.readInt();
     script_h.setInt( &script_h.pushed_variable, from );
     
     if ( !script_h.compareString("to") )
-        errorAndExit( "for: no to" );
+        errorAndExit( "for: missing 'to'" );
 
     script_h.readLabel();
     
@@ -1043,7 +1070,8 @@ int ScriptParser::forCommand()
 
 int ScriptParser::filelogCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "filelog: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "filelog: not in the define section" );
 
     filelog_flag = true;
     readLog( script_h.log_info[ScriptHandler::FILE_LOG] );
@@ -1053,7 +1081,8 @@ int ScriptParser::filelogCommand()
 
 int ScriptParser::englishCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "english: not in the define section." );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "english: not in the define section." );
     
     //english_mode = true;
     script_h.setEnglishMode(true);
@@ -1063,7 +1092,8 @@ int ScriptParser::englishCommand()
 
 int ScriptParser::effectcutCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "effectcut: not in the define section." );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "effectcut: not in the define section." );
 
     effect_cut_flag = true;
 
@@ -1072,7 +1102,8 @@ int ScriptParser::effectcutCommand()
 
 int ScriptParser::effectblankCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "effectblank: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "effectblank: not in the define section" );
     
     effect_blank = script_h.readInt();
 
@@ -1087,11 +1118,13 @@ int ScriptParser::effectCommand()
         elink = &window_effect;
     }
     else{
-        if ( current_mode != DEFINE_MODE ) errorAndExit( "effect: not in the define section" );
+        if ( current_mode != DEFINE_MODE )
+            errorAndExit( "effect: not in the define section" );
 
         elink = new EffectLink();
         elink->no = script_h.readInt();
-        if (elink->no < 2 || elink->no > 255) errorAndExit( "Effect No. is out of range" );
+        if (elink->no < 2 || elink->no > 255)
+            errorAndExit( "effect: effect number out of range" );
 
         last_effect_link->next = elink;
         last_effect_link = last_effect_link->next;
@@ -1115,7 +1148,8 @@ int ScriptParser::divCommand()
 
 int ScriptParser::dimCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "dim: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "dim: not in the define section" );
 
     script_h.declareDim();
     
@@ -1159,7 +1193,8 @@ int ScriptParser::defmp3volCommand()
 
 int ScriptParser::defaultspeedCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "defaultspeed: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "defaultspeed: not in the define section" );
 
     for ( int i=0 ; i<3 ; i++ ) default_text_speed[i] = script_h.readInt();
 
@@ -1168,7 +1203,8 @@ int ScriptParser::defaultspeedCommand()
 
 int ScriptParser::defaultfontCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "defaultfont: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "defaultfont: not in the define section" );
 
     setStr( &default_env_font, script_h.readStr() );
 
@@ -1231,7 +1267,8 @@ int ScriptParser::cmpCommand()
 
 int ScriptParser::clickvoiceCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( "clickvoice: not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "clickvoice: not in the define section" );
 
     for ( int i=0 ; i<CLICKVOICE_NUM ; i++ )
         setStr( &clickvoice_file_name[i], script_h.readStr() );
@@ -1314,7 +1351,8 @@ int ScriptParser::arcCommand()
 
 int ScriptParser::addkinsokuCommand()
 {
-    if ( current_mode != DEFINE_MODE ) errorAndExit( script_h.getStringBuffer(), "not in the define section" );
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "addkinsoku: not in the define section" );
 
     script_h.readStr();
     char *start = script_h.saveStringBuffer();

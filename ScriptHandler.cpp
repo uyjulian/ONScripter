@@ -176,6 +176,9 @@ const char *ScriptHandler::readToken()
              ch == '@' || ch == '\\' || ch == '/' ||
              ch == '%' || ch == '?' || ch == '$' ||
              ch == '[' || ch == '(' ||
+#ifndef ENABLE_1BYTE_CHAR
+             ch == '`' ||
+#endif             
              (!english_mode && ch == '>') ||
              ch == '!' || ch == '#' || ch == ',' || ch == '"'){ // text
         while(1){
@@ -206,6 +209,23 @@ const char *ScriptHandler::readToken()
 
         text_flag = true;
     }
+#ifdef ENABLE_1BYTE_CHAR
+    else if (ch == '`'){
+        ch = *++buf;
+        while (ch != '`' && ch != 0x0a && ch !='\0'){
+            if ( IS_TWO_BYTE(ch) ){
+                addStringBuffer( ch );
+                ch = *++buf;
+            }
+            addStringBuffer( ch );
+            ch = *++buf;
+        }
+        if (ch == '`') buf++;
+        
+        text_flag = true;
+        end_status |= END_1BYTE_CHAR;
+    }
+#endif
     else if (english_mode && ch == '>'){
         ch = *++buf;
         while (1){
