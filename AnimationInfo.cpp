@@ -53,6 +53,7 @@ AnimationInfo::AnimationInfo()
     is_copy = false;
     
     image_name = NULL;
+    surface_name = NULL;
     image_surface = NULL;
     alpha_buf = NULL;
 
@@ -128,7 +129,12 @@ void AnimationInfo::setImageName( const char *name ){
     strcpy( image_name, name );
 }
 
-void AnimationInfo::deleteSurface(){
+void AnimationInfo::deleteSurface(bool delete_surface_name)
+{
+    if (delete_surface_name){
+        if ( surface_name ) delete[] surface_name;
+        surface_name = NULL;
+    }
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;
     if (alpha_buf) delete[] alpha_buf;
@@ -613,7 +619,7 @@ void AnimationInfo::allocImage( int w, int h )
     if (!image_surface ||
         image_surface->w != w ||
         image_surface->h != h){
-        deleteSurface();
+        deleteSurface(false);
 
         image_surface = allocSurface( w, h );
 #if defined(BPP16)    

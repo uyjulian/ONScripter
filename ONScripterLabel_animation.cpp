@@ -132,9 +132,16 @@ void ONScripterLabel::resetRemainingTime( int t )
 
 void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 {
+    if (anim->file_name && anim->surface_name &&
+        strcmp(anim->file_name, anim->surface_name) == 0) return;
+
     anim->deleteSurface();
     anim->abs_flag = true;
 
+    if ( anim->surface_name ) delete[] anim->surface_name;
+    anim->surface_name = new char[ strlen(anim->file_name) + 1 ];
+    strcpy( anim->surface_name, anim->file_name );
+    
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
         FontInfo f_info = sentence_font;
         if (info) f_info = *info;

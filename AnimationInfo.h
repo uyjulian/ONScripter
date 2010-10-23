@@ -75,6 +75,7 @@ public:
     bool affine_flag;
     int trans;
     char *image_name;
+    char *surface_name; // used to avoid reloading images
     SDL_Surface *image_surface;
     unsigned char *alpha_buf;
     /* Variables for extended sprite (lsp2, drawsp2, etc.) */
@@ -103,7 +104,7 @@ public:
     
     void deleteImageName();
     void setImageName( const char *name );
-    void deleteSurface();
+    void deleteSurface(bool delete_surface_name=true);
     void remove();
     void removeTag();
 
