@@ -693,7 +693,8 @@ int ONScripterLabel::selectCommand()
 
             const char *buf = script_h.readStr();
             comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
-            if ( select_mode != SELECT_NUM_MODE && !comma_flag ) errorAndExit( "select: comma is needed here." );
+            if ( select_mode != SELECT_NUM_MODE && !comma_flag )
+                errorAndExit( "select: missing comma." );
 
             // Text part
             SelectLink *slink = new SelectLink();
@@ -889,7 +890,7 @@ int ONScripterLabel::savegameCommand()
         savestr = script_h.readStr();
 
     if ( no < 0 )
-        errorAndExit("savegame: the specified number is less than 0.");
+        errorAndExit("savegame: save number is less than 0.");
     else
         saveSaveFile( no, savestr ); 
 
@@ -1544,7 +1545,7 @@ int ONScripterLabel::loadgameCommand()
     int no = script_h.readInt();
 
     if ( no < 0 )
-        errorAndExit( "loadgame: no < 0." );
+        errorAndExit( "loadgame: save number is less than 0." );
 
     if ( loadSaveFile( no ) ) return RET_CONTINUE;
     else {
@@ -1932,7 +1933,7 @@ int ONScripterLabel::getsavestrCommand()
 {
     script_h.readVariable();
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
-        errorAndExit( "not a string variable" );
+        errorAndExit( "getsavestr: no string variable." );
         
     script_h.pushVariable();
 
@@ -2726,7 +2727,7 @@ int ONScripterLabel::checkpageCommand()
 
     if ( script_h.pushed_variable.type != ScriptHandler::VAR_INT &&
          script_h.pushed_variable.type != ScriptHandler::VAR_ARRAY )
-        errorAndExit( "checkpage: no variable." );
+        errorAndExit( "checkpage: no integer variable." );
 
     int page_no = script_h.readInt();
     
@@ -2806,7 +2807,7 @@ int ONScripterLabel::btnwaitCommand()
         shortcut_mouse_line = 0;
         skip_mode &= ~SKIP_NORMAL;
 
-        if ( exbtn_d_button_link.exbtn_ctl ){
+        if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl){
             SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
             if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect );
         }
@@ -2816,13 +2817,16 @@ int ONScripterLabel::btnwaitCommand()
             p_button_link->show_flag = 0;
             if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
                  p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+                sprite_info[ p_button_link->sprite_no ].setCell(0);
             }
             else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
                 p_button_link->show_flag = 1;
+                sprite_info[ p_button_link->sprite_no ].setCell(0);
             }
             else if ( p_button_link->anim[1] != NULL ){
                 p_button_link->show_flag = 2;
             }
+            dirty_rect.add( p_button_link->image_rect );
             p_button_link = p_button_link->next;
         }
 
@@ -2868,7 +2872,6 @@ int ONScripterLabel::btnwaitCommand()
     }
 
     btnwait_time = SDL_GetTicks() - internal_button_timer;
-    btntime_value = 0;
     num_chars_in_sentence = 0;
 
     if ( textbtn_flag && (skip_mode & SKIP_NORMAL || 
@@ -2879,10 +2882,6 @@ int ONScripterLabel::btnwaitCommand()
 
     if ( current_button_state.button >= 1 && del_flag ){
         deleteButtonLink();
-        if ( exbtn_d_button_link.exbtn_ctl ){
-            delete[] exbtn_d_button_link.exbtn_ctl;
-            exbtn_d_button_link.exbtn_ctl = NULL;
-        }
     }
 
     event_mode = IDLE_EVENT_MODE;
@@ -2935,6 +2934,7 @@ int ONScripterLabel::btndefCommand()
         }
     }
     
+    btntime_value = 0;
     deleteButtonLink();
 
     disableGetButtonFlag();

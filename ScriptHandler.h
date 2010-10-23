@@ -91,7 +91,7 @@ public:
            VAR_ARRAY = 2,  // array
            VAR_STR   = 4,  // string
            VAR_CONST = 8,  // direct value or alias, not variable
-           VAR_PTR   = 16  // poiter to a variable, e.g. i%0, s%0
+           VAR_PTR   = 16  // pointer to a variable, e.g. i%0, s%0
     };
     struct VariableInfo{
         int type;

@@ -1082,7 +1082,7 @@ void ScriptHandler::errorAndExit( const char *str )
 void ScriptHandler::addStringBuffer( char ch )
 {
     if (string_counter+1 == STRING_BUFFER_LENGTH)
-        errorAndExit("addStringBuffer: string exceeds 2048.");
+        errorAndExit("addStringBuffer: string length exceeds 2048.");
     string_buffer[string_counter++] = ch;
     string_buffer[string_counter] = '\0';
 }
@@ -1169,7 +1169,7 @@ void ScriptHandler::parseStr( char **buf )
         (*buf)++;
         parseStr(buf);
         SKIP_SPACE( *buf );
-        if ( (*buf)[0] != ')' ) errorAndExit("parseStr: ) is not found.");
+        if ( (*buf)[0] != ')' ) errorAndExit("parseStr: missing ')'.");
         (*buf)++;
 
         if ( findAndAddLog( log_info[FILE_LOG], str_string_buffer, false ) ){
@@ -1451,7 +1451,7 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
         *num = parseIntExpression( buf );
         if (minus_flag) *num = -*num;
         SKIP_SPACE(*buf);
-        if ( (*buf)[0] != ')' ) errorAndExit(") is not found.");
+        if ( (*buf)[0] != ')' ) errorAndExit("Missing ')' in expression");
         (*buf)++;
     }
     else{
@@ -1493,7 +1493,7 @@ int ScriptHandler::parseArray( char **buf, struct ArrayVariable &array )
         array.dim[array.num_dim] = parseIntExpression(buf);
         array.num_dim++;
         SKIP_SPACE( *buf );
-        if ( **buf != ']' ) errorAndExit( "parseArray: no ']' is found." );
+        if ( **buf != ']' ) errorAndExit( "parseArray: missing ']'." );
         (*buf)++;
     }
     for ( int i=array.num_dim ; i<20 ; i++ ) array.dim[i] = 0;

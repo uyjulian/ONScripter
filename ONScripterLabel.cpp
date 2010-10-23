@@ -1003,6 +1003,7 @@ void ONScripterLabel::deleteButtonLink()
 
     if ( exbtn_d_button_link.exbtn_ctl ) delete[] exbtn_d_button_link.exbtn_ctl;
     exbtn_d_button_link.exbtn_ctl = NULL;
+    is_exbtn_enabled = false;
 }
 
 void ONScripterLabel::refreshMouseOverButton()
@@ -1329,7 +1330,6 @@ void ONScripterLabel::quit()
 void ONScripterLabel::disableGetButtonFlag()
 {
     btndown_flag = false;
-    is_exbtn_enabled = false;
 
     getzxc_flag = false;
     gettab_flag = false;

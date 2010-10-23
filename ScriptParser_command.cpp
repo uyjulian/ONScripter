@@ -910,7 +910,8 @@ int ScriptParser::ifCommand()
         condition_flag |= f;
         op_buf = script_h.getNext();
         if ( op_buf[0] == '|' ){
-            if (condition_status == 1) errorAndExit( "& and | are not used at the same time." );
+            if (condition_status == 1)
+                errorAndExit( "if: using & and | at the same time is not supported." );
             while(*op_buf == '|') op_buf++;
             script_h.setCurrent(op_buf);
             condition_status = 2;
@@ -922,7 +923,8 @@ int ScriptParser::ifCommand()
             return RET_SKIP_LINE;
 
         if ( op_buf[0] == '&' ){
-            if (condition_status == 2) errorAndExit( "& and | are not used at the same time." );
+            if (condition_status == 2) 
+                errorAndExit( "if: using & and | at the same time is not supported." );
             while(*op_buf == '&') op_buf++;
             script_h.setCurrent(op_buf);
             condition_status = 1;

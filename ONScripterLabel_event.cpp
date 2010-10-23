@@ -1043,7 +1043,7 @@ bool ONScripterLabel::runEventLoop()
             if ( !event.active.gain ) break;
           case SDL_VIDEOEXPOSE:
 #ifdef ANDROID
-            screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+            screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             // draw buttons
             if (screen_surface->w > screen_width){
                 int w = screen_surface->w - screen_width;
