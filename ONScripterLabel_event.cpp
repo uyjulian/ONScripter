@@ -345,11 +345,18 @@ extern "C" void waveCallback( int channel )
     SDL_PushEvent(&event);
 }
 
-void ONScripterLabel::trapHandler()
+bool ONScripterLabel::trapHandler()
 {
+    if (trap_mode & TRAP_STOP){
+        trap_mode |= TRAP_CLICKED;
+        return false;
+    }
+    
     trap_mode = TRAP_NONE;
     stopAnimation( clickstr_state );
     setCurrentLabel( trap_dist );
+
+    return true;
 }
 
 /* **************************************** *
@@ -374,8 +381,7 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     }
     if ( (event->button == SDL_BUTTON_RIGHT && trap_mode & TRAP_RIGHT_CLICK) ||
          (event->button == SDL_BUTTON_LEFT  && trap_mode & TRAP_LEFT_CLICK) ){
-        trapHandler();
-        return true;
+        if (trapHandler()) return true;
     }
 
     current_button_state.x = event->x;
@@ -687,13 +693,11 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
          (event->keysym.sym == SDLK_RETURN ||
           event->keysym.sym == SDLK_KP_ENTER ||
           event->keysym.sym == SDLK_SPACE ) ){
-        trapHandler();
-        return true;
+        if (trapHandler()) return true;
     }
     else if ( (trap_mode & TRAP_RIGHT_CLICK) && 
               (event->keysym.sym == SDLK_ESCAPE) ){
-        trapHandler();
-        return true;
+        if (trapHandler()) return true;
     }
     
     if ( event_mode & WAIT_BUTTON_MODE &&

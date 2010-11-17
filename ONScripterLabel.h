@@ -280,7 +280,7 @@ protected:
     void advancePhase( int count=0 );
     bool waitEventSub(int count);
     bool waitEvent(int count, bool check_interruption = false);
-    void trapHandler();
+    bool trapHandler();
     void initSDL();
     void openAudio();
     
@@ -337,7 +337,8 @@ private:
            TRAP_LEFT_CLICK  = 1,
            TRAP_RIGHT_CLICK = 2,
            TRAP_NEXT_SELECT = 4,
-           TRAP_STOP        = 8
+           TRAP_STOP        = 8,
+           TRAP_CLICKED     = 16
     };
     int  trap_mode;
     char *trap_dist;

@@ -124,6 +124,9 @@ int ONScripterLabel::trapCommand()
     if      ( script_h.isName( "lr_trap" ) ){
         trap_mode = TRAP_LEFT_CLICK | TRAP_RIGHT_CLICK;
     }
+    else if ( script_h.isName( "r_trap" ) ){
+        trap_mode = TRAP_RIGHT_CLICK;
+    }
     else if ( script_h.isName( "trap" ) ){
         trap_mode = TRAP_LEFT_CLICK;
     }
@@ -131,6 +134,17 @@ int ONScripterLabel::trapCommand()
     if ( script_h.compareString("off") ){
         script_h.readLabel();
         trap_mode = TRAP_NONE;
+        return RET_CONTINUE;
+    }
+    else if ( script_h.compareString("stop") ){
+        script_h.readLabel();
+        trap_mode |= TRAP_STOP;
+        return RET_CONTINUE;
+    }
+    else if ( script_h.compareString("resume") ){
+        script_h.readLabel();
+        trap_mode &= ~TRAP_STOP;
+        if (trap_mode & TRAP_CLICKED) trapHandler();
         return RET_CONTINUE;
     }
 
@@ -1224,6 +1238,12 @@ int ONScripterLabel::mp3Command()
 
 int ONScripterLabel::movieCommand()
 {
+    if (script_h.compareString("stop")){
+        script_h.readLabel();
+        fprintf(stderr, " [movie stop] is not supported yet!!\n");
+        return RET_CONTINUE;
+    }
+
     script_h.readStr();
     const char *filename = script_h.saveStringBuffer();
     
@@ -1252,10 +1272,6 @@ int ONScripterLabel::movieCommand()
         else if (script_h.compareString("async")){ // not supported yet
             script_h.readLabel();
             fprintf(stderr, " [movie async] is not supported yet!!\n");
-        }
-        else if (script_h.compareString("stop")){ // not supported yet
-            script_h.readLabel();
-            fprintf(stderr, " [movie stop] is not supported yet!!\n");
         }
         else{
             script_h.readLabel();
