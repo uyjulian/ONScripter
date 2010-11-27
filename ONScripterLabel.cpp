@@ -22,6 +22,9 @@
  */
 
 #include "ONScripterLabel.h"
+#ifdef USE_FONTCONFIG
+#include <fontconfig/fontconfig.h>
+#endif
 
 extern void initSJIS2UTF16();
 extern "C" void waveCallback( int channel );
@@ -561,6 +564,36 @@ int ONScripterLabel::init()
     else{
         font_file = new char[ strlen(archive_path) + strlen(FONT_FILE) + 1 ];
         sprintf( font_file, "%s%s", archive_path, FONT_FILE );
+#ifdef USE_FONTCONFIG
+        FILE *fp = NULL;
+        if ((fp = ::fopen(font_file, "rb")) == NULL){
+            FcPattern *pat = FcPatternCreate();
+
+            FcPatternAddString( pat, FC_LANG, (const FcChar8*)"ja" );
+            FcPatternAddBool( pat, FC_OUTLINE, FcTrue );
+            FcPatternAddInteger( pat, FC_SLANT, FC_SLANT_ROMAN );
+            FcPatternAddInteger( pat, FC_WEIGHT, FC_WEIGHT_NORMAL );
+
+            FcConfigSubstitute( NULL, pat, FcMatchPattern );
+            FcDefaultSubstitute( pat );
+            
+            FcResult result;
+            FcPattern *p_pat = FcFontMatch( NULL, pat, &result );
+            FcPatternDestroy( pat );
+            
+            FcChar8* val_s;
+            if (FcResultMatch == FcPatternGetString( p_pat, FC_FILE, 0, &val_s )){
+                delete[] font_file;
+                font_file = new char[ strlen((const char*)val_s) + 1 ];
+                strcpy( font_file, (const char*)val_s );
+                printf("Font: %s\n", font_file);
+            }
+            FcPatternDestroy( p_pat );
+        }
+        else{
+            fclose(fp);
+        }
+#endif
     }
     
     // ----------------------------------------

@@ -133,7 +133,10 @@ void ONScripterLabel::resetRemainingTime( int t )
 void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 {
     if (anim->file_name && anim->surface_name &&
-        strcmp(anim->file_name, anim->surface_name) == 0) return;
+        strcmp(anim->file_name, anim->surface_name) == 0 &&
+        (!anim->mask_file_name && !anim->mask_surface_name ||
+         anim->mask_file_name && !anim->mask_surface_name &&
+         strcmp(anim->mask_file_name, anim->mask_surface_name) == 0)) return;
 
     anim->deleteSurface();
     anim->abs_flag = true;
@@ -141,6 +144,15 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     if ( anim->surface_name ) delete[] anim->surface_name;
     anim->surface_name = new char[ strlen(anim->file_name) + 1 ];
     strcpy( anim->surface_name, anim->file_name );
+
+    if (anim->mask_surface_name) delete[] anim->mask_surface_name;
+    if (anim->mask_file_name){
+        anim->mask_surface_name = new char[ strlen(anim->mask_file_name) + 1 ];
+        strcpy( anim->mask_surface_name, anim->mask_file_name );
+    }
+    else{
+        anim->mask_surface_name = NULL;
+    }
     
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
         FontInfo f_info = sentence_font;

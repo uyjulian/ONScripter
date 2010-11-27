@@ -54,6 +54,7 @@ AnimationInfo::AnimationInfo()
     
     image_name = NULL;
     surface_name = NULL;
+    mask_surface_name = NULL;
     image_surface = NULL;
     alpha_buf = NULL;
 
@@ -134,6 +135,8 @@ void AnimationInfo::deleteSurface(bool delete_surface_name)
     if (delete_surface_name){
         if ( surface_name ) delete[] surface_name;
         surface_name = NULL;
+        if ( mask_surface_name ) delete[] mask_surface_name;
+        mask_surface_name = NULL;
     }
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;

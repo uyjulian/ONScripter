@@ -76,6 +76,7 @@ public:
     int trans;
     char *image_name;
     char *surface_name; // used to avoid reloading images
+    char *mask_surface_name; // used to avoid reloading images
     SDL_Surface *image_surface;
     unsigned char *alpha_buf;
     /* Variables for extended sprite (lsp2, drawsp2, etc.) */
