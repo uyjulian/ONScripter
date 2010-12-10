@@ -348,6 +348,7 @@ void ONScripterLabel::initSDL()
         exit(-1);
     }
     printf("Display: %d x %d (%d bpp)\n", screen_width, screen_height, screen_bpp);
+    dirty_rect.setDimension(screen_width, screen_height);
     
     initSJIS2UTF16();
     

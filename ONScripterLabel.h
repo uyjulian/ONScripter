@@ -553,7 +553,7 @@ private:
 
     /* ---------------------------------------- */
     /* Effect related variables */
-    DirtyRect dirty_rect, dirty_rect_tmp; // only this region is updated
+    DirtyRect dirty_rect; // only this region is updated
     int effect_counter, effect_duration; // counter in each effect
     int effect_timer_resolution;
     int effect_start_time;

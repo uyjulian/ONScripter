@@ -33,11 +33,14 @@ struct DirtyRect
     DirtyRect& operator =( const DirtyRect &d );
     ~DirtyRect();
     
+    void setDimension(int w, int h);
     void add( SDL_Rect src );
     void clear();
     void fill( int w, int h );
 
     SDL_Rect calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 );
+
+    int screen_width, screen_height;
 
     int area;
     int total_history;

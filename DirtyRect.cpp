@@ -25,6 +25,7 @@
 
 DirtyRect::DirtyRect()
 {
+    screen_width = screen_height = 0;
     area = 0;
     total_history = 10;
     num_history = 0;
@@ -34,6 +35,8 @@ DirtyRect::DirtyRect()
 
 DirtyRect::DirtyRect( const DirtyRect &d )
 {
+    screen_width  = d.screen_width;
+    screen_height = d.screen_height;
     area = d.area;
     total_history = d.total_history;
     num_history = d.num_history;
@@ -46,6 +49,8 @@ DirtyRect::DirtyRect( const DirtyRect &d )
 
 DirtyRect& DirtyRect::operator =( const DirtyRect &d )
 {
+    screen_width  = d.screen_width;
+    screen_height = d.screen_height;
     area = d.area;
     total_history = d.total_history;
     num_history = d.num_history;
@@ -64,6 +69,12 @@ DirtyRect::~DirtyRect()
     delete[] history;
 }
 
+void DirtyRect::setDimension(int w, int h)
+{
+    screen_width  = w;
+    screen_height = h;
+}
+
 void DirtyRect::add( SDL_Rect src )
 {
     //printf("add %d %d %d %d\n", src.x, src.y, src.w, src.h );
@@ -79,6 +90,14 @@ void DirtyRect::add( SDL_Rect src )
         src.h += src.y;
         src.y = 0;
     }
+
+    if (src.x >= screen_width) return;
+    if (src.x+src.w >= screen_width)
+        src.w = screen_width-src.x;
+
+    if (src.y >= screen_height) return;
+    if (src.y+src.h >= screen_height)
+        src.h = screen_height-src.y;
 
     bounding_box = calcBoundingBox( bounding_box, src );
 
