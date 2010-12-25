@@ -782,7 +782,6 @@ int ONScripterLabel::selectCommand()
         setCurrentLabel( "customsel" );
         return RET_CONTINUE;
     }
-    skip_mode &= ~SKIP_NORMAL;
     automode_flag = false;
     sentence_font.xy[0] = xy[0];
     sentence_font.xy[1] = xy[1];
@@ -792,8 +791,11 @@ int ONScripterLabel::selectCommand()
     refreshMouseOverButton();
 
     event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
-    do waitEvent(-1);
-    while(current_button_state.button <= 0);
+    do{
+        skip_mode &= ~SKIP_NORMAL;
+        waitEvent(-1);
+    }
+    while(current_button_state.button <= 0 || skip_mode & SKIP_NORMAL);
         
     if ( selectvoice_file_name[SELECTVOICE_SELECT] )
         playSound(selectvoice_file_name[SELECTVOICE_SELECT], 

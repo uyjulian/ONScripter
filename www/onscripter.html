@@ -18,11 +18,9 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Dec. 10, 2010 (ソース更新)<br>
+Last updated: Dec. 25, 2010 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
-[<a href="http://onscripter.sourceforge.jp/onscripter.html">
-新メインサイト</a>]<br>
 </div> <!-- header -->
 
 <div id="toc-container">
@@ -35,15 +33,10 @@ Last updated: Dec. 10, 2010 (ソース更新)<br>
     <ul>
       <li> <a href="#package-source">ソースパッケージ</a></li>
       <li> <a href="#package-binary">バイナリパッケージ</a></li>
+      <li> <a href="#feature">特長</a>
       <li> <a href="onscripter_devel.2010_1.html">開発日誌</a></li>
       <li> <a href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscripter&amp;action=top">バグ報告</a></li>
       <li> <a href="android/android.html">ONScripter on Android のページ</a>
-      <li> <a href="zaurus/index.html">SDL on Zaurus のページ</a>
-    </ul>
-  <li> <a href="#feature">特長</a>
-    <ul>
-      <li> <a href="#feature-comparison">NScripter と比較した特長</a>
-      <li> <a href="#feature-engine">その他の特長</a>
     </ul>
   <li> <a href="#howto">実行方法</a>
     <ul>
@@ -82,17 +75,7 @@ Last updated: Dec. 10, 2010 (ソース更新)<br>
 <div class="content">
 <h2 id="introduction">はじめに</h2>
 
-<p>ONScripter (オーエヌスクリプター)とは、NScripter 用に作られたスクリ
-プトを独自に解釈して実行するプログラムです。NScripterは<a
-href="http://www.nscripter.com/">高橋直樹</a>氏が
-開発されたゲーム実行エンジンであり、高橋氏のホームページから<a
-href="http://www.nscripter.com/">ダウンロード</a>
-できます。ONScripter で何ができるのかについてはαβεさんの[<A
-HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参照し
-てください。</p>
-
-<p>更新内容については[<a href="onscripter_devel.2010_1.html">開発日誌
-</a>]を参照して下さい。</p>
+<p>ONScripter (オーエヌスクリプター)とは、<a href="http://www.nscripter.com/">NScripter</a>(<a href="http://ja.wikipedia.org/wiki/NScripter">解説</a>)用に作られたスクリプトを独自に解釈して実行するプログラムです。動作例については、αβεさんの[<A HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参考にしてください。</p>
 
 <p>動作報告・バグ報告・機能追加要望・パッチは随時受け付けますので[<a
 href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscripter&amp;action=top">
@@ -106,8 +89,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20101210.tar.gz">onscripter-20101210.tar.gz</a>
-  <li> <a href="onscripter-20101127.tar.gz">onscripter-20101127.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20101225.tar.gz">onscripter-20101225.tar.gz</a>
+  <li> <a href="onscripter-20101210.tar.gz">onscripter-20101210.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -115,91 +98,47 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-binary">バイナリパッケージ (Android, Zaurus 以外は当方では動作未確認)</h3>
 
-<ul>
-  <li> Android (Nexus One (2.2), HTC Desire (2.2), Emulator, etc.)
-    <ul>
-      <li> <a href="android/android.html">ONScripter on Android のページ</a> (Ogapee)
-    </ul>
-  <li> Zaurus (SL-C700, etc.)
-    <ul>
-      <li> <a href="zaurus/index.html">SDL on Zaurus のページ</a> (Ogapee)
-    </ul>
-  <li> Linux
-    <ul>
-      <li> 公式 Debian パッケージ (Ying-Chun Liu (PaulLiu) さん)
-        <ul>
-          <li> <a href="http://packages.debian.org/lenny/onscripter"> Stable (Lenny) </a>
-          <li> <a href="http://packages.debian.org/squeeze/onscripter"> Testing (Squeeze) </a>
-          <li> <a href="http://packages.debian.org/sid/onscripter"> Unstable (Sid) </a>
-        </ul>
-      <li> Debian パッケージ (Etch, Sarge, Woody) <a href="http://detroit.ddo.jp/"> detroit.ddo.jp </a> (みーさん)
-        <ul>
-          <li> deb http://detroit.ddo.jp/debian/etch/ ./ 
-          <li> deb http://detroit.ddo.jp/debian/woody/ ./ 
-          <li> deb http://detroit.ddo.jp/debian/sarge/ ./ 
-        </ul>
-      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
-    </ul>
-  <li> MacOSX
-    <ul>
-      <li> <a href="http://tmkk.pv.land.to/onscripter/">ONScripter Launcher and Binary for Mac OS X</a> (tmkkさん)
-      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です（下記参照）
-    </ul>
-  <li> Windows
-    <ul>
-      <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
-      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-      <li> <a href="http://logue.be/ONScripter.html">ONScripter/SDL for Win32 (MinGW)</a> (Logueさん)
-      <li> <a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> (Uncle Mion さん) <FONT color="#ff0000">[注意]</font> ONScripter-EN です (下記参照）
-    </ul>
-  <li> PSP
-    <ul>
-      <li> <a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a> (すとーむさん)
-    </ul>
-  <li> iPhone, iPod touch (iPhoneOS)
-    <ul>
-      <li> <a href="http://ipodons.web.fc2.com/index.html">iPodOns</a>
-      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-    </ul>
-  <li> iPod 5G, photo, nano, mini (iPodLinux)
-    <ul>
-      <li> <a href="http://kimatten.hp.infoseek.co.jp/">Shiori-chan Project</a> (秋月かたねさん)
-    </ul>
-  <li> NetWalker
-    <ul>
-      <li> <a href="http://zero975.cocolog-nifty.com/qt_blog/">Qt 初心者の覚え書き</a>
-    </ul>
-  <li> Brain (WindowsCE 6.0)
-    <ul>
-      <li> <a href="http://lycoris2475.xxxxxxxx.jp/">ONScripter for Brain</a> (lycoris さん)
-    </ul>
-  <li> NetBSD
-    <ul>
-      <li> <a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2"> pkgsrc-wip-jpめも </a> (いしはらさん) (<a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>)
-    </ul>
-  <li> OS2/Warp
-    <ul>
-      <li> <a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a> (Sofiya猫さん) (<a href="http://www.os2.jp/modules/search/index.php?query=onscripter&action=results&showcontext=1">package at OS2.jp</a>)
-    </ul>
-  <li> Playstation3
-    <ul>
-      <li> <a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a> (rerofumiさん)
-    </ul>
-  <li> Wii
-    <ul>
-      <li> <a href="http://wiibrew.org/wiki/ONScripter">ONScripter WiiBrew</a>
-    </ul>
-  <li> FreeBSD
-    <ul>
-      <li> <a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a> (藤田さん)
-    </ul>
-  <li> Dreamcast
-    <ul>
-      <li> <a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a> (bero さん)
-    </ul>
-  <li> その他募集中
-</ul>
+<table>
+<tr><th>プラットフォーム</th><th>パッケージ配布サイト</th></tr>
+<tr><td>Android (1.6 or later)</td><td><a href="android/android.html">ONScripter on Android のページ</a></td></tr>
+<tr><td>Zaurus (SL-C700, etc.)</td><td><a href="zaurus/index.html">SDL on Zaurus のページ</a></td></tr>
+
+<tr><td rowspan=5>Linux</td><td class="span">Debian 公式 <a href="http://packages.debian.org/sid/onscripter">Unstable (Sid)</a></td></tr>
+<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/squeeze/onscripter">Testing (Squeeze)</a></td></tr>
+<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/lenny/onscripter">Stable (Lenny)</a></td></tr>
+<tr><td class="span"><a href="http://detroit.ddo.jp/hiki.cgi?Debian">Debian 非公式 (Etch, Sarge, Woody, Potato)</a></td></tr>
+<tr><td><a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> <FONT color="#ff0000">(ONScripter-EN)</td></tr>
+
+<tr><td rowspan=2>MacOSX</td><td class="span"><a href="http://tmkk.pv.land.to/onscripter/">ONScripter Launcher and Binary for Mac OS X</a></td></tr>
+<tr><td><a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> <FONT color="#ff0000">(ONScripter-EN)</td></tr>
+
+<tr><td rowspan=3>Windows</td><td class="span"><a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a></td></tr>
+<tr><td class="span"><a href="http://logue.be/ONScripter.html">ONScripter/SDL for Win32 (MinGW)</a></td></tr>
+<tr><td><a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> <FONT color="#ff0000">(ONScripter-EN)</td></tr>
+
+<tr><td>PSP</td><td><a href="http://blog.livedoor.jp/tormtorm/">霧雨の降る日に</a></td></tr>
+
+<tr><td>iPhone, iPod touch</td><td><a href="http://ipodons.web.fc2.com/index.html">iPodOns</a></td></tr>
+
+<tr><td>NetWalker</td><td><a href="http://zero975.cocolog-nifty.com/qt_blog/">Qt 初心者の覚え書き</a></td></tr>
+
+<tr><td>Brain (WindowsCE 6.0)</td><td><a href="http://lycoris2475.xxxxxxxx.jp/">ONScripter for Brain</a></td></tr>
+
+<tr><td>NetBSD</td><td><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2">pkgsrc-wip-jpめも</a> (<a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>)</td></tr>
+
+<tr><td>OS2/Warp</td><td><a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a> (<a href="http://www.os2.jp/modules/search/index.php?query=onscripter&action=results&showcontext=1">package at OS2.jp</a>)</td></tr>
+
+<tr><td>Playstation3</td><td><a href="http://www.fumi2kick.com/ps3app/"> PS3 Linux で自作ソフトを楽しもう </a></td></tr>
+
+<tr><td>Wii</td><td><a href="http://wiibrew.org/wiki/ONScripter">ONScripter WiiBrew</a></td></tr>
+
+<tr><td>FreeBSD</td><td><a href="http://fjts.org/~m/Install/PrivPorts/"> Private Ports for FreeBSD </a></td></tr>
+
+<tr><td>Dreamcast</td><td><a href="http://sdl-dc.sourceforge.net/onscripter-dc.html">ONScripter for Dreamcast</a></td></tr>
+
+<tr><td colspan=2>その他募集中</td></tr>
+
+</table>
 
 <p>ONScripter-EN とは、Uncle Mion さんによって英語のスクリプトがうまく
 扱えるように拡張された ONScripter です。サポートされているコマンドも 
@@ -208,30 +147,18 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
 
 </div> <!-- sub-content -->
 
-</div> <!-- content -->
-
-
-<div class="content">
-<h2 id="feature">特長</h2>
 
 <div class="sub-content">
-<h3 id="feature-comparison">NScripter と比較した特長</h3>
+<h3 id="feature">特長</h3>
+
 <ol>
-  <li> 現時点(2009/05/17)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。詳しくは<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。
-  <li> 全ての操作をキーボードから行えます。もちろんマウスも使えますが、使う必要はありません。
-  <li> CD Audio の演奏に対応していますが、これを MP3 ファイルの演奏に振り替える機能もあります。
-  <li> マルチプラットフォームに対応しています。Windows, Linux, Mac OS X, Mac OS 9, <a href="android/android.html">Android</a>(Nexus One (2.2), HTC Desire (2.2)), <a href="zaurus/index.html">Zaurus</a>(SL-5500,SL-A300,SL-B500,SL-C700), FreeBSD, Solaris(on SPARC), Tru64 UNIX, PSP, OS/2Warp, iPod, iPhone, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作が確認されていますが、下記の libjpeg, bzip2, SDL 及び SMPEG が動く環境ならどこでも同じソースをコンパイルするだけで動くはずです。<br>
-  <li> 全てのコマンド・仕様を実装していないため、ゲームによって挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
+  <li> 現時点(2009/05/17)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。
+  <li> 全ての操作をキーボードから行えます。もちろんマウスも使えます。
+  <li> CD Audio の演奏を音楽ファイル(MP3, Ogg)の演奏に振り替える機能があります。
+  <li> マルチプラットフォームに対応しており、Windows, Linux, MacOS X, MacOS 9, <a href="android/android.html">Android</a>(1.6 以上), iPhone, PSP, <a href="zaurus/index.html">Zaurus</a>(SL-5500,SL-A300,SL-B500,SL-C700), FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/2Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作が確認されています。それ以外のプラットフォームでも、<a href="#environment">動作環境</a>が準備できれば動作するはずです。<br>
+  <li> 全てのコマンド・仕様を実装していないため、ゲームによっては挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
-</div> <!-- sub-content -->
 
-<div class="sub-content">
-<h3 id="feature-engine">その他の特長</h3>
-<!--
-<OL>
-  <li> OpenGL を有効にしてコンパイルすることで、OpenGL をサポートし、かつビデオメモリがゲームの要求するメモリ以上に搭載されている場合に、描画関係で快適にゲームができるようになります。OpenGL を有効にする場合のデメリットは、現在のところ nega と monocro 命令が無効になることと、最大テクスチャサイズを越えた画像を読み込むことができず結果としてその画像が表示されないことです。
-</OL>
--->
 </div> <!-- sub-content -->
 
 </div> <!-- content -->
@@ -245,44 +172,35 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
 <p>下記の処理系とライブラリ等が必要です。記載のバージョンは作者の開発環境のものですが、このバージョンに合わせる必要はないと思います。</p>
 
 <h4>必須</h4>
-<dl>
-  <dt> ・C++ 処理系
-  <dd> g++ 4.4.4 (Linux)
-  <dd> Visual Studio 2008 C++ (Windows)
-  <dt> ・Unicode で指定された日本語 TTF フォント(ファイル名は default.ttf に)
-  <dt> ・<a href="http://www.ijg.org/">Independent JPEG Group</a>
-  <dd> libjpeg-6b
-  <dt> ・<a href="http://sources.redhat.com/bzip2/">The bzip2 and libbzip2 official home page</a>
-  <dd> bzip2-1.0.5
-  <dt> ・<a href="http://www.libsdl.org">SDL (Simple Direct Layer)</a>
-  <dd> SDL-1.2.14, SDL_image-1.2.10, SDL_mixer-1.2.8, SDL_ttf-2.0.9, SMPEG-0.4.5
-  <dt> ・<a href="http://www.freetype.org/"> FreeType </a>
-  <dd> FreeType 2.3.11
-</dl>
+<ul>
+  <li> ・C++ 処理系
+<ul>
+  <li> g++ 4.4.4 (Linux)
+  <li> Visual Studio 2008 C++ (Windows)
+</ul>
+  <li> Unicode で指定された日本語 TTF フォント(ファイル名は default.ttf に)
+  <li> libjpeg-6b (<a href="http://www.ijg.org/">Independent JPEG Group</a>)
+  <li> bzip2-1.0.5 (<a href="http://sources.redhat.com/bzip2/">bzip2</a>)
+  <li> SDL-1.2.14, SDL_image-1.2.10, SDL_mixer-1.2.8, SDL_ttf-2.0.9, SMPEG-0.4.5 (<a href="http://www.libsdl.org">Simple Directmedia Layer</a>)
+  <li> FreeType 2.3.11 (<a href="http://freetype.sourceforge.net/">the Free Type Project</a>)
+</ul>
 
 <h4>推奨</h4>
-<dl>
-  <dt> ・<a href="http://www.xiph.org/">The Ogg Vorbis CODEC Project</a>
-  <dd> ogg-1.2.0, vorbis-1.3.1 (or Tremor vorbis)
-  <dd> これは必須ではありませんが、最近多くのゲームで使われている Ogg Vorbis 形式で圧縮された音声を聞きたい場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。
-</dl>
+<ul>
+  <li> ogg-1.2.0, vorbis-1.3.1 (<a href="http://www.xiph.org/">The Ogg Vorbis CODEC Project</a>)<br>
+Ogg Vorbis 形式の音楽ファイルを再生する場合には入れてください。同梱の Makefile.Linux, Makefile.ArmLinux ではデフォルトで使用するようになっています。整数演算のみを使用した Tremor vorbis を代わりに使うこともできます。
+</ul>
 
 <h4>必要に応じて導入</h4>
-<dl>
-  <dt> ・<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>
-  <dd> mad-0.15.1b
-  <dd> これは必要ではありませんが、Zaurus で MP3 を聞きたい方はほぼ必須。
-  <dd> コンパイル時に MP3_MAD を定義することで、SMPEG に差し換えて使用されます。
-  <dt> ・<a href="http://avifile.sourceforge.net/">avifile</a>
-  <dd> avifile-0.7.48
-  <dd> これは必要ではありませんが、avi コマンドを使ってムービーを再生したい場合には入れてください。Linux 上で動作確認しております。
-  <dd> コンパイル時に USE_AVIFILE を定義し、AVIWrapper.o をリンクすることで使用可能になります。
-</dl>
+<ul>
+  <li> mad-0.15.1b (<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>)<br>
+整数演算のみを使用した MP3 演奏ライブラリです。Android や Zaurus で MP3 を演奏する場合には必須です。MP3_MAD を定義してコンパイルすると、SMPEG の代わりに使用されます。
 
-<p>当方では Windows, Linux, <a href="android/android.html">Android</a>(HTC Desire (2.2)), <a href="zaurus/index.html">Zaurus</a>(SL-C700)で動作確認をしています。<br>
-また<a href="http://www.freeml.com/message/sdl-fan-jp@freeml.com/0000316">MacOS X</a>, Android(Nexus One (2.2)), iPhone, PSP, FreeBSD, Solaris(on SPARC), Zaurus(SL-A300,SL-B500), OS/2Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作報告をいただいております。<br>
+  <li> avifile-0.7.48 (<a href="http://avifile.sourceforge.net/">avifile</a>)<br>
+avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認をしています。USE_AVIFILE を定義し AVIWrapper.o をリンクしてコンパイルすると使用されます。
+</ul>
 
-その他の多くの Unix 系 OS, BeOS, MacOS については上記のライブラリが対応しているため適切な Makefile を書けばコンパイルおよび実行できると思います。ぜひ試してみてください。</p>
+<p>当方では Windows, Linux, <a href="android/android.html">Android</a>(HTC Desire (2.2)) で動作確認をしています。</p>
 
 </div> <!-- sub-content -->
 
@@ -312,8 +230,6 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
 <div class="content">
 <h2 id="todo">TODO</h2>
 
-<p>現在把握しており直す予定のバグ・未実装機能。先頭の文字は優先度。</p>
-
 <OL>
   <li> (<FONT color="#ff0000">高</FONT>)Lua 対応
   <li> (<FONT color="#ff8800">中</FONT>)右クリックからの windowerase を実行する時に windoweffect の効果を反映させる。
@@ -330,16 +246,14 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
 <div class="content">
 <h2 id="link">リンク</h2>
 
-<p>お世話になっているページ、よく利用させていただいているページへのリンクです。</p>
-
 <dl>
+  <dt> ○<a href="http://d.hatena.ne.jp/katane/">だめーエンジン開発・移植日記（仮）</a>
+  <dd> 数多くのプラットフォームにONScripterを移植していただいた秋月かたねさんの日記です。
   <dt> ○<a href="http://you-like.to/cgi-bin/ponytail/yukiwiki/wiki.cgi">技術屋きさらの箱庭</a>
-  <dd> きさらさんが公開されている日記です。<br>
-       <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://ponytail.jpn.org/kagemai/html/guest.cgi?project=ONScripter&amp;action=top">バグトラッキングシステム</a>を運用していただいております。</s>現在は、新バグトラッキングシステムに移行しています。<br>
+  <dd> 以前にバグトラッキングシステムを運用していただいたきさらさんの日記です。
   <dt> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
   <dd> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
        ONScripter を開発する上でたいへんお世話になっております。<br>
-       <s><a href="http://www.daifukuya.com/kagemai/">影舞</a>を利用した<a href="http://abe.nwr.jp/kagemai/kagemai.rhtml?project=ONScripter">バグトラッキングシステム</a>も運用していただいております。現在は、きさらさんの新バグトラッキングシステムに移行しています。</s><br>
        ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
 <!--
   <dt> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
@@ -643,7 +557,7 @@ xxxは、使用するフォーマットに合わせて変更してください。</p>
 <h3 id="midi">MIDI 演奏機能</h3>
 
 <p>MIDI は SDL_mixer の機能を使って演奏します。<br>
-この時、現在のディレクトリに tmp.mid という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</p>
+この時、現在のディレクトリに tmp.mus という一時ファイルを作ります。美しくないですが、SDL_mixer の MIDI 読み込み部がファイルからの読み込みしかサポートしていないためやむをえません。</p>
 
 <dl>
   <dt> Unix系(動作確認は Linux と Zaurus)でソフトウェア音源で演奏する場合（デフォルト）。
