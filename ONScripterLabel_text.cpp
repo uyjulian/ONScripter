@@ -340,7 +340,7 @@ void ONScripterLabel::restoreTextBuffer()
             if ( IS_TWO_BYTE(out_text[0]) ){
                 out_text[1] = current_page->text[i+1];
                 
-                if ( checkLineBreak( current_page->text, &f_info ) )
+                if ( checkLineBreak( current_page->text+i, &f_info ) )
                     f_info.newLine();
             }
             else{
