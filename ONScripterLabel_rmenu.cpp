@@ -79,6 +79,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         }
     }
     dirty_rect.fill( screen_width, screen_height );
+    refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
     flush( refreshMode() );
 
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
@@ -88,7 +89,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
     system_menu_mode = SYSTEM_NULL;
 }
 
-bool ONScripterLabel::executeSystemCall()
+int ONScripterLabel::executeSystemCall()
 {
     enterSystemCall();
 
@@ -97,16 +98,16 @@ bool ONScripterLabel::executeSystemCall()
         switch(system_menu_mode){
           case SYSTEM_SKIP:
             executeSystemSkip();
-            return true;
+            return 2; // continue parsing text
             break;
           case SYSTEM_RESET:
-            if (executeSystemReset()) return true;
+            if (executeSystemReset()) return 1; // stop parsing text
             break;
           case SYSTEM_SAVE:
             executeSystemSave();
             break;
           case SYSTEM_LOAD:
-            if (executeSystemLoad()) return true;
+            if (executeSystemLoad()) return 1; // stop parsing text
             break;
           case SYSTEM_LOOKBACK:
             executeSystemLookback();
@@ -119,7 +120,7 @@ bool ONScripterLabel::executeSystemCall()
             break;
           case SYSTEM_AUTOMODE:
             executeSystemAutomode();
-            return true;
+            return 2; // continue parsing text
             break;
           case SYSTEM_END:
             executeSystemEnd();
@@ -129,7 +130,7 @@ bool ONScripterLabel::executeSystemCall()
         }
     }
 
-    return false;
+    return 0;
 }
 
 void ONScripterLabel::executeSystemMenu()
@@ -298,16 +299,20 @@ bool ONScripterLabel::executeSystemLoad()
     refreshMouseOverButton();
 
     event_mode = WAIT_BUTTON_MODE;
-    do waitEventSub(-1);
-    while (current_button_state.button == 0);
+    int file_no = 0;
+    while(1){
+        waitEventSub(-1);
+
+        if ( current_button_state.button > 0 ){
+            file_no = current_button_state.button;
+            searchSaveFile( save_file_info, file_no );
+            if ( !save_file_info.valid ) continue;
+        }
+
+        if (current_button_state.button != 0) break;
+    }
 
     if ( current_button_state.button > 0 ){
-        int file_no = current_button_state.button;
-        searchSaveFile( save_file_info, file_no );
-        if ( !save_file_info.valid ){
-            refreshMouseOverButton();
-            return false;
-        }
         deleteButtonLink();
 
         if (executeSystemYesNo( SYSTEM_LOAD, file_no )){

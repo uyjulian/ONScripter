@@ -728,7 +728,7 @@ private:
     
     void enterSystemCall();
     void leaveSystemCall( bool restore_flag = true );
-    bool executeSystemCall();
+    int  executeSystemCall();
     
     void executeSystemMenu();
     void executeSystemSkip();

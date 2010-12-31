@@ -793,7 +793,7 @@ int ONScripterLabel::selectCommand()
     event_mode = WAIT_TEXT_MODE | WAIT_BUTTON_MODE | WAIT_TIMER_MODE;
     do{
         skip_mode &= ~SKIP_NORMAL;
-        waitEvent(-1);
+        if (waitEvent(-1)) return RET_CONTINUE;
     }
     while(current_button_state.button <= 0 || skip_mode & SKIP_NORMAL);
         
@@ -1568,6 +1568,7 @@ int ONScripterLabel::loadgameCommand()
     if ( loadSaveFile( no ) ) return RET_CONTINUE;
     else {
         dirty_rect.fill( screen_width, screen_height );
+        refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
         flush( refreshMode() );
 
         saveon_flag = true;

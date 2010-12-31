@@ -318,7 +318,9 @@ bool ONScripterLabel::waitEvent( int count, bool check_interruption )
     while(1){
         if (waitEventSub( count ) && check_interruption) return true;
         if ( system_menu_mode == SYSTEM_NULL ) break;
-        if ( executeSystemCall() ) return false;
+        int ret = executeSystemCall();
+        if      (ret == 1) return true;
+        else if (ret == 2) return false;
     }
 
     return false;
