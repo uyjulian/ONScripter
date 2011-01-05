@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -32,17 +32,10 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *lo
     if (location) *location = BaseReader::ARCHIVE_TYPE_NONE;
 
     if (filename[0] == '>')
-        tmp = createRectangleSurface(filename);
+        tmp = createRectangleSurface(filename, has_alpha);
     else
-        tmp = createSurfaceFromFile(filename, location);
+        tmp = createSurfaceFromFile(filename, has_alpha, location);
     if (tmp == NULL) return NULL;
-
-    if (has_alpha){
-        if (tmp->format->Amask)
-            *has_alpha = true;
-        else
-            *has_alpha = false;
-    }
 
     SDL_Surface *ret;
     if((tmp->w * tmp->format->BytesPerPixel == tmp->pitch) &&
@@ -60,7 +53,7 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *lo
     return ret;
 }
 
-SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
+SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename, bool *has_alpha)
 {
     int c=1, w=0, h=0;
     while (filename[c] != 0x0a && filename[c] != 0x00){
@@ -112,11 +105,13 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
         rect.h = h;
         SDL_FillRect(tmp, &rect, SDL_MapRGBA( accumulation_surface->format, col[0], col[1], col[2], 0xff));
     }
+
+    if (has_alpha) *has_alpha = true;
     
     return tmp;
 }
 
-SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *location)
+SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, bool *has_alpha, int *location)
 {
     unsigned long length = script_h.cBR->getFileLength( filename );
 
@@ -150,11 +145,21 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
     char *ext = strrchr(filename, '.');
 
     SDL_RWops *src = SDL_RWFromMem(buffer, length);
+    int is_png = IMG_isPNG(src);
+
     SDL_Surface *tmp = IMG_Load_RW(src, 0);
     if (!tmp && ext && (!strcmp(ext+1, "JPG") || !strcmp(ext+1, "jpg"))){
         fprintf(stderr, " *** force-loading a JPG image [%s]\n", filename);
         tmp = IMG_LoadJPG_RW(src);
     }
+
+    if (has_alpha){
+        if (tmp->format->Amask || is_png)
+            *has_alpha = true;
+        else
+            *has_alpha = false;
+    }
+
     SDL_RWclose(src);
 
     if (buffer != tmp_image_buf) delete[] buffer;

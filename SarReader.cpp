@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -322,7 +322,8 @@ size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned c
 
     fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
     size_t ret = fread( buf, 1, ai->fi_list[i].length, ai->file_handle );
-    for (size_t j=0 ; j<ret ; j++) buf[j] = key_table[buf[j]];
+    if (key_table_flag)
+        for (size_t j=0 ; j<ret ; j++) buf[j] = key_table[buf[j]];
     return ret;
 }
 

@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.h - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -702,8 +702,8 @@ private:
     size_t resize_buffer_size;
 
     SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL, int *location=NULL);
-    SDL_Surface *createRectangleSurface(char *filename);
-    SDL_Surface *createSurfaceFromFile(char *filename, int *location);
+    SDL_Surface *createRectangleSurface(char *filename, bool *has_alpha);
+    SDL_Surface *createSurfaceFromFile(char *filename,bool *has_alpha, int *location);
 
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );
     void shiftCursorOnButton( int diff );
