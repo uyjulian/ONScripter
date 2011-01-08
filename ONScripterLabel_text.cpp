@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_text.cpp - Text parser of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -834,10 +834,10 @@ bool ONScripterLabel::processText()
             while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
                    script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
             if (!skip_mode && !ctrl_pressed_status){
-                if (flag) event_mode = WAIT_INPUT_MODE;
                 key_pressed_flag = false;
 
                 event_mode = WAIT_TIMER_MODE | WAIT_SLEEP_MODE;
+                if (flag) event_mode |= WAIT_INPUT_MODE;
                 waitEvent(t);
             }
         }

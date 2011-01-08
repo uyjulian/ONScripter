@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -122,8 +122,12 @@ static struct FuncLUT{
     {"menu_window", &ONScripterLabel::menu_windowCommand},
     {"menu_full", &ONScripterLabel::menu_fullCommand},
     {"menu_automode", &ONScripterLabel::menu_automodeCommand},
+    {"lsph2sub", &ONScripterLabel::lsp2Command},
+    {"lsph2add", &ONScripterLabel::lsp2Command},
     {"lsph2", &ONScripterLabel::lsp2Command},
     {"lsph", &ONScripterLabel::lspCommand},
+    {"lsp2sub", &ONScripterLabel::lsp2Command},
+    {"lsp2add", &ONScripterLabel::lsp2Command},
     {"lsp2", &ONScripterLabel::lsp2Command},
     {"lsp", &ONScripterLabel::lspCommand},
     {"lr_trap",   &ONScripterLabel::trapCommand},

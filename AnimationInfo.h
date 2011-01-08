@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.h - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -84,6 +84,11 @@ public:
     int mat[2][2], inv_mat[2][2];
     int corner_xy[4][2];
     SDL_Rect bounding_rect;
+
+    enum { BLEND_NORMAL = 0,
+           BLEND_ADD    = 1,
+           BLEND_SUB    = 2
+    };
     int blending_mode;
     int cos_i, sin_i;
 

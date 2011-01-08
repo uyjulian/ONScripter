@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_effect.cpp - Effect executer of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -384,6 +384,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     //printf("effect conut %d / dur %d\n", effect_counter, effect_duration);
     
     effect_counter += effect_timer_resolution;
+    event_mode = WAIT_INPUT_MODE;
     if (waitEvent(0, true)) effect_counter = effect_duration;
 
     if ( effect_counter < effect_duration && effect_no != 1 ){

@@ -2,7 +2,7 @@
  *
  *  ScriptParser.cpp - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -161,6 +161,7 @@ ScriptParser::ScriptParser()
 {
     debug_level = 0;
     srand( time(NULL) );
+    rand();
 
     archive_path = NULL;
     version_str = NULL;

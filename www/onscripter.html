@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Jan. 5, 2011 (ソース更新)<br>
+Last updated: Jan. 8, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -89,8 +89,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110105.tar.gz">onscripter-20110105.tar.gz</a>
-  <li> <a href="onscripter-20101231.tar.gz">onscripter-20101231.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20110108.tar.gz">onscripter-20110108.tar.gz</a>
+  <li> <a href="onscripter-20110105.tar.gz">onscripter-20110105.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -194,7 +194,7 @@ Ogg Vorbis 形式の音楽ファイルを再生する場合には入れてください。同梱の Makefile.L
 <h4>必要に応じて導入</h4>
 <ul>
   <li> mad-0.15.1b (<a href="http://www.mars.org/home/rob/proj/mpeg/">MAD: Mpeg Audio Decoder</a>)<br>
-整数演算のみを使用した MP3 演奏ライブラリです。Android や Zaurus で MP3 を演奏する場合には必須です。MP3_MAD を定義してコンパイルすると、SMPEG の代わりに使用されます。
+整数演算のみを使用した MP3 演奏ライブラリです。Android や Zaurus で MP3 を演奏する場合には必須です。MAD を使用するためには、SMPEG の代わりに MAD を有効にしてコンパイルした SDL_mixer を使用してください。
 
   <li> avifile-0.7.48 (<a href="http://avifile.sourceforge.net/">avifile</a>)<br>
 avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認をしています。USE_AVIFILE を定義し AVIWrapper.o をリンクしてコンパイルすると使用されます。
@@ -739,7 +739,7 @@ return
 <tr><td>IDLE_EVENT_MODE</td><td>待ち状態ではない</td></tr>
 <tr><td><s>EFFECT_EVENT_MODE</s></td><td><s>画面効果実行中</s></td><td><s>print, bg</s></td></tr>
 <tr><td>WAIT_BUTTON_MODE</td><td>ButtonLink(画像)を使用した選択待ち</td><td>btnwait, select, 右クリックメニュー</td></tr>
-<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, @, \</td></tr>
+<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, @, \, 画面効果</td></tr>
 <tr><td>WAIT_SLEEP_MODE</td><td>クリックで飛ばせない待ち</td><td>テキスト文字描画</td></tr>
 </table>
 

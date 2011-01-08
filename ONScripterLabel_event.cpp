@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -304,7 +304,7 @@ bool ONScripterLabel::waitEventSub(int count)
         event.type = ONS_BREAK_EVENT;
         SDL_PushEvent( &event );
     }
- 
+    
     bool ret = runEventLoop();
     
     if (break_id) SDL_RemoveTimer(break_id);
@@ -428,13 +428,17 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     }
 #endif
     else return false;
-    
-    if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
-        skip_mode |= SKIP_TO_EOL;
-    playClickVoice();
-    stopAnimation( clickstr_state );
 
-    return true;
+    if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
+        if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+            skip_mode |= SKIP_TO_EOL;
+        playClickVoice();
+        stopAnimation( clickstr_state );
+
+        return true;
+    }
+
+    return false;
 }
 
 void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )

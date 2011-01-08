@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,6 +40,7 @@
 #define GMASK 0x0000ff00
 #define BMASK 0x000000ff
 #define AMASK 0xff000000
+#define RBMASK (RMASK|BMASK)
 #endif
 #define RGBMASK 0x00ffffff
 
@@ -108,7 +109,7 @@ void AnimationInfo::reset()
     visible = false;
     abs_flag = true;
     scale_x = scale_y = rot = 0;
-    blending_mode = 0;
+    blending_mode = BLEND_NORMAL;
 
     font_size_xy[0] = font_size_xy[1] = -1;
     font_pitch = -1;
@@ -297,6 +298,66 @@ int AnimationInfo::doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped 
 //                         (*src_buffer & 0x00ff00) * mask2) >> 8) & 0x00ff00;
 #endif
 
+#if defined(BPP16)
+#define ADDBLEND_PIXEL(){\
+    mask2 = (*alphap * alpha) >> 11;\
+    Uint32 s1 = (*src_buffer | *src_buffer << 16) & 0x07e0f81f;\
+    Uint32 d1 = (*dst_buffer | *dst_buffer << 16) & 0x07e0f81f;\
+    Uint32 mask1 = d1 + (((s1 * mask2) >> 5) & 0x07e0f81f);\
+    mask1 |= ((mask1 & 0xf8000000) ? 0x07e00000 : 0) |\
+             ((mask1 & 0x001f0000) ? 0x0000f800 : 0) |\
+             ((mask1 & 0x000007e0) ? 0x0000001f : 0);\
+    mask1 &= 0x07e0f81f;\
+    *dst_buffer = mask1 | mask1 >> 16;\
+    alphap++;\
+}
+#else
+#define ADDBLEND_PIXEL(){\
+    mask2 = (*alphap * alpha) >> 8;\
+    Uint32 mask_rb = (*dst_buffer & RBMASK) +\
+                     ((((*src_buffer & RBMASK) * mask2) >> 8) & RBMASK);\
+    mask_rb |= ((mask_rb & AMASK) ? RMASK : 0) |\
+               ((mask_rb & GMASK) ? BMASK : 0);\
+    Uint32 mask_g = (*dst_buffer & GMASK) +\
+                    ((((*src_buffer & GMASK) * mask2) >> 8) & GMASK);\
+    mask_g |= ((mask_g & RMASK) ? GMASK : 0);\
+    *dst_buffer = (mask_rb & RBMASK) | (mask_g & GMASK);\
+    alphap += 4;\
+}
+#endif
+
+#if defined(BPP16)
+#define SUBBLEND_PIXEL(){\
+    mask2 = (*alphap * alpha) >> 11;\
+    Uint32 mask_r = (*dst_buffer & RMASK) -\
+                    ((((*src_buffer & RMASK) * mask2) >> 5) & RMASK);\
+    mask_r &= ((mask_r & 0x001f0000) ? 0 : RMASK);\
+    Uint32 mask_g = (*dst_buffer & GMASK) -\
+                    ((((*src_buffer & GMASK) * mask2) >> 5) & GMASK);\
+    mask_g &= ((mask_g & ~(GMASK | BMASK)) ? 0 : GMASK);\
+    Uint32 mask_b = (*dst_buffer & BMASK) -\
+                    ((((*src_buffer & BMASK) * mask2) >> 5) & BMASK);\
+    mask_b &= ((mask_b & ~BMASK) ? 0 : BMASK);\
+    *dst_buffer = (mask_r & RMASK) | (mask_g & GMASK) | (mask_b & BMASK);\
+    alphap++;\
+}
+#else
+#define SUBBLEND_PIXEL(){\
+    mask2 = (*alphap * alpha) >> 8;\
+    Uint32 mask_r = (*dst_buffer & RMASK) -\
+                    ((((*src_buffer & RMASK) * mask2) >> 8) & RMASK);\
+    mask_r &= ((mask_r & AMASK) ? 0 : RMASK);\
+    Uint32 mask_g = (*dst_buffer & GMASK) -\
+                    ((((*src_buffer & GMASK) * mask2) >> 8) & GMASK);\
+    mask_g &= ((mask_g & ~(GMASK | BMASK)) ? 0 : GMASK);\
+    Uint32 mask_b = (*dst_buffer & BMASK) -\
+                    ((((*src_buffer & BMASK) * mask2) >> 8) & BMASK);\
+    mask_b &= ((mask_b & ~BMASK) ? 0 : BMASK);\
+    *dst_buffer = (mask_r & RMASK) | (mask_g & GMASK) | (mask_b & BMASK);\
+    alphap += 4;\
+}
+#endif
+
 void AnimationInfo::blendOnSurface( SDL_Surface *dst_surface, int dst_x, int dst_y,
                                     SDL_Rect &clip, int alpha )
 {
@@ -423,7 +484,12 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
             unsigned char *alphap = (unsigned char *)src_buffer;
 #endif
 #endif
-            BLEND_PIXEL();
+            if (blending_mode == BLEND_NORMAL)
+                BLEND_PIXEL()
+            else if (blending_mode == BLEND_ADD)
+                ADDBLEND_PIXEL()
+            else
+                SUBBLEND_PIXEL();
         }
     }
     

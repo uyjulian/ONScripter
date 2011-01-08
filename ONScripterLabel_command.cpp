@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -1364,13 +1364,22 @@ int ONScripterLabel::lsp2Command()
 
     bool v=true;
 
-    if ( script_h.isName( "lsph2" ) )
+    if ( script_h.isName( "lsph2" ) ||
+         script_h.isName( "lsph2add" ) ||
+         script_h.isName( "lsph2sub" ))
         v = false;
+
+    int blend_mode = AnimationInfo::BLEND_NORMAL;
+    if ( script_h.isName( "lsp2add" ) || script_h.isName( "lsph2add" ))
+        blend_mode = AnimationInfo::BLEND_ADD;
+    else if ( script_h.isName( "lsp2sub" ) || script_h.isName( "lsph2sub" ))
+        blend_mode = AnimationInfo::BLEND_SUB;
 
     int no = script_h.readInt();
     if ( sprite2_info[no].visible )
         dirty_rect.add( sprite2_info[no].bounding_rect );
     sprite2_info[ no ].visible = v;
+    sprite2_info[ no ].blending_mode = blend_mode;
     
     const char *buf = script_h.readStr();
     sprite2_info[ no ].setImageName( buf );
