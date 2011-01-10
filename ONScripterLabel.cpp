@@ -804,17 +804,8 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
     else{
         if ( rect ) dirty_rect.add( *rect );
 
-        if ( dirty_rect.area > 0 ){
-            if ( dirty_rect.area >= dirty_rect.bounding_box.w * dirty_rect.bounding_box.h ){
-                flushDirect( dirty_rect.bounding_box, refresh_mode );
-            }
-            else{
-                for ( int i=0 ; i<dirty_rect.num_history ; i++ ){
-                    //printf("%d: ", i );
-                    flushDirect( dirty_rect.history[i], refresh_mode );
-                }
-            }
-        }
+        if (dirty_rect.bounding_box.w * dirty_rect.bounding_box.h > 0)
+            flushDirect( dirty_rect.bounding_box, refresh_mode );
     }
     
     if ( clear_dirty_flag ) dirty_rect.clear();

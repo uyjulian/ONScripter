@@ -408,7 +408,7 @@ bool ONScripterLabel::doClickEnd()
             ret = waitEvent( automode_time );
     }
     else if ( autoclick_time > 0 ){
-        event_mode = WAIT_SLEEP_MODE | WAIT_TIMER_MODE;
+        event_mode = WAIT_TIMER_MODE;
         ret = waitEvent( autoclick_time );
     }
     else{
@@ -693,6 +693,11 @@ void ONScripterLabel::processEOT()
 {
     int i, n;
     
+    if ( skip_mode & SKIP_TO_EOL ){
+        flush( refreshMode() );
+        skip_mode &= ~SKIP_TO_EOL;
+    }
+
     if (!sentence_font.isLineEmpty() && !new_line_skip_flag){
         // if sentence_font.isLineEmpty() is true, newPage() might be already issued
         if (page_enter_status == 1){
@@ -836,7 +841,7 @@ bool ONScripterLabel::processText()
             if (!skip_mode && !ctrl_pressed_status){
                 key_pressed_flag = false;
 
-                event_mode = WAIT_TIMER_MODE | WAIT_SLEEP_MODE;
+                event_mode = WAIT_TIMER_MODE;
                 if (flag) event_mode |= WAIT_INPUT_MODE;
                 waitEvent(t);
             }

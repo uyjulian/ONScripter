@@ -2829,9 +2829,12 @@ int ONScripterLabel::btnwaitCommand()
 
     script_h.readInt();
 
-    if (!(textbtn_flag && (skip_mode & SKIP_NORMAL || 
-                           (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
-                           ctrl_pressed_status)) ){
+    if (textbtn_flag && (skip_mode & SKIP_NORMAL || 
+                         (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
+                         ctrl_pressed_status) ){
+        current_button_state.button = 0;
+    }
+    else{
         shortcut_mouse_line = 0;
         skip_mode &= ~SKIP_NORMAL;
 
@@ -2896,16 +2899,13 @@ int ONScripterLabel::btnwaitCommand()
         }
 
         event_mode |= WAIT_TIMER_MODE;
-        if (waitEvent(t)) return RET_CONTINUE;
+        waitEvent(t);
+        skip_mode &= ~SKIP_TO_EOL;
     }
 
     btnwait_time = SDL_GetTicks() - internal_button_timer;
     num_chars_in_sentence = 0;
 
-    if ( textbtn_flag && (skip_mode & SKIP_NORMAL || 
-                          (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
-                          ctrl_pressed_status))
-        current_button_state.button = 0;
     script_h.setInt( &script_h.current_variable, current_button_state.button );
 
     if ( current_button_state.button >= 1 && del_flag ){

@@ -2,7 +2,7 @@
  * 
  *  DirtyRect.cpp - Invalid region on text_surface which should be updated
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,47 +26,27 @@
 DirtyRect::DirtyRect()
 {
     screen_width = screen_height = 0;
-    area = 0;
-    total_history = 10;
-    num_history = 0;
     bounding_box.w = bounding_box.h = 0;
-    history = new SDL_Rect[total_history];
 };
 
 DirtyRect::DirtyRect( const DirtyRect &d )
 {
     screen_width  = d.screen_width;
     screen_height = d.screen_height;
-    area = d.area;
-    total_history = d.total_history;
-    num_history = d.num_history;
     bounding_box = d.bounding_box;
-    history = new SDL_Rect[total_history];
-
-    for ( int i=0 ; i<num_history ; i++ )
-        history[i] = d.history[i];
-};
+}
 
 DirtyRect& DirtyRect::operator =( const DirtyRect &d )
 {
     screen_width  = d.screen_width;
     screen_height = d.screen_height;
-    area = d.area;
-    total_history = d.total_history;
-    num_history = d.num_history;
     bounding_box = d.bounding_box;
-    delete[] history;
-    history = new SDL_Rect[total_history];
-
-    for ( int i=0 ; i<num_history ; i++ )
-        history[i] = d.history[i];
 
     return *this;
 };
 
 DirtyRect::~DirtyRect()
 {
-    delete[] history;
 }
 
 void DirtyRect::setDimension(int w, int h)
@@ -100,37 +80,6 @@ void DirtyRect::add( SDL_Rect src )
         src.h = screen_height-src.y;
 
     bounding_box = calcBoundingBox( bounding_box, src );
-
-    int i, min_is=0, min_hist=-1;
-    SDL_Rect min_rect;
-    for (i=0 ; i<num_history ; i++){
-        SDL_Rect rect = calcBoundingBox(src, history[i]);
-        if (i==0 || rect.w*rect.h < min_is){
-            min_is = rect.w*rect.h;
-            min_hist = i;
-            min_rect = rect;
-        }
-    }
-    if (min_hist >= 0 &&
-        history[min_hist].w * history[min_hist].h + src.w * src.h > min_is ){
-        area -= history[min_hist].w * history[min_hist].h;
-        history[min_hist] = min_rect;
-        area += history[min_hist].w * history[min_hist].h;
-        return;
-    }
-    
-    history[ num_history++ ] = src;
-    area += src.w * src.h;
-    
-    if ( num_history == total_history ){
-        total_history += 10;
-        SDL_Rect *tmp = history;
-        history = new SDL_Rect[ total_history ];
-        for ( i=0 ; i<num_history ; i++ )
-            history[i] = tmp[i];
-
-        delete[] tmp;
-    }
 };
 
 SDL_Rect DirtyRect::calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 )
@@ -162,14 +111,11 @@ SDL_Rect DirtyRect::calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 )
 
 void DirtyRect::clear()
 {
-    area = 0;
-    num_history = 0;
     bounding_box.w = bounding_box.h = 0;
 }
 
 void DirtyRect::fill( int w, int h )
 {
-    area = w*h;
     bounding_box.x = bounding_box.y = 0;
     bounding_box.w = w;
     bounding_box.h = h;

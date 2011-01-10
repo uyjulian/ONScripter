@@ -287,10 +287,9 @@ void ONScripterLabel::advancePhase( int count )
     timer_id = SDL_AddTimer( count, timerCallback, NULL );
 }
 
-bool ONScripterLabel::waitEventSub(int count)
+void ONScripterLabel::waitEventSub(int count)
 {
-    if (break_id != NULL) // already in wait queue
-        return false;
+    if (break_id != NULL) return; // already in wait queue
 
     if (count != 0){
         timerEvent(count);
@@ -305,18 +304,16 @@ bool ONScripterLabel::waitEventSub(int count)
         SDL_PushEvent( &event );
     }
     
-    bool ret = runEventLoop();
+    runEventLoop();
     
     if (break_id) SDL_RemoveTimer(break_id);
     break_id = NULL;
-
-    return ret; // true if interrupted
 }
 
-bool ONScripterLabel::waitEvent( int count, bool check_interruption )
+bool ONScripterLabel::waitEvent( int count )
 {
     while(1){
-        if (waitEventSub( count ) && check_interruption) return true;
+        waitEventSub( count );
         if ( system_menu_mode == SYSTEM_NULL ) break;
         int ret = executeSystemCall();
         if      (ret == 1) return true;
@@ -357,6 +354,7 @@ bool ONScripterLabel::trapHandler()
     trap_mode = TRAP_NONE;
     stopAnimation( clickstr_state );
     setCurrentLabel( trap_dist );
+    current_button_state.button = 0; // to escape from screen effect
 
     return true;
 }
@@ -430,7 +428,7 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     else return false;
 
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
-        if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+        if (!(event_mode & (WAIT_TEXT_MODE)))
             skip_mode |= SKIP_TO_EOL;
         playClickVoice();
         stopAnimation( clickstr_state );
@@ -853,7 +851,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         if (event->keysym.sym == SDLK_RETURN || 
             event->keysym.sym == SDLK_KP_ENTER ||
             event->keysym.sym == SDLK_SPACE ){
-            if (!(event_mode & (WAIT_BUTTON_MODE | WAIT_TEXT_MODE)))
+            if (!(event_mode & WAIT_TEXT_MODE))
                 skip_mode |= SKIP_TO_EOL;
             key_pressed_flag = true;
             playClickVoice();
@@ -939,7 +937,7 @@ void ONScripterLabel::timerEvent(int count)
     }
 }
 
-bool ONScripterLabel::runEventLoop()
+void ONScripterLabel::runEventLoop()
 {
     SDL_Event event, tmp_event;
 
@@ -962,7 +960,7 @@ bool ONScripterLabel::runEventLoop()
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
             ret = mousePressEvent( (SDL_MouseButtonEvent*)&event );
-            if (ret) return true;
+            if (ret) return;
             break;
 
           case SDL_JOYBUTTONDOWN:
@@ -976,7 +974,7 @@ bool ONScripterLabel::runEventLoop()
             ret = keyDownEvent( (SDL_KeyboardEvent*)&event );
             if ( btndown_flag )
                 ret |= keyPressEvent( (SDL_KeyboardEvent*)&event );
-            if (ret) return true;
+            if (ret) return;
             break;
 
           case SDL_JOYBUTTONUP:
@@ -989,7 +987,7 @@ bool ONScripterLabel::runEventLoop()
             event.key.keysym.sym = transKey(event.key.keysym.sym);
             keyUpEvent( (SDL_KeyboardEvent*)&event );
             ret = keyPressEvent( (SDL_KeyboardEvent*)&event );
-            if (ret) return true;
+            if (ret) return;
             break;
 
           case SDL_JOYAXISMOTION:
@@ -1047,7 +1045,7 @@ bool ONScripterLabel::runEventLoop()
                 stopAnimation( clickstr_state ); 
             }
 
-            return false;
+            return;
             
           case SDL_ACTIVEEVENT:
             if ( !event.active.gain ) break;

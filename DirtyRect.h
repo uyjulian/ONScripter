@@ -2,7 +2,7 @@
  * 
  *  DirtyRect.h - Invalid region on text_surface which should be updated
  *
- *  Copyright (c) 2001-2004 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -41,12 +41,7 @@ struct DirtyRect
     SDL_Rect calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 );
 
     int screen_width, screen_height;
-
-    int area;
-    int total_history;
-    int num_history;
     SDL_Rect bounding_box;
-    SDL_Rect *history;
 };
 
 #endif // __DIRTY_RECT__

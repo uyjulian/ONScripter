@@ -79,7 +79,7 @@ public:
     void setKeyEXE(const char *path);
     
     int  init();
-    bool runEventLoop();
+    void runEventLoop();
 
     void reset(); // used if definereset
     void resetSub(); // used if reset
@@ -278,8 +278,8 @@ protected:
     void flushEventSub( SDL_Event &event );
     void flushEvent();
     void advancePhase( int count=0 );
-    bool waitEventSub(int count);
-    bool waitEvent(int count, bool check_interruption = false);
+    void waitEventSub(int count);
+    bool waitEvent(int count);
     bool trapHandler();
     void initSDL();
     void openAudio();
@@ -293,7 +293,7 @@ private:
            WAIT_RCLICK_MODE     = 1, // for lrclick
            WAIT_BUTTON_MODE     = 2, // For select, btnwait and rmenu.
            WAIT_INPUT_MODE      = (4|8),  // can be skipped by a click
-           WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
+           //WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
            WAIT_TIMER_MODE      = 32,
            WAIT_TEXTBTN_MODE    = 64,
            WAIT_VOICE_MODE      = 128,

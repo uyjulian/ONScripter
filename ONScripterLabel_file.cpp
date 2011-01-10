@@ -523,13 +523,7 @@ int ONScripterLabel::loadSaveFile( int no )
 
     display_mode = shelter_display_mode = DISPLAY_MODE_TEXT;
 
-    event_mode = tmp_event_mode;
-    if ( event_mode & WAIT_BUTTON_MODE ) event_mode = WAIT_SLEEP_MODE; // Re-execute the selectCommand, etc.
-
-    if ( event_mode & WAIT_SLEEP_MODE )
-        event_mode &= ~WAIT_SLEEP_MODE;
-    else
-        event_mode |= WAIT_TIMER_MODE;
+    event_mode = tmp_event_mode | WAIT_TIMER_MODE;
     if (event_mode & WAIT_INPUT_MODE) event_mode |= WAIT_TEXT_MODE;
     
     draw_cursor_flag = (clickstr_state == CLICK_NONE)?false:true;

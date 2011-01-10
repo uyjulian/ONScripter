@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Jan. 8, 2011 (ソース更新)<br>
+Last updated: Jan. 10, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -89,8 +89,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110108.tar.gz">onscripter-20110108.tar.gz</a>
-  <li> <a href="onscripter-20110105.tar.gz">onscripter-20110105.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20110110.tar.gz">onscripter-20110110.tar.gz</a>
+  <li> <a href="onscripter-20110108.tar.gz">onscripter-20110108.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -292,17 +292,11 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
 <tr><td> Shift + q </td><td>終了（end コマンドを発行）</td></tr>
 </table>
 
-<p>ただし、s 以外のキーは入力待ちの時しか受け付けません（文字を描画し
-ている最中は受け付けません）。次の選択肢まで飛ばしている最中に限り、任
-意のタイミングで s キーにより通常の状態に戻すことができます。</p>
-
 </div> <!-- sub-content -->
 
 
 <div class="sub-content">
 <h3 id="option">起動オプション</h3>
-
-<p>以下に示すオプションを指定できます。ただし、オプション無しがデフォルト動作です。</p>
 
 <table>
 <tr><th> オプション </th><th>説明</th></tr>
@@ -328,14 +322,14 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
 <div class="sub-content">
 <h3 id="save">異なるプラットフォーム上で同時に遊ぶ方法</h3>
 
-<p>例えば家では Windows、通勤中は Zaurus、職場では Linux といったよう
-に、同じゲームを別々のプラットフォーム上で同時に進行させることができま
-す。基本的には、それぞれの環境にゲームのアーカイブをセットアップし、プ
-ラットフォームを移るたびに ONScripter(もしくは NScripter) の書き出すファ
-イルを全てコピーすればよいのですが、注意点があります。</p>
+<p>例えばデスクトップＰＣ(Windows, Linux)やスマートフォン(Android)など、
+異なるプラットフォームでセーブファイルを共有してゲームを進めることがで
+きます。プラットフォームごとにゲームのアーカイブを用意し、以下の注意に
+したがってプラットフォームを移るたびに ONScripter(もしくは NScripter) 
+の書き出すファイルをコピーしてください。</p>
 
 <p>NScripter もしくは ONScripter が書き出すファイルには次のものがあり
-ます。この内一部のファイルはゲームによっては書き出されませんので、無い
+ます。このうち一部のファイルはゲームによっては書き出されないため、無い
 場合もあります。</p>
 
 <table>
@@ -346,58 +340,52 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
 <tr><td><i>archive_path/</i>NScrflog.dat</td><td>既読ファイル情報の格納</td></tr>
 <tr><td><i>archive_path/</i>NScrllog.dat</td><td>既読ラベル情報の格納</td></tr>
 <tr><td><i>archive_path/</i>save*.dat</td><td>セーブファイル(ONScripter の出力したものは ONScripter 専用です、NScripter が出力したものは NScripter でも ONScripter でも読み込めます)</td></tr>
-<tr><td><i>archive_path/sav/</i>save*.dat</td><td>上段の NScripter が出力するものと互換性のあるもの（無保証）で、ONScripter が出力します</td></tr>
-<tr><td><i>archive_path/</i>その他画像ファイル</td><td>スクリーンショットを画像ファイルとして保存している場合があります。これはゲームによって場所や名前が異なるので、ゲーム毎に対応してください。</td></tr>
+<tr><td><i>archive_path/sav/</i>save*.dat</td><td>上段の NScripter が出力するものと互換性のあるセーブファイル（無保証）で、ONScripter が出力します</td></tr>
+<tr><td><i>archive_path/</i>その他画像ファイル</td><td>スクリーンショットを画像ファイルとして保存している場合があります。これはゲームによって場所や名前が異なるので、ゲームごとに対応してください。</td></tr>
 </table>
 
-<p>上記のうち save*.dat (以下セーブファイル)の構造については、
-NScripter (ONScripter) のバージョンアップの際に拡張されることがあるた
-め、ONScripter の出力するセーブファイルには、構造識別のためにバージョ
-ン番号の入ったヘッダが付きます。ただし、ゲームのスクリプトがある場所に 
-sav というディレクトリがある場合には、ヘッダ無しのセーブファイルを sav 
-以下にも同時に作成します。このバージョン番号はセーブファイルのバージョ
-ンであり、ONScripter のバージョンとは関係ありません。セーブファイルの
-構造が変わるとバージョンアップします。</p>
+<p>セーブファイルのフォーマットは NScripter (ONScripter) がバージョン
+アップするときに変更されることがあります。そのため、ONScripter の出力
+するセーブファイルには、先頭にセーブファイルのバージョン番号が入ってい
+ます。また、sav というディレクトリがある場合には、バージョン番号なしの
+セーブファイルを sav 以下にも同時に作成します。sav 以下に生成されるセー
+ブファイルは、最新の NScripter が生成するセーブファイルと互換性があり
+ます。なお、セーブファイルのバージョン番号は ONScripter のバージョンと
+は異なります。</p>
 
-<p>save*.dat の読み込みに関しては、ONScripter は、ヘッダ付きセーブファ
-イルか、もしくは ONScripter がサポートする最新バージョンのヘッダ無しセー
-ブファイルを読み込むことができます。読み込みは常にアーカイブと同じディ
-レクトリからであり、sav/ 以下から読み込むことはありません。</p>
+<p>ONScripter は、バージョン番号ありのセーブファイルか、もしくは 
+ONScripter がサポートする最新のフォーマットでバージョン番号なしのセー
+ブファイルを読み込むことができます。</p>
 
 <h4>ONScripter 環境から ONScripter 環境へデータを移動</h4>
 
-<ul>
-<li>上記の書き出しファイルを全てそのままコピーしてください。
-<li>別途 NScripter も併用する場合には、sav/ 以下も忘れずにコピーしてください。
-
-<li>ONScripter_dir/* → ONScripter_dir/* (上記の書き出しファイルのみ)
-<li>ONScripter_dir/sav/save*.dat → ONScripter_dir/sav/save*.dat
-</ul>
+<dl>
+<dt>上記の書き出しファイルを全てそのままコピーしてください。
+<dd>ONScripter_dir/* → ONScripter_dir/*
+</dl>
 
 <h4>NScripter 環境から ONScripter 環境へデータを移動</h4>
 
-<ul>
-<li>上記の書き出しファイルを全て（save*.datを含む）そのままコピーしてください。
-<li>さらに save*.dat については、sav というディレクトリ以下にもファイルをコピーしてください。この作業は、後で ONScripter 環境から NScripter 環境にデータを移す場合に必要になります。
-<li>NScripter_dir/* → ONScripter_dir/* (上記の書き出しファイルのみ)
-<li>NScripter_dir/save*.dat → ONScripter_dir/sav/save*.dat
-</ul>
+<dl>
+<dt>上記の書き出しファイルを全て（save*.datを含む）そのままコピーしてください。
+<dd>NScripter_dir/* → ONScripter_dir/*
+</dl>
 
 <h4>ONScripter 環境から NScripter 環境へデータを移動</h4>
 
-<ul>
-<li>save*.dat を除く上記の書き出しファイルを全てそのままコピーしてください。
-<li>save*.dat については、sav というディレクトリ以下に生成されたファイルをコピーしてください。
-<li>ONScripter_dir/* → NScripter_dir/* (save*.dat を除く上記の書き出しファイルのみ)
-<li>ONScripter_dir/sav/save*.dat → NScripter_dir/save*.dat
-</ul>
+<dl>
+<dt>save*.dat を除く上記の書き出しファイルを全てそのままコピーしてください。
+<dd>ONScripter_dir/* → NScripter_dir/*
+<dt>save*.dat については sav ディレクトリ以下に生成されたファイルをコピーしてください。
+<dd>ONScripter_dir/sav/save*.dat → NScripter_dir/save*.dat
+</dl>
 
 <h4>注意点</h4>
 <ul>
-  <li>NScripter は、現時点(2009/05/17)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
+  <li> NScripter は、現時点(2009/05/17)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
   <li>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
-  <li>過去のほぼ全ての NScripter 用のゲームは、上記の最新の nscr.exe で問題なく遊ぶことができます。したがって、<FONT color="#ff0000">Windows 以外で同時に ONScripter を使用したい方は、Windows 上では最初から上記の nscr.exe に差し換えて使ってください。</FONT>ゲームを進めてから差し換えると、古い形式のセーブデータを読むことができずエラーになることがあります。 一部のゲームでは nscr.exe を差し換えるとゲームの実行に支障が出るため、ONScripter で動作する場合には、Windows 環境では ONScripter の最新の Windows バイナリをご使用下さい。
-  <li>NScripterと併用する場合は、ONScripter 環境のアーカイブのある場所にあらかじめ sav というディレクトリを作成しておいてください。
+  <li>ONScripter は古いバージョンの NScripter が生成するセーブファイルを読み込むことができないため、<FONT color="#ff0000">ONScripter と NScripter を併用したい方は Windows 上では最初から上記の最新の nscr.exe を使用してください。</FONT>
+  <li>ONScripter と NScripter を併用する場合には、あらかじめ sav というディレクトリを作成しておいてください。
 </ul>
 
 </div> <!-- sub-content -->
@@ -730,17 +718,13 @@ return
 <div class="sub-content">
 <h3 id="memo">開発メモ</h3>
 
-<p>開発に関する覚え書きです。</p>
-
 <h4>event_mode</h4>
 <p>下の表の値は排他的に用いられます。</p>
 <table>
 <tr><th>値</th><th>説明</th><th>例</th></tr>
-<tr><td>IDLE_EVENT_MODE</td><td>待ち状態ではない</td></tr>
-<tr><td><s>EFFECT_EVENT_MODE</s></td><td><s>画面効果実行中</s></td><td><s>print, bg</s></td></tr>
+<tr><td>IDLE_EVENT_MODE</td><td>クリックで飛ばせない待ち</td><td>wait</td></tr>
 <tr><td>WAIT_BUTTON_MODE</td><td>ButtonLink(画像)を使用した選択待ち</td><td>btnwait, select, 右クリックメニュー</td></tr>
-<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる待ち</td><td>delay, click, @, \, 画面効果</td></tr>
-<tr><td>WAIT_SLEEP_MODE</td><td>クリックで飛ばせない待ち</td><td>テキスト文字描画</td></tr>
+<tr><td>WAIT_INPUT_MODE</td><td>クリックで飛ばせる入力待ち</td><td>delay, click, @, \, テキスト文字描画, 画面効果</td></tr>
 </table>
 
 <p>下の表の値は、上の表の値と組み合わせて使用されます。</p>
@@ -749,7 +733,7 @@ return
 <tr><td>WAIT_TIMER_MODE</td><td>時間を指定した待ち、待ち中にアニメーションを実行</td><td>画面効果、テキスト文字描画以外のほぼ全ての場合</td></tr>
 <tr><td>WAIT_TEXTBTN_MODE</td><td>textbtnwait での待ち</td><td>textbtnwait 使用時のみ</td></tr>
 <tr><td>WAIT_VOICE_MODE</td><td>ボイスの発声終了を待つ</td><td>automode, btntime2 使用時のみ</td></tr>
-<tr><td>WAIT_TEXT_MODE</td><td>テキスト終端での待ち</td><td>@, \, select</td></tr>
+<tr><td>WAIT_TEXT_MODE</td><td>テキスト終端での待ち（右クリックメニューの可否の判定用）</td><td>@, \, select</td></tr>
 <tr><td>WAIT_RCLICK_MODE</td><td>右クリック待ち</td><td>lrclick</td></tr>
 </table>
 
