@@ -264,7 +264,6 @@ protected:
     int variable_edit_index;
     int variable_edit_num;
     int variable_edit_sign;
-    bool key_pressed_flag;
     int  shift_pressed_status;
     int  ctrl_pressed_status;
     
@@ -293,9 +292,7 @@ private:
            WAIT_RCLICK_MODE     = 1, // for lrclick
            WAIT_BUTTON_MODE     = 2, // For select, btnwait and rmenu.
            WAIT_INPUT_MODE      = (4|8),  // can be skipped by a click
-           //WAIT_SLEEP_MODE      = 16, // cannot be skipped by a click
            WAIT_TIMER_MODE      = 32,
-           WAIT_TEXTBTN_MODE    = 64,
            WAIT_VOICE_MODE      = 128,
            WAIT_TEXT_MODE       = 256 // clickwait, newpage, select
     };
@@ -638,7 +635,6 @@ private:
     
     Mix_Chunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
 
-    char *music_cmd;
     char *midi_cmd;
 
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);

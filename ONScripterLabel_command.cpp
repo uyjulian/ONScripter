@@ -1586,7 +1586,6 @@ int ONScripterLabel::loadgameCommand()
         automode_flag = false;
         deleteButtonLink();
         deleteSelectLink();
-        key_pressed_flag = false;
         text_on_flag = false;
         indent_offset = 0;
         line_enter_status = 0;
@@ -2574,8 +2573,6 @@ int ONScripterLabel::drawCommand()
 
 int ONScripterLabel::delayCommand()
 {
-    key_pressed_flag = false;
-
     event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
     waitEvent( script_h.readInt() );
 
@@ -2698,7 +2695,6 @@ int ONScripterLabel::clickCommand()
     if ( script_h.isName( "lrclick" ) ) lrclick_flag = true;
 
     skip_mode &= ~SKIP_NORMAL;
-    key_pressed_flag = false;
 
     event_mode = WAIT_TIMER_MODE | WAIT_INPUT_MODE;
     if (lrclick_flag) event_mode |= WAIT_RCLICK_MODE;
@@ -2877,7 +2873,7 @@ int ONScripterLabel::btnwaitCommand()
         internal_button_timer = SDL_GetTicks();
 
         if ( textbtn_flag ){
-            event_mode |= WAIT_TEXTBTN_MODE;
+            event_mode |= WAIT_INPUT_MODE;
             if ( btntime_value == 0 ){
                 if ( automode_flag ){
                     event_mode |= WAIT_VOICE_MODE;

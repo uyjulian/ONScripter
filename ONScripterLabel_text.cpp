@@ -446,7 +446,6 @@ bool ONScripterLabel::clickWait( char *out_text )
         if ( waitEvent(0) ) return false;
     }
     else{
-        key_pressed_flag = false;
         if ( out_text ){
             drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
@@ -467,7 +466,6 @@ bool ONScripterLabel::clickWait( char *out_text )
         if (doClickEnd()) return false;
 
         clickstr_state = CLICK_NONE;
-        key_pressed_flag = false;
     }
 
     return true;
@@ -495,7 +493,6 @@ bool ONScripterLabel::clickNewPage( char *out_text )
         if (waitEvent(0)) return false;
     }
     else{
-        key_pressed_flag = false;
         if ( textgosub_label ){
             saveoffCommand();
 
@@ -514,7 +511,6 @@ bool ONScripterLabel::clickNewPage( char *out_text )
 
     newPage( true );
     clickstr_state = CLICK_NONE;
-    key_pressed_flag = false;
 
     return true;
 }
@@ -839,8 +835,6 @@ bool ONScripterLabel::processText()
             while (script_h.getStringBuffer()[ string_buffer_offset ] == ' ' ||
                    script_h.getStringBuffer()[ string_buffer_offset ] == '\t') string_buffer_offset++;
             if (!skip_mode && !ctrl_pressed_status){
-                key_pressed_flag = false;
-
                 event_mode = WAIT_TIMER_MODE;
                 if (flag) event_mode |= WAIT_INPUT_MODE;
                 waitEvent(t);

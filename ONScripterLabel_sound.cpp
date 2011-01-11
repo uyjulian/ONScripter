@@ -2,7 +2,7 @@
  * 
  *  ONScripterLabel_sound.cpp - Methods for playing sound
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +22,7 @@
  */
 
 #include "ONScripterLabel.h"
+#include <new>
 #if defined(LINUX)
 #include <signal.h>
 #endif
@@ -64,7 +65,11 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
         buffer = music_buffer;
     }
     else{
-        buffer = new unsigned char[length];
+        buffer = new(std::nothrow) unsigned char[length];
+        if (buffer == NULL){
+            fprintf( stderr, "failed to load [%s] because file size [%lu] is too large.\n", filename, length);
+            return SOUND_NONE;
+        }
         script_h.cBR->getFile( filename, buffer );
     }
     

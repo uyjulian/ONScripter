@@ -429,10 +429,8 @@ ONScripterLabel::ONScripterLabel()
 
     // External Players
 #if defined(WINCE)
-    music_cmd = NULL;
     midi_cmd  = NULL;
 #else
-    music_cmd = getenv("PLAYER_CMD");
     midi_cmd  = getenv("MUSIC_CMD");
 #endif
 
@@ -671,7 +669,6 @@ void ONScripterLabel::reset()
 
     system_menu_enter_flag = false;
     system_menu_mode = SYSTEM_NULL;
-    key_pressed_flag = false;
     shift_pressed_status = 0;
     ctrl_pressed_status = 0;
     display_mode = DISPLAY_MODE_NORMAL;

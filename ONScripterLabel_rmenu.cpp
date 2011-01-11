@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_rmenu.cpp - Right click menu handler of ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -63,7 +63,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
 {
     current_font = &sentence_font;
     display_mode = shelter_display_mode;
-    key_pressed_flag = false;
 
     if ( restore_flag ){
         
@@ -79,7 +78,6 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         }
     }
     dirty_rect.fill( screen_width, screen_height );
-    refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
     flush( refreshMode() );
 
     //printf("leaveSystemCall %d %d\n",event_mode, clickstr_state);
@@ -321,6 +319,7 @@ bool ONScripterLabel::executeSystemLoad()
                 return false;
 
             leaveSystemCall( false );
+            refreshSurface(backup_surface, NULL, REFRESH_NORMAL_MODE);
             saveon_flag = true;
             internal_saveon_flag = true;
             text_on_flag = false;

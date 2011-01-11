@@ -846,14 +846,13 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
     }
 
-    if ( event_mode & WAIT_INPUT_MODE && !key_pressed_flag &&
+    if ( event_mode & WAIT_INPUT_MODE &&
          ( autoclick_time == 0 || (event_mode & WAIT_BUTTON_MODE)) ){
         if (event->keysym.sym == SDLK_RETURN || 
             event->keysym.sym == SDLK_KP_ENTER ||
             event->keysym.sym == SDLK_SPACE ){
             if (!(event_mode & WAIT_TEXT_MODE))
                 skip_mode |= SKIP_TO_EOL;
-            key_pressed_flag = true;
             playClickVoice();
             stopAnimation( clickstr_state );
 
@@ -861,12 +860,10 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
     }
     
-    if ( event_mode & (WAIT_INPUT_MODE | WAIT_TEXTBTN_MODE) && 
-         !key_pressed_flag ){
+    if ( event_mode & WAIT_INPUT_MODE ){
         if (event->keysym.sym == SDLK_s && !automode_flag ){
             skip_mode |= SKIP_NORMAL;
             printf("toggle skip to true\n");
-            key_pressed_flag = true;
             stopAnimation( clickstr_state );
 
             return true;
@@ -887,7 +884,6 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             automode_flag = true;
             skip_mode &= ~SKIP_NORMAL;
             printf("change to automode\n");
-            key_pressed_flag = true;
             stopAnimation( clickstr_state );
 
             return true;

@@ -22,6 +22,7 @@
  */
 
 #include "ONScripterLabel.h"
+#include <new>
 #include "resize_image.h"
 
 SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *location)
@@ -134,7 +135,11 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, bool *has_al
 
     unsigned char *buffer = NULL;
     if (length > tmp_image_buf_length){
-        buffer = new unsigned char[length];
+        buffer = new(std::nothrow) unsigned char[length];
+        if (buffer == NULL){
+            fprintf( stderr, "failed to load [%s] because file size [%lu] is too large.\n", filename, length);
+            return NULL;
+        }
     }
     else{
         if (!tmp_image_buf) tmp_image_buf = new unsigned char[tmp_image_buf_length];
