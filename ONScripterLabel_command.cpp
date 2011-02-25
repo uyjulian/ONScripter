@@ -159,6 +159,11 @@ int ONScripterLabel::trapCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::transbtnCommand()
+{
+    transbtn_flag = true;
+}
+
 int ONScripterLabel::textspeedCommand()
 {
     sentence_font.wait_time = script_h.readInt();
@@ -1623,7 +1628,7 @@ int ONScripterLabel::ldCommand()
         if ( tachi_info[ no ].image_surface ){
             tachi_info[ no ].visible = true;
             tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
-            tachi_info[ no ].pos.y = underline_value - tachi_info[ no ].image_surface->h + 1;
+            tachi_info[ no ].pos.y = underline_value * screen_ratio1 / screen_ratio2 - tachi_info[ no ].image_surface->h;
             dirty_rect.add( tachi_info[ no ].pos );
         }
     }
@@ -2810,6 +2815,8 @@ int ONScripterLabel::captionCommand()
 
 int ONScripterLabel::btnwaitCommand()
 {
+    leaveTextDisplayMode();
+
     bool del_flag=false, textbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
@@ -2959,6 +2966,7 @@ int ONScripterLabel::btndefCommand()
     }
     
     btntime_value = 0;
+    transbtn_flag = false;
     deleteButtonLink();
 
     disableGetButtonFlag();

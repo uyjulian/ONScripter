@@ -682,11 +682,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         }
     }
     
-    if (event->type == SDL_KEYUP && 
-        (event->keysym.sym == SDLK_RETURN || 
-         event->keysym.sym == SDLK_KP_ENTER ||
-         event->keysym.sym == SDLK_SPACE ||
-         event->keysym.sym == SDLK_s))
+    if (event->type == SDL_KEYUP)
         skip_mode &= ~SKIP_NORMAL;
     
     if ( shift_pressed_status && event->keysym.sym == SDLK_q && current_mode == NORMAL_MODE ){

@@ -2,7 +2,7 @@
  *
  *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -40,7 +40,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define SAVEFILE_MAGIC_NUMBER "ONS"
 #define SAVEFILE_VERSION_MAJOR 2
-#define SAVEFILE_VERSION_MINOR 6
+#define SAVEFILE_VERSION_MINOR 7
 
 #define READ_LENGTH 4096
 
@@ -451,7 +451,7 @@ int ONScripterLabel::loadSaveFile( int no )
             parseTaggedString( &tachi_info[i] );
             setupAnimationInfo( &tachi_info[ i ] );
             tachi_info[ i ].pos.x = screen_width * (i+1) / 4 - tachi_info[ i ].pos.w / 2;
-            tachi_info[ i ].pos.y = underline_value - tachi_info[ i ].image_surface->h + 1;
+            tachi_info[ i ].pos.y = underline_value * screen_ratio1 / screen_ratio2 - tachi_info[ i ].image_surface->h;
         }
     }
 

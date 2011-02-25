@@ -94,6 +94,7 @@ public:
     int voicevolCommand();
     int vCommand();
     int trapCommand();
+    int transbtnCommand();
     int textspeedCommand();
     int textshowCommand();
     int textonCommand();
@@ -350,6 +351,7 @@ private:
     long internal_button_timer;
     long btnwait_time;
     bool btndown_flag;
+    bool transbtn_flag;
 
     void quit();
 

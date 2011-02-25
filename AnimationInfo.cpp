@@ -451,7 +451,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
             int i2 = (i+1)&3; // = (i+1)%4
             if (corner_xy[i][1] == corner_xy[i2][1]) continue;
             x = (corner_xy[i2][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
-            if (corner_xy[i2][1] - corner_xy[i][1] > 0){
+            if (scale_x*scale_y*(corner_xy[i2][1] - corner_xy[i][1]) > 0){
                 if (raster_min < x) raster_min = x;
             }
             else{
@@ -928,4 +928,31 @@ void AnimationInfo::setImage( SDL_Surface *surface )
     SDL_UnlockSurface( surface );
     SDL_FreeSurface( surface );
 #endif
+}
+
+bool AnimationInfo::isTransparent(int x, int y)
+{
+    if (image_surface == NULL) return true;
+
+    bool is_transparent = false;
+
+    x -= pos.x;
+    y -= pos.y;
+    int offset_x = (image_surface->w/num_of_cells)*current_cell;
+    
+#if defined(BPP16)
+    if (alpha_buf[image_surface->w*y+offset_x+x] == 0) is_transparent = true;
+#else
+    int total_width = image_surface->pitch / 4;
+    SDL_LockSurface( image_surface );
+    ONSBuf *buf = (ONSBuf *)image_surface->pixels + total_width*y + offset_x + x;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+    if (*((unsigned char *)buf + 3) == 0) is_transparent = true;
+#else
+    if (*((unsigned char *)buf) == 0) is_transparent = true;
+#endif
+    SDL_UnlockSurface( image_surface );
+#endif
+
+    return is_transparent;
 }

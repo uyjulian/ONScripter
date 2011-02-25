@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -92,10 +92,7 @@ int ScriptParser::useescspcCommand()
 
 int ScriptParser::underlineCommand()
 {
-    if ( current_mode != DEFINE_MODE )
-        errorAndExit( "underline: not in the define section" );
-
-    underline_value = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    underline_value = script_h.readInt();
 
     return RET_CONTINUE;
 }
