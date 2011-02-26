@@ -295,13 +295,11 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         wave_sample[MIX_BGM_CHANNEL] = NULL;
     }
 
-    if ( !continue_flag ){
-        setStr( &music_file_name, NULL );
-        music_play_loop_flag = false;
-        if (music_buffer){
-            delete[] music_buffer;
-            music_buffer = NULL;
-        }
+    if ( music_info ){
+        ext_music_play_once_flag = true;
+        Mix_HaltMusic();
+        Mix_FreeMusic( music_info );
+        music_info = NULL;
     }
 
     if ( midi_info ){
@@ -310,19 +308,20 @@ void ONScripterLabel::stopBGM( bool continue_flag )
         Mix_FreeMusic( midi_info );
         midi_info = NULL;
     }
+
     if ( !continue_flag ){
+        setStr( &music_file_name, NULL );
+        music_play_loop_flag = false;
+        if (music_buffer){
+            delete[] music_buffer;
+            music_buffer = NULL;
+        }
+
         setStr( &midi_file_name, NULL );
         midi_play_loop_flag = false;
-    }
 
-    if ( music_info ){
-        ext_music_play_once_flag = true;
-        Mix_HaltMusic();
-        Mix_FreeMusic( music_info );
-        music_info = NULL;
+        current_cd_track = -1;
     }
-
-    if ( !continue_flag ) current_cd_track = -1;
 }
 
 void ONScripterLabel::stopAllDWAVE()
