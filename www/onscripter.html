@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Feb. 26, 2011 (ソース更新)<br>
+Last updated: Mar. 9, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -75,7 +75,7 @@ Last updated: Feb. 26, 2011 (ソース更新)<br>
 <div class="content">
 <h2 id="introduction">はじめに</h2>
 
-<p>ONScripter (オーエヌスクリプター)とは、<a href="http://www.nscripter.com/">NScripter</a>(<a href="http://ja.wikipedia.org/wiki/NScripter">解説</a>)用に作られたスクリプトを独自に解釈して実行するプログラムです。動作例については、αβεさんの[<A HREF="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>]を参考にしてください。</p>
+<p>ONScripter (オーエヌスクリプター)とは、<a href="http://www.nscripter.com/">NScripter</a>(<a href="http://ja.wikipedia.org/wiki/NScripter">解説</a>)用に作られたスクリプトを独自に解釈して実行するプログラムです。
 
 <p>動作報告・バグ報告・機能追加要望・パッチは随時受け付けますので[<a
 href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscripter&amp;action=top">
@@ -89,8 +89,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110226.tar.gz">onscripter-20110226.tar.gz</a>
-  <li> <a href="onscripter-20110223.tar.gz">onscripter-20110223.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20110309.tar.gz">onscripter-20110309.tar.gz</a>
+  <li> <a href="onscripter-20110226.tar.gz">onscripter-20110226.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -104,8 +104,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <tr><td>Zaurus (SL-C700, etc.)</td><td><a href="zaurus/index.html">SDL on Zaurus のページ</a></td></tr>
 
 <tr><td rowspan=5>Linux</td><td class="span">Debian 公式 <a href="http://packages.debian.org/sid/onscripter">Unstable (Sid)</a></td></tr>
-<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/squeeze/onscripter">Testing (Squeeze)</a></td></tr>
-<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/lenny/onscripter">Stable (Lenny)</a></td></tr>
+<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/wheezy/onscripter">Testing (Wheezy)</a></td></tr>
+<tr><td class="span">Debian 公式 <a href="http://packages.debian.org/squeeze/onscripter">Stable (Squeeze)</a></td></tr>
 <tr><td class="span"><a href="http://detroit.ddo.jp/hiki.cgi?Debian">Debian 非公式 (Etch, Sarge, Woody, Potato)</a></td></tr>
 <tr><td><a href="http://onscripter.unclemion.com/">Uncle Mion's ONScripter Corner</a> <FONT color="#ff0000">(ONScripter-EN)</td></tr>
 
@@ -124,7 +124,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 
 <tr><td>Brain (WindowsCE 6.0)</td><td><a href="http://lycoris2475.xxxxxxxx.jp/">ONScripter for Brain</a></td></tr>
 
-<tr><td>NetBSD</td><td><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2">pkgsrc-wip-jpめも</a> (<a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>)</td></tr>
+<tr><td rowspan=2>NetBSD, DragonFly BSD</td><td class="span"><a href="http://cvsweb.netbsd.org/bsdweb.cgi/pkgsrc/games/onscripter/">pkgsrc</a></td></tr>
+<tr><td><a href="http://www.tunagu.gr.jp/cgi-bin/fswiki/wiki.cgi/isihara?page=pkgsrc-wip-jp%A4%E1%A4%E2">pkgsrc-wip-jpめも</a> (<a href="http://cvs.sourceforge.jp/cgi-bin/viewcvs.cgi/pkgsrc-wip/wip-jp/onscripter/">pkgsrc-wip/wip-jp/onscripter</a>)</td></tr>
 
 <tr><td>OS2/Warp</td><td><a href="http://www.fastwave.gr.jp/diarysrv/sofiya/">猫耳なプログラミング格闘日記</a> (<a href="http://www.os2.jp/modules/search/index.php?query=onscripter&action=results&showcontext=1">package at OS2.jp</a>)</td></tr>
 
@@ -251,14 +252,6 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
   <dd> 数多くのプラットフォームにONScripterを移植していただいた秋月かたねさんの日記です。
   <dt> ○<a href="http://you-like.to/cgi-bin/ponytail/yukiwiki/wiki.cgi">技術屋きさらの箱庭</a>
   <dd> 以前にバグトラッキングシステムを運用していただいたきさらさんの日記です。
-  <dt> ○<a href="http://abe.nwr.jp/onscripter/">ONScripter のスゝメ</a>
-  <dd> αβεさんによる ONScripter の導入方法・既存のゲームの動作状況・バグ報告のページです。<br>
-       ONScripter を開発する上でたいへんお世話になっております。<br>
-       ONScripter に興味を持たれた方は最初にこちらのページを見ることをお勧めします。
-<!--
-  <dt> ○<a href="http://www.enterbrain.co.jp/techwin/data/book/linux/">Linux Power</a>
-  <dd> αβεさんによる ONScripter の紹介記事が載っています。興味のある方は是非手にとってみてください。
--->
 </dl>
 
 </div> <!-- content -->

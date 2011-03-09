@@ -27,6 +27,61 @@
 #include <signal.h>
 #endif
 
+#ifdef ANDROID
+extern "C"
+{
+#include <jni.h>
+#include <android/log.h>
+static JavaVM *jniVM = NULL;
+static jobject JavaONScripter = NULL;
+static jmethodID JavaPlayVideo = NULL;
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
+{
+    jniVM = vm;
+    return JNI_VERSION_1_2;
+};
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
+{
+    jniVM = vm;
+};
+
+#ifndef SDL_JAVA_PACKAGE_PATH
+#error You have to define SDL_JAVA_PACKAGE_PATH to your package path with dots replaced with underscores, for example "com_example_SanAngeles"
+#endif
+#define JAVA_EXPORT_NAME2(name,package) Java_##package##_##name
+#define JAVA_EXPORT_NAME1(name,package) JAVA_EXPORT_NAME2(name,package)
+#define JAVA_EXPORT_NAME(name) JAVA_EXPORT_NAME1(name,SDL_JAVA_PACKAGE_PATH)
+
+JNIEXPORT jint JNICALL JAVA_EXPORT_NAME(ONScripter_nativeInitJavaCallbacks) (JNIEnv * jniEnv, jobject thiz)
+{
+    JavaONScripter = jniEnv->NewGlobalRef(thiz);
+    jclass JavaONScripterClass = jniEnv->GetObjectClass(JavaONScripter);
+    JavaPlayVideo = jniEnv->GetMethodID(JavaONScripterClass, "playVideo", "([C)V");
+}
+}
+
+void playVideoAndroid(const char *filename)
+{
+    JNIEnv * jniEnv = NULL;
+    jniVM->AttachCurrentThread(&jniEnv, NULL);
+
+    if (!jniEnv){
+        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripterLabel::playVideoAndroid: Java VM AttachCurrentThread() failed");
+        return;
+    }
+
+    jchar *jc = new jchar[strlen(filename)];
+    for (int i=0 ; i<strlen(filename) ; i++)
+        jc[i] = filename[i];
+    jcharArray jca = jniEnv->NewCharArray(strlen(filename));
+    jniEnv->SetCharArrayRegion(jca, 0, strlen(filename), jc);
+    jniEnv->CallIntMethod( JavaONScripter, JavaPlayVideo, jca );
+    delete[] jc;
+}
+#endif
+
 #if defined(USE_AVIFILE)
 #include "AVIWrapper.h"
 #endif
@@ -187,6 +242,12 @@ int ONScripterLabel::playMIDI(bool loop_flag)
 int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 {
     int ret = 0;
+
+#ifdef ANDROID
+    playVideoAndroid(filename);
+    return ret;
+#endif
+
 #ifndef MP3_MAD
     unsigned long length = script_h.cBR->getFileLength( filename );
     unsigned char *mpeg_buffer = new unsigned char[length];
@@ -247,6 +308,11 @@ int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_f
 
 int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
+#ifdef ANDROID
+    playVideoAndroid(filename);
+    return 0;
+#endif
+
 #if defined(USE_AVIFILE)
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
     sprintf( absolute_filename, "%s%s", archive_path, filename );
