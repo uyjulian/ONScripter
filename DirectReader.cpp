@@ -2,7 +2,7 @@
 /*
  *  DirectReader.cpp - Reader from independent files
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -78,6 +78,7 @@ DirectReader::DirectReader( char *path, const unsigned char *key_table )
     decomp_buffer_len = N*2;
 
     last_registered_compression_type = &root_registered_compression_type;
+    registerCompressionType( "NBZ", NBZ_COMPRESSION );
     registerCompressionType( "SPB", SPB_COMPRESSION );
     registerCompressionType( "JPG", NO_COMPRESSION );
     registerCompressionType( "GIF", NO_COMPRESSION );
