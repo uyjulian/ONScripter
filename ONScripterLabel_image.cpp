@@ -600,6 +600,7 @@ void ONScripterLabel::createBackground()
                 src_rect.x = (anim.image_surface->w - screen_width) / 2;
                 src_rect.w = screen_width;
             }
+
             if (screen_height >= anim.image_surface->h){
                 dst_rect.y = (screen_height - anim.image_surface->h) / 2;
             }

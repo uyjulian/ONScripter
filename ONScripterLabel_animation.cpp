@@ -2,7 +2,7 @@
  * 
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -319,9 +319,9 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
             buffer += 7;
         }
         else if ( buffer[0] == '!' ){
-            anim->trans_mode = AnimationInfo::TRANS_PALLET;
+            anim->trans_mode = AnimationInfo::TRANS_PALLETTE;
             buffer++;
-            anim->pallet_number = getNumberFromBuffer( (const char**)&buffer );
+            anim->pallette_number = getNumberFromBuffer( (const char**)&buffer );
         }
 
         if (anim->trans_mode != AnimationInfo::TRANS_STRING)

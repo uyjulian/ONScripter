@@ -295,12 +295,11 @@ void ONScripterLabel::initSDL()
     screen_bpp = 32;
 #endif
     
-#if defined(PDA) && defined(PDA_WIDTH)
-    screen_ratio1 *= PDA_WIDTH;
-    screen_ratio2 *= 320;
-    screen_width   = screen_width  * PDA_WIDTH / 320;
-    screen_height  = screen_height * PDA_WIDTH / 320;
-#elif defined(PDA) && defined(PDA_AUTOSIZE)
+#if defined(PDA_WIDTH)
+    screen_ratio1 = PDA_WIDTH;
+    screen_ratio2 = screen_width;
+    screen_width  = screen_width  * screen_ratio1 / screen_ratio2;
+#elif defined(PDA_AUTOSIZE)
     SDL_Rect **modes;
     modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
     if (modes == (SDL_Rect **)0){
@@ -312,16 +311,28 @@ void ONScripterLabel::initSDL()
     }
  	else{
         int width;
-        if (modes[0]->w * 3 > modes[0]->h * 4)
-            width = (modes[0]->h / 3) * 4;
-        else
-            width = (modes[0]->w / 4) * 4;
-        screen_ratio1 *= width;
-        screen_ratio2 *= 320;
-        screen_width   = screen_width  * width / 320;
-        screen_height  = screen_height * width / 320;
+        if (wide_screen_mode){
+            if (modes[0]->w * 9 > modes[0]->h * 16)
+                width = (modes[0]->h / 9) * 16;
+            else
+                width = (modes[0]->w / 16) * 16;
+        }
+        else{
+            if (modes[0]->w * 3 > modes[0]->h * 4)
+                width = (modes[0]->h / 3) * 4;
+            else
+                width = (modes[0]->w / 4) * 4;
+        }
+        screen_ratio1 = width;
+        screen_ratio2 = screen_width;
+        screen_width  = screen_width * screen_ratio1 / screen_ratio2;
     }
 #endif
+
+    if (wide_screen_mode)
+        screen_height = screen_width*9/16;
+    else
+        screen_height = screen_width*3/4;
 
 #if defined(ANDROID)
     screen_device_width  = 0;
@@ -335,7 +346,7 @@ void ONScripterLabel::initSDL()
     
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
-#if defined(PDA) && (PDA_WIDTH==640)
+#if (PDA_WIDTH==640)
     if ( screen_surface == NULL ){
         screen_ratio1 /= 2;
         screen_width  /= 2;
@@ -368,7 +379,7 @@ void ONScripterLabel::initSDL()
 
 void ONScripterLabel::openAudio()
 {
-#if defined(PDA) && !defined(PSP) && !defined(IPHONE)
+#if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE)
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
     if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
@@ -413,6 +424,7 @@ ONScripterLabel::ONScripterLabel()
     key_exe_file = NULL;
     fullscreen_mode = false;
     window_mode = false;
+    wide_screen_mode = false;
     sprite_info  = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
     current_button_state.down_flag = false;
@@ -495,6 +507,11 @@ void ONScripterLabel::setFullscreenMode()
 void ONScripterLabel::setWindowMode()
 {
     window_mode = true;
+}
+
+void ONScripterLabel::setWideScreenMode()
+{
+    wide_screen_mode = true;
 }
 
 void ONScripterLabel::enableButtonShortCut()

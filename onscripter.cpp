@@ -78,9 +78,10 @@ void optionHelp()
     printf( "  -r, --root path\tspecify the root path to the archives\n");
     printf( "      --fullscreen\tstart in fullscreen mode\n");
     printf( "      --window\t\tstart in windowed mode\n");
+    printf( "      --wide\t\tstart in wide screen (16:9) mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheel down\n");
-    printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
+    printf( "      --disable-rescale\tdo not rescale the images in the archives\n");
     printf( "      --edit\t\tenable online modification of the volume and variables when 'z' is pressed\n");
     printf( "      --key-exe file\tspecify a file (*.EXE) that includes a key table\n");
     printf( "  -h, --help\t\tshow this help and exit\n");
@@ -173,6 +174,9 @@ int main( int argc, char **argv )
             }
             else if ( !strcmp( argv[0]+1, "-window" ) ){
                 ons.setWindowMode();
+            }
+            else if ( !strcmp( argv[0]+1, "-wide" ) ){
+                ons.setWideScreenMode();
             }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
                 ons.enableButtonShortCut();

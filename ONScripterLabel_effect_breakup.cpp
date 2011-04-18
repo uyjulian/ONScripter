@@ -3,11 +3,11 @@
  *  ONScripterLabel_effect_breakup.cpp
  *    - Emulation of Takashi Toyama's "breakup.dll" NScripter plugin effect
  *
- *  Copyright (c) 2008-2010 "Uncle" Mion Sonozaki
+ *  Copyright (c) 2008-2011 "Uncle" Mion Sonozaki
  *
  *  UncleMion@gmail.com
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee
  *
  *  ogapee@aqua.dti2.ne.jp
  *

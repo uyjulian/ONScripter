@@ -72,6 +72,7 @@ public:
     void setArchivePath(const char *path);
     void setFullscreenMode();
     void setWindowMode();
+    void setWideScreenMode();
     void enableButtonShortCut();
     void enableWheelDownAdvance();
     void disableRescale();
@@ -345,6 +346,7 @@ private:
     char wm_edit_string[256];
     bool fullscreen_mode;
     bool window_mode;
+    bool wide_screen_mode;
 
     bool btntime2_flag;
     long btntime_value;

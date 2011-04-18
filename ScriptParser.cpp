@@ -371,46 +371,26 @@ int ScriptParser::open()
     
     if ( script_h.readScript( archive_path ) ) return -1;
 
+    screen_ratio1 = 1;
+    screen_ratio2 = 1;
+
     switch ( script_h.screen_size ){
       case ScriptHandler::SCREEN_SIZE_800x600:
-#if defined(PDA)
-        screen_ratio1 = 2;
-        screen_ratio2 = 5;
-#else
-        screen_ratio1 = 1;
-        screen_ratio2 = 1;
-#endif
-        screen_width  = 800 * screen_ratio1 / screen_ratio2;
-        screen_height = 600 * screen_ratio1 / screen_ratio2;
+        screen_width  = 800;
+        screen_height = 600;
         break;
       case ScriptHandler::SCREEN_SIZE_400x300:
-#if defined(PDA)
-        screen_ratio1 = 4;
-        screen_ratio2 = 5;
-#else
-        screen_ratio1 = 1;
-        screen_ratio2 = 1;
-#endif
-        screen_width  = 400 * screen_ratio1 / screen_ratio2;
-        screen_height = 300 * screen_ratio1 / screen_ratio2;
+        screen_width  = 400;
+        screen_height = 300;
         break;
       case ScriptHandler::SCREEN_SIZE_320x240:
-        screen_ratio1 = 1;
-        screen_ratio2 = 1;
-        screen_width  = 320 * screen_ratio1 / screen_ratio2;
-        screen_height = 240 * screen_ratio1 / screen_ratio2;
+        screen_width  = 320;
+        screen_height = 240;
         break;
       case ScriptHandler::SCREEN_SIZE_640x480:
       default:
-#if defined(PDA)
-        screen_ratio1 = 1;
-        screen_ratio2 = 2;
-#else
-        screen_ratio1 = 1;
-        screen_ratio2 = 1;
-#endif
-        screen_width  = 640 * screen_ratio1 / screen_ratio2;
-        screen_height = 480 * screen_ratio1 / screen_ratio2;
+        screen_width  = 640;
+        screen_height = 480;
         break;
     }
 

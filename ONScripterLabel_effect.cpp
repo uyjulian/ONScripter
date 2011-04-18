@@ -451,7 +451,7 @@ void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
             if (i+1-width < 0) height2 = i+1;
             int width2 = width;
             if (j+width > screen_width) width2 = screen_width - j;
-            for ( ii=0 ; ii<height2 ; ii++ ){
+            for ( ii=height2 ; ii!=0 ; ii-- ){
                 for ( jj=width2 ; jj!=0 ; jj-- ){
                     *dst_buffer++ = p;
                 }

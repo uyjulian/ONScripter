@@ -41,19 +41,20 @@ public:
            TRANS_COPY           = 3,
            TRANS_STRING         = 4,
            TRANS_DIRECT         = 5,
-           TRANS_PALLET         = 6,
+           TRANS_PALLETTE       = 6,
            TRANS_TOPRIGHT       = 7,
            TRANS_MASK           = 8
     };
 
     bool is_copy; // allocated buffers should not be deleted from a copied instance
     
-    /* Variables from TaggedInfo */
+    /* variables set from the image tag */
     int trans_mode;
     uchar3 direct_color;
-    int pallet_number;
+    int pallette_number;
     uchar3 color;
-    SDL_Rect pos; // pose and size of the current cell
+    SDL_Rect orig_pos; // position and size of the image before resizing
+    SDL_Rect pos; // position and size of the current cell
 
     int num_of_cells;
     int current_cell;
@@ -122,8 +123,8 @@ public:
                          SDL_Rect &clip, int alpha=256 );
     void blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int dst_y,
                           SDL_Rect &clip, int alpha=256 );
-    void blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_Color &color,
-                    SDL_Rect *clip, bool rotate_flag );
+    void blendText( SDL_Surface *surface, int dst_x, int dst_y, 
+                    SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
     void calcAffineMatrix();
     
     static SDL_Surface *allocSurface( int w, int h );

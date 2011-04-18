@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Mar. 9, 2011 (ソース更新)<br>
+Last updated: Apr. 16, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -89,8 +89,8 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110320.tar.gz">onscripter-20110320.tar.gz</a>
-  <li> <a href="onscripter-20110309.tar.gz">onscripter-20110309.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20110416.tar.gz">onscripter-20110416.tar.gz</a>
+  <li> <a href="onscripter-20110320.tar.gz">onscripter-20110320.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -157,6 +157,7 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えます。
   <li> CD Audio の演奏を音楽ファイル(MP3, Ogg)の演奏に振り替える機能があります。
   <li> マルチプラットフォームに対応しており、Windows, Linux, MacOS X, MacOS 9, <a href="android/android.html">Android</a>(1.6 以上), iPhone, PSP, <a href="zaurus/index.html">Zaurus</a>(SL-5500,SL-A300,SL-B500,SL-C700), FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/2Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作が確認されています。それ以外のプラットフォームでも、<a href="#environment">動作環境</a>が準備できれば動作するはずです。<br>
+  <li> --wide オプションを指定することによりワイドスクリーンモードになります。ONScripter ではゲーム画面の比率は通常 4:3 に固定されていますが、ワイドスクリーンモードではこの比率が 16:9 になります。ゲーム画面の横幅は、スクリプトから 320, 400, 640, 800 のいずれかに指定できます(デフォルトは 640)。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによっては挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
 
@@ -303,6 +304,7 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
 <tr><td>--fullscreen</td><td>フルスクリーンモードで起動します。</td></tr>
 <tr><td>--window</td><td>ウィンドウモードで起動します。</td></tr>
+<tr><td>--wide</td><td>ワイドスクリーン(16:9)モードで起動します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
 <tr><td>--enable-wheeldown-advance</td><td>テキスト終端でのクリック待ちの際に、マウスのホイールダウン操作をクリック操作として扱います。textgosub でクリック待ちをカスタマイズしているときには効果はありません。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
