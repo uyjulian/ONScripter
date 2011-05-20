@@ -162,6 +162,8 @@ int ONScripterLabel::trapCommand()
 int ONScripterLabel::transbtnCommand()
 {
     transbtn_flag = true;
+
+    return RET_CONTINUE;
 }
 
 int ONScripterLabel::textspeedCommand()
@@ -1051,6 +1053,16 @@ int ONScripterLabel::prnumCommand()
     leaveTextDisplayMode();
     
     int no = script_h.readInt();
+    if (no < 0 || no >= MAX_PARAM_NUM){
+        script_h.readInt();
+        script_h.readInt();
+        script_h.readInt();
+        script_h.readInt();
+        script_h.readInt();
+        script_h.readStr();
+        return RET_CONTINUE;
+    }
+    
     if ( prnum_info[no] ){
         dirty_rect.add( prnum_info[no]->pos );
         delete prnum_info[no];
