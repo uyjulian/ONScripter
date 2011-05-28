@@ -27,7 +27,7 @@ DirtyRect::DirtyRect()
 {
     screen_width = screen_height = 0;
     bounding_box.w = bounding_box.h = 0;
-};
+}
 
 DirtyRect::DirtyRect( const DirtyRect &d )
 {
@@ -43,7 +43,7 @@ DirtyRect& DirtyRect::operator =( const DirtyRect &d )
     bounding_box = d.bounding_box;
 
     return *this;
-};
+}
 
 DirtyRect::~DirtyRect()
 {
@@ -80,7 +80,7 @@ void DirtyRect::add( SDL_Rect src )
         src.h = screen_height-src.y;
 
     bounding_box = calcBoundingBox( bounding_box, src );
-};
+}
 
 SDL_Rect DirtyRect::calcBoundingBox( SDL_Rect src1, SDL_Rect &src2 )
 {

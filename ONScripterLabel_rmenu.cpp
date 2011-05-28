@@ -67,7 +67,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
     if ( restore_flag ){
         
         current_page = cached_page;
-        restoreTextBuffer();
+        restoreTextBuffer(false);
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
 
@@ -501,19 +501,19 @@ void ONScripterLabel::setupLookbackButton()
         root_button_link.insert( button );
     
         button->no = 1;
-        button->select_rect.x = sentence_font_info.pos.x;
-        button->select_rect.y = sentence_font_info.pos.y;
-        button->select_rect.w = sentence_font_info.pos.w;
-        button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[0] >= 0 ){
             button->button_type = ButtonLink::SPRITE_BUTTON;
             button->sprite_no = lookback_sp[0];
-            sprite_info[ button->sprite_no ].visible = true;
-            button->image_rect = sprite_info[ button->sprite_no ].pos;
+            AnimationInfo &si = sprite_info[ button->sprite_no ];
+            si.visible = true;
+            button->select_rect = si.pos;
+            button->image_rect  = si.pos;
         }
         else{
             button->button_type = ButtonLink::LOOKBACK_BUTTON;
+            button->select_rect = sentence_font_info.pos;
+            button->select_rect.h /= 3;
             button->show_flag = 2;
             button->anim[0] = &lookback_info[0];
             button->anim[1] = &lookback_info[1];
@@ -536,19 +536,20 @@ void ONScripterLabel::setupLookbackButton()
         root_button_link.insert( button );
     
         button->no = 2;
-        button->select_rect.x = sentence_font_info.pos.x;
-        button->select_rect.y = sentence_font_info.pos.y + sentence_font_info.pos.h*2/3;
-        button->select_rect.w = sentence_font_info.pos.w;
-        button->select_rect.h = sentence_font_info.pos.h/3;
 
         if ( lookback_sp[1] >= 0 ){
             button->button_type = ButtonLink::SPRITE_BUTTON;
             button->sprite_no = lookback_sp[1];
-            sprite_info[ button->sprite_no ].visible = true;
-            button->image_rect = sprite_info[ button->sprite_no ].pos;
+            AnimationInfo &si = sprite_info[ button->sprite_no ];
+            si.visible = true;
+            button->select_rect = si.pos;
+            button->image_rect  = si.pos;
         }
         else{
             button->button_type = ButtonLink::LOOKBACK_BUTTON;
+            button->select_rect = sentence_font_info.pos;
+            button->select_rect.y += sentence_font_info.pos.h*2/3;
+            button->select_rect.h /= 3;
             button->show_flag = 2;
             button->anim[0] = &lookback_info[2];
             button->anim[1] = &lookback_info[3];
@@ -586,15 +587,16 @@ void ONScripterLabel::executeSystemLookback()
         setupLookbackButton();
         refreshMouseOverButton();
 
+        dirty_rect.fill( screen_width, screen_height );
+        flush( refreshMode() & ~REFRESH_TEXT_MODE);
+
         for ( i=0 ; i<3 ; i++ ){
             color[i] = sentence_font.color[i];
             sentence_font.color[i] = lookback_color[i];
         }
-        restoreTextBuffer();
+        restoreTextBuffer(accumulation_surface);
         for ( i=0 ; i<3 ; i++ ) sentence_font.color[i] = color[i];
-    
-        dirty_rect.fill( screen_width, screen_height );
-        flush( refreshMode() );
+        flush( REFRESH_NONE_MODE );
 
         event_mode = WAIT_BUTTON_MODE;
         waitEventSub(-1);

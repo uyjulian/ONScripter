@@ -305,7 +305,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     if ( rect ) *rect = clipped_rect;
 }
 
-void ONScripterLabel::restoreTextBuffer()
+void ONScripterLabel::restoreTextBuffer(SDL_Surface *surface)
 {
     text_info.fill( 0, 0, 0, 0 );
 
@@ -345,14 +345,14 @@ void ONScripterLabel::restoreTextBuffer()
             }
             else{
                 out_text[1] = '\0';
-                drawChar( out_text, &f_info, false, false, NULL, &text_info );
+                drawChar( out_text, &f_info, false, false, surface, &text_info );
                 
                 if (i+1 == current_page->text_count) break;
                 out_text[0] = current_page->text[i+1];
                 if (out_text[0] == 0x0a) continue;
             }
             i++;
-            drawChar( out_text, &f_info, false, false, NULL, &text_info );
+            drawChar( out_text, &f_info, false, false, surface, &text_info );
         }
     }
 }
@@ -424,10 +424,8 @@ bool ONScripterLabel::doClickEnd()
 
 bool ONScripterLabel::clickWait( char *out_text )
 {
-    if ( skip_mode & SKIP_TO_EOL ){
-        flush( refreshMode() );
-        skip_mode &= ~SKIP_TO_EOL;
-    }
+    flush( REFRESH_NONE_MODE );
+    skip_mode &= ~SKIP_TO_EOL;
 
     if (script_h.checkClickstr(script_h.getStringBuffer() + string_buffer_offset) != 1) string_buffer_offset++;
     string_buffer_offset++;
@@ -477,10 +475,9 @@ bool ONScripterLabel::clickNewPage( char *out_text )
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
         num_chars_in_sentence++;
     }
-    if ( skip_mode || ctrl_pressed_status ){
-        flush( refreshMode() );
-        skip_mode &= ~SKIP_TO_EOL;
-    }
+
+    flush( REFRESH_NONE_MODE );
+    skip_mode &= ~SKIP_TO_EOL;
     
     if (script_h.checkClickstr(script_h.getStringBuffer() + string_buffer_offset) != 1) string_buffer_offset++;
     string_buffer_offset++;

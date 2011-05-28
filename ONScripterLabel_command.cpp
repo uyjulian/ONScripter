@@ -1393,7 +1393,7 @@ int ONScripterLabel::lsp2Command()
         blend_mode = AnimationInfo::BLEND_SUB;
 
     int no = script_h.readInt();
-    if ( sprite2_info[no].visible )
+    if (sprite2_info[no].image_surface && sprite2_info[no].visible)
         dirty_rect.add( sprite2_info[no].bounding_rect );
     sprite2_info[ no ].visible = v;
     sprite2_info[ no ].blending_mode = blend_mode;
@@ -1432,7 +1432,7 @@ int ONScripterLabel::lspCommand()
         v = false;
 
     int no = script_h.readInt();
-    if ( sprite_info[no].visible )
+    if (sprite_info[no].image_surface && sprite_info[no].visible)
         dirty_rect.add( sprite_info[no].pos );
     sprite_info[ no ].visible = v;
     
@@ -1522,7 +1522,8 @@ int ONScripterLabel::logspCommand()
     int sprite_no = script_h.readInt();
 
     AnimationInfo &si = sprite_info[sprite_no];
-    if ( si.visible ) dirty_rect.add( si.pos );
+    if (si.image_surface && si.visible)
+        dirty_rect.add( si.pos );
     si.remove();
     setStr( &si.file_name, script_h.readStr() );
 
@@ -1633,7 +1634,8 @@ int ONScripterLabel::ldCommand()
     if (no >= 0) buf = script_h.readStr();
     
     if (no >= 0){
-        dirty_rect.add( tachi_info[ no ].pos );
+        if (tachi_info[ no ].image_surface)
+            dirty_rect.add( tachi_info[ no ].pos );
         tachi_info[ no ].setImageName( buf );
         parseTaggedString( &tachi_info[ no ] );
         setupAnimationInfo( &tachi_info[ no ] );
@@ -1767,7 +1769,8 @@ int ONScripterLabel::humanorderCommand()
     }
 
     for ( i=0 ; i<3 ; i++ )
-        dirty_rect.add( tachi_info[i].pos );
+        if (tachi_info[i].image_surface)
+            dirty_rect.add( tachi_info[i].pos );
 
     EffectLink *el = parseEffect(true);
     if (setEffect(el, true, true)) return RET_CONTINUE;
@@ -2383,7 +2386,6 @@ int ONScripterLabel::exbtnCommand()
 int ONScripterLabel::erasetextwindowCommand()
 {
     erase_text_window_mode = script_h.readInt();
-    dirty_rect.add( sentence_font_info.pos );
 
     return RET_CONTINUE;
 }
@@ -3282,8 +3284,9 @@ int ONScripterLabel::allsp2resumeCommand()
 {
     all_sprite2_hide_flag = false;
     for ( int i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-        if ( sprite2_info[i].visible )
-            dirty_rect.add( sprite2_info[i].bounding_rect );
+        AnimationInfo &si = sprite2_info[i];
+        if (si.image_surface && si.visible)
+            dirty_rect.add( si.bounding_rect );
     }
     return RET_CONTINUE;
 }
@@ -3292,8 +3295,9 @@ int ONScripterLabel::allspresumeCommand()
 {
     all_sprite_hide_flag = false;
     for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        if ( sprite_info[i].visible )
-            dirty_rect.add( sprite_info[i].pos );
+        AnimationInfo &si = sprite_info[i];
+        if (si.image_surface && si.visible)
+            dirty_rect.add( si.pos );
     }
     return RET_CONTINUE;
 }
@@ -3302,8 +3306,9 @@ int ONScripterLabel::allsp2hideCommand()
 {
     all_sprite2_hide_flag = true;
     for ( int i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-        if ( sprite2_info[i].visible )
-            dirty_rect.add( sprite2_info[i].bounding_rect );
+        AnimationInfo &si = sprite2_info[i];
+        if (si.image_surface && si.visible)
+            dirty_rect.add( si.bounding_rect );
     }
     return RET_CONTINUE;
 }
@@ -3312,8 +3317,9 @@ int ONScripterLabel::allsphideCommand()
 {
     all_sprite_hide_flag = true;
     for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        if ( sprite_info[i].visible )
-            dirty_rect.add( sprite_info[i].pos );
+        AnimationInfo &si = sprite_info[i];
+        if (si.image_surface && si.visible)
+            dirty_rect.add( si.pos );
     }
     return RET_CONTINUE;
 }

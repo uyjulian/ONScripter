@@ -517,7 +517,7 @@ int ONScripterLabel::loadSaveFile( int no )
     text_on_flag = (readChar()==1)?true:false;
 
 
-    restoreTextBuffer();
+    restoreTextBuffer(false);
     num_chars_in_sentence = 0;
     cached_page = current_page;
 
