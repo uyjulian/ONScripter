@@ -2183,8 +2183,8 @@ int ONScripterLabel::getcselstrCommand()
         if (csel_no == counter++) break;
         link = link->next;
     }
-    if (!link) errorAndExit("getcselstr: no select link");
-    setStr(&script_h.getVariableData(script_h.pushed_variable.var_no).str, link->text);
+
+    setStr(&script_h.getVariableData(script_h.pushed_variable.var_no).str, link?(link->text):NULL);
 
     return RET_CONTINUE;
 }
