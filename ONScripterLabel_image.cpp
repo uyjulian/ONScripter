@@ -104,7 +104,7 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename, bool *has_a
         rect.w = w*(i+1)/n - rect.x;
         if (i == n-1) rect.w = w - rect.x;
         rect.h = h;
-        SDL_FillRect(tmp, &rect, SDL_MapRGBA( accumulation_surface->format, col[0], col[1], col[2], 0xff));
+        SDL_FillRect(tmp, &rect, SDL_MapRGBA( tmp->format, col[0], col[1], col[2], 0xff));
     }
 
     if (has_alpha) *has_alpha = true;

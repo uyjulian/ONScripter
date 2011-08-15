@@ -835,8 +835,9 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
-    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-    SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
+    SDL_Rect dst_rect = rect;
+    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &dst_rect );
+    SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
 }
 
 void ONScripterLabel::mouseOverCheck( int x, int y )
