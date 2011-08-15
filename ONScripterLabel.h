@@ -376,6 +376,7 @@ private:
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destnation buffer for effect
     SDL_Surface *screenshot_surface; // Screenshot
+    int screenshot_w, screenshot_h;
     SDL_Surface *image_surface; // Reference for loadImage()
 
     unsigned char *tmp_image_buf;

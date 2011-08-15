@@ -35,6 +35,7 @@ extern "C" void waveCallback( int channel );
 #define REGISTRY_FILE "registry.txt"
 #define DLL_FILE "dll.txt"
 #define DEFAULT_ENV_FONT "‚l‚r ƒSƒVƒbƒN"
+#define DEFAULT_AUTOMODE_TIME 1000
 
 typedef int (ONScripterLabel::*FuncList)();
 static struct FuncLUT{
@@ -565,7 +566,10 @@ int ONScripterLabel::init()
     SDL_SetAlpha( backup_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
-    screenshot_surface   = NULL;
+
+    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_surface->w, screen_surface->h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+    screenshot_w = screen_surface->w;
+    screenshot_h = screen_surface->h;
 
     tmp_image_buf = NULL;
     tmp_image_buf_length = 0;
@@ -677,7 +681,7 @@ int ONScripterLabel::init()
 void ONScripterLabel::reset()
 {
     automode_flag = false;
-    automode_time = 3000;
+    automode_time = DEFAULT_AUTOMODE_TIME;
     autoclick_time = 0;
     btntime2_flag = false;
     btntime_value = 0;
@@ -1308,6 +1312,8 @@ void ONScripterLabel::loadEnvData()
     cdaudio_on_flag = true;
     default_cdrom_drive = NULL;
     kidokumode_flag = true;
+    setStr( &savedir, NULL );
+    automode_time = DEFAULT_AUTOMODE_TIME;
     
     if (loadFileIOBuf( "envdata" ) > 0){
         if (readInt() == 1 && window_mode == false) menu_fullCommand();
@@ -1323,6 +1329,9 @@ void ONScripterLabel::loadEnvData()
         se_volume = DEFAULT_VOLUME - readInt();
         music_volume = DEFAULT_VOLUME - readInt();
         if (readInt() == 0) kidokumode_flag = false;
+        readInt();
+        readStr( &savedir );
+        automode_time = readInt();
     }
     else{
         setStr( &default_env_font, DEFAULT_ENV_FONT );
@@ -1347,8 +1356,8 @@ void ONScripterLabel::saveEnvData()
         writeInt( DEFAULT_VOLUME - music_volume, output_flag );
         writeInt( kidokumode_flag?1:0, output_flag );
         writeInt( 0, output_flag ); // ?
-        writeChar( 0, output_flag ); // ?
-        writeInt( 1000, output_flag ); // ?
+        writeStr( savedir, output_flag );
+        writeInt( automode_time, output_flag );
 
         if (i==1) break;
         allocFileIOBuf();

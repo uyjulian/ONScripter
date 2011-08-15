@@ -451,7 +451,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
             int i2 = (i+1)&3; // = (i+1)%4
             if (corner_xy[i][1] == corner_xy[i2][1]) continue;
             x = (corner_xy[i2][0] - corner_xy[i][0])*(y-corner_xy[i][1])/(corner_xy[i2][1] - corner_xy[i][1]) + corner_xy[i][0];
-            if (scale_x*scale_y*(corner_xy[i2][1] - corner_xy[i][1]) > 0){
+            if (corner_xy[i2][1] - corner_xy[i][1] > 0){
                 if (raster_min < x) raster_min = x;
             }
             else{
@@ -652,10 +652,12 @@ void AnimationInfo::calcAffineMatrix()
     mat[1][1] =  cos_i*scale_y/100;
 
     // calculate bounding box
-    int min_xy[2], max_xy[2];
+    int min_xy[2] = { 0, 0 }, max_xy[2] = { 0, 0 };
     for (int i=0 ; i<4 ; i++){
         int c_x = (i<2)?(-pos.w/2):(pos.w/2);
         int c_y = ((i+1)&2)?(pos.h/2):(-pos.h/2);
+        if (scale_x < 0) c_x = -c_x;
+        if (scale_y < 0) c_y = -c_y;
         corner_xy[i][0] = (mat[0][0] * c_x + mat[0][1] * c_y) / 1024 + pos.x;
         corner_xy[i][1] = (mat[1][0] * c_x + mat[1][1] * c_y) / 1024 + pos.y;
 
@@ -880,7 +882,7 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
         for (i=h ; i!=0 ; i--){
             for (j=w ; j!=0 ; j--, buffer++, alphap+=4){
                 if ( (*buffer & RGBMASK) == ref_color )
-                    *buffer = 0x00;
+                    *alphap = 0x00;
                 else
                     *alphap = 0xff;
             }

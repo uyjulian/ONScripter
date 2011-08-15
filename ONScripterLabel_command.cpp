@@ -878,7 +878,11 @@ int ONScripterLabel::savescreenshotCommand()
         for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
             if ( filename[i] == '/' || filename[i] == '\\' )
                 filename[i] = DELIMITER;
-        SDL_SaveBMP( screenshot_surface, filename );
+
+        SDL_Surface *surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screenshot_w, screenshot_h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+        resizeSurface( screenshot_surface, surface );
+        SDL_SaveBMP( surface, filename );
+        SDL_FreeSurface( surface );
     }
     else
         printf("savescreenshot: file %s is not supported.\n", buf );
@@ -1959,19 +1963,9 @@ int ONScripterLabel::getscreenshotCommand()
     if ( w == 0 ) w = 1;
     if ( h == 0 ) h = 1;
 
-    if ( screenshot_surface &&
-         screenshot_surface->w != w &&
-         screenshot_surface->h != h ){
-        SDL_FreeSurface( screenshot_surface );
-        screenshot_surface = NULL;
-    }
-
-    if ( screenshot_surface == NULL )
-        screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
-
-    SDL_Surface *surface = SDL_ConvertSurface( screen_surface, image_surface->format, SDL_SWSURFACE );
-    resizeSurface( surface, screenshot_surface );
-    SDL_FreeSurface( surface );
+    screenshot_w = w;
+    screenshot_h = h;
+    SDL_BlitSurface( screen_surface, NULL, screenshot_surface, NULL);
 
     return RET_CONTINUE;
 }

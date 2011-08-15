@@ -165,6 +165,7 @@ ScriptParser::ScriptParser()
 
     archive_path = NULL;
     version_str = NULL;
+    savedir = NULL;
     nsa_path = NULL;
     nsa_offset = 0;
     key_table = NULL;
@@ -220,6 +221,8 @@ ScriptParser::~ScriptParser()
 
     if (file_io_buf) delete[] file_io_buf;
     if (save_data_buf) delete[] save_data_buf;
+
+    if (savedir) delete[] savedir;
 }
 
 void ScriptParser::reset()
@@ -270,6 +273,8 @@ void ScriptParser::reset()
                            strlen("\n")+
                            +1];
     sprintf( version_str, "%s\n%s\n", VERSION_STR1, VERSION_STR2 );
+    if (savedir) delete[] savedir;
+    savedir = NULL;
     z_order = 499;
 
     textgosub_label = NULL;
