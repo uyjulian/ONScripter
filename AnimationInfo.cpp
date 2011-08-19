@@ -934,29 +934,29 @@ void AnimationInfo::setImage( SDL_Surface *surface )
 #endif
 }
 
-bool AnimationInfo::isTransparent(int x, int y)
+unsigned char AnimationInfo::getAlpha(int x, int y)
 {
-    if (image_surface == NULL) return true;
-
-    bool is_transparent = false;
+    if (image_surface == NULL) return 0;
 
     x -= pos.x;
     y -= pos.y;
     int offset_x = (image_surface->w/num_of_cells)*current_cell;
     
+    unsigned char alpha = 0;
 #if defined(BPP16)
-    if (alpha_buf[image_surface->w*y+offset_x+x] == 0) is_transparent = true;
+    alpha = alpha_buf[image_surface->w*y+offset_x+x];
 #else
     int total_width = image_surface->pitch / 4;
     SDL_LockSurface( image_surface );
     ONSBuf *buf = (ONSBuf *)image_surface->pixels + total_width*y + offset_x + x;
+
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-    if (*((unsigned char *)buf + 3) == 0) is_transparent = true;
+    alpha = *((unsigned char *)buf + 3);
 #else
-    if (*((unsigned char *)buf) == 0) is_transparent = true;
+    alpha = *((unsigned char *)buf);
 #endif
     SDL_UnlockSurface( image_surface );
 #endif
 
-    return is_transparent;
+    return alpha;
 }

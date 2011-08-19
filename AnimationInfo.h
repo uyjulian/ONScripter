@@ -133,7 +133,7 @@ public:
     void fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a );
     SDL_Surface *setupImageAlpha( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha );
     void setImage( SDL_Surface *surface );
-    bool isTransparent(int x, int y);
+    unsigned char getAlpha(int x, int y);
 };
 
 #endif // __ANIMATION_INFO_H__

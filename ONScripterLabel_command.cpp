@@ -2878,7 +2878,7 @@ int ONScripterLabel::btnwaitCommand()
         refreshMouseOverButton();
 
         int t = -1;
-        if ( btntime_value > 0 ){
+        if ( btntime_value >= 0 ){
             if ( btntime2_flag )
                 event_mode |= WAIT_VOICE_MODE;
             t = btntime_value;
@@ -2889,7 +2889,7 @@ int ONScripterLabel::btnwaitCommand()
 
         if ( textbtn_flag ){
             event_mode |= WAIT_INPUT_MODE;
-            if ( btntime_value == 0 ){
+            if ( btntime_value == -1 ){
                 if ( automode_flag ){
                     event_mode |= WAIT_VOICE_MODE;
                     if ( automode_time < 0 ){
@@ -2973,7 +2973,7 @@ int ONScripterLabel::btndefCommand()
         }
     }
     
-    btntime_value = 0;
+    btntime_value = -1;
     transbtn_flag = false;
     deleteButtonLink();
 
