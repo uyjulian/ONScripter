@@ -587,40 +587,40 @@ int ONScripterLabel::textCommand()
 
     char *buf = script_h.getStringBuffer();
 
+    bool tag_flag = true;
+    if (buf[string_buffer_offset] == '[')
+        string_buffer_offset++;
+    else if (zenkakko_flag && 
+             buf[string_buffer_offset  ] == "y"[0] && 
+             buf[string_buffer_offset+1] == "y"[1])
+        string_buffer_offset += 2;
+    else
+        tag_flag = false;
+
+    int start_offset = string_buffer_offset;
+    int end_offset = start_offset;
+    while (tag_flag && buf[string_buffer_offset]){
+        if (zenkakko_flag && 
+            buf[string_buffer_offset  ] == "z"[0] && 
+            buf[string_buffer_offset+1] == "z"[1]){
+            end_offset = string_buffer_offset;
+            string_buffer_offset += 2;
+            break;
+        }
+        else if (buf[string_buffer_offset] == ']'){
+            end_offset = string_buffer_offset;
+            string_buffer_offset++;
+            break;
+        }
+        else if (IS_TWO_BYTE(buf[string_buffer_offset]))
+            string_buffer_offset += 2;
+        else
+            string_buffer_offset++;
+    }
+
     if (pretextgosub_label && 
         (!pagetag_flag || page_enter_status == 0) &&
         line_enter_status == 0){
-
-        bool tag_flag = true;
-        if (buf[string_buffer_offset] == '[')
-            string_buffer_offset++;
-        else if (zenkakko_flag && 
-                 buf[string_buffer_offset  ] == "y"[0] && 
-                 buf[string_buffer_offset+1] == "y"[1])
-            string_buffer_offset += 2;
-        else
-            tag_flag = false;
-
-        int start_offset = string_buffer_offset;
-        int end_offset = start_offset;
-        while (tag_flag && buf[string_buffer_offset]){
-            if (zenkakko_flag && 
-                buf[string_buffer_offset  ] == "z"[0] && 
-                buf[string_buffer_offset+1] == "z"[1]){
-                end_offset = string_buffer_offset;
-                string_buffer_offset += 2;
-                break;
-            }
-            else if (buf[string_buffer_offset] == ']'){
-                end_offset = string_buffer_offset;
-                string_buffer_offset++;
-                break;
-            }
-            else if (IS_TWO_BYTE(buf[string_buffer_offset]))
-                string_buffer_offset += 2;
-            else
-                string_buffer_offset++;
-        }
 
         if (current_page->tag) delete[] current_page->tag;
         if (end_offset > start_offset){
@@ -633,7 +633,7 @@ int ONScripterLabel::textCommand()
             current_page->tag = NULL;
         }
 
-        gosubReal( pretextgosub_label, script_h.getNext(), true );
+        gosubReal( pretextgosub_label, script_h.getCurrent() );
         line_enter_status = 1;
 
         return RET_CONTINUE;
@@ -702,7 +702,7 @@ void ONScripterLabel::processEOT()
             }
         }
         else{
-            current_page->add( 0x0a );
+            if (!sentence_font.isEndOfLine()) current_page->add( 0x0a );
         }
             
         sentence_font.newLine();
@@ -735,7 +735,6 @@ bool ONScripterLabel::processText()
         /* Kinsoku process */
         if ( checkLineBreak( script_h.getStringBuffer() + string_buffer_offset, &sentence_font ) ){
             sentence_font.newLine();
-            current_page->add( 0x0a );
             for (int i=0 ; i<indent_offset ; i++){
                 current_page->add(0x81);
                 current_page->add(0x40);

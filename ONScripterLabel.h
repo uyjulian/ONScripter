@@ -490,9 +490,6 @@ private:
 
     /* ---------------------------------------- */
     /* Cursor related variables */
-    enum { CURSOR_WAIT_NO    = 0,
-           CURSOR_NEWPAGE_NO = 1
-    };
     AnimationInfo cursor_info[2];
 
     void loadCursor( int no, const char *str, int x, int y, bool abs_flag = false );

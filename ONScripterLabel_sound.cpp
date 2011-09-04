@@ -195,7 +195,7 @@ void ONScripterLabel::playCDAudio()
         if (ret == SOUND_MUSIC) return;
 
         sprintf( filename, "cd\\track%2.2d.wav", current_cd_track );
-        ret = playSound( filename, SOUND_MUSIC, cd_play_loop_flag, MIX_BGM_CHANNEL );
+        ret = playSound( filename, SOUND_MUSIC|SOUND_CHUNK, cd_play_loop_flag, MIX_BGM_CHANNEL );
     }
 }
 

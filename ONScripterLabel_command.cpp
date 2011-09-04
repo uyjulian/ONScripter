@@ -28,9 +28,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
-#define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
-#define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
-
 #define CONTINUOUS_PLAY
 
 int ONScripterLabel::waveCommand()
@@ -1252,7 +1249,7 @@ int ONScripterLabel::mp3Command()
     if (buf[0] != '\0'){
         setStr(&music_file_name, buf);
         playSound(music_file_name, 
-                  SOUND_MUSIC | SOUND_MIDI,
+                  SOUND_MUSIC | SOUND_MIDI | SOUND_CHUNK,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
     }
         
@@ -2227,8 +2224,8 @@ int ONScripterLabel::gameCommand()
     
     /* ---------------------------------------- */
     /* Load default cursor */
-    loadCursor( CURSOR_WAIT_NO, DEFAULT_CURSOR_WAIT, 0, 0 );
-    loadCursor( CURSOR_NEWPAGE_NO, DEFAULT_CURSOR_NEWPAGE, 0, 0 );
+    loadCursor( 0, NULL, 0, 0 );
+    loadCursor( 1, NULL, 0, 0 );
 
     /* ---------------------------------------- */
     /* Initialize text buffer */
@@ -3114,6 +3111,7 @@ int ONScripterLabel::bgcopyCommand()
 {
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
 
+    setStr( &bg_info.file_name, "*bgcpy" );
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
     bg_info.pos.x = 0;

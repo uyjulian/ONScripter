@@ -49,9 +49,9 @@ int ONScripterLabel::proceedAnimation()
            clickstr_state == CLICK_NEWPAGE ) ){
         
         if      ( clickstr_state == CLICK_WAIT )
-            anim = &cursor_info[CURSOR_WAIT_NO];
+            anim = &cursor_info[0];
         else if ( clickstr_state == CLICK_NEWPAGE )
-            anim = &cursor_info[CURSOR_NEWPAGE_NO];
+            anim = &cursor_info[1];
 
         if ( anim->visible && anim->is_animatable ){
             if (min == -1 || min > anim->remaining_time)
@@ -113,9 +113,9 @@ void ONScripterLabel::resetRemainingTime( int t )
          ( clickstr_state == CLICK_WAIT ||
            clickstr_state == CLICK_NEWPAGE ) ){
         if ( clickstr_state == CLICK_WAIT )
-            anim = &cursor_info[CURSOR_WAIT_NO];
+            anim = &cursor_info[0];
         else if ( clickstr_state == CLICK_NEWPAGE )
-            anim = &cursor_info[CURSOR_NEWPAGE_NO];
+            anim = &cursor_info[1];
         
         if ( anim->visible && anim->is_animatable ){
             if (anim->proceedAnimation(t)){
@@ -395,8 +395,8 @@ void ONScripterLabel::stopAnimation( int click )
 
     if ( textgosub_label ) return;
 
-    if      ( click == CLICK_WAIT )    no = CURSOR_WAIT_NO;
-    else if ( click == CLICK_NEWPAGE ) no = CURSOR_NEWPAGE_NO;
+    if      ( click == CLICK_WAIT )    no = 0;
+    else if ( click == CLICK_NEWPAGE ) no = 1;
     else return;
 
     if (cursor_info[no].image_surface == NULL) return;

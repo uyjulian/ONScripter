@@ -381,23 +381,26 @@ int ScriptParser::open()
 
     switch ( script_h.screen_size ){
       case ScriptHandler::SCREEN_SIZE_800x600:
-        screen_width  = 800;
-        screen_height = 600;
+        game_width  = 800;
+        game_height = 600;
         break;
       case ScriptHandler::SCREEN_SIZE_400x300:
-        screen_width  = 400;
-        screen_height = 300;
+        game_width  = 400;
+        game_height = 300;
         break;
       case ScriptHandler::SCREEN_SIZE_320x240:
-        screen_width  = 320;
-        screen_height = 240;
+        game_width  = 320;
+        game_height = 240;
         break;
       case ScriptHandler::SCREEN_SIZE_640x480:
       default:
-        screen_width  = 640;
-        screen_height = 480;
+        game_width  = 640;
+        game_height = 480;
         break;
     }
+
+    screen_width  = game_width;
+    screen_height = game_height;
 
     return 0;
 }

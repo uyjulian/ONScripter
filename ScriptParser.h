@@ -260,6 +260,7 @@ protected:
     /* ---------------------------------------- */
     /* Global definitions */
     int screen_ratio1, screen_ratio2;
+    int game_width, game_height;
     int screen_width, screen_height;
     int screen_device_width, screen_device_height;
     int screen_bpp;

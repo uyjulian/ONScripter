@@ -41,21 +41,13 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     sentence_font.color[1] = readInt();
     sentence_font.color[2] = readInt();
     cursor_info[0].remove();
-    readStr( &cursor_info[0].image_name );
-    if ( cursor_info[0].image_name ){
-        parseTaggedString( &cursor_info[0] );
-        setupAnimationInfo( &cursor_info[0] );
-        if ( cursor_info[0].image_surface )
-            cursor_info[0 ].visible = true;
-    }
-    cursor_info[1].remove();
-    readStr( &cursor_info[1].image_name );
-    if ( cursor_info[1].image_name ){
-        parseTaggedString( &cursor_info[1] );
-        setupAnimationInfo( &cursor_info[1] );
-        if ( cursor_info[1].image_surface )
-            cursor_info[1 ].visible = true;
-    }
+
+    char *tmp_name = NULL;
+    readStr( &tmp_name );
+    loadCursor(0, tmp_name, 0, 0);
+    readStr( &tmp_name );
+    loadCursor(1, tmp_name, 0, 0);
+    if (tmp_name) delete[] tmp_name;
 
     window_effect.effect = readInt();
     window_effect.duration = readInt();
@@ -658,9 +650,9 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeChar( 0, output_flag ); // added in version 205
 
     writeInt(   0, output_flag ); // added in version 206
-    writeInt( 160, output_flag ); // added in version 206
-    writeInt( 320, output_flag ); // added in version 206
-    writeInt( 480, output_flag ); // added in version 206
+    writeInt( game_height/3,   output_flag ); // added in version 206
+    writeInt( game_height*2/3, output_flag ); // added in version 206
+    writeInt( game_height,     output_flag ); // added in version 206
     writeInt( underline_value, output_flag ); // changed in version 207
     
     Page *page = current_page;

@@ -36,6 +36,8 @@ extern "C" void waveCallback( int channel );
 #define DLL_FILE "dll.txt"
 #define DEFAULT_ENV_FONT "ÇlÇr ÉSÉVÉbÉN"
 #define DEFAULT_AUTOMODE_TIME 1000
+#define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
+#define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
 
 typedef int (ONScripterLabel::*FuncList)();
 static struct FuncLUT{
@@ -357,7 +359,7 @@ void ONScripterLabel::initSDL()
         screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
-    underline_value = screen_height * screen_ratio2 / screen_ratio1;
+    underline_value = game_height;
 
     if ( screen_surface == NULL ) {
         fprintf( stderr, "Couldn't set %dx%dx%d video mode: %s\n",
@@ -1289,19 +1291,30 @@ void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_s
 
 void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool abs_flag )
 {
-    cursor_info[ no ].setImageName( str );
-    cursor_info[ no ].pos.x = x;
-    cursor_info[ no ].pos.y = y;
+    if (str){
+        cursor_info[no].setImageName( str );
+    }
+    else{
+        if (no == 0) cursor_info[no].setImageName( DEFAULT_CURSOR_WAIT );
+        else         cursor_info[no].setImageName( DEFAULT_CURSOR_NEWPAGE );
+    }
+    cursor_info[no].pos.x = x;
+    cursor_info[no].pos.y = y;
 
-    parseTaggedString( &cursor_info[ no ] );
-    setupAnimationInfo( &cursor_info[ no ] );
+    parseTaggedString( &cursor_info[no] );
+    setupAnimationInfo( &cursor_info[no] );
     if ( filelog_flag )
-        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], cursor_info[ no ].file_name, true ); // a trick for save file
-    cursor_info[ no ].abs_flag = abs_flag;
-    if ( cursor_info[ no ].image_surface )
-        cursor_info[ no ].visible = true;
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], cursor_info[no].file_name, true ); // a trick for save file
+    cursor_info[no].abs_flag = abs_flag;
+    if ( cursor_info[no].image_surface )
+        cursor_info[no].visible = true;
     else
-        cursor_info[ no ].remove();
+        cursor_info[no].remove();
+
+    if (str == NULL){
+        if (no == 0) cursor_info[no].deleteImageName();
+        else         cursor_info[no].deleteImageName();
+    }
 }
 
 void ONScripterLabel::saveAll()

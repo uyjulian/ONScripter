@@ -533,9 +533,9 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 
     if ( refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label ){
         if ( clickstr_state == CLICK_WAIT )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_WAIT_NO], clip );
+            drawTaggedSurface( surface, &cursor_info[0], clip );
         else if ( clickstr_state == CLICK_NEWPAGE )
-            drawTaggedSurface( surface, &cursor_info[CURSOR_NEWPAGE_NO], clip );
+            drawTaggedSurface( surface, &cursor_info[1], clip );
     }
 
     ButtonLink *p_button_link = root_button_link.next;
@@ -576,7 +576,8 @@ void ONScripterLabel::createBackground()
     if ( !strcmp( bg_info.file_name, "white" ) ){
         bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;
     }
-    else if ( !strcmp( bg_info.file_name, "black" ) ){
+    else if ( !strcmp( bg_info.file_name, "black" ) ||
+              !strcmp( bg_info.file_name, "*bgcpy" ) ){
         bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0x00;
     }
     else if ( bg_info.file_name[0] == '#' ){

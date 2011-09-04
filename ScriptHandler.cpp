@@ -977,7 +977,6 @@ int ScriptHandler::labelScript()
             buf = getNext();
             if ( *buf == 0x0a ){
                 buf++;
-                SKIP_SPACE(buf);
                 current_line++;
             }
             label_info[ label_counter ].start_address = buf;
