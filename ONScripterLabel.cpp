@@ -54,6 +54,7 @@ static struct FuncLUT{
     {"voicevol",   &ONScripterLabel::voicevolCommand},
     {"trap",   &ONScripterLabel::trapCommand},
     {"transbtn",   &ONScripterLabel::transbtnCommand},
+    {"textspeeddefault",   &ONScripterLabel::textspeeddefaultCommand},
     {"textspeed",   &ONScripterLabel::textspeedCommand},
     {"textshow",   &ONScripterLabel::textshowCommand},
     {"texton",   &ONScripterLabel::textonCommand},
@@ -717,8 +718,6 @@ void ONScripterLabel::reset()
     new_line_skip_flag = false;
     text_on_flag = true;
     draw_cursor_flag = false;
-
-    resetSentenceFont();
 
     setStr(&getret_str, NULL);
     getret_int = 0;

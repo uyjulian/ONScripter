@@ -384,7 +384,7 @@ int ScriptParser::returnCommand()
         if (script_h.getStringBuffer()[string_buffer_offset] != 0)
             return RET_NO_READ;
         else
-            return RET_CONTINUE | RET_EOT;
+            return RET_CONTINUE;
     }
 
     return RET_CONTINUE;

@@ -163,6 +163,12 @@ int ONScripterLabel::transbtnCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::textspeeddefaultCommand()
+{
+    sentence_font.wait_time = -1;
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::textspeedCommand()
 {
     sentence_font.wait_time = script_h.readInt();
@@ -223,6 +229,8 @@ int ONScripterLabel::texecCommand()
 {
     if ( textgosub_clickstr_state == CLICK_NEWPAGE )
         newPage( true );
+    else if ( textgosub_clickstr_state == (CLICK_WAIT|CLICK_EOL) )
+        processEOT();
     
     return RET_CONTINUE;
 }
@@ -2142,13 +2150,21 @@ int ONScripterLabel::getenterCommand()
 
 int ONScripterLabel::getcursorposCommand()
 {
+    FontInfo fi = sentence_font;
+    
+    if ( fi.isEndOfLine() ){
+        fi.newLine();
+        for (int i=0 ; i<indent_offset ; i++)
+            fi.advanceCharInHankaku(2);
+    }
+
     script_h.readInt();
-    //script_h.setInt( &script_h.current_variable, sentence_font.x() );
-    script_h.setInt( &script_h.current_variable, sentence_font.x()-sentence_font.ruby_offset_xy[0] ); // workaround for possibly a bug in the original
+    //script_h.setInt( &script_h.current_variable, fi.x() );
+    script_h.setInt( &script_h.current_variable, fi.x()-fi.ruby_offset_xy[0] ); // workaround for possibly a bug in the original
     
     script_h.readInt();
-    //script_h.setInt( &script_h.current_variable, sentence_font.y() );
-    script_h.setInt( &script_h.current_variable, sentence_font.y()-sentence_font.ruby_offset_xy[1] ); // workaround for possibly a bug in the original
+    //script_h.setInt( &script_h.current_variable, fi.y() );
+    script_h.setInt( &script_h.current_variable, fi.y()-fi.ruby_offset_xy[1] ); // workaround for possibly a bug in the original
     
     return RET_CONTINUE;
 }
@@ -3286,11 +3302,19 @@ int ONScripterLabel::allsp2resumeCommand()
 int ONScripterLabel::allspresumeCommand()
 {
     all_sprite_hide_flag = false;
-    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        AnimationInfo &si = sprite_info[i];
-        if (si.image_surface && si.visible)
-            dirty_rect.add( si.pos );
+
+    for ( int i=0 ; i<3 ; i++ ){
+        AnimationInfo &ai = tachi_info[i];
+        if (ai.image_surface && ai.visible)
+            dirty_rect.add( ai.pos );
     }
+
+    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        AnimationInfo &ai = sprite_info[i];
+        if (ai.image_surface && ai.visible)
+            dirty_rect.add( ai.pos );
+    }
+
     return RET_CONTINUE;
 }
 
@@ -3308,11 +3332,19 @@ int ONScripterLabel::allsp2hideCommand()
 int ONScripterLabel::allsphideCommand()
 {
     all_sprite_hide_flag = true;
-    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        AnimationInfo &si = sprite_info[i];
-        if (si.image_surface && si.visible)
-            dirty_rect.add( si.pos );
+
+    for ( int i=0 ; i<3 ; i++ ){
+        AnimationInfo &ai = tachi_info[i];
+        if (ai.image_surface && ai.visible)
+            dirty_rect.add( ai.pos );
     }
+
+    for ( int i=0 ; i<MAX_SPRITE_NUM ; i++ ){
+        AnimationInfo &ai = sprite_info[i];
+        if (ai.image_surface && ai.visible)
+            dirty_rect.add( ai.pos );
+    }
+
     return RET_CONTINUE;
 }
 

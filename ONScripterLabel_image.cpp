@@ -107,7 +107,7 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename, bool *has_a
         SDL_FillRect(tmp, &rect, SDL_MapRGBA( tmp->format, col[0], col[1], col[2], 0xff));
     }
 
-    if (has_alpha) *has_alpha = true;
+    if (has_alpha) *has_alpha = false;
     
     return tmp;
 }
@@ -460,9 +460,11 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         }
     }
 
-    for ( i=0 ; i<3 ; i++ ){
-        if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
-            drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
+    if ( !all_sprite_hide_flag ){
+        for ( i=0 ; i<3 ; i++ ){
+            if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
+                drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
+            }
         }
     }
 

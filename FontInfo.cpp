@@ -62,6 +62,7 @@ FontInfo::FontInfo()
     nofile_color[0] = 0x55;
     nofile_color[1] = 0x55;
     nofile_color[2] = 0x99;
+    rubyon_flag = false;
 
     reset();
 }
@@ -69,7 +70,6 @@ FontInfo::FontInfo()
 void FontInfo::reset()
 {
     tateyoko_mode = YOKO_MODE;
-    rubyon_flag = false;
     ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
     clear();
 

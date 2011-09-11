@@ -149,7 +149,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     if ( info->isEndOfLine() ){
         info->newLine();
         for (int i=0 ; i<indent_offset ; i++)
-            sentence_font.advanceCharInHankaku(2);
+            info->advanceCharInHankaku(2);
 
         if ( lookback_flag ){
             for (int i=0 ; i<indent_offset ; i++){
@@ -452,6 +452,8 @@ bool ONScripterLabel::clickWait( char *out_text )
             saveoffCommand();
 
             textgosub_clickstr_state = CLICK_WAIT;
+            if (script_h.getStringBuffer()[string_buffer_offset] == 0x0)
+                textgosub_clickstr_state |= CLICK_EOL;
             gosubReal( textgosub_label, script_h.getNext(), true );
 
             event_mode = IDLE_EVENT_MODE;

@@ -96,6 +96,7 @@ public:
     int vCommand();
     int trapCommand();
     int transbtnCommand();
+    int textspeeddefaultCommand();
     int textspeedCommand();
     int textshowCommand();
     int textonCommand();
