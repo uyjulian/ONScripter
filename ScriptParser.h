@@ -213,8 +213,7 @@ protected:
            RET_SKIP_LINE = 1,
            RET_CONTINUE  = 2,
            RET_NO_READ   = 4,
-           RET_EOL       = 8, // end of line (0x0a is found)
-           RET_EOT       = 16 // end of text (the end of string_buffer is reached)
+           RET_EOL       = 8 // end of line (0x0a is found)
     };
     enum { CLICK_NONE    = 0,
            CLICK_WAIT    = 1,
@@ -366,6 +365,8 @@ protected:
     int  clickstr_state;
     int  linepage_mode;
     int  num_chars_in_sentence;
+    int  line_enter_status; // 0 ... no enter, 1 ... pretext, 2 ... body
+    int  page_enter_status; // 0 ... no enter, 1 ... body until @,\ used when pagetag is enabled
     bool english_mode;
 
     struct Kinsoku {

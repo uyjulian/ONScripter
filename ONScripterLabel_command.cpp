@@ -221,16 +221,18 @@ int ONScripterLabel::texthideCommand()
 
 int ONScripterLabel::textclearCommand()
 {
-    newPage( false );
+    newPage();
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::texecCommand()
 {
     if ( textgosub_clickstr_state == CLICK_NEWPAGE )
-        newPage( true );
-    else if ( textgosub_clickstr_state == (CLICK_WAIT|CLICK_EOL) )
+        newPage();
+    else if ( textgosub_clickstr_state == (CLICK_WAIT|CLICK_EOL) ){
         processEOT();
+        page_enter_status = 0;
+    }
     
     return RET_CONTINUE;
 }
@@ -538,10 +540,7 @@ int ONScripterLabel::spbtnCommand()
 
     if ( sprite_info[ sprite_no ].image_surface ||
          sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING )
-    {
         button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
-        sprite_info[ sprite_no ].visible = true;
-    }
 
     return RET_CONTINUE;
 }
@@ -836,7 +835,7 @@ int ONScripterLabel::selectCommand()
     }
     deleteSelectLink();
 
-    newPage( true );
+    newPage();
 
     return RET_CONTINUE;
 }
@@ -1039,8 +1038,10 @@ int ONScripterLabel::puttextCommand()
     if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)
         string_buffer_offset = 1; // skip the heading `
 
+    int s = line_enter_status;
     while(processText());
     processEOT();
+    line_enter_status = s;
 
     return RET_CONTINUE;
 }
@@ -1877,7 +1878,7 @@ int ONScripterLabel::gettagCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    char *buf = current_page->tag;
+    char *buf = pretext_tag;
     
     int end_status;
     do{
@@ -2382,10 +2383,7 @@ int ONScripterLabel::exbtnCommand()
     if ( sprite_no >= 0 &&
          ( sprite_info[ sprite_no ].image_surface ||
            sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) )
-    {
         button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
-        sprite_info[ sprite_no ].visible = true;
-    }
 
     return RET_CONTINUE;
 }
@@ -2679,7 +2677,7 @@ int ONScripterLabel::cselgotoCommand()
     setCurrentLabel( link->label );
     
     deleteSelectLink();
-    newPage( true );
+    newPage();
     
     return RET_CONTINUE;
 }
@@ -2836,8 +2834,6 @@ int ONScripterLabel::captionCommand()
 
 int ONScripterLabel::btnwaitCommand()
 {
-    leaveTextDisplayMode();
-
     bool del_flag=false, textbtn_flag=false;
 
     if ( script_h.isName( "btnwait2" ) ){
@@ -2853,6 +2849,33 @@ int ONScripterLabel::btnwaitCommand()
 
     script_h.readInt();
 
+    if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl){
+        SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
+        if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect );
+    }
+
+    ButtonLink *p_button_link = root_button_link.next;
+    while( p_button_link ){
+        p_button_link->show_flag = 0;
+        if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
+             p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+            sprite_info[ p_button_link->sprite_no ].visible = true;
+            sprite_info[ p_button_link->sprite_no ].setCell(0);
+        }
+        else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
+            p_button_link->show_flag = 1;
+            sprite_info[ p_button_link->sprite_no ].visible = true;
+            sprite_info[ p_button_link->sprite_no ].setCell(0);
+        }
+        else if ( p_button_link->anim[1] != NULL ){
+            p_button_link->show_flag = 2;
+        }
+        dirty_rect.add( p_button_link->image_rect );
+        p_button_link = p_button_link->next;
+    }
+
+    leaveTextDisplayMode();
+
     if (textbtn_flag && (skip_mode & SKIP_NORMAL || 
                          (skip_mode & SKIP_TO_EOP && (textgosub_clickstr_state & 0x03) == CLICK_WAIT) || 
                          ctrl_pressed_status) ){
@@ -2861,29 +2884,6 @@ int ONScripterLabel::btnwaitCommand()
     else{
         shortcut_mouse_line = 0;
         skip_mode &= ~SKIP_NORMAL;
-
-        if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl){
-            SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
-            if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect );
-        }
-
-        ButtonLink *p_button_link = root_button_link.next;
-        while( p_button_link ){
-            p_button_link->show_flag = 0;
-            if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
-                 p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                sprite_info[ p_button_link->sprite_no ].setCell(0);
-            }
-            else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
-                p_button_link->show_flag = 1;
-                sprite_info[ p_button_link->sprite_no ].setCell(0);
-            }
-            else if ( p_button_link->anim[1] != NULL ){
-                p_button_link->show_flag = 2;
-            }
-            dirty_rect.add( p_button_link->image_rect );
-            p_button_link = p_button_link->next;
-        }
 
         flush( refreshMode() );
 
@@ -2939,7 +2939,7 @@ int ONScripterLabel::btnwaitCommand()
     event_mode = IDLE_EVENT_MODE;
     disableGetButtonFlag();
         
-    ButtonLink *p_button_link = root_button_link.next;
+    p_button_link = root_button_link.next;
     while( p_button_link ){
         p_button_link->show_flag = 0;
         p_button_link = p_button_link->next;

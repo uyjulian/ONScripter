@@ -767,7 +767,8 @@ void ONScripterLabel::resetSub()
     indent_offset = 0;
     line_enter_status = 0;
     page_enter_status = 0;
-
+    pretext_tag = NULL;
+    
     resetSentenceFont();
 
     deleteNestInfo();
@@ -993,8 +994,6 @@ void ONScripterLabel::executeLabel()
             if (++current_line >= current_label_info.num_of_lines) break;
         }
 
-        if ( ret & RET_EOT ) processEOT();
-        
         if (!(ret & RET_NO_READ)) readToken();
     }
 
@@ -1170,20 +1169,16 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
     }
 }
 
-void ONScripterLabel::newPage( bool next_flag )
+void ONScripterLabel::newPage()
 {
-    /* ---------------------------------------- */
-    /* Set forward the text buffer */
     if ( current_page->text_count != 0 ){
         current_page = current_page->next;
         if ( start_page == current_page )
             start_page = start_page->next;
+        clearCurrentPage();
     }
 
-    if ( next_flag )
-        page_enter_status = 0;
-    
-    clearCurrentPage();
+    page_enter_status = 0;
 
     flush( refreshMode(), &sentence_font_info.pos );
 }

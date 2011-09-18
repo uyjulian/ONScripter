@@ -383,8 +383,10 @@ int ScriptParser::returnCommand()
         string_buffer_offset = script_h.popStringBuffer();
         if (script_h.getStringBuffer()[string_buffer_offset] != 0)
             return RET_NO_READ;
-        else
-            return RET_CONTINUE;
+
+        // if this is the end of the line, pretext becomes enabled
+        line_enter_status = 0;
+        page_enter_status = 0;
     }
 
     return RET_CONTINUE;

@@ -448,6 +448,11 @@ bool ONScripterLabel::clickWait( char *out_text )
             drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
             num_chars_in_sentence++;
         }
+
+        while( (!(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) &&
+                script_h.getStringBuffer()[ string_buffer_offset ] == ' ') ||
+               script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
+
         if ( textgosub_label ){
             saveoffCommand();
 
@@ -462,10 +467,17 @@ bool ONScripterLabel::clickWait( char *out_text )
             return false;
         }
 
+        // if this is the end of the line, pretext becomes enabled
+        if (script_h.getStringBuffer()[string_buffer_offset] == 0x0)
+            line_enter_status = 0;
+
         clickstr_state = CLICK_WAIT;
         if (doClickEnd()) return false;
 
         clickstr_state = CLICK_NONE;
+
+        if (pagetag_flag) processEOT();
+        page_enter_status = 0;
     }
 
     return true;
@@ -492,6 +504,10 @@ bool ONScripterLabel::clickNewPage( char *out_text )
         if (waitEvent(0)) return false;
     }
     else{
+        while( (!(script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR) &&
+                script_h.getStringBuffer()[ string_buffer_offset ] == ' ') ||
+               script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
+
         if ( textgosub_label ){
             saveoffCommand();
 
@@ -504,11 +520,15 @@ bool ONScripterLabel::clickNewPage( char *out_text )
             return false;
         }
 
+        // if this is the end of the line, pretext becomes enabled
+        if (script_h.getStringBuffer()[string_buffer_offset] == 0x0)
+            line_enter_status = 0;
+
         clickstr_state = CLICK_NEWPAGE;
         if (doClickEnd()) return false;
     }
 
-    newPage( true );
+    newPage();
     clickstr_state = CLICK_NONE;
 
     return true;
@@ -635,6 +655,7 @@ int ONScripterLabel::textCommand()
             current_page->tag = NULL;
         }
 
+        pretext_tag = current_page->tag;
         gosubReal( pretextgosub_label, script_h.getCurrent() );
         line_enter_status = 1;
 
@@ -706,11 +727,11 @@ void ONScripterLabel::processEOT()
         else{
             if (!sentence_font.isEndOfLine()) current_page->add( 0x0a );
         }
-            
+
         sentence_font.newLine();
     }
 
-    if (!new_line_skip_flag) line_enter_status = 0;
+    if (!new_line_skip_flag && !pagetag_flag) line_enter_status = 0;
 }
 
 bool ONScripterLabel::processText()

@@ -512,8 +512,7 @@ private:
     bool draw_cursor_flag;
     int  textgosub_clickstr_state;
     int  indent_offset;
-    int  line_enter_status; // 0 ... no enter, 1 ... pretext, 2 ... body
-    int  page_enter_status; // 0 ... no enter, 1 ... body
+    char *pretext_tag;
     struct GlyphCache{
         GlyphCache *next;
         Uint16 text;
@@ -663,7 +662,7 @@ private:
 
     void shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip );
     void clearCurrentPage();
-    void newPage( bool next_flag );
+    void newPage();
     
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
