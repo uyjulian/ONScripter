@@ -960,6 +960,23 @@ void ONScripterLabel::runEventLoop()
         switch (event.type) {
           case SDL_MOUSEMOTION:
             mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
+            if (btndown_flag){
+                SDL_MouseMotionEvent *me = (SDL_MouseMotionEvent*)&event;
+                SDL_MouseButtonEvent be;
+
+                if (me->state & SDL_BUTTON(SDL_BUTTON_LEFT))
+                    be.button = SDL_BUTTON_LEFT;
+                else if (me->state & SDL_BUTTON(SDL_BUTTON_RIGHT))
+                    be.button = SDL_BUTTON_RIGHT;
+                else
+                    break;
+
+                be.type = SDL_MOUSEBUTTONDOWN;
+                be.x = me->x;
+                be.y = me->y;
+                ret = mousePressEvent( &be );
+                if (ret) return;
+            }
             break;
             
           case SDL_MOUSEBUTTONDOWN:

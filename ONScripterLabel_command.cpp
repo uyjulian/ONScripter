@@ -341,6 +341,7 @@ int ONScripterLabel::strspCommand()
     ai->visible = true;
     ai->is_single_line = false;
     ai->is_tight_region = false;
+    ai->is_ruby_drawable = true;
     setupAnimationInfo(ai, &fi);
     if ( ai->visible ) dirty_rect.add( ai->pos );
 
@@ -3027,6 +3028,7 @@ int ONScripterLabel::btnCommand()
     button->anim[0]->pos.x = button->image_rect.x;
     button->anim[0]->pos.y = button->image_rect.y;
     button->anim[0]->allocImage( button->image_rect.w, button->image_rect.h );
+    button->anim[0]->fill( 0, 0, 0, 0 );
     button->anim[0]->copySurface( btndef_info.image_surface, &src_rect );
     
     root_button_link.insert( button );
