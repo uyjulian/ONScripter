@@ -105,6 +105,7 @@ void AnimationInfo::reset()
     remove();
 
     trans = 256;
+    orig_pos.x = orig_pos.y = 0;
     pos.x = pos.y = 0;
     visible = false;
     abs_flag = true;
@@ -613,7 +614,7 @@ void AnimationInfo::blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_C
 #if defined(BPP16)
             alphap += image_surface->w - dst_rect.w;
 #endif        
-            src_buffer += surface->pitch  - dst_rect.w;
+            src_buffer += surface->pitch - dst_rect.w;
         }
     }
     else{
@@ -798,6 +799,8 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
     int w = surface->w;
     int h = surface->h;
     int w2 = w / num_of_cells;
+    orig_pos.w = w;
+    orig_pos.h = h;
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
     unsigned char *alphap = (unsigned char *)buffer + 3;
@@ -824,6 +827,7 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
     if ( trans_mode == TRANS_ALPHA && !has_alpha ){
         const int w22 = w2/2;
         const int w3 = w22 * num_of_cells;
+        orig_pos.w = w3;
         SDL_PixelFormat *fmt = surface->format;
         SDL_Surface *surface2 = SDL_CreateRGBSurface( SDL_SWSURFACE, w3, h,
                                                       fmt->BitsPerPixel, fmt->Rmask, fmt->Gmask, fmt->Bmask, fmt->Amask );

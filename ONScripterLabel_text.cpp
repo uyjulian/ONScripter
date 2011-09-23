@@ -296,11 +296,18 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
 
     /* ---------------------------------------- */
     /* Calculate the area of selection */
-    SDL_Rect clipped_rect = info->calcUpdatedArea(start_xy, screen_ratio1, screen_ratio2);
-    info->addShadeArea(clipped_rect, shade_distance);
+    SDL_Rect clipped_rect = info->calcUpdatedArea(start_xy);
+
+    SDL_Rect scaled_clipped_rect;
+    scaled_clipped_rect.x = clipped_rect.x * screen_ratio1 / screen_ratio2;
+    scaled_clipped_rect.y = clipped_rect.y * screen_ratio1 / screen_ratio2;
+    scaled_clipped_rect.w = clipped_rect.w * screen_ratio1 / screen_ratio2;
+    scaled_clipped_rect.h = clipped_rect.h * screen_ratio1 / screen_ratio2;
+
+    info->addShadeArea(scaled_clipped_rect, shade_distance);
     
     if ( flush_flag )
-        flush( refresh_shadow_text_mode, &clipped_rect );
+        flush( refresh_shadow_text_mode, &scaled_clipped_rect );
     
     if ( rect ) *rect = clipped_rect;
 }

@@ -68,24 +68,30 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     if ( readChar() == 0x00 ) sentence_font.is_transparent = true;
     else                      sentence_font.is_transparent = false;
     sentence_font.wait_time = readInt();
-    sentence_font_info.pos.x = readInt() * screen_ratio1 / screen_ratio2;
-    sentence_font_info.pos.y = readInt() * screen_ratio1 / screen_ratio2;
-    sentence_font_info.pos.w = (readInt() + 1 - sentence_font_info.pos.x * screen_ratio1 / screen_ratio2) * screen_ratio1 / screen_ratio2;
-    sentence_font_info.pos.h = (readInt() + 1 - sentence_font_info.pos.y * screen_ratio1 / screen_ratio2) * screen_ratio1 / screen_ratio2;
-    readStr( &sentence_font_info.image_name );
-    if ( !sentence_font.is_transparent && sentence_font_info.image_name ){
-        parseTaggedString( &sentence_font_info );
-        setupAnimationInfo( &sentence_font_info );
+
+    AnimationInfo *ai = &sentence_font_info;
+    ai->orig_pos.x = readInt();
+    ai->orig_pos.y = readInt();
+    ai->orig_pos.w = readInt() + 1 - ai->orig_pos.x;
+    ai->orig_pos.h = readInt() + 1 - ai->orig_pos.y;
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scalePosWH( screen_ratio1, screen_ratio2 );
+    readStr( &ai->image_name );
+    if ( !sentence_font.is_transparent && ai->image_name ){
+        parseTaggedString( ai );
+        setupAnimationInfo( ai );
     }
 
     if ( readInt() == 1 ) cursor_info[0].abs_flag = false;
     else                  cursor_info[0].abs_flag = true;
     if ( readInt() == 1 ) cursor_info[1].abs_flag = false;
     else                  cursor_info[1].abs_flag = true;
-    cursor_info[0].pos.x = readInt() * screen_ratio1 / screen_ratio2;
-    cursor_info[1].pos.x = readInt() * screen_ratio1 / screen_ratio2;
-    cursor_info[0].pos.y = readInt() * screen_ratio1 / screen_ratio2;
-    cursor_info[1].pos.y = readInt() * screen_ratio1 / screen_ratio2;
+    cursor_info[0].orig_pos.x = readInt();
+    cursor_info[1].orig_pos.x = readInt();
+    cursor_info[0].orig_pos.y = readInt();
+    cursor_info[1].orig_pos.y = readInt();
+    cursor_info[0].scalePosXY( screen_ratio1, screen_ratio2 );
+    cursor_info[1].scalePosXY( screen_ratio1, screen_ratio2 );
 
     // load background surface
     bg_info.remove();
@@ -101,11 +107,12 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         }
     }
 
-    for ( i=0 ; i<3 ; i++ )
-        tachi_info[i].pos.x = readInt() * screen_ratio1 / screen_ratio2;
-
-    for ( i=0 ; i<3 ; i++ )
-        tachi_info[i].pos.y = readInt() * screen_ratio1 / screen_ratio2;
+    for ( i=0 ; i<3 ; i++ ) 
+        tachi_info[i].orig_pos.x = readInt();
+    for ( i=0 ; i<3 ; i++ ) 
+        tachi_info[i].orig_pos.y = readInt();
+    for ( i=0 ; i<3 ; i++ ) 
+        tachi_info[i].scalePosXY( screen_ratio1, screen_ratio2 );
 
     readInt(); // 0
     readInt(); // 0
@@ -118,23 +125,26 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     }
     
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        sprite_info[i].remove();
-        readStr( &sprite_info[i].image_name );
-        if ( sprite_info[i].image_name ){
-            parseTaggedString( &sprite_info[i] );
-            setupAnimationInfo( &sprite_info[i] );
+        AnimationInfo *ai = &sprite_info[i];
+        
+        ai->remove();
+        readStr( &ai->image_name );
+        if ( ai->image_name ){
+            parseTaggedString( ai );
+            setupAnimationInfo( ai );
         }
-        sprite_info[i].pos.x = readInt() * screen_ratio1 / screen_ratio2;
-        sprite_info[i].pos.y = readInt() * screen_ratio1 / screen_ratio2;
-        if ( readInt() == 1 ) sprite_info[i].visible = true;
-        else                  sprite_info[i].visible = false;
-        sprite_info[i].current_cell = readInt();
+        ai->orig_pos.x = readInt();
+        ai->orig_pos.y = readInt();
+        ai->scalePosXY( screen_ratio1, screen_ratio2 );
+        if ( readInt() == 1 ) ai->visible = true;
+        else                  ai->visible = false;
+        ai->current_cell = readInt();
         if (file_version >= 203){
             j = readInt();
             if (j == -1)
-                sprite_info[i].trans = 256;
+                ai->trans = 256;
             else
-                sprite_info[i].trans = j;
+                ai->trans = j;
         }
     }
 
@@ -235,26 +245,30 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         j = readInt();
         if ( j != 0 ){
-            bar_info[i] = new AnimationInfo();
-            bar_info[i]->trans_mode = AnimationInfo::TRANS_COPY;
-            bar_info[i]->num_of_cells = 1;
+            ai = bar_info[i] = new AnimationInfo();
+            ai->trans_mode = AnimationInfo::TRANS_COPY;
+            ai->num_of_cells = 1;
 
-            bar_info[i]->param = j;
-            bar_info[i]->pos.x = readInt() * screen_ratio1 / screen_ratio2;
-            bar_info[i]->pos.y = readInt() * screen_ratio1 / screen_ratio2;
-            bar_info[i]->max_width = readInt() * screen_ratio1 / screen_ratio2;
-            bar_info[i]->pos.h = readInt() * screen_ratio1 / screen_ratio2;
-            bar_info[i]->max_param = readInt();
+            ai->param = j;
+            ai->orig_pos.x = readInt();
+            ai->orig_pos.y = readInt();
+            ai->max_width  = readInt();
+            ai->orig_pos.w = 0;
+            ai->orig_pos.h = readInt();
+            ai->max_param  = readInt();
+
+            ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
             for ( j=0 ; j<3 ; j++ )
-                bar_info[i]->color[2-j] = readChar();
+                ai->color[2-j] = readChar();
             readChar(); // 0x00
 
-            int w = bar_info[i]->max_width * bar_info[i]->param / bar_info[i]->max_param;
-            if ( bar_info[i]->max_width > 0 && w > 0 ){
-                bar_info[i]->pos.w = w;
-                bar_info[i]->allocImage( bar_info[i]->pos.w, bar_info[i]->pos.h );
-                bar_info[i]->fill( bar_info[i]->color[0], bar_info[i]->color[1], bar_info[i]->color[2], 0xff );
-            }
+            int w = ai->max_width * ai->param / ai->max_param;
+            if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
+
+            ai->scalePosWH( screen_ratio1, screen_ratio2 );
+            ai->allocImage( ai->pos.w, ai->pos.h );
+            ai->fill( ai->color[0], ai->color[1], ai->color[2], 0xff );
         }
         else{
             readInt(); // -1
@@ -270,25 +284,26 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         j = readInt();
         if ( prnum_info[i] ){
-            prnum_info[i] = new AnimationInfo();
-            prnum_info[i]->trans_mode = AnimationInfo::TRANS_STRING;
-            prnum_info[i]->num_of_cells = 1;
-            prnum_info[i]->color_list = new uchar3[1];
+            ai = prnum_info[i] = new AnimationInfo();
+            ai->trans_mode = AnimationInfo::TRANS_STRING;
+            ai->num_of_cells = 1;
+            ai->color_list = new uchar3[1];
 
-            prnum_info[i]->param = j;
-            prnum_info[i]->pos.x = readInt() * screen_ratio1 / screen_ratio2;
-            prnum_info[i]->pos.y = readInt() * screen_ratio1 / screen_ratio2;
-            prnum_info[i]->font_size_xy[0] = readInt();
-            prnum_info[i]->font_size_xy[1] = readInt();
+            ai->param = j;
+            ai->orig_pos.x = readInt();
+            ai->orig_pos.y = readInt();
+            ai->scalePosXY( screen_ratio1, screen_ratio2 );
+            ai->font_size_xy[0] = readInt();
+            ai->font_size_xy[1] = readInt();
             for ( j=0 ; j<3 ; j++ )
-                prnum_info[i]->color_list[0][2-j] = readChar();
+                ai->color_list[0][2-j] = readChar();
             readChar(); // 0x00
 
             char num_buf[7];
-            script_h.getStringFromInteger( num_buf, prnum_info[i]->param, 3 );
-            setStr( &prnum_info[i]->file_name, num_buf );
+            script_h.getStringFromInteger( num_buf, ai->param, 3 );
+            setStr( &ai->file_name, num_buf );
 
-            setupAnimationInfo( prnum_info[i] );
+            setupAnimationInfo( ai );
         }
         else{
             readInt(); // -1
@@ -341,26 +356,29 @@ int ONScripterLabel::loadSaveFile2( int file_version )
         readInt();
         
         for ( i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-            sprite2_info[i].remove();
-            readStr( &sprite2_info[i].image_name );
-            if ( sprite2_info[i].image_name ){
-                parseTaggedString( &sprite2_info[i] );
-                setupAnimationInfo( &sprite2_info[i] );
+            ai = &sprite2_info[i];
+
+            ai->remove();
+            readStr( &ai->image_name );
+            if ( ai->image_name ){
+                parseTaggedString( ai );
+                setupAnimationInfo( ai );
             }
-            sprite2_info[i].pos.x = readInt() * screen_ratio1 / screen_ratio2;
-            sprite2_info[i].pos.y = readInt() * screen_ratio1 / screen_ratio2;
-            sprite2_info[i].scale_x = readInt();
-            sprite2_info[i].scale_y = readInt();
-            sprite2_info[i].rot = readInt();
-            if ( readInt() == 1 ) sprite2_info[i].visible = true;
-            else                  sprite2_info[i].visible = false;
+            ai->orig_pos.x = readInt();
+            ai->orig_pos.y = readInt();
+            ai->scalePosXY( screen_ratio1, screen_ratio2 );
+            ai->scale_x = readInt();
+            ai->scale_y = readInt();
+            ai->rot     = readInt();
+            if ( readInt() == 1 ) ai->visible = true;
+            else                  ai->visible = false;
             j = readInt();
             if (j == -1)
-                sprite2_info[i].trans = 256;
+                ai->trans = 256;
             else
-                sprite2_info[i].trans = j;
-            sprite2_info[i].blending_mode = readInt();
-            sprite2_info[i].calcAffineMatrix();
+                ai->trans = j;
+            ai->blending_mode = readInt();
+            ai->calcAffineMatrix();
         }
         
         readInt();
@@ -463,28 +481,28 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
         writeChar( sentence_font.window_color[2-i], output_flag );
     writeChar( ( sentence_font.is_transparent )?0x00:0xff, output_flag ); 
     writeInt( sentence_font.wait_time, output_flag );
-    writeInt( sentence_font_info.pos.x * screen_ratio2 / screen_ratio1, output_flag );
-    writeInt( sentence_font_info.pos.y * screen_ratio2 / screen_ratio1, output_flag );
-    writeInt( sentence_font_info.pos.w * screen_ratio2 / screen_ratio1 + sentence_font_info.pos.x * screen_ratio2 / screen_ratio1 - 1, output_flag );
-    writeInt( sentence_font_info.pos.h * screen_ratio2 / screen_ratio1 + sentence_font_info.pos.y * screen_ratio2 / screen_ratio1 - 1, output_flag );
+    writeInt( sentence_font_info.orig_pos.x, output_flag );
+    writeInt( sentence_font_info.orig_pos.y, output_flag );
+    writeInt( sentence_font_info.orig_pos.w + sentence_font_info.orig_pos.x - 1, output_flag );
+    writeInt( sentence_font_info.orig_pos.h + sentence_font_info.orig_pos.y - 1, output_flag );
     writeStr( sentence_font_info.image_name, output_flag );
 
     writeInt( (cursor_info[0].abs_flag)?0:1, output_flag );
     writeInt( (cursor_info[1].abs_flag)?0:1, output_flag );
-    writeInt( cursor_info[0].pos.x * screen_ratio2 / screen_ratio1, output_flag );
-    writeInt( cursor_info[1].pos.x * screen_ratio2 / screen_ratio1, output_flag );
-    writeInt( cursor_info[0].pos.y * screen_ratio2 / screen_ratio1, output_flag );
-    writeInt( cursor_info[1].pos.y * screen_ratio2 / screen_ratio1, output_flag );
+    writeInt( cursor_info[0].orig_pos.x, output_flag );
+    writeInt( cursor_info[1].orig_pos.x, output_flag );
+    writeInt( cursor_info[0].orig_pos.y, output_flag );
+    writeInt( cursor_info[1].orig_pos.y, output_flag );
     
     writeStr( bg_info.file_name, output_flag );
     for ( i=0 ; i<3 ; i++ )
         writeStr( tachi_info[i].image_name, output_flag );
 
     for ( i=0 ; i<3 ; i++ )
-        writeInt( tachi_info[i].pos.x * screen_ratio2 / screen_ratio1, output_flag );
+        writeInt( tachi_info[i].orig_pos.x, output_flag );
 
     for ( i=0 ; i<3 ; i++ )
-        writeInt( tachi_info[i].pos.y * screen_ratio2 / screen_ratio1, output_flag );
+        writeInt( tachi_info[i].orig_pos.y, output_flag );
 
     writeInt( 0, output_flag );
     writeInt( 0, output_flag );
@@ -495,15 +513,16 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt( -1, output_flag );
     
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
-        writeStr( sprite_info[i].image_name, output_flag );
-        writeInt( sprite_info[i].pos.x * screen_ratio2 / screen_ratio1, output_flag );
-        writeInt( sprite_info[i].pos.y * screen_ratio2 / screen_ratio1, output_flag );
-        writeInt( sprite_info[i].visible?1:0, output_flag );
-        writeInt( sprite_info[i].current_cell, output_flag );
-        if (sprite_info[i].trans == 256)
+        AnimationInfo *ai = &sprite_info[i];
+        writeStr( ai->image_name,   output_flag );
+        writeInt( ai->orig_pos.x,   output_flag );
+        writeInt( ai->orig_pos.y,   output_flag );
+        writeInt( ai->visible?1:0,  output_flag );
+        writeInt( ai->current_cell, output_flag );
+        if (ai->trans == 256)
             writeInt( -1, output_flag );
         else
-            writeInt( sprite_info[i].trans, output_flag );
+            writeInt( ai->trans, output_flag );
     }
 
     writeVariables( 0, script_h.global_variable_border, output_flag );
@@ -561,12 +580,12 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         if ( bar_info[i] ){
-            writeInt( bar_info[i]->param, output_flag );
-            writeInt( bar_info[i]->pos.x * screen_ratio2 / screen_ratio1, output_flag );
-            writeInt( bar_info[i]->pos.y * screen_ratio2 / screen_ratio1, output_flag );
-            writeInt( bar_info[i]->max_width * screen_ratio2 / screen_ratio1, output_flag );
-            writeInt( bar_info[i]->pos.h * screen_ratio2 / screen_ratio1, output_flag );
-            writeInt( bar_info[i]->max_param, output_flag );
+            writeInt( bar_info[i]->param,      output_flag );
+            writeInt( bar_info[i]->orig_pos.x, output_flag );
+            writeInt( bar_info[i]->orig_pos.y, output_flag );
+            writeInt( bar_info[i]->max_width,  output_flag );
+            writeInt( bar_info[i]->orig_pos.h, output_flag );
+            writeInt( bar_info[i]->max_param,  output_flag );
             for ( j=0 ; j<3 ; j++ )
                 writeChar( bar_info[i]->color[2-j], output_flag );
             writeChar( 0x00, output_flag );
@@ -585,8 +604,8 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
         if ( prnum_info[i] ){
             writeInt( prnum_info[i]->param, output_flag );
-            writeInt( prnum_info[i]->pos.x * screen_ratio2 / screen_ratio1, output_flag );
-            writeInt( prnum_info[i]->pos.y * screen_ratio2 / screen_ratio1, output_flag );
+            writeInt( prnum_info[i]->orig_pos.x, output_flag );
+            writeInt( prnum_info[i]->orig_pos.y, output_flag );
             writeInt( prnum_info[i]->font_size_xy[0], output_flag );
             writeInt( prnum_info[i]->font_size_xy[1], output_flag );
             for ( j=0 ; j<3 ; j++ )
@@ -626,18 +645,19 @@ void ONScripterLabel::saveSaveFile2( bool output_flag )
     writeInt( 0, output_flag );
     
     for ( i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-        writeStr( sprite2_info[i].image_name, output_flag );
-        writeInt( sprite2_info[i].pos.x * screen_ratio2 / screen_ratio1, output_flag );
-        writeInt( sprite2_info[i].pos.y * screen_ratio2 / screen_ratio1, output_flag );
-        writeInt( sprite2_info[i].scale_x, output_flag );
-        writeInt( sprite2_info[i].scale_y, output_flag );
-        writeInt( sprite2_info[i].rot, output_flag );
-        writeInt( sprite2_info[i].visible?1:0, output_flag );
-        if (sprite2_info[i].trans == 256)
+        AnimationInfo *ai = &sprite2_info[i];
+        writeStr( ai->image_name,  output_flag );
+        writeInt( ai->orig_pos.x,  output_flag );
+        writeInt( ai->orig_pos.y,  output_flag );
+        writeInt( ai->scale_x,     output_flag );
+        writeInt( ai->scale_y,     output_flag );
+        writeInt( ai->rot,         output_flag );
+        writeInt( ai->visible?1:0, output_flag );
+        if (ai->trans == 256)
             writeInt( -1, output_flag );
         else
-            writeInt( sprite2_info[i].trans, output_flag );
-        writeInt( sprite2_info[i].blending_mode, output_flag );
+            writeInt( ai->trans, output_flag );
+        writeInt( ai->blending_mode, output_flag );
     }
 
     writeInt( 0, output_flag );

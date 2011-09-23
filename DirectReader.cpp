@@ -221,7 +221,18 @@ void DirectReader::writeLong( FILE *fp, unsigned long ch )
     fwrite( &buf, 1, 4, fp );
 }
 
-int DirectReader::open( char *name, int archive_type )
+unsigned short DirectReader::swapShort( unsigned short ch )
+{
+    return ((ch & 0xff00) >> 8) | ((ch & 0x00ff) << 8);
+}
+
+unsigned long DirectReader::swapLong( unsigned long ch )
+{
+    return ((ch & 0xff000000) >> 24) | ((ch & 0x00ff0000) >> 8 ) |
+           ((ch & 0x0000ff00) <<  8) | ((ch & 0x000000ff) << 24);
+}
+
+int DirectReader::open( char *name )
 {
     return 0;
 }

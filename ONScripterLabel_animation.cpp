@@ -160,8 +160,8 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 
         if ( anim->font_size_xy[0] >= 0 ){ // in case of Sprite, not rclick menu
             f_info.setTateyokoMode(0);
-            f_info.top_xy[0] = anim->pos.x * screen_ratio2 / screen_ratio1;
-            f_info.top_xy[1] = anim->pos.y * screen_ratio2 / screen_ratio1;
+            f_info.top_xy[0] = anim->orig_pos.x;
+            f_info.top_xy[1] = anim->orig_pos.y;
             if (anim->is_single_line)
                 f_info.setLineArea( strlen(anim->file_name)/2+1 );
             f_info.clear();
@@ -186,7 +186,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
             
             int xy[2] = {0, 0};
             f_info.setXY(f_info.num_xy[0]-1, f_info.num_xy[1]-1);
-            pos = f_info.calcUpdatedArea(xy, screen_ratio1, screen_ratio2);
+            pos = f_info.calcUpdatedArea(xy);
 
             f_info.xy[0] = xy_bak[0];
             f_info.xy[1] = xy_bak[1];
@@ -197,7 +197,10 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
             info->xy[1] = f_info.xy[1];
         }
         
-        anim->allocImage( pos.w*anim->num_of_cells, pos.h );
+        anim->orig_pos.w = pos.w;
+        anim->orig_pos.h = pos.h;
+        anim->scalePosWH( screen_ratio1, screen_ratio2 );
+        anim->allocImage( anim->pos.w*anim->num_of_cells, anim->pos.h );
         anim->fill( 0, 0, 0, 0 );
         
         f_info.setRubyOnFlag(anim->is_ruby_drawable);
@@ -205,7 +208,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
             f_info.clear();
             drawString( anim->file_name, anim->color_list[i], &f_info, false, NULL, NULL, anim );
-            f_info.top_xy[0] += anim->pos.w * screen_ratio2 / screen_ratio1;
+            f_info.top_xy[0] += anim->orig_pos.w;
         }
     }
     else{

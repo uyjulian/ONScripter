@@ -40,7 +40,7 @@ SarReader::~SarReader()
     close();
 }
 
-int SarReader::open( char *name, int archive_type )
+int SarReader::open( char *name )
 {
     ArchiveInfo* info = new ArchiveInfo();
 
@@ -61,79 +61,103 @@ int SarReader::open( char *name, int archive_type )
     return 0;
 }
 
-void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int nsa_offset )
-{
-    /* Read header */
-    for (int i=0; i<nsa_offset; i++)
-        readChar( ai->file_handle ); // for commands "ns2" and "ns3"
-
-    ai->num_of_files = readShort( ai->file_handle );
-    ai->fi_list = new struct FileInfo[ ai->num_of_files ];
-    
-    ai->base_offset = readLong( ai->file_handle );
-    ai->base_offset += nsa_offset;
-    
-    fpos_t pos;
-    fgetpos(ai->file_handle, &pos);
-
-    int num = readArchiveSub(ai, archive_type, true);
-    ai->name_buffer = new char[num];
-    //printf("buffer size %d v.s. %d\n", num, ai->num_of_files*256);
-
-    fsetpos(ai->file_handle, &pos);
-    readArchiveSub(ai, archive_type, false);
-}
-
-int SarReader::readArchiveSub( struct ArchiveInfo *ai, int archive_type, bool check_size )
+void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset )
 {
     unsigned int i;
-    char name[256];
-    int name_buffer_pos = 0;
+    
+    /* Read header */
+    for (i=0; i<offset; i++)
+        readChar( ai->file_handle ); // for commands "ns2" and "ns3"
 
-    for ( i=0 ; i<ai->num_of_files ; i++ ){
-        unsigned char ch;
-        int count = 0;
+    if ( archive_type == ARCHIVE_TYPE_NS2 ) {
+        // new archive type since NScr2.91
+        // - header starts with base_offset (byte-swapped), followed by
+        //   filename data - doesn't tell how many files!
+        // - filenames are surrounded by ""s
+        // - new NS2 filename def: "filename", length (4bytes, swapped)
+        // - no compression type? really, no compression.
+        // - not sure if NS2 uses key_table or not, using default funcs for now
+        ai->base_offset = swapLong( readLong( ai->file_handle ) );
+        ai->base_offset += offset;
 
-        while( (ch = key_table[fgetc( ai->file_handle )] ) ){
-            if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
-            name[count++] = ch;
+        // need to parse the whole header to see how many files there are
+        ai->num_of_files = 0;
+        long unsigned int cur_offset = offset + 5;
+        // there's an extra byte at the end of the header, not sure what for
+        while (cur_offset < ai->base_offset){
+            //skip the beginning double-quote
+            unsigned char ch = key_table[fgetc( ai->file_handle )];
+            cur_offset++;
+            do cur_offset++;
+            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' );
+            cur_offset += 4;
+            ai->num_of_files++;
         }
-        name[count++] = ch;
+        ai->fi_list = new struct FileInfo[ ai->num_of_files ];
 
-        if (!check_size){
-            ai->fi_list[i].name = ai->name_buffer + name_buffer_pos;
-            memcpy(ai->fi_list[i].name, name, count);
-        }
-
-        name_buffer_pos += count;
-
-        if ( archive_type >= ARCHIVE_TYPE_NSA )
-            ai->fi_list[i].compression_type = readChar( ai->file_handle );
-        else
-            ai->fi_list[i].compression_type = NO_COMPRESSION;
-        ai->fi_list[i].offset = readLong( ai->file_handle ) + ai->base_offset;
-        ai->fi_list[i].length = readLong( ai->file_handle );
-
-        if ( archive_type >= ARCHIVE_TYPE_NSA ){
-            ai->fi_list[i].original_length = readLong( ai->file_handle );
-        }
-        else{
+        // now go back to the beginning and read the file info
+        cur_offset = ai->base_offset;
+        fseek( ai->file_handle, 4 + offset, SEEK_SET );
+        for ( i=0 ; i<ai->num_of_files ; i++ ){
+            unsigned int count = 0;
+            //skip the beginning double-quote
+            unsigned char ch = key_table[fgetc( ai->file_handle )];
+            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' ){
+                if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
+                ai->fi_list[i].name[count++] = ch;
+            }
+            ai->fi_list[i].name[count] = '\0';
+            ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
+            ai->fi_list[i].offset = cur_offset;
+            ai->fi_list[i].length = swapLong( readLong( ai->file_handle ) );
             ai->fi_list[i].original_length = ai->fi_list[i].length;
+            cur_offset += ai->fi_list[i].length;
         }
+    } else {
+        // old NSA filename def: filename, ending '\0' byte , compr-type byte,
+        // start (4byte), length (4byte))
+        ai->num_of_files = readShort( ai->file_handle );
+        ai->fi_list = new struct FileInfo[ ai->num_of_files ];
+    
+        ai->base_offset = readLong( ai->file_handle );
+        ai->base_offset += offset;
+    
+        for ( i=0 ; i<ai->num_of_files ; i++ ){
+            unsigned char ch;
+            int count = 0;
 
-        /* Registered Plugin check */
-        if ( ai->fi_list[i].compression_type == NO_COMPRESSION )
-            ai->fi_list[i].compression_type = getRegisteredCompressionType( name );
+            while( (ch = key_table[fgetc( ai->file_handle )] ) ){
+                if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
+                ai->fi_list[i].name[count++] = ch;
+            }
+            ai->fi_list[i].name[count] = ch;
 
-        if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ||
-             ai->fi_list[i].compression_type == SPB_COMPRESSION ){
-            // Delaying checking decompressed file length to prevent
-            // massive random access in the archives at the start-up.
-            ai->fi_list[i].original_length = 0;
+            if ( archive_type == ARCHIVE_TYPE_NSA )
+                ai->fi_list[i].compression_type = readChar( ai->file_handle );
+            else
+                ai->fi_list[i].compression_type = NO_COMPRESSION;
+            ai->fi_list[i].offset = readLong( ai->file_handle ) + ai->base_offset;
+            ai->fi_list[i].length = readLong( ai->file_handle );
+
+            if ( archive_type == ARCHIVE_TYPE_NSA ){
+                ai->fi_list[i].original_length = readLong( ai->file_handle );
+            }
+            else{
+                ai->fi_list[i].original_length = ai->fi_list[i].length;
+            }
+
+            /* Registered Plugin check */
+            if ( ai->fi_list[i].compression_type == NO_COMPRESSION )
+                ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
+
+            if ( ai->fi_list[i].compression_type == NBZ_COMPRESSION ||
+                 ai->fi_list[i].compression_type == SPB_COMPRESSION ){
+                // Delaying checking decompressed file length to prevent
+                // massive random access in the archives at the start-up.
+                ai->fi_list[i].original_length = 0;
+            }
         }
     }
-    
-    return name_buffer_pos;
 }
 
 int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type, int nsa_offset )

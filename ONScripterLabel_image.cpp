@@ -454,17 +454,15 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         else
             top = z_order;
         for ( i=MAX_SPRITE_NUM-1 ; i>top ; i-- ){
-            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible )
                 drawTaggedSurface( surface, &sprite_info[i], clip );
-            }
         }
     }
 
     if ( !all_sprite_hide_flag ){
         for ( i=0 ; i<3 ; i++ ){
-            if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface){
+            if (human_order[2-i] >= 0 && tachi_info[human_order[2-i]].image_surface)
                 drawTaggedSurface( surface, &tachi_info[human_order[2-i]], clip );
-            }
         }
     }
 
@@ -475,9 +473,8 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 
         if (!all_sprite2_hide_flag){
             for ( i=MAX_SPRITE2_NUM-1 ; i>=0 ; i-- ){
-                if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
+                if ( sprite2_info[i].image_surface && sprite2_info[i].visible )
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
-                }
             }
         }
     
@@ -493,18 +490,16 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
         else
             top = 0;
         for ( i=z_order ; i>=top ; i-- ){
-            if ( sprite_info[i].image_surface && sprite_info[i].visible ){
+            if ( sprite_info[i].image_surface && sprite_info[i].visible )
                 drawTaggedSurface( surface, &sprite_info[i], clip );
-            }
         }
     }
 
     if ( !windowback_flag ){
         if (!all_sprite2_hide_flag){
             for ( i=MAX_SPRITE2_NUM-1 ; i>=0 ; i-- ){
-                if ( sprite2_info[i].image_surface && sprite2_info[i].visible ){
+                if ( sprite2_info[i].image_surface && sprite2_info[i].visible )
                     drawTaggedSurface( surface, &sprite2_info[i], clip );
-                }
             }
         }
 
@@ -515,14 +510,12 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
     
     if ( !( refresh_mode & REFRESH_SAYA_MODE ) ){
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
-            if ( bar_info[i] ) {
+            if ( bar_info[i] )
                 drawTaggedSurface( surface, bar_info[i], clip );
-            }
         }
         for ( i=0 ; i<MAX_PARAM_NUM ; i++ ){
-            if ( prnum_info[i] ){
+            if ( prnum_info[i] )
                 drawTaggedSurface( surface, prnum_info[i], clip );
-            }
         }
     }
 
@@ -542,9 +535,8 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
 
     ButtonLink *p_button_link = root_button_link.next;
     while( p_button_link ){
-        if (p_button_link->show_flag > 0){
+        if (p_button_link->show_flag > 0)
             drawTaggedSurface( surface, p_button_link->anim[p_button_link->show_flag-1], clip );
-        }
         p_button_link = p_button_link->next;
     }
 }

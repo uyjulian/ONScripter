@@ -107,6 +107,15 @@ public:
 
     AnimationInfo& operator =(const AnimationInfo &anim);
 
+    void scalePosXY(int screen_ratio1, int screen_ratio2){
+        pos.x = orig_pos.x * screen_ratio1 / screen_ratio2;
+        pos.y = orig_pos.y * screen_ratio1 / screen_ratio2;
+    };
+    void scalePosWH(int screen_ratio1, int screen_ratio2){
+        pos.w = orig_pos.w * screen_ratio1 / screen_ratio2;
+        pos.h = orig_pos.h * screen_ratio1 / screen_ratio2;
+    };
+                 
     void reset();
     
     void deleteImageName();

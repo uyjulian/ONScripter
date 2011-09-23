@@ -30,18 +30,17 @@
 
 #define CONTINUOUS_PLAY
 
-int ONScripterLabel::waveCommand()
+int ONScripterLabel::yesnoboxCommand()
 {
-    wave_play_loop_flag = false;
+    script_h.readInt();
+    int no = script_h.current_variable.var_no;
+    script_h.setInt( &script_h.current_variable, 1 );
+
+    script_h.readStr();
+    script_h.readStr();
     
-    if (script_h.isName( "waveloop" ))
-        wave_play_loop_flag = true;
+    printf( "*** yesnoboxCommand(): %%%d is set to 1\n", no);
 
-    wavestopCommand();
-
-    setStr(&wave_file_name, script_h.readStr());
-    playSound(wave_file_name, SOUND_CHUNK, wave_play_loop_flag, MIX_WAVE_CHANNEL);
-        
     return RET_CONTINUE;
 }
 
@@ -54,6 +53,21 @@ int ONScripterLabel::wavestopCommand()
     }
     setStr( &wave_file_name, NULL );
 
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::waveCommand()
+{
+    wave_play_loop_flag = false;
+    
+    if (script_h.isName( "waveloop" ))
+        wave_play_loop_flag = true;
+
+    wavestopCommand();
+
+    setStr(&wave_file_name, script_h.readStr());
+    playSound(wave_file_name, SOUND_CHUNK, wave_play_loop_flag, MIX_WAVE_CHANNEL);
+        
     return RET_CONTINUE;
 }
 
@@ -87,11 +101,11 @@ int ONScripterLabel::vspCommand()
     int v  = script_h.readInt();
 
     if (vsp2_flag){
-        sprite2_info[ no ].visible = (v==1)?true:false;
+        sprite2_info[no].visible = (v==1)?true:false;
         dirty_rect.add( sprite2_info[no].bounding_rect );
     }
     else{
-        sprite_info[ no ].visible = (v==1)?true:false;
+        sprite_info[no].visible = (v==1)?true:false;
         dirty_rect.add( sprite_info[no].pos );
     }
     
@@ -303,13 +317,15 @@ int ONScripterLabel::strspCommand()
     
     int sprite_no = script_h.readInt();
     AnimationInfo *ai = &sprite_info[sprite_no];
+
     ai->removeTag();
     setStr(&ai->file_name, script_h.readStr());
-    
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
     FontInfo fi;
     fi.is_newline_accepted = true;
-    ai->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    ai->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
     fi.num_xy[0] = script_h.readInt();
     fi.num_xy[1] = script_h.readInt();
     fi.font_size_xy[0] = script_h.readInt();
@@ -370,10 +386,10 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     ONSBuf key_b = script_h.readInt();
     Uint32 alpha = script_h.readInt();
 
-    AnimationInfo *si;
-    if (no == -1) si = &sentence_font_info;
-    else          si = &sprite_info[no];
-    SDL_Surface *surface = si->image_surface;
+    AnimationInfo *ai;
+    if (no == -1) ai = &sentence_font_info;
+    else          ai = &sprite_info[no];
+    SDL_Surface *surface = ai->image_surface;
     if (surface == NULL) return RET_CONTINUE;
 
     SDL_PixelFormat *fmt = surface->format;
@@ -408,7 +424,7 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     for (i=upper_bound ; i<=lower_bound ; i++){
         ONSBuf *buf = (ONSBuf *)surface->pixels + surface->w * i;
 #if defined(BPP16)    
-        unsigned char *alphap = si->alpha_buf + surface->w * i;
+        unsigned char *alphap = ai->alpha_buf + surface->w * i;
 #else
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
         unsigned char *alphap = (unsigned char *)buf + 3;
@@ -443,8 +459,8 @@ int ONScripterLabel::sp_rgb_gradationCommand()
     
     SDL_UnlockSurface(surface);
     
-    if ( si->visible )
-        dirty_rect.add( si->pos );
+    if ( ai->visible )
+        dirty_rect.add( ai->pos );
 
     return RET_CONTINUE;
 }
@@ -459,15 +475,15 @@ int ONScripterLabel::spstrCommand()
 int ONScripterLabel::spreloadCommand()
 {
     int no = script_h.readInt();
-    AnimationInfo *si;
-    if (no == -1) si = &sentence_font_info;
-    else          si = &sprite_info[no];
+    AnimationInfo *ai;
+    if (no == -1) ai = &sentence_font_info;
+    else          ai = &sprite_info[no];
 
-    parseTaggedString( si );
-    setupAnimationInfo( si );
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
     
-    if ( si->visible )
-        dirty_rect.add( si->pos );
+    if ( ai->visible )
+        dirty_rect.add( ai->pos );
     
     return RET_CONTINUE;
 }
@@ -583,28 +599,28 @@ void ONScripterLabel::setwindowCore()
 
     const char *buf = script_h.readStr();
     dirty_rect.add( sentence_font_info.pos );
+
+    AnimationInfo *ai = &sentence_font_info;
     if ( buf[0] == '#' ){
         sentence_font.is_transparent = true;
         readColor( &sentence_font.window_color, buf );
 
-        sentence_font_info.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-        sentence_font_info.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-        sentence_font_info.pos.w = script_h.readInt() * screen_ratio1 / screen_ratio2 - sentence_font_info.pos.x + 1;
-        sentence_font_info.pos.h = script_h.readInt() * screen_ratio1 / screen_ratio2 - sentence_font_info.pos.y + 1;
+        ai->orig_pos.x = script_h.readInt();
+        ai->orig_pos.y = script_h.readInt();
+        ai->orig_pos.w = script_h.readInt() - ai->orig_pos.x + 1;
+        ai->orig_pos.h = script_h.readInt() - ai->orig_pos.y + 1;
+        ai->scalePosXY( screen_ratio1, screen_ratio2 );
+        ai->scalePosWH( screen_ratio1, screen_ratio2 );
     }
     else{
+        ai->setImageName( buf );
+        parseTaggedString( ai );
+        setupAnimationInfo( ai );
+        ai->orig_pos.x = script_h.readInt();
+        ai->orig_pos.y = script_h.readInt();
+        ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
         sentence_font.is_transparent = false;
-        sentence_font_info.setImageName( buf );
-        parseTaggedString( &sentence_font_info );
-        setupAnimationInfo( &sentence_font_info );
-        sentence_font_info.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-        sentence_font_info.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-#if 0        
-        if ( sentence_font_info.image_surface ){
-            sentence_font_info.pos.w = sentence_font_info.image_surface->w * screen_ratio1 / screen_ratio2;
-            sentence_font_info.pos.h = sentence_font_info.image_surface->h * screen_ratio1 / screen_ratio2;
-        }
-#endif        
         sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0xff;
     }
 }
@@ -669,8 +685,8 @@ int ONScripterLabel::setcursorCommand()
     int no = script_h.readInt();
     script_h.readStr();
     const char* buf = script_h.saveStringBuffer();
-    int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    int x = script_h.readInt();
+    int y = script_h.readInt();
 
     loadCursor( no, buf, x, y, abs_flag );
     
@@ -1078,27 +1094,28 @@ int ONScripterLabel::prnumCommand()
         dirty_rect.add( prnum_info[no]->pos );
         delete prnum_info[no];
     }
-    prnum_info[no] = new AnimationInfo();
-    prnum_info[no]->trans_mode = AnimationInfo::TRANS_STRING;
-    prnum_info[no]->num_of_cells = 1;
-    prnum_info[no]->setCell(0);
-    prnum_info[no]->color_list = new uchar3[ prnum_info[no]->num_of_cells ];
+    AnimationInfo *ai = prnum_info[no] = new AnimationInfo();
+    ai->trans_mode = AnimationInfo::TRANS_STRING;
+    ai->num_of_cells = 1;
+    ai->setCell(0);
+    ai->color_list = new uchar3[ ai->num_of_cells ];
     
-    prnum_info[no]->param = script_h.readInt();
-    prnum_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    prnum_info[no]->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    prnum_info[no]->font_size_xy[0] = script_h.readInt();
-    prnum_info[no]->font_size_xy[1] = script_h.readInt();
+    ai->param = script_h.readInt();
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->font_size_xy[0] = script_h.readInt();
+    ai->font_size_xy[1] = script_h.readInt();
 
     const char *buf = script_h.readStr();
-    readColor( &prnum_info[no]->color_list[0], buf );
+    readColor( &ai->color_list[0], buf );
 
     char num_buf[7];
-    script_h.getStringFromInteger( num_buf, prnum_info[no]->param, 3 );
-    setStr( &prnum_info[no]->file_name, num_buf );
+    script_h.getStringFromInteger( num_buf, ai->param, 3 );
+    setStr( &ai->file_name, num_buf );
 
-    setupAnimationInfo( prnum_info[no] );
-    dirty_rect.add( prnum_info[no]->pos );
+    setupAnimationInfo( ai );
+    dirty_rect.add( ai->pos );
     
     return RET_CONTINUE;
 }
@@ -1180,33 +1197,34 @@ int ONScripterLabel::mspCommand()
     if (script_h.isName("msp2")) msp2_flag = true;
 
     int no = script_h.readInt();
-    AnimationInfo *si=NULL;
+    AnimationInfo *ai = NULL;
     if (msp2_flag) {
-        si = &sprite2_info[no];
-        dirty_rect.add( si->bounding_rect );
+        ai = &sprite2_info[no];
+        dirty_rect.add( ai->bounding_rect );
     }
     else{
-        si = &sprite_info[no];
-        dirty_rect.add( si->pos );
+        ai = &sprite_info[no];
+        dirty_rect.add( ai->pos );
     }
 
-    si->pos.x += script_h.readInt() * screen_ratio1 / screen_ratio2;
-    si->pos.y += script_h.readInt() * screen_ratio1 / screen_ratio2;
+    ai->orig_pos.x += script_h.readInt();
+    ai->orig_pos.y += script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
     if (msp2_flag){
-        si->scale_x += script_h.readInt();
-        si->scale_y += script_h.readInt();
-        si->rot += script_h.readInt();
-        si->calcAffineMatrix();
-        dirty_rect.add( si->bounding_rect );
+        ai->scale_x += script_h.readInt();
+        ai->scale_y += script_h.readInt();
+        ai->rot     += script_h.readInt();
+        ai->calcAffineMatrix();
+        dirty_rect.add( ai->bounding_rect );
     }
     else{
-        dirty_rect.add( si->pos );
+        dirty_rect.add( ai->pos );
     }
     
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
-        si->trans += script_h.readInt();
-    if ( si->trans > 256 ) si->trans = 256;
-    else if ( si->trans < 0 ) si->trans = 0;
+        ai->trans += script_h.readInt();
+    if      ( ai->trans > 256 ) ai->trans = 256;
+    else if ( ai->trans <   0 ) ai->trans = 0;
 
     return RET_CONTINUE;
 }
@@ -1391,7 +1409,6 @@ int ONScripterLabel::lsp2Command()
     leaveTextDisplayMode();
 
     bool v=true;
-
     if ( script_h.isName( "lsph2" ) ||
          script_h.isName( "lsph2add" ) ||
          script_h.isName( "lsph2sub" ))
@@ -1404,31 +1421,34 @@ int ONScripterLabel::lsp2Command()
         blend_mode = AnimationInfo::BLEND_SUB;
 
     int no = script_h.readInt();
-    if (sprite2_info[no].image_surface && sprite2_info[no].visible)
-        dirty_rect.add( sprite2_info[no].bounding_rect );
-    sprite2_info[ no ].visible = v;
-    sprite2_info[ no ].blending_mode = blend_mode;
+    AnimationInfo *ai = &sprite2_info[no];
+    
+    if (ai->image_surface && ai->visible)
+        dirty_rect.add( ai->bounding_rect );
+    ai->visible = v;
+    ai->blending_mode = blend_mode;
     
     const char *buf = script_h.readStr();
-    sprite2_info[ no ].setImageName( buf );
+    ai->setImageName( buf );
 
-    sprite2_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    sprite2_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    sprite2_info[ no ].scale_x = script_h.readInt();
-    sprite2_info[ no ].scale_y = script_h.readInt();
-    sprite2_info[ no ].rot = script_h.readInt();
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scale_x = script_h.readInt();
+    ai->scale_y = script_h.readInt();
+    ai->rot     = script_h.readInt();
 
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
-        sprite2_info[ no ].trans = script_h.readInt();
+        ai->trans = script_h.readInt();
     else
-        sprite2_info[ no ].trans = 256;
+        ai->trans = 256;
 
-    parseTaggedString( &sprite2_info[ no ] );
-    setupAnimationInfo( &sprite2_info[ no ] );
-    sprite2_info[ no ].calcAffineMatrix();
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
+    ai->calcAffineMatrix();
 
-    if ( sprite2_info[no].visible )
-        dirty_rect.add( sprite2_info[no].bounding_rect );
+    if ( ai->visible )
+        dirty_rect.add( ai->bounding_rect );
 
     return RET_CONTINUE;
 }
@@ -1438,29 +1458,31 @@ int ONScripterLabel::lspCommand()
     leaveTextDisplayMode();
 
     bool v=true;
-
-    if ( script_h.isName( "lsph" ) )
-        v = false;
+    if ( script_h.isName( "lsph" ) ) v = false;
 
     int no = script_h.readInt();
-    if (sprite_info[no].image_surface && sprite_info[no].visible)
-        dirty_rect.add( sprite_info[no].pos );
-    sprite_info[ no ].visible = v;
+    AnimationInfo *ai = &sprite_info[no];
+
+    if (ai->image_surface && ai->visible)
+        dirty_rect.add( ai->pos );
+    ai->visible = v;
     
     const char *buf = script_h.readStr();
-    sprite_info[ no ].setImageName( buf );
+    ai->setImageName( buf );
 
-    sprite_info[ no ].pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    sprite_info[ no ].pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
-        sprite_info[ no ].trans = script_h.readInt();
+        ai->trans = script_h.readInt();
     else
-        sprite_info[ no ].trans = 256;
+        ai->trans = 256;
 
-    parseTaggedString( &sprite_info[ no ] );
-    setupAnimationInfo( &sprite_info[ no ] );
-    if ( sprite_info[no].visible )
-        dirty_rect.add( sprite_info[no].pos );
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
+
+    if ( ai->visible ) dirty_rect.add( ai->pos );
 
     return RET_CONTINUE;
 }
@@ -1530,28 +1552,29 @@ int ONScripterLabel::logspCommand()
     if ( script_h.isName( "logsp2" ) )
         logsp2_flag = true;
 
-    int sprite_no = script_h.readInt();
+    int no = script_h.readInt();
+    AnimationInfo *ai = &sprite_info[no];
 
-    AnimationInfo &si = sprite_info[sprite_no];
-    if (si.image_surface && si.visible)
-        dirty_rect.add( si.pos );
-    si.remove();
-    setStr( &si.file_name, script_h.readStr() );
+    if (ai->image_surface && ai->visible)
+        dirty_rect.add( ai->pos );
+    ai->remove();
+    setStr( &ai->file_name, script_h.readStr() );
 
-    si.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    si.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
     
-    si.trans_mode = AnimationInfo::TRANS_STRING;
+    ai->trans_mode = AnimationInfo::TRANS_STRING;
     if (logsp2_flag){
-        si.font_size_xy[0] = script_h.readInt();
-        si.font_size_xy[1] = script_h.readInt();
-        si.font_pitch = script_h.readInt() + si.font_size_xy[0];
+        ai->font_size_xy[0] = script_h.readInt();
+        ai->font_size_xy[1] = script_h.readInt();
+        ai->font_pitch = script_h.readInt() + ai->font_size_xy[0];
         script_h.readInt(); // dummy read for y pitch
     }
     else{
-        si.font_size_xy[0] = sentence_font.font_size_xy[0];
-        si.font_size_xy[1] = sentence_font.font_size_xy[1];
-        si.font_pitch = sentence_font.pitch_xy[0];
+        ai->font_size_xy[0] = sentence_font.font_size_xy[0];
+        ai->font_size_xy[1] = sentence_font.font_size_xy[1];
+        ai->font_pitch = sentence_font.pitch_xy[0];
     }
     
     char *current = script_h.getNext();
@@ -1563,26 +1586,26 @@ int ONScripterLabel::logspCommand()
 
     script_h.setCurrent(current);
     if (num == 0){
-        si.num_of_cells = 1;
-        si.color_list = new uchar3[ si.num_of_cells ];
-        readColor( &si.color_list[0], "#ffffff" );
+        ai->num_of_cells = 1;
+        ai->color_list = new uchar3[ ai->num_of_cells ];
+        readColor( &ai->color_list[0], "#ffffff" );
     }
     else{
-        si.num_of_cells = num;
-        si.color_list = new uchar3[ si.num_of_cells ];
+        ai->num_of_cells = num;
+        ai->color_list = new uchar3[ ai->num_of_cells ];
         for (int i=0 ; i<num ; i++){
-            readColor( &si.color_list[i], script_h.readStr() );
+            readColor( &ai->color_list[i], script_h.readStr() );
         }
     }
 
-    si.is_single_line = false;
-    si.is_tight_region = false;
-    si.is_ruby_drawable = true;
+    ai->is_single_line = false;
+    ai->is_tight_region = false;
+    ai->is_ruby_drawable = true;
     sentence_font.is_newline_accepted = true;
-    setupAnimationInfo( &si );
+    setupAnimationInfo( ai );
     sentence_font.is_newline_accepted = false;
-    si.visible = true;
-    dirty_rect.add( si.pos );
+    ai->visible = true;
+    dirty_rect.add( ai->pos );
     
     return RET_CONTINUE;
 }
@@ -1645,16 +1668,19 @@ int ONScripterLabel::ldCommand()
     if (no >= 0) buf = script_h.readStr();
     
     if (no >= 0){
-        if (tachi_info[ no ].image_surface)
-            dirty_rect.add( tachi_info[ no ].pos );
-        tachi_info[ no ].setImageName( buf );
-        parseTaggedString( &tachi_info[ no ] );
-        setupAnimationInfo( &tachi_info[ no ] );
-        if ( tachi_info[ no ].image_surface ){
-            tachi_info[ no ].visible = true;
-            tachi_info[ no ].pos.x = screen_width * (no+1) / 4 - tachi_info[ no ].pos.w / 2;
-            tachi_info[ no ].pos.y = underline_value * screen_ratio1 / screen_ratio2 - tachi_info[ no ].image_surface->h;
-            dirty_rect.add( tachi_info[ no ].pos );
+        AnimationInfo *ai = &tachi_info[no];
+
+        if (ai->image_surface) dirty_rect.add( ai->pos );
+        ai->setImageName( buf );
+        parseTaggedString( ai );
+        setupAnimationInfo( ai );
+
+        if ( ai->image_surface ){
+            ai->visible = true;
+            ai->orig_pos.x = screen_width * (no+1) * screen_ratio2 / (4 * screen_ratio1) - ai->orig_pos.w / 2;
+            ai->orig_pos.y = underline_value - ai->image_surface->h * screen_ratio2 / screen_ratio1;
+            ai->scalePosXY( screen_ratio1, screen_ratio2 );
+            dirty_rect.add( ai->pos );
         }
     }
 
@@ -1932,9 +1958,9 @@ int ONScripterLabel::getspsizeCommand()
     int no = script_h.readInt();
 
     script_h.readVariable();
-    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.w * screen_ratio2 / screen_ratio1 );
+    script_h.setInt( &script_h.current_variable, sprite_info[no].orig_pos.w );
     script_h.readVariable();
-    script_h.setInt( &script_h.current_variable, sprite_info[no].pos.h * screen_ratio2 / screen_ratio1 );
+    script_h.setInt( &script_h.current_variable, sprite_info[no].orig_pos.h );
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
         script_h.readVariable();
         script_h.setInt( &script_h.current_variable, sprite_info[no].num_of_cells );
@@ -2481,26 +2507,26 @@ int ONScripterLabel::drawsp3Command()
     int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    AnimationInfo &si = sprite_info[sprite_no];
-    int old_cell_no = si.current_cell;
-    si.setCell(cell_no);
+    AnimationInfo *ai = &sprite_info[sprite_no];
+    int old_cell_no = ai->current_cell;
+    ai->setCell(cell_no);
 
-    si.mat[0][0] = script_h.readInt();
-    si.mat[0][1] = script_h.readInt();
-    si.mat[1][0] = script_h.readInt();
-    si.mat[1][1] = script_h.readInt();
+    ai->mat[0][0] = script_h.readInt();
+    ai->mat[0][1] = script_h.readInt();
+    ai->mat[1][0] = script_h.readInt();
+    ai->mat[1][1] = script_h.readInt();
 
-    int denom = (si.mat[0][0]*si.mat[1][1]-si.mat[0][1]*si.mat[1][0])/1000;
+    int denom = (ai->mat[0][0]*ai->mat[1][1]-ai->mat[0][1]*ai->mat[1][0])/1000;
     if (denom != 0){
-        si.inv_mat[0][0] =  si.mat[1][1] * 1000 / denom;
-        si.inv_mat[0][1] = -si.mat[0][1] * 1000 / denom;
-        si.inv_mat[1][0] = -si.mat[1][0] * 1000 / denom;
-        si.inv_mat[1][1] =  si.mat[0][0] * 1000 / denom;
+        ai->inv_mat[0][0] =  ai->mat[1][1] * 1000 / denom;
+        ai->inv_mat[0][1] = -ai->mat[0][1] * 1000 / denom;
+        ai->inv_mat[1][0] = -ai->mat[1][0] * 1000 / denom;
+        ai->inv_mat[1][1] =  ai->mat[0][0] * 1000 / denom;
     }
 
     SDL_Rect clip = {0, 0, screen_width, screen_height};
-    si.blendOnSurface2( accumulation_surface, x, y, clip, alpha );
-    si.setCell(old_cell_no);
+    ai->blendOnSurface2( accumulation_surface, x, y, clip, alpha );
+    ai->setCell(old_cell_no);
 
     return RET_CONTINUE;
 }
@@ -2511,17 +2537,18 @@ int ONScripterLabel::drawsp2Command()
     int cell_no = script_h.readInt();
     int alpha = script_h.readInt();
 
-    AnimationInfo si = sprite_info[sprite_no];
-    si.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    si.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    si.scale_x = script_h.readInt();
-    si.scale_y = script_h.readInt();
-    si.rot = script_h.readInt();
-    si.calcAffineMatrix();
-    si.setCell(cell_no);
+    AnimationInfo *ai = &sprite_info[sprite_no];
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scale_x = script_h.readInt();
+    ai->scale_y = script_h.readInt();
+    ai->rot     = script_h.readInt();
+    ai->calcAffineMatrix();
+    ai->setCell(cell_no);
 
     SDL_Rect clip = {0, 0, screen_width, screen_height};
-    si.blendOnSurface2( accumulation_surface, si.pos.x, si.pos.y, clip, alpha );
+    ai->blendOnSurface2( accumulation_surface, ai->pos.x, ai->pos.y, clip, alpha );
 
     return RET_CONTINUE;
 }
@@ -2534,12 +2561,12 @@ int ONScripterLabel::drawspCommand()
     int x = script_h.readInt() * screen_ratio1 / screen_ratio2;
     int y = script_h.readInt() * screen_ratio1 / screen_ratio2;
 
-    AnimationInfo &si = sprite_info[sprite_no];
-    int old_cell_no = si.current_cell;
-    si.setCell(cell_no);
+    AnimationInfo *ai = &sprite_info[sprite_no];
+    int old_cell_no = ai->current_cell;
+    ai->setCell(cell_no);
     SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
-    si.blendOnSurface( accumulation_surface, x, y, clip, alpha );
-    si.setCell(old_cell_no);
+    ai->blendOnSurface( accumulation_surface, x, y, clip, alpha );
+    ai->setCell(old_cell_no);
 
     return RET_CONTINUE;
 }
@@ -2573,11 +2600,12 @@ int ONScripterLabel::drawbgCommand()
 int ONScripterLabel::drawbg2Command()
 {
     AnimationInfo bi = bg_info;
-    bi.pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    bi.pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    bi.orig_pos.x = script_h.readInt();
+    bi.orig_pos.y = script_h.readInt();
+    bi.scalePosXY( screen_ratio1, screen_ratio2 );
     bi.scale_x = script_h.readInt();
     bi.scale_y = script_h.readInt();
-    bi.rot = script_h.readInt();
+    bi.rot     = script_h.readInt();
     bi.calcAffineMatrix();
 
     SDL_Rect clip = {0, 0, screen_width, screen_height};
@@ -2643,8 +2671,9 @@ int ONScripterLabel::cspCommand()
                     dirty_rect.add( si[i].pos );
             }
             if ( si[i].image_name ){
-                si[i].pos.x = -1000 * screen_ratio1 / screen_ratio2;
-                si[i].pos.y = -1000 * screen_ratio1 / screen_ratio2;
+                si[i].orig_pos.x = -1000;
+                si[i].orig_pos.y = -1000;
+                si[i].scalePosXY( screen_ratio1, screen_ratio2 );
             }
             if (!csp2_flag) root_button_link.removeSprite(i);
             si[i].remove();
@@ -3022,14 +3051,14 @@ int ONScripterLabel::btnCommand()
     src_rect.w = button->image_rect.w;
     src_rect.h = button->image_rect.h;
 
-    button->anim[0] = new AnimationInfo();
-    button->anim[0]->num_of_cells = 1;
-    button->anim[0]->trans_mode = AnimationInfo::TRANS_COPY;
-    button->anim[0]->pos.x = button->image_rect.x;
-    button->anim[0]->pos.y = button->image_rect.y;
-    button->anim[0]->allocImage( button->image_rect.w, button->image_rect.h );
-    button->anim[0]->fill( 0, 0, 0, 0 );
-    button->anim[0]->copySurface( btndef_info.image_surface, &src_rect );
+    AnimationInfo *ai = button->anim[0] = new AnimationInfo();
+    ai->num_of_cells = 1;
+    ai->trans_mode = AnimationInfo::TRANS_COPY;
+    ai->pos.x = button->image_rect.x;
+    ai->pos.y = button->image_rect.y;
+    ai->allocImage( button->image_rect.w, button->image_rect.h );
+    ai->fill( 0, 0, 0, 0 );
+    ai->copySurface( btndef_info.image_surface, &src_rect );
     
     root_button_link.insert( button );
 
@@ -3187,35 +3216,40 @@ int ONScripterLabel::barclearCommand()
 int ONScripterLabel::barCommand()
 {
     int no = script_h.readInt();
-    if ( bar_info[no] ){
-        dirty_rect.add( bar_info[no]->pos );
-        bar_info[no]->remove();
+    AnimationInfo *ai = bar_info[no];
+    
+    if ( ai ){
+        dirty_rect.add( ai->pos );
+        ai->remove();
     }
     else{
-        bar_info[no] = new AnimationInfo();
+        ai = bar_info[no] = new AnimationInfo();
     }
-    bar_info[no]->trans_mode = AnimationInfo::TRANS_COPY;
-    bar_info[no]->num_of_cells = 1;
-    bar_info[no]->setCell(0);
 
-    bar_info[no]->param = script_h.readInt();
-    bar_info[no]->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    bar_info[no]->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
-                          
-    bar_info[no]->max_width = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    bar_info[no]->pos.h = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    bar_info[no]->max_param = script_h.readInt();
+    ai->trans_mode = AnimationInfo::TRANS_COPY;
+    ai->num_of_cells = 1;
+    ai->setCell(0);
+
+    ai->param      = script_h.readInt();
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->max_width  = script_h.readInt();
+    ai->orig_pos.w = 0;
+    ai->orig_pos.h = script_h.readInt();
+    ai->max_param  = script_h.readInt();
+
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
 
     const char *buf = script_h.readStr();
-    readColor( &bar_info[no]->color, buf );
+    readColor( &ai->color, buf );
 
-    int w = bar_info[no]->max_width * bar_info[no]->param / bar_info[no]->max_param;
-    if ( bar_info[no]->max_width > 0 && w > 0 ){
-        bar_info[no]->pos.w = w;
-        bar_info[no]->allocImage( bar_info[no]->pos.w, bar_info[no]->pos.h );
-        bar_info[no]->fill( bar_info[no]->color[0], bar_info[no]->color[1], bar_info[no]->color[2], 0xff );
-        dirty_rect.add( bar_info[no]->pos );
-    }
+    int w = ai->max_width * ai->param / ai->max_param;
+    if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
+
+    ai->scalePosWH( screen_ratio1, screen_ratio2 );
+    ai->allocImage( ai->pos.w, ai->pos.h );
+    ai->fill( ai->color[0], ai->color[1], ai->color[2], 0xff );
+    dirty_rect.add( ai->pos );
 
     return RET_CONTINUE;
 }
@@ -3258,34 +3292,35 @@ int ONScripterLabel::amspCommand()
     if (script_h.isName("amsp2")) amsp2_flag = true;
 
     int no = script_h.readInt();
-    AnimationInfo *si=NULL;
+    AnimationInfo *ai = NULL;
     if (amsp2_flag){
-        si = &sprite2_info[no];
-        dirty_rect.add( si->bounding_rect );
+        ai = &sprite2_info[no];
+        dirty_rect.add( ai->bounding_rect );
     }
     else{
-        si = &sprite_info[no];
-        dirty_rect.add( si->pos );
+        ai = &sprite_info[no];
+        dirty_rect.add( ai->pos );
     }
 
-    si->pos.x = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    si->pos.y = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    ai->orig_pos.x = script_h.readInt();
+    ai->orig_pos.y = script_h.readInt();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
     if (amsp2_flag){
-        si->scale_x = script_h.readInt();
-        si->scale_y = script_h.readInt();
-        si->rot = script_h.readInt();
-        si->calcAffineMatrix();
-        dirty_rect.add( si->bounding_rect );
+        ai->scale_x = script_h.readInt();
+        ai->scale_y = script_h.readInt();
+        ai->rot     = script_h.readInt();
+        ai->calcAffineMatrix();
+        dirty_rect.add( ai->bounding_rect );
     }
     else{
-        dirty_rect.add( si->pos );
+        dirty_rect.add( ai->pos );
     }
     
     if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
-        si->trans = script_h.readInt();
+        ai->trans = script_h.readInt();
 
-    if ( si->trans > 256 ) si->trans = 256;
-    else if ( si->trans < 0 ) si->trans = 0;
+    if      ( ai->trans > 256 ) ai->trans = 256;
+    else if ( ai->trans <   0 ) ai->trans = 0;
 
     return RET_CONTINUE;
 }
@@ -3293,10 +3328,11 @@ int ONScripterLabel::amspCommand()
 int ONScripterLabel::allsp2resumeCommand()
 {
     all_sprite2_hide_flag = false;
+
     for ( int i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-        AnimationInfo &si = sprite2_info[i];
-        if (si.image_surface && si.visible)
-            dirty_rect.add( si.bounding_rect );
+        AnimationInfo &ai = sprite2_info[i];
+        if (ai.image_surface && ai.visible)
+            dirty_rect.add( ai.bounding_rect );
     }
     return RET_CONTINUE;
 }
@@ -3323,10 +3359,11 @@ int ONScripterLabel::allspresumeCommand()
 int ONScripterLabel::allsp2hideCommand()
 {
     all_sprite2_hide_flag = true;
+
     for ( int i=0 ; i<MAX_SPRITE2_NUM ; i++ ){
-        AnimationInfo &si = sprite2_info[i];
-        if (si.image_surface && si.visible)
-            dirty_rect.add( si.bounding_rect );
+        AnimationInfo *ai = &sprite2_info[i];
+        if (ai->image_surface && ai->visible)
+            dirty_rect.add( ai->bounding_rect );
     }
     return RET_CONTINUE;
 }

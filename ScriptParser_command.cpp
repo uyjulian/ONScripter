@@ -442,8 +442,6 @@ int ScriptParser::nsadirCommand()
 
 int ScriptParser::nsaCommand()
 {
-    int archive_type = NsaReader::ARCHIVE_TYPE_NSA;
-    
     if ( script_h.isName("ns2") ){
         nsa_offset = 1;
     }
@@ -453,8 +451,8 @@ int ScriptParser::nsaCommand()
     
     delete script_h.cBR;
     script_h.cBR = new NsaReader( nsa_offset, archive_path, key_table );
-    if ( script_h.cBR->open( nsa_path, archive_type ) ){
-        fprintf( stderr, " *** failed to open Nsa archive, ignored.  ***\n");
+    if ( script_h.cBR->open( nsa_path ) ){
+        fprintf( stderr, " *** failed to open nsa or ns2 archive, ignored.  ***\n");
     }
 
     return RET_CONTINUE;

@@ -44,6 +44,7 @@ static struct FuncLUT{
     char command[30];
     FuncList method;
 } func_lut[] = {
+    {"yesnobox",   &ONScripterLabel::yesnoboxCommand},
     {"wavestop",   &ONScripterLabel::wavestopCommand},
     {"waveloop",   &ONScripterLabel::waveCommand},
     {"wave",   &ONScripterLabel::waveCommand},
@@ -1193,27 +1194,27 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     button_link->button_type = ButtonLink::TMP_SPRITE_BUTTON;
     button_link->show_flag = 1;
 
-    AnimationInfo *anim = new AnimationInfo();
-    button_link->anim[0] = anim;
+    AnimationInfo *ai = button_link->anim[0] = new AnimationInfo();
     
-    anim->trans_mode = AnimationInfo::TRANS_STRING;
-    anim->is_single_line = false;
-    anim->num_of_cells = 2;
-    anim->color_list = new uchar3[ anim->num_of_cells ];
+    ai->trans_mode = AnimationInfo::TRANS_STRING;
+    ai->is_single_line = false;
+    ai->num_of_cells = 2;
+    ai->color_list = new uchar3[ ai->num_of_cells ];
     for (int i=0 ; i<3 ; i++){
         if (nofile_flag)
-            anim->color_list[0][i] = info->nofile_color[i];
+            ai->color_list[0][i] = info->nofile_color[i];
         else
-            anim->color_list[0][i] = info->off_color[i];
-        anim->color_list[1][i] = info->on_color[i];
+            ai->color_list[0][i] = info->off_color[i];
+        ai->color_list[1][i] = info->on_color[i];
     }
-    setStr( &anim->file_name, buffer );
-    anim->pos.x = info->x() * screen_ratio1 / screen_ratio2;
-    anim->pos.y = info->y() * screen_ratio1 / screen_ratio2;
-    anim->visible = true;
+    setStr( &ai->file_name, buffer );
+    ai->orig_pos.x = info->x();
+    ai->orig_pos.y = info->y();
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->visible = true;
 
-    setupAnimationInfo( anim, info );
-    button_link->select_rect = button_link->image_rect = anim->pos;
+    setupAnimationInfo( ai, info );
+    button_link->select_rect = button_link->image_rect = ai->pos;
 
     info->newLine();
     if (info->getTateyokoMode() == FontInfo::YOKO_MODE)
@@ -1269,45 +1270,52 @@ void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_s
         }
         else if (com == 'M' || com == 'm'){
             sprite_no = getNumberFromBuffer( &ctl_str );
-            SDL_Rect rect = sprite_info[ sprite_no ].pos;
+            AnimationInfo *ai = &sprite_info[sprite_no];
+
+            SDL_Rect rect = ai->pos;
             if ( *ctl_str != ',' ) continue;
             ctl_str++; // skip ','
-            sprite_info[ sprite_no ].pos.x = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
+            ai->orig_pos.x = getNumberFromBuffer( &ctl_str );
             if ( *ctl_str != ',' ) continue;
             ctl_str++; // skip ','
-            sprite_info[ sprite_no ].pos.y = getNumberFromBuffer( &ctl_str ) * screen_ratio1 / screen_ratio2;
+            ai->orig_pos.y = getNumberFromBuffer( &ctl_str );
+            ai->scalePosXY( screen_ratio1, screen_ratio2 );
             dirty_rect.add( rect );
-            sprite_info[ sprite_no ].visible = true;
-            dirty_rect.add( sprite_info[ sprite_no ].pos );
+            ai->visible = true;
+            dirty_rect.add( ai->pos );
         }
     }
 }
 
 void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool abs_flag )
 {
+    AnimationInfo *ai = &cursor_info[no];
+    
     if (str){
-        cursor_info[no].setImageName( str );
+        ai->setImageName( str );
     }
     else{
-        if (no == 0) cursor_info[no].setImageName( DEFAULT_CURSOR_WAIT );
-        else         cursor_info[no].setImageName( DEFAULT_CURSOR_NEWPAGE );
+        if (no == 0) ai->setImageName( DEFAULT_CURSOR_WAIT );
+        else         ai->setImageName( DEFAULT_CURSOR_NEWPAGE );
     }
-    cursor_info[no].pos.x = x;
-    cursor_info[no].pos.y = y;
+    ai->orig_pos.x = x;
+    ai->orig_pos.y = y;
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
 
-    parseTaggedString( &cursor_info[no] );
-    setupAnimationInfo( &cursor_info[no] );
+    parseTaggedString( ai );
+    setupAnimationInfo( ai );
+
     if ( filelog_flag )
-        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], cursor_info[no].file_name, true ); // a trick for save file
-    cursor_info[no].abs_flag = abs_flag;
-    if ( cursor_info[no].image_surface )
-        cursor_info[no].visible = true;
+        script_h.findAndAddLog( script_h.log_info[ScriptHandler::FILE_LOG], ai->file_name, true ); // a trick for save file
+    ai->abs_flag = abs_flag;
+    if ( ai->image_surface )
+        ai->visible = true;
     else
-        cursor_info[no].remove();
+        ai->remove();
 
     if (str == NULL){
-        if (no == 0) cursor_info[no].deleteImageName();
-        else         cursor_info[no].deleteImageName();
+        if (no == 0) ai->deleteImageName();
+        else         ai->deleteImageName();
     }
 }
 

@@ -2,7 +2,7 @@
  *
  *  NsaReader.h - Reader from a NSA archive
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,6 +26,7 @@
 
 #include "SarReader.h"
 #define MAX_EXTRA_ARCHIVE 9
+#define MAX_NS2_ARCHIVE 100
 
 class NsaReader : public SarReader
 {
@@ -33,7 +34,7 @@ public:
     NsaReader( int nsa_offset=0, char *path=NULL, const unsigned char *key_table=NULL );
     ~NsaReader();
 
-    int open( char *nsa_path=NULL, int archive_type = ARCHIVE_TYPE_NSA );
+    int open( char *nsa_path=NULL );
     const char *getArchiveName() const;
     int getNumFiles();
     
@@ -48,9 +49,12 @@ public:
 private:
     bool sar_flag;
     int nsa_offset;
-    struct ArchiveInfo archive_info2[MAX_EXTRA_ARCHIVE];
     int num_of_nsa_archives;
-    char *nsa_archive_ext;
+    int num_of_ns2_archives;
+    const char *nsa_archive_ext;
+    const char *ns2_archive_ext;
+    struct ArchiveInfo archive_info2[MAX_EXTRA_ARCHIVE];
+    struct ArchiveInfo archive_info_ns2[MAX_NS2_ARCHIVE];
 
     size_t getFileLengthSub( ArchiveInfo *ai, const char *file_name );
 };

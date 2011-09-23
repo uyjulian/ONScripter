@@ -87,6 +87,7 @@ public:
 
     /* ---------------------------------------- */
     /* Commands */
+    int yesnoboxCommand();
     int wavestopCommand();
     int waveCommand();
     int waittimerCommand();

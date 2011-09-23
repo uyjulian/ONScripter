@@ -2,7 +2,7 @@
 /*
  *  DirectReader.h - Reader from independent files
  *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -35,7 +35,7 @@ public:
     DirectReader( char *path=NULL, const unsigned char *key_table=NULL );
     ~DirectReader();
 
-    int open( char *name=NULL, int archive_type = ARCHIVE_TYPE_NONE );
+    int open( char *name=NULL );
     int close();
 
     const char *getArchiveName() const;
@@ -95,6 +95,8 @@ protected:
     void writeChar( FILE *fp, unsigned char ch );
     void writeShort( FILE *fp, unsigned short ch );
     void writeLong( FILE *fp, unsigned long ch );
+    static unsigned short swapShort( unsigned short ch );
+    static unsigned long swapLong( unsigned long ch );
     size_t decodeNBZ( FILE *fp, size_t offset, unsigned char *buf );
     size_t encodeNBZ( FILE *fp, size_t length, unsigned char *buf );
     int getbit( FILE *fp, int n );
