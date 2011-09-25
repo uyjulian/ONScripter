@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_effect.cpp - Effect executer of ONScripter
+ *  ONScripter_effect.cpp - Effect executer of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,13 +21,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
 #define EFFECT_STRIPE_WIDTH (16 * screen_ratio1 / screen_ratio2)
 #define EFFECT_STRIPE_CURTAIN_WIDTH (24 * screen_ratio1 / screen_ratio2)
 #define EFFECT_QUAKE_AMP (12 * screen_ratio1 / screen_ratio2)
 
-bool ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
+bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool update_backup_surface )
 {
     if ( effect->effect == 0 ) return true;
 
@@ -90,7 +90,7 @@ bool ONScripterLabel::setEffect( EffectLink *effect, bool generate_effect_dst, b
     return false;
 }
 
-bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
+bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
 {
     effect_start_time = SDL_GetTicks();
     if ( effect_counter == 0 ) effect_start_time_old = effect_start_time - 1;
@@ -413,7 +413,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     }
 }
 
-void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)
+void ONScripter::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)
 {
     SDL_Rect clipped_rect;
     if (AnimationInfo::doClipping(dst_rect, &dirty_rect.bounding_box, &clipped_rect)) return;
@@ -427,7 +427,7 @@ void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Sur
     SDL_BlitSurface(surface, src_rect, accumulation_surface, dst_rect);
 }
 
-void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
+void ONScripter::generateMosaic( SDL_Surface *src_surface, int level )
 {
     int i, j, ii, jj;
     int width = 160;

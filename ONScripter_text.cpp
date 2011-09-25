@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_text.cpp - Text parser of ONScripter
+ *  ONScripter_text.cpp - Text parser of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
 extern unsigned short convSJIS2UTF16( unsigned short in );
 
@@ -37,7 +37,7 @@ extern unsigned short convSJIS2UTF16( unsigned short in );
 #define IS_TRANSLATION_REQUIRED(x)	\
         ( *(x) == (char)0x81 && *((x)+1) >= 0x41 && *((x)+1) <= 0x44 )
 
-SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text)
+SDL_Surface *ONScripter::renderGlyph(TTF_Font *font, Uint16 text)
 {
     GlyphCache *gc = root_glyph_cache;
     GlyphCache *pre_gc = gc;
@@ -70,7 +70,7 @@ SDL_Surface *ONScripterLabel::renderGlyph(TTF_Font *font, Uint16 text)
     return gc->surface;
 }
 
-void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
+void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
     if (IS_TWO_BYTE(text[0])){
@@ -130,7 +130,7 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_C
     }
 }
 
-void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
+void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
 {
     //printf("draw %x-%x[%s] %d, %d\n", text[0], text[1], text, info->xy[0], info->xy[1] );
     
@@ -198,7 +198,7 @@ void ONScripterLabel::drawChar( char* text, FontInfo *info, bool flush_flag, boo
     }
 }
 
-void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
+void ONScripter::drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip )
 {
     char text2[3]= {text[0], '\0', '\0'};
     
@@ -215,7 +215,7 @@ void ONScripterLabel::drawDoubleChars( char* text, FontInfo *info, bool flush_fl
     }
 }
 
-void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info )
+void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info )
 {
     int i;
 
@@ -312,7 +312,7 @@ void ONScripterLabel::drawString( const char *str, uchar3 color, FontInfo *info,
     if ( rect ) *rect = clipped_rect;
 }
 
-void ONScripterLabel::restoreTextBuffer(SDL_Surface *surface)
+void ONScripter::restoreTextBuffer(SDL_Surface *surface)
 {
     text_info.fill( 0, 0, 0, 0 );
 
@@ -364,7 +364,7 @@ void ONScripterLabel::restoreTextBuffer(SDL_Surface *surface)
     }
 }
 
-void ONScripterLabel::enterTextDisplayMode(bool text_flag)
+void ONScripter::enterTextDisplayMode(bool text_flag)
 {
     if (line_enter_status <= 1 && saveon_flag && internal_saveon_flag && text_flag){
         saveSaveFile( -1 );
@@ -384,7 +384,7 @@ void ONScripterLabel::enterTextDisplayMode(bool text_flag)
     }
 }
 
-void ONScripterLabel::leaveTextDisplayMode(bool force_leave_flag)
+void ONScripter::leaveTextDisplayMode(bool force_leave_flag)
 {
     if (display_mode & DISPLAY_MODE_TEXT &&
         (force_leave_flag || erase_text_window_mode != 0)){
@@ -401,7 +401,7 @@ void ONScripterLabel::leaveTextDisplayMode(bool force_leave_flag)
     display_mode |= DISPLAY_MODE_UPDATED;
 }
 
-bool ONScripterLabel::doClickEnd()
+bool ONScripter::doClickEnd()
 {
     bool ret = false;
     
@@ -429,7 +429,7 @@ bool ONScripterLabel::doClickEnd()
     return ret;
 }
 
-bool ONScripterLabel::clickWait( char *out_text )
+bool ONScripter::clickWait( char *out_text )
 {
     flush( REFRESH_NONE_MODE );
     skip_mode &= ~SKIP_TO_EOL;
@@ -490,7 +490,7 @@ bool ONScripterLabel::clickWait( char *out_text )
     return true;
 }
 
-bool ONScripterLabel::clickNewPage( char *out_text )
+bool ONScripter::clickNewPage( char *out_text )
 {
     if ( out_text ){
         drawDoubleChars( out_text, &sentence_font, true, true, accumulation_surface, &text_info );
@@ -541,7 +541,7 @@ bool ONScripterLabel::clickNewPage( char *out_text )
     return true;
 }
 
-void ONScripterLabel::startRuby(const char *buf, FontInfo &info)
+void ONScripter::startRuby(const char *buf, FontInfo &info)
 {
     ruby_struct.stage = RubyStruct::BODY;
     ruby_font = info;
@@ -579,7 +579,7 @@ void ONScripterLabel::startRuby(const char *buf, FontInfo &info)
     ruby_struct.margin = ruby_font.initRuby(info, ruby_struct.body_count/2, ruby_struct.ruby_count/2);
 }
 
-void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info)
+void ONScripter::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info)
 {
     char out_text[3]= {'\0', '\0', '\0'};
     if ( rubyon_flag ){
@@ -607,7 +607,7 @@ void ONScripterLabel::endRuby(bool flush_flag, bool lookback_flag, SDL_Surface *
     ruby_struct.stage = RubyStruct::NONE;
 }
 
-int ONScripterLabel::textCommand()
+int ONScripter::textCommand()
 {
     if (line_enter_status <= 1 && saveon_flag && internal_saveon_flag){
         saveSaveFile( -1 );
@@ -679,7 +679,7 @@ int ONScripterLabel::textCommand()
     return RET_CONTINUE;
 }
 
-bool ONScripterLabel::checkLineBreak(const char *buf, FontInfo *fi)
+bool ONScripter::checkLineBreak(const char *buf, FontInfo *fi)
 {
     // check start kinsoku
     if (isStartKinsoku( buf+2 )){
@@ -712,7 +712,7 @@ bool ONScripterLabel::checkLineBreak(const char *buf, FontInfo *fi)
     return false;
 }
 
-void ONScripterLabel::processEOT()
+void ONScripter::processEOT()
 {
     int i, n;
     
@@ -741,7 +741,7 @@ void ONScripterLabel::processEOT()
     if (!new_line_skip_flag && !pagetag_flag) line_enter_status = 0;
 }
 
-bool ONScripterLabel::processText()
+bool ONScripter::processText()
 {
     //printf("textCommand %c %d %d %d\n", script_h.getStringBuffer()[ string_buffer_offset ], string_buffer_offset, event_mode, line_enter_status);
     char out_text[3]= {'\0', '\0', '\0'};

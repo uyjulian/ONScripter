@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel.cpp - Execution block parser of ONScripter
+ *  ONScripter.cpp - Execution block parser of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 #ifdef USE_FONTCONFIG
 #include <fontconfig/fontconfig.h>
 #endif
@@ -39,218 +39,218 @@ extern "C" void waveCallback( int channel );
 #define DEFAULT_CURSOR_WAIT    ":l/3,160,2;cursor0.bmp"
 #define DEFAULT_CURSOR_NEWPAGE ":l/3,160,2;cursor1.bmp"
 
-typedef int (ONScripterLabel::*FuncList)();
+typedef int (ONScripter::*FuncList)();
 static struct FuncLUT{
     char command[30];
     FuncList method;
 } func_lut[] = {
-    {"yesnobox",   &ONScripterLabel::yesnoboxCommand},
-    {"wavestop",   &ONScripterLabel::wavestopCommand},
-    {"waveloop",   &ONScripterLabel::waveCommand},
-    {"wave",   &ONScripterLabel::waveCommand},
-    {"waittimer",   &ONScripterLabel::waittimerCommand},
-    {"wait",   &ONScripterLabel::waitCommand},
-    {"vsp2",   &ONScripterLabel::vspCommand},
-    {"vsp",   &ONScripterLabel::vspCommand},
-    {"voicevol",   &ONScripterLabel::voicevolCommand},
-    {"trap",   &ONScripterLabel::trapCommand},
-    {"transbtn",   &ONScripterLabel::transbtnCommand},
-    {"textspeeddefault",   &ONScripterLabel::textspeeddefaultCommand},
-    {"textspeed",   &ONScripterLabel::textspeedCommand},
-    {"textshow",   &ONScripterLabel::textshowCommand},
-    {"texton",   &ONScripterLabel::textonCommand},
-    {"textoff",   &ONScripterLabel::textoffCommand},
-    {"texthide",   &ONScripterLabel::texthideCommand},
-    {"textclear",   &ONScripterLabel::textclearCommand},
-    {"textbtnwait",   &ONScripterLabel::btnwaitCommand},
-    {"texec",   &ONScripterLabel::texecCommand},
-    {"tateyoko",   &ONScripterLabel::tateyokoCommand},
-    {"tal", &ONScripterLabel::talCommand},
-    {"tablegoto",   &ONScripterLabel::tablegotoCommand},
-    {"systemcall",   &ONScripterLabel::systemcallCommand},
-    {"strsp",   &ONScripterLabel::strspCommand},
-    {"stop",   &ONScripterLabel::stopCommand},
-    {"sp_rgb_gradation",   &ONScripterLabel::sp_rgb_gradationCommand},
-    {"spstr",   &ONScripterLabel::spstrCommand},
-    {"spreload",   &ONScripterLabel::spreloadCommand},
-    {"splitstring",   &ONScripterLabel::splitCommand},
-    {"split",   &ONScripterLabel::splitCommand},
-    {"spclclk",   &ONScripterLabel::spclclkCommand},
-    {"spbtn",   &ONScripterLabel::spbtnCommand},
-    {"skipoff",   &ONScripterLabel::skipoffCommand},
-    {"sevol",   &ONScripterLabel::sevolCommand},
-    {"setwindow3",   &ONScripterLabel::setwindow3Command},
-    {"setwindow2",   &ONScripterLabel::setwindow2Command},
-    {"setwindow",   &ONScripterLabel::setwindowCommand},
-    {"setcursor",   &ONScripterLabel::setcursorCommand},
-    {"selnum",   &ONScripterLabel::selectCommand},
-    {"selgosub",   &ONScripterLabel::selectCommand},
-    {"selectbtnwait", &ONScripterLabel::btnwaitCommand},
-    {"select",   &ONScripterLabel::selectCommand},
-    {"savetime",   &ONScripterLabel::savetimeCommand},
-    {"savescreenshot2",   &ONScripterLabel::savescreenshotCommand},
-    {"savescreenshot",   &ONScripterLabel::savescreenshotCommand},
-    {"saveon",   &ONScripterLabel::saveonCommand},
-    {"saveoff",   &ONScripterLabel::saveoffCommand},
-    {"savegame2",   &ONScripterLabel::savegameCommand},
-    {"savegame",   &ONScripterLabel::savegameCommand},
-    {"savefileexist",   &ONScripterLabel::savefileexistCommand},
-    {"rnd2",   &ONScripterLabel::rndCommand},
-    {"rnd",   &ONScripterLabel::rndCommand},
-    {"rmode",   &ONScripterLabel::rmodeCommand},
-    {"resettimer",   &ONScripterLabel::resettimerCommand},
-    {"reset",   &ONScripterLabel::resetCommand},
-    {"repaint",   &ONScripterLabel::repaintCommand},
-    {"quakey",   &ONScripterLabel::quakeCommand},
-    {"quakex",   &ONScripterLabel::quakeCommand},
-    {"quake",   &ONScripterLabel::quakeCommand},
-    {"puttext",   &ONScripterLabel::puttextCommand},
-    {"prnumclear",   &ONScripterLabel::prnumclearCommand},
-    {"prnum",   &ONScripterLabel::prnumCommand},
-    {"print",   &ONScripterLabel::printCommand},
-    {"playstop",   &ONScripterLabel::playstopCommand},
-    {"playonce",   &ONScripterLabel::playCommand},
-    {"play",   &ONScripterLabel::playCommand},
-    {"ofscpy", &ONScripterLabel::ofscopyCommand},
-    {"ofscopy", &ONScripterLabel::ofscopyCommand},
-    {"nega", &ONScripterLabel::negaCommand},
-    {"msp2", &ONScripterLabel::mspCommand},
-    {"msp", &ONScripterLabel::mspCommand},
-    {"mpegplay", &ONScripterLabel::mpegplayCommand},
-    {"mp3vol", &ONScripterLabel::mp3volCommand},
-    {"mp3stop", &ONScripterLabel::playstopCommand},
-    {"mp3save", &ONScripterLabel::mp3Command},
-    {"mp3loop", &ONScripterLabel::mp3Command},
-    {"mp3", &ONScripterLabel::mp3Command},
-    {"movie", &ONScripterLabel::movieCommand},
-    {"movemousecursor", &ONScripterLabel::movemousecursorCommand},
-    {"monocro", &ONScripterLabel::monocroCommand},
-    {"menu_window", &ONScripterLabel::menu_windowCommand},
-    {"menu_full", &ONScripterLabel::menu_fullCommand},
-    {"menu_automode", &ONScripterLabel::menu_automodeCommand},
-    {"lsph2sub", &ONScripterLabel::lsp2Command},
-    {"lsph2add", &ONScripterLabel::lsp2Command},
-    {"lsph2", &ONScripterLabel::lsp2Command},
-    {"lsph", &ONScripterLabel::lspCommand},
-    {"lsp2sub", &ONScripterLabel::lsp2Command},
-    {"lsp2add", &ONScripterLabel::lsp2Command},
-    {"lsp2", &ONScripterLabel::lsp2Command},
-    {"lsp", &ONScripterLabel::lspCommand},
-    {"lr_trap",   &ONScripterLabel::trapCommand},
-    {"lrclick",   &ONScripterLabel::clickCommand},
-    {"loopbgmstop", &ONScripterLabel::loopbgmstopCommand},
-    {"loopbgm", &ONScripterLabel::loopbgmCommand},
-    {"lookbackflush", &ONScripterLabel::lookbackflushCommand},
-    {"lookbackbutton",      &ONScripterLabel::lookbackbuttonCommand},
-    {"logsp2", &ONScripterLabel::logspCommand},
-    {"logsp", &ONScripterLabel::logspCommand},
-    {"locate", &ONScripterLabel::locateCommand},
-    {"loadgame", &ONScripterLabel::loadgameCommand},
-    {"ld", &ONScripterLabel::ldCommand},
-    {"jumpf", &ONScripterLabel::jumpfCommand},
-    {"jumpb", &ONScripterLabel::jumpbCommand},
-    {"isfull", &ONScripterLabel::isfullCommand},
-    {"isskip", &ONScripterLabel::isskipCommand},
-    {"ispage", &ONScripterLabel::ispageCommand},
-    {"isdown", &ONScripterLabel::isdownCommand},
-    {"input", &ONScripterLabel::inputCommand},
-    {"indent", &ONScripterLabel::indentCommand},
-    {"humanorder", &ONScripterLabel::humanorderCommand},
-    {"getzxc", &ONScripterLabel::getzxcCommand},
-    {"getvoicevol", &ONScripterLabel::getvoicevolCommand},
-    {"getversion", &ONScripterLabel::getversionCommand},
-    {"gettimer", &ONScripterLabel::gettimerCommand},
-    {"gettext", &ONScripterLabel::gettextCommand},
-    {"gettaglog", &ONScripterLabel::gettaglogCommand},
-    {"gettag", &ONScripterLabel::gettagCommand},
-    {"gettab", &ONScripterLabel::gettabCommand},
-    {"getspsize", &ONScripterLabel::getspsizeCommand},
-    {"getspmode", &ONScripterLabel::getspmodeCommand},
-    {"getsevol", &ONScripterLabel::getsevolCommand},
-    {"getscreenshot", &ONScripterLabel::getscreenshotCommand},
-    {"getsavestr", &ONScripterLabel::getsavestrCommand},
-    {"getret", &ONScripterLabel::getretCommand},
-    {"getreg", &ONScripterLabel::getregCommand},
-    {"getpageup", &ONScripterLabel::getpageupCommand},
-    {"getpage", &ONScripterLabel::getpageCommand},
-    {"getmp3vol", &ONScripterLabel::getmp3volCommand},
-    {"getmousepos", &ONScripterLabel::getmouseposCommand},
-    {"getlog", &ONScripterLabel::getlogCommand},
-    {"getinsert", &ONScripterLabel::getinsertCommand},
-    {"getfunction", &ONScripterLabel::getfunctionCommand},
-    {"getenter", &ONScripterLabel::getenterCommand},
-    {"getcursorpos", &ONScripterLabel::getcursorposCommand},
-    {"getcursor", &ONScripterLabel::getcursorCommand},
-    {"getcselstr", &ONScripterLabel::getcselstrCommand},
-    {"getcselnum", &ONScripterLabel::getcselnumCommand},
-    {"getbtntimer", &ONScripterLabel::gettimerCommand},
-    {"getbgmvol", &ONScripterLabel::getmp3volCommand},
-    {"game", &ONScripterLabel::gameCommand},
-    {"fileexist", &ONScripterLabel::fileexistCommand},
-    {"existspbtn", &ONScripterLabel::spbtnCommand},
-    {"exec_dll", &ONScripterLabel::exec_dllCommand},
-    {"exbtn_d", &ONScripterLabel::exbtnCommand},
-    {"exbtn", &ONScripterLabel::exbtnCommand},
-    {"erasetextwindow", &ONScripterLabel::erasetextwindowCommand},
-    {"end", &ONScripterLabel::endCommand},
-    {"dwavestop", &ONScripterLabel::dwavestopCommand},
-    {"dwaveplayloop", &ONScripterLabel::dwaveCommand},
-    {"dwaveplay", &ONScripterLabel::dwaveCommand},
-    {"dwaveloop", &ONScripterLabel::dwaveCommand},
-    {"dwaveload", &ONScripterLabel::dwaveCommand},
-    {"dwave", &ONScripterLabel::dwaveCommand},
-    {"drawtext", &ONScripterLabel::drawtextCommand},
-    {"drawsp3", &ONScripterLabel::drawsp3Command},
-    {"drawsp2", &ONScripterLabel::drawsp2Command},
-    {"drawsp", &ONScripterLabel::drawspCommand},
-    {"drawfill", &ONScripterLabel::drawfillCommand},
-    {"drawclear", &ONScripterLabel::drawclearCommand},
-    {"drawbg2", &ONScripterLabel::drawbg2Command},
-    {"drawbg", &ONScripterLabel::drawbgCommand},
-    {"draw", &ONScripterLabel::drawCommand},
-    {"delay", &ONScripterLabel::delayCommand},
-    {"definereset", &ONScripterLabel::defineresetCommand},
-    {"csp2", &ONScripterLabel::cspCommand},
-    {"csp", &ONScripterLabel::cspCommand},
-    {"cselgoto", &ONScripterLabel::cselgotoCommand},
-    {"cselbtn", &ONScripterLabel::cselbtnCommand},
-    {"csel", &ONScripterLabel::selectCommand},
-    {"click", &ONScripterLabel::clickCommand},
-    {"cl", &ONScripterLabel::clCommand},
-    {"chvol", &ONScripterLabel::chvolCommand},
-    {"checkpage", &ONScripterLabel::checkpageCommand},
-    {"cellcheckspbtn", &ONScripterLabel::spbtnCommand},
-    {"cellcheckexbtn", &ONScripterLabel::exbtnCommand},
-    {"cell", &ONScripterLabel::cellCommand},
-    {"caption", &ONScripterLabel::captionCommand},
-    {"btnwait2", &ONScripterLabel::btnwaitCommand},
-    {"btnwait", &ONScripterLabel::btnwaitCommand},
-    {"btntime2", &ONScripterLabel::btntimeCommand},
-    {"btntime", &ONScripterLabel::btntimeCommand},
-    {"btndown",  &ONScripterLabel::btndownCommand},
-    {"btndef",  &ONScripterLabel::btndefCommand},
-    {"btn",     &ONScripterLabel::btnCommand},
-    {"br",      &ONScripterLabel::brCommand},
-    {"blt",      &ONScripterLabel::bltCommand},
-    {"bgmvol", &ONScripterLabel::mp3volCommand},
-    {"bgmstop", &ONScripterLabel::playstopCommand},
-    {"bgmonce", &ONScripterLabel::mp3Command}, 
-    {"bgm", &ONScripterLabel::mp3Command}, 
-    {"bgcpy",      &ONScripterLabel::bgcopyCommand},
-    {"bgcopy",      &ONScripterLabel::bgcopyCommand},
-    {"bg",      &ONScripterLabel::bgCommand},
-    {"barclear",      &ONScripterLabel::barclearCommand},
-    {"bar",      &ONScripterLabel::barCommand},
-    {"avi",      &ONScripterLabel::aviCommand},
-    {"automode_time",      &ONScripterLabel::automode_timeCommand},
-    {"autoclick",      &ONScripterLabel::autoclickCommand},
-    {"amsp2",      &ONScripterLabel::amspCommand},
-    {"amsp",      &ONScripterLabel::amspCommand},
-    {"allsp2resume",      &ONScripterLabel::allsp2resumeCommand},
-    {"allspresume",      &ONScripterLabel::allspresumeCommand},
-    {"allsp2hide",      &ONScripterLabel::allsp2hideCommand},
-    {"allsphide",      &ONScripterLabel::allsphideCommand},
-    {"abssetcursor", &ONScripterLabel::setcursorCommand},
+    {"yesnobox",   &ONScripter::yesnoboxCommand},
+    {"wavestop",   &ONScripter::wavestopCommand},
+    {"waveloop",   &ONScripter::waveCommand},
+    {"wave",   &ONScripter::waveCommand},
+    {"waittimer",   &ONScripter::waittimerCommand},
+    {"wait",   &ONScripter::waitCommand},
+    {"vsp2",   &ONScripter::vspCommand},
+    {"vsp",   &ONScripter::vspCommand},
+    {"voicevol",   &ONScripter::voicevolCommand},
+    {"trap",   &ONScripter::trapCommand},
+    {"transbtn",   &ONScripter::transbtnCommand},
+    {"textspeeddefault",   &ONScripter::textspeeddefaultCommand},
+    {"textspeed",   &ONScripter::textspeedCommand},
+    {"textshow",   &ONScripter::textshowCommand},
+    {"texton",   &ONScripter::textonCommand},
+    {"textoff",   &ONScripter::textoffCommand},
+    {"texthide",   &ONScripter::texthideCommand},
+    {"textclear",   &ONScripter::textclearCommand},
+    {"textbtnwait",   &ONScripter::btnwaitCommand},
+    {"texec",   &ONScripter::texecCommand},
+    {"tateyoko",   &ONScripter::tateyokoCommand},
+    {"tal", &ONScripter::talCommand},
+    {"tablegoto",   &ONScripter::tablegotoCommand},
+    {"systemcall",   &ONScripter::systemcallCommand},
+    {"strsp",   &ONScripter::strspCommand},
+    {"stop",   &ONScripter::stopCommand},
+    {"sp_rgb_gradation",   &ONScripter::sp_rgb_gradationCommand},
+    {"spstr",   &ONScripter::spstrCommand},
+    {"spreload",   &ONScripter::spreloadCommand},
+    {"splitstring",   &ONScripter::splitCommand},
+    {"split",   &ONScripter::splitCommand},
+    {"spclclk",   &ONScripter::spclclkCommand},
+    {"spbtn",   &ONScripter::spbtnCommand},
+    {"skipoff",   &ONScripter::skipoffCommand},
+    {"sevol",   &ONScripter::sevolCommand},
+    {"setwindow3",   &ONScripter::setwindow3Command},
+    {"setwindow2",   &ONScripter::setwindow2Command},
+    {"setwindow",   &ONScripter::setwindowCommand},
+    {"setcursor",   &ONScripter::setcursorCommand},
+    {"selnum",   &ONScripter::selectCommand},
+    {"selgosub",   &ONScripter::selectCommand},
+    {"selectbtnwait", &ONScripter::btnwaitCommand},
+    {"select",   &ONScripter::selectCommand},
+    {"savetime",   &ONScripter::savetimeCommand},
+    {"savescreenshot2",   &ONScripter::savescreenshotCommand},
+    {"savescreenshot",   &ONScripter::savescreenshotCommand},
+    {"saveon",   &ONScripter::saveonCommand},
+    {"saveoff",   &ONScripter::saveoffCommand},
+    {"savegame2",   &ONScripter::savegameCommand},
+    {"savegame",   &ONScripter::savegameCommand},
+    {"savefileexist",   &ONScripter::savefileexistCommand},
+    {"rnd2",   &ONScripter::rndCommand},
+    {"rnd",   &ONScripter::rndCommand},
+    {"rmode",   &ONScripter::rmodeCommand},
+    {"resettimer",   &ONScripter::resettimerCommand},
+    {"reset",   &ONScripter::resetCommand},
+    {"repaint",   &ONScripter::repaintCommand},
+    {"quakey",   &ONScripter::quakeCommand},
+    {"quakex",   &ONScripter::quakeCommand},
+    {"quake",   &ONScripter::quakeCommand},
+    {"puttext",   &ONScripter::puttextCommand},
+    {"prnumclear",   &ONScripter::prnumclearCommand},
+    {"prnum",   &ONScripter::prnumCommand},
+    {"print",   &ONScripter::printCommand},
+    {"playstop",   &ONScripter::playstopCommand},
+    {"playonce",   &ONScripter::playCommand},
+    {"play",   &ONScripter::playCommand},
+    {"ofscpy", &ONScripter::ofscopyCommand},
+    {"ofscopy", &ONScripter::ofscopyCommand},
+    {"nega", &ONScripter::negaCommand},
+    {"msp2", &ONScripter::mspCommand},
+    {"msp", &ONScripter::mspCommand},
+    {"mpegplay", &ONScripter::mpegplayCommand},
+    {"mp3vol", &ONScripter::mp3volCommand},
+    {"mp3stop", &ONScripter::playstopCommand},
+    {"mp3save", &ONScripter::mp3Command},
+    {"mp3loop", &ONScripter::mp3Command},
+    {"mp3", &ONScripter::mp3Command},
+    {"movie", &ONScripter::movieCommand},
+    {"movemousecursor", &ONScripter::movemousecursorCommand},
+    {"monocro", &ONScripter::monocroCommand},
+    {"menu_window", &ONScripter::menu_windowCommand},
+    {"menu_full", &ONScripter::menu_fullCommand},
+    {"menu_automode", &ONScripter::menu_automodeCommand},
+    {"lsph2sub", &ONScripter::lsp2Command},
+    {"lsph2add", &ONScripter::lsp2Command},
+    {"lsph2", &ONScripter::lsp2Command},
+    {"lsph", &ONScripter::lspCommand},
+    {"lsp2sub", &ONScripter::lsp2Command},
+    {"lsp2add", &ONScripter::lsp2Command},
+    {"lsp2", &ONScripter::lsp2Command},
+    {"lsp", &ONScripter::lspCommand},
+    {"lr_trap",   &ONScripter::trapCommand},
+    {"lrclick",   &ONScripter::clickCommand},
+    {"loopbgmstop", &ONScripter::loopbgmstopCommand},
+    {"loopbgm", &ONScripter::loopbgmCommand},
+    {"lookbackflush", &ONScripter::lookbackflushCommand},
+    {"lookbackbutton",      &ONScripter::lookbackbuttonCommand},
+    {"logsp2", &ONScripter::logspCommand},
+    {"logsp", &ONScripter::logspCommand},
+    {"locate", &ONScripter::locateCommand},
+    {"loadgame", &ONScripter::loadgameCommand},
+    {"ld", &ONScripter::ldCommand},
+    {"jumpf", &ONScripter::jumpfCommand},
+    {"jumpb", &ONScripter::jumpbCommand},
+    {"isfull", &ONScripter::isfullCommand},
+    {"isskip", &ONScripter::isskipCommand},
+    {"ispage", &ONScripter::ispageCommand},
+    {"isdown", &ONScripter::isdownCommand},
+    {"input", &ONScripter::inputCommand},
+    {"indent", &ONScripter::indentCommand},
+    {"humanorder", &ONScripter::humanorderCommand},
+    {"getzxc", &ONScripter::getzxcCommand},
+    {"getvoicevol", &ONScripter::getvoicevolCommand},
+    {"getversion", &ONScripter::getversionCommand},
+    {"gettimer", &ONScripter::gettimerCommand},
+    {"gettext", &ONScripter::gettextCommand},
+    {"gettaglog", &ONScripter::gettaglogCommand},
+    {"gettag", &ONScripter::gettagCommand},
+    {"gettab", &ONScripter::gettabCommand},
+    {"getspsize", &ONScripter::getspsizeCommand},
+    {"getspmode", &ONScripter::getspmodeCommand},
+    {"getsevol", &ONScripter::getsevolCommand},
+    {"getscreenshot", &ONScripter::getscreenshotCommand},
+    {"getsavestr", &ONScripter::getsavestrCommand},
+    {"getret", &ONScripter::getretCommand},
+    {"getreg", &ONScripter::getregCommand},
+    {"getpageup", &ONScripter::getpageupCommand},
+    {"getpage", &ONScripter::getpageCommand},
+    {"getmp3vol", &ONScripter::getmp3volCommand},
+    {"getmousepos", &ONScripter::getmouseposCommand},
+    {"getlog", &ONScripter::getlogCommand},
+    {"getinsert", &ONScripter::getinsertCommand},
+    {"getfunction", &ONScripter::getfunctionCommand},
+    {"getenter", &ONScripter::getenterCommand},
+    {"getcursorpos", &ONScripter::getcursorposCommand},
+    {"getcursor", &ONScripter::getcursorCommand},
+    {"getcselstr", &ONScripter::getcselstrCommand},
+    {"getcselnum", &ONScripter::getcselnumCommand},
+    {"getbtntimer", &ONScripter::gettimerCommand},
+    {"getbgmvol", &ONScripter::getmp3volCommand},
+    {"game", &ONScripter::gameCommand},
+    {"fileexist", &ONScripter::fileexistCommand},
+    {"existspbtn", &ONScripter::spbtnCommand},
+    {"exec_dll", &ONScripter::exec_dllCommand},
+    {"exbtn_d", &ONScripter::exbtnCommand},
+    {"exbtn", &ONScripter::exbtnCommand},
+    {"erasetextwindow", &ONScripter::erasetextwindowCommand},
+    {"end", &ONScripter::endCommand},
+    {"dwavestop", &ONScripter::dwavestopCommand},
+    {"dwaveplayloop", &ONScripter::dwaveCommand},
+    {"dwaveplay", &ONScripter::dwaveCommand},
+    {"dwaveloop", &ONScripter::dwaveCommand},
+    {"dwaveload", &ONScripter::dwaveCommand},
+    {"dwave", &ONScripter::dwaveCommand},
+    {"drawtext", &ONScripter::drawtextCommand},
+    {"drawsp3", &ONScripter::drawsp3Command},
+    {"drawsp2", &ONScripter::drawsp2Command},
+    {"drawsp", &ONScripter::drawspCommand},
+    {"drawfill", &ONScripter::drawfillCommand},
+    {"drawclear", &ONScripter::drawclearCommand},
+    {"drawbg2", &ONScripter::drawbg2Command},
+    {"drawbg", &ONScripter::drawbgCommand},
+    {"draw", &ONScripter::drawCommand},
+    {"delay", &ONScripter::delayCommand},
+    {"definereset", &ONScripter::defineresetCommand},
+    {"csp2", &ONScripter::cspCommand},
+    {"csp", &ONScripter::cspCommand},
+    {"cselgoto", &ONScripter::cselgotoCommand},
+    {"cselbtn", &ONScripter::cselbtnCommand},
+    {"csel", &ONScripter::selectCommand},
+    {"click", &ONScripter::clickCommand},
+    {"cl", &ONScripter::clCommand},
+    {"chvol", &ONScripter::chvolCommand},
+    {"checkpage", &ONScripter::checkpageCommand},
+    {"cellcheckspbtn", &ONScripter::spbtnCommand},
+    {"cellcheckexbtn", &ONScripter::exbtnCommand},
+    {"cell", &ONScripter::cellCommand},
+    {"caption", &ONScripter::captionCommand},
+    {"btnwait2", &ONScripter::btnwaitCommand},
+    {"btnwait", &ONScripter::btnwaitCommand},
+    {"btntime2", &ONScripter::btntimeCommand},
+    {"btntime", &ONScripter::btntimeCommand},
+    {"btndown",  &ONScripter::btndownCommand},
+    {"btndef",  &ONScripter::btndefCommand},
+    {"btn",     &ONScripter::btnCommand},
+    {"br",      &ONScripter::brCommand},
+    {"blt",      &ONScripter::bltCommand},
+    {"bgmvol", &ONScripter::mp3volCommand},
+    {"bgmstop", &ONScripter::playstopCommand},
+    {"bgmonce", &ONScripter::mp3Command}, 
+    {"bgm", &ONScripter::mp3Command}, 
+    {"bgcpy",      &ONScripter::bgcopyCommand},
+    {"bgcopy",      &ONScripter::bgcopyCommand},
+    {"bg",      &ONScripter::bgCommand},
+    {"barclear",      &ONScripter::barclearCommand},
+    {"bar",      &ONScripter::barCommand},
+    {"avi",      &ONScripter::aviCommand},
+    {"automode_time",      &ONScripter::automode_timeCommand},
+    {"autoclick",      &ONScripter::autoclickCommand},
+    {"amsp2",      &ONScripter::amspCommand},
+    {"amsp",      &ONScripter::amspCommand},
+    {"allsp2resume",      &ONScripter::allsp2resumeCommand},
+    {"allspresume",      &ONScripter::allspresumeCommand},
+    {"allsp2hide",      &ONScripter::allsp2hideCommand},
+    {"allsphide",      &ONScripter::allsphideCommand},
+    {"abssetcursor", &ONScripter::setcursorCommand},
     {"", NULL}
 };
 
@@ -264,7 +264,7 @@ static void SDL_Quit_Wrapper()
     SDL_Quit();
 }
 
-void ONScripterLabel::initSDL()
+void ONScripter::initSDL()
 {
     /* ---------------------------------------- */
     /* Initialize SDL */
@@ -382,7 +382,7 @@ void ONScripterLabel::initSDL()
     openAudio();
 }
 
-void ONScripterLabel::openAudio()
+void ONScripter::openAudio()
 {
 #if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE)
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
@@ -413,7 +413,7 @@ void ONScripterLabel::openAudio()
     }
 }
 
-ONScripterLabel::ONScripterLabel()
+ONScripter::ONScripter()
 {
     cdrom_drive_number = 0;
     cdaudio_flag = false;
@@ -465,7 +465,7 @@ ONScripterLabel::ONScripterLabel()
     }
 }
 
-ONScripterLabel::~ONScripterLabel()
+ONScripter::~ONScripter()
 {
     reset();
 
@@ -473,78 +473,78 @@ ONScripterLabel::~ONScripterLabel()
     delete[] sprite2_info;
 }
 
-void ONScripterLabel::enableCDAudio(){
+void ONScripter::enableCDAudio(){
     cdaudio_flag = true;
 }
 
-void ONScripterLabel::setCDNumber(int cdrom_drive_number)
+void ONScripter::setCDNumber(int cdrom_drive_number)
 {
     this->cdrom_drive_number = cdrom_drive_number;
 }
 
-void ONScripterLabel::setFontFile(const char *filename)
+void ONScripter::setFontFile(const char *filename)
 {
     setStr(&default_font, filename);
 }
 
-void ONScripterLabel::setRegistryFile(const char *filename)
+void ONScripter::setRegistryFile(const char *filename)
 {
     setStr(&registry_file, filename);
 }
 
-void ONScripterLabel::setDLLFile(const char *filename)
+void ONScripter::setDLLFile(const char *filename)
 {
     setStr(&dll_file, filename);
 }
 
-void ONScripterLabel::setArchivePath(const char *path)
+void ONScripter::setArchivePath(const char *path)
 {
     if (archive_path) delete[] archive_path;
     archive_path = new char[ RELATIVEPATHLENGTH + strlen(path) + 2 ];
     sprintf( archive_path, RELATIVEPATH "%s%c", path, DELIMITER );
 }
 
-void ONScripterLabel::setFullscreenMode()
+void ONScripter::setFullscreenMode()
 {
     fullscreen_mode = true;
 }
 
-void ONScripterLabel::setWindowMode()
+void ONScripter::setWindowMode()
 {
     window_mode = true;
 }
 
-void ONScripterLabel::setWideScreenMode()
+void ONScripter::setWideScreenMode()
 {
     wide_screen_mode = true;
 }
 
-void ONScripterLabel::enableButtonShortCut()
+void ONScripter::enableButtonShortCut()
 {
     force_button_shortcut_flag = true;
 }
 
-void ONScripterLabel::enableWheelDownAdvance()
+void ONScripter::enableWheelDownAdvance()
 {
     enable_wheeldown_advance_flag = true;
 }
 
-void ONScripterLabel::disableRescale()
+void ONScripter::disableRescale()
 {
     disable_rescale_flag = true;
 }
 
-void ONScripterLabel::enableEdit()
+void ONScripter::enableEdit()
 {
     edit_flag = true;
 }
 
-void ONScripterLabel::setKeyEXE(const char *filename)
+void ONScripter::setKeyEXE(const char *filename)
 {
     setStr(&key_exe_file, filename);
 }
 
-int ONScripterLabel::init()
+int ONScripter::init()
 {
     if (archive_path == NULL) archive_path = "";
     
@@ -682,7 +682,7 @@ int ONScripterLabel::init()
     return 0;
 }
 
-void ONScripterLabel::reset()
+void ONScripter::reset()
 {
     automode_flag = false;
     automode_time = DEFAULT_AUTOMODE_TIME;
@@ -742,7 +742,7 @@ void ONScripterLabel::reset()
         readVariables( script_h.global_variable_border, VARIABLE_RANGE );
 }
 
-void ONScripterLabel::resetSub()
+void ONScripter::resetSub()
 {
     int i;
 
@@ -799,7 +799,7 @@ void ONScripterLabel::resetSub()
     dirty_rect.fill( screen_width, screen_height );
 }
 
-void ONScripterLabel::resetSentenceFont()
+void ONScripter::resetSentenceFont()
 {
     sentence_font.reset();
     sentence_font.font_size_xy[0] = DEFAULT_FONT_SIZE;
@@ -818,7 +818,7 @@ void ONScripterLabel::resetSentenceFont()
     sentence_font_info.pos.h = screen_height+1;
 }
 
-void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
+void ONScripter::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );
@@ -833,7 +833,7 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
     if ( clear_dirty_flag ) dirty_rect.clear();
 }
 
-void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
+void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
 {
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
@@ -843,7 +843,7 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode )
     SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
 }
 
-void ONScripterLabel::mouseOverCheck( int x, int y )
+void ONScripter::mouseOverCheck( int x, int y )
 {
     int c = 0, max_c = 0;
 
@@ -955,7 +955,7 @@ void ONScripterLabel::mouseOverCheck( int x, int y )
     current_over_button = button;
 }
 
-void ONScripterLabel::executeLabel()
+void ONScripter::executeLabel()
 {
   executeLabelTop:    
 
@@ -1011,7 +1011,7 @@ void ONScripterLabel::executeLabel()
     endCommand();
 }
 
-void ONScripterLabel::runScript()
+void ONScripter::runScript()
 {
     readToken();
 
@@ -1019,7 +1019,7 @@ void ONScripterLabel::runScript()
     if ( ret == RET_NOMATCH ) ret = this->parseLine();
 }
 
-int ONScripterLabel::parseLine( )
+int ONScripter::parseLine( )
 {
     int ret;
     const char *s_buf = script_h.getStringBuffer();
@@ -1062,7 +1062,7 @@ int ONScripterLabel::parseLine( )
 }
 
 /* ---------------------------------------- */
-void ONScripterLabel::deleteButtonLink()
+void ONScripter::deleteButtonLink()
 {
     ButtonLink *b1 = root_button_link.next;
 
@@ -1078,7 +1078,7 @@ void ONScripterLabel::deleteButtonLink()
     is_exbtn_enabled = false;
 }
 
-void ONScripterLabel::refreshMouseOverButton()
+void ONScripter::refreshMouseOverButton()
 {
     int mx, my;
     current_over_button = 0;
@@ -1089,7 +1089,7 @@ void ONScripterLabel::refreshMouseOverButton()
 
 /* ---------------------------------------- */
 /* Delete select link */
-void ONScripterLabel::deleteSelectLink()
+void ONScripter::deleteSelectLink()
 {
     SelectLink *link, *last_select_link = root_select_link.next;
 
@@ -1101,7 +1101,7 @@ void ONScripterLabel::deleteSelectLink()
     root_select_link.next = NULL;
 }
 
-void ONScripterLabel::clearCurrentPage()
+void ONScripter::clearCurrentPage()
 {
     sentence_font.clear();
 
@@ -1132,7 +1132,7 @@ void ONScripterLabel::clearCurrentPage()
     cached_page = current_page;
 }
 
-void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
+void ONScripter::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
 {
     if ( current_font->is_transparent ){
 
@@ -1170,7 +1170,7 @@ void ONScripterLabel::shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip )
     }
 }
 
-void ONScripterLabel::newPage()
+void ONScripter::newPage()
 {
     if ( current_page->text_count != 0 ){
         current_page = current_page->next;
@@ -1184,7 +1184,7 @@ void ONScripterLabel::newPage()
     flush( refreshMode(), &sentence_font_info.pos );
 }
 
-struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char *buffer, FontInfo *info, bool flush_flag, bool nofile_flag )
+struct ONScripter::ButtonLink *ONScripter::getSelectableSentence( char *buffer, FontInfo *info, bool flush_flag, bool nofile_flag )
 {
     int current_text_xy[2];
     current_text_xy[0] = info->xy[0];
@@ -1227,7 +1227,7 @@ struct ONScripterLabel::ButtonLink *ONScripterLabel::getSelectableSentence( char
     return button_link;
 }
 
-void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
+void ONScripter::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     char sound_name[256];
     int i, sprite_no, sprite_no2, cell_no;
@@ -1287,7 +1287,7 @@ void ONScripterLabel::decodeExbtnControl( const char *ctl_str, SDL_Rect *check_s
     }
 }
 
-void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool abs_flag )
+void ONScripter::loadCursor( int no, const char *str, int x, int y, bool abs_flag )
 {
     AnimationInfo *ai = &cursor_info[no];
     
@@ -1319,7 +1319,7 @@ void ONScripterLabel::loadCursor( int no, const char *str, int x, int y, bool ab
     }
 }
 
-void ONScripterLabel::saveAll()
+void ONScripter::saveAll()
 {
     saveEnvData();
     saveGlovalData();
@@ -1328,7 +1328,7 @@ void ONScripterLabel::saveAll()
     if ( kidokuskip_flag ) script_h.saveKidokuData();
 }
 
-void ONScripterLabel::loadEnvData()
+void ONScripter::loadEnvData()
 {
     volume_on_flag = true;
     text_speed_no = 1;
@@ -1364,7 +1364,7 @@ void ONScripterLabel::loadEnvData()
     }
 }
 
-void ONScripterLabel::saveEnvData()
+void ONScripter::saveEnvData()
 {
     file_io_buf_ptr = 0;
     bool output_flag = false;
@@ -1392,7 +1392,7 @@ void ONScripterLabel::saveEnvData()
     saveFileIOBuf( "envdata" );
 }
 
-int ONScripterLabel::refreshMode()
+int ONScripter::refreshMode()
 {
     if (display_mode & DISPLAY_MODE_TEXT)
         return refresh_shadow_text_mode;
@@ -1400,7 +1400,7 @@ int ONScripterLabel::refreshMode()
     return REFRESH_NORMAL_MODE;
 }
 
-void ONScripterLabel::quit()
+void ONScripter::quit()
 {
     saveAll();
     
@@ -1418,7 +1418,7 @@ void ONScripterLabel::quit()
     }
 }
 
-void ONScripterLabel::disableGetButtonFlag()
+void ONScripter::disableGetButtonFlag()
 {
     btndown_flag = false;
 
@@ -1433,7 +1433,7 @@ void ONScripterLabel::disableGetButtonFlag()
     spclclk_flag = false;
 }
 
-int ONScripterLabel::getNumberFromBuffer( const char **buf )
+int ONScripter::getNumberFromBuffer( const char **buf )
 {
     int ret = 0;
     while ( **buf >= '0' && **buf <= '9' )

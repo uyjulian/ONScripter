@@ -3,18 +3,18 @@
 # Makefile.onscripter - General makefile rules for ONScripter
 #
 
-GUI_OBJS = ONScripterLabel$(OBJSUFFIX) \
-	ONScripterLabel_animation$(OBJSUFFIX) \
-	ONScripterLabel_command$(OBJSUFFIX) \
-	ONScripterLabel_effect$(OBJSUFFIX) \
-	ONScripterLabel_effect_breakup$(OBJSUFFIX) \
-	ONScripterLabel_event$(OBJSUFFIX) \
-	ONScripterLabel_file$(OBJSUFFIX) \
-	ONScripterLabel_file2$(OBJSUFFIX) \
-	ONScripterLabel_image$(OBJSUFFIX) \
-	ONScripterLabel_rmenu$(OBJSUFFIX) \
-	ONScripterLabel_sound$(OBJSUFFIX) \
-	ONScripterLabel_text$(OBJSUFFIX) \
+GUI_OBJS = ONScripter$(OBJSUFFIX) \
+	ONScripter_animation$(OBJSUFFIX) \
+	ONScripter_command$(OBJSUFFIX) \
+	ONScripter_effect$(OBJSUFFIX) \
+	ONScripter_effect_breakup$(OBJSUFFIX) \
+	ONScripter_event$(OBJSUFFIX) \
+	ONScripter_file$(OBJSUFFIX) \
+	ONScripter_file2$(OBJSUFFIX) \
+	ONScripter_image$(OBJSUFFIX) \
+	ONScripter_rmenu$(OBJSUFFIX) \
+	ONScripter_sound$(OBJSUFFIX) \
+	ONScripter_text$(OBJSUFFIX) \
 	AnimationInfo$(OBJSUFFIX) \
 	FontInfo$(OBJSUFFIX) \
 	DirtyRect$(OBJSUFFIX) \
@@ -63,7 +63,7 @@ PARSER_HEADER = BaseReader.h \
 	DirtyRect.h \
 	LUAHandler.h
 
-ONSCRIPTER_HEADER = ONScripterLabel.h $(PARSER_HEADER)
+ONSCRIPTER_HEADER = ONScripter.h $(PARSER_HEADER)
 
 ALL: $(TARGET)
 
@@ -107,18 +107,18 @@ simple_aviplay$(OBJSUFFIX): AVIWrapper.h
 conv_shared$(OBJSUFFIX): resize_image.h
 
 onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
-ONScripterLabel$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
-ONScripterLabel_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_effect_breakup$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_event$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_rmenu$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_animation$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_sound$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_file$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_file2$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
-ONScripterLabel_image$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
+ONScripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
+ONScripter_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_effect$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_effect_breakup$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_event$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_rmenu$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_animation$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_sound$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_file$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_file2$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
+ONScripter_image$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
 AnimationInfo$(OBJSUFFIX): AnimationInfo.h
 FontInfo$(OBJSUFFIX): FontInfo.h
 DirtyRect$(OBJSUFFIX) : DirtyRect.h

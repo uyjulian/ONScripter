@@ -21,9 +21,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
-int ONScripterLabel::proceedAnimation()
+int ONScripter::proceedAnimation()
 {
     int i, min = -1; // minimum duration
     AnimationInfo *anim;
@@ -71,7 +71,7 @@ int ONScripterLabel::proceedAnimation()
     return min;
 }
 
-void ONScripterLabel::resetRemainingTime( int t )
+void ONScripter::resetRemainingTime( int t )
 {
     int i;
     AnimationInfo *anim;
@@ -130,7 +130,7 @@ void ONScripterLabel::resetRemainingTime( int t )
     }
 }
 
-void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
+void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 {
     if (anim->file_name && anim->surface_name &&
         strcmp(anim->file_name, anim->surface_name) == 0 &&
@@ -245,7 +245,7 @@ void ONScripterLabel::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     }
 }
 
-void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
+void ONScripter::parseTaggedString( AnimationInfo *anim )
 {
     if (anim->image_name == NULL) return;
     anim->removeTag();
@@ -336,7 +336,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
         anim->num_of_cells = getNumberFromBuffer( (const char**)&buffer );
         buffer++;
         if ( anim->num_of_cells == 0 ){
-            fprintf( stderr, "ONScripterLabel::parseTaggedString  The number of cells is 0\n");
+            fprintf( stderr, "ONScripter::parseTaggedString  The number of cells is 0\n");
             return;
         }
 
@@ -376,7 +376,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim )
     }
 }
 
-void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip )
+void ONScripter::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip )
 {
     SDL_Rect poly_rect = anim->pos;
     if ( !anim->abs_flag ){
@@ -392,7 +392,7 @@ void ONScripterLabel::drawTaggedSurface( SDL_Surface *dst_surface, AnimationInfo
                                clip, anim->trans );
 }
 
-void ONScripterLabel::stopAnimation( int click )
+void ONScripter::stopAnimation( int click )
 {
     int no;
 

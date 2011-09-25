@@ -2,7 +2,7 @@
  *
  *  LUAHandler.cpp - LUA handler for ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,7 +22,7 @@
  */
 
 #include "LUAHandler.h"
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 #include "ScriptHandler.h"
 
 #define ONS_LUA_HANDLER_PTR "ONS_LUA_HANDLER_PTR"
@@ -240,7 +240,7 @@ int NSExec(lua_State *state)
     //printf("NSExec [%s]\n", str);
     
     lh->sh->enterExternalScript(str2);
-    lh->onsl->runScript();
+    lh->ons->runScript();
     lh->sh->leaveExternalScript();
 
     return 0;
@@ -252,7 +252,7 @@ int NSGoto(lua_State *state)
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
     
     const char *str = luaL_checkstring( state, 1 );
-    lh->onsl->setCurrentLabel( str+1 );
+    lh->ons->setCurrentLabel( str+1 );
 
     return 0;
 }
@@ -263,7 +263,7 @@ int NSGosub(lua_State *state)
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
     
     const char *str = luaL_checkstring( state, 1 );
-    lh->onsl->gosubReal( str+1, lh->sh->getNext() );
+    lh->ons->gosubReal( str+1, lh->sh->getNext() );
 
     return 0;
 }
@@ -273,7 +273,7 @@ int NSReturn(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
     
-    lh->onsl->returnCommand();
+    lh->ons->returnCommand();
 
     return 0;
 }
@@ -325,7 +325,7 @@ static const struct luaL_Reg lua_lut[] = {
     {NULL, NULL}
 };
 
-//LUAHandler::LUAHandler(ONScripterLabel *onsl)
+//LUAHandler::LUAHandler(ONScripter *ons)
 LUAHandler::LUAHandler()
 {
     state = NULL;
@@ -345,9 +345,9 @@ LUAHandler::~LUAHandler()
     if (state) lua_close(state);
 }
 
-void LUAHandler::init(ONScripterLabel *onsl, ScriptHandler *sh)
+void LUAHandler::init(ONScripter *ons, ScriptHandler *sh)
 {
-    this->onsl = onsl;
+    this->ons = ons;
     this->sh = sh;
     
     state = lua_open();

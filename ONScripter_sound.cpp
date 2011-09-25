@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_sound.cpp - Methods for playing sound
+ *  ONScripter_sound.cpp - Methods for playing sound
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 #include <new>
 #if defined(LINUX)
 #include <signal.h>
@@ -68,7 +68,7 @@ void playVideoAndroid(const char *filename)
     jniVM->AttachCurrentThread(&jniEnv, NULL);
 
     if (!jniEnv){
-        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripterLabel::playVideoAndroid: Java VM AttachCurrentThread() failed");
+        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripter::playVideoAndroid: Java VM AttachCurrentThread() failed");
         return;
     }
 
@@ -105,7 +105,7 @@ extern SDL_TimerID timer_cdaudio_id;
 
 #define TMP_MUSIC_FILE "tmp.mus"
 
-int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag, int channel)
+int ONScripter::playSound(const char *filename, int format, bool loop_flag, int channel)
 {
     if ( !audio_open_flag ) return SOUND_NONE;
 
@@ -175,7 +175,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
     return SOUND_OTHER;
 }
 
-void ONScripterLabel::playCDAudio()
+void ONScripter::playCDAudio()
 {
     if ( cdaudio_flag ){
         if ( cdrom_info ){
@@ -199,7 +199,7 @@ void ONScripterLabel::playCDAudio()
     }
 }
 
-int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel)
+int ONScripter::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel)
 {
     if (!chunk) return -1;
 
@@ -217,7 +217,7 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
     return 0;
 }
 
-int ONScripterLabel::playMIDI(bool loop_flag)
+int ONScripter::playMIDI(bool loop_flag)
 {
     Mix_SetMusicCMD(midi_cmd);
     
@@ -239,7 +239,7 @@ int ONScripterLabel::playMIDI(bool loop_flag)
     return 0;
 }
 
-int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_flag)
+int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 {
     int ret = 0;
 
@@ -306,7 +306,7 @@ int ONScripterLabel::playMPEG(const char *filename, bool click_flag, bool loop_f
     return ret;
 }
 
-int ONScripterLabel::playAVI( const char *filename, bool click_flag )
+int ONScripter::playAVI( const char *filename, bool click_flag )
 {
 #ifdef ANDROID
     playVideoAndroid(filename);
@@ -342,7 +342,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
     return 0;
 }
 
-void ONScripterLabel::stopBGM( bool continue_flag )
+void ONScripter::stopBGM( bool continue_flag )
 {
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
@@ -390,7 +390,7 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 }
 
-void ONScripterLabel::stopAllDWAVE()
+void ONScripter::stopAllDWAVE()
 {
     for (int ch=0; ch<ONS_MIX_CHANNELS ; ch++)
         if ( wave_sample[ch] ){
@@ -400,7 +400,7 @@ void ONScripterLabel::stopAllDWAVE()
         }
 }
 
-void ONScripterLabel::playClickVoice()
+void ONScripter::playClickVoice()
 {
     if      ( clickstr_state == CLICK_NEWPAGE ){
         if ( clickvoice_file_name[CLICKVOICE_NEWPAGE] )

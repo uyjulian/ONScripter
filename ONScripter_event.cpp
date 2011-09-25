@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_event.cpp - Event handler of ONScripter
+ *  ONScripter_event.cpp - Event handler of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 #if defined(LINUX)
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -228,7 +228,7 @@ SDL_KeyboardEvent transJoystickAxis(SDL_JoyAxisEvent &jaxis)
     return event;
 }
 
-void ONScripterLabel::flushEventSub( SDL_Event &event )
+void ONScripter::flushEventSub( SDL_Event &event )
 {
     if ( event.type == ONS_MUSIC_EVENT ){
         if ( music_play_loop_flag ||
@@ -270,14 +270,14 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
     }
 }
 
-void ONScripterLabel::flushEvent()
+void ONScripter::flushEvent()
 {
     SDL_Event event;
     while( SDL_PollEvent( &event ) )
         flushEventSub( event );
 }
 
-void ONScripterLabel::advancePhase( int count )
+void ONScripter::advancePhase( int count )
 {
     if ( timer_id != NULL ){
         SDL_RemoveTimer( timer_id );
@@ -287,7 +287,7 @@ void ONScripterLabel::advancePhase( int count )
     timer_id = SDL_AddTimer( count, timerCallback, NULL );
 }
 
-void ONScripterLabel::waitEventSub(int count)
+void ONScripter::waitEventSub(int count)
 {
     if (break_id != NULL) return; // already in wait queue
 
@@ -318,7 +318,7 @@ void ONScripterLabel::waitEventSub(int count)
     break_id = NULL;
 }
 
-bool ONScripterLabel::waitEvent( int count )
+bool ONScripter::waitEvent( int count )
 {
     while(1){
         waitEventSub( count );
@@ -352,7 +352,7 @@ extern "C" void waveCallback( int channel )
     SDL_PushEvent(&event);
 }
 
-bool ONScripterLabel::trapHandler()
+bool ONScripter::trapHandler()
 {
     if (trap_mode & TRAP_STOP){
         trap_mode |= TRAP_CLICKED;
@@ -370,7 +370,7 @@ bool ONScripterLabel::trapHandler()
 /* **************************************** *
  * Event handlers
  * **************************************** */
-void ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
+void ONScripter::mouseMoveEvent( SDL_MouseMotionEvent *event )
 {
     current_button_state.x = event->x;
     current_button_state.y = event->y;
@@ -379,7 +379,7 @@ void ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
         mouseOverCheck( current_button_state.x, current_button_state.y );
 }
 
-bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
+bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
 {
     if ( variable_edit_mode ) return false;
     
@@ -447,7 +447,7 @@ bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )
     return false;
 }
 
-void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
+void ONScripter::variableEditMode( SDL_KeyboardEvent *event )
 {
     int  i;
     const char *var_name;
@@ -591,7 +591,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
     SDL_WM_SetCaption( wm_edit_string, wm_icon_string );
 }
 
-void ONScripterLabel::shiftCursorOnButton( int diff )
+void ONScripter::shiftCursorOnButton( int diff )
 {
     int num;
     ButtonLink *button = root_button_link.next;
@@ -617,7 +617,7 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
     }
 }
 
-bool ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
+bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
 {
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
@@ -646,7 +646,7 @@ bool ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
     return true;
 }
 
-void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
+void ONScripter::keyUpEvent( SDL_KeyboardEvent *event )
 {
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
@@ -666,7 +666,7 @@ void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
     }
 }
 
-bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
+bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
 {
     current_button_state.button = 0;
     current_button_state.down_flag = false;
@@ -920,7 +920,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     return false;
 }
 
-void ONScripterLabel::timerEvent(int count)
+void ONScripter::timerEvent(int count)
 {
     if (!(event_mode & WAIT_TIMER_MODE)) return;
 
@@ -937,7 +937,7 @@ void ONScripterLabel::timerEvent(int count)
     }
 }
 
-void ONScripterLabel::runEventLoop()
+void ONScripter::runEventLoop()
 {
     SDL_Event event, tmp_event;
 

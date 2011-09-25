@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_effect_breakup.cpp
+ *  ONScripter_effect_breakup.cpp
  *    - Emulation of Takashi Toyama's "breakup.dll" NScripter plugin effect
  *
  *  Copyright (c) 2008-2011 "Uncle" Mion Sonozaki
@@ -26,7 +26,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
 #define BREAKUP_CELLWIDTH 24
 #define BREAKUP_CELLFORMS 16
@@ -48,7 +48,7 @@ int n_cells, tot_frames, last_frame;
 int breakup_mode;
 SDL_Rect breakup_window;  // window of _cells_, not pixels
 
-void ONScripterLabel::buildBreakupCellforms()
+void ONScripter::buildBreakupCellforms()
 {
 // build the 32x32 mask for each cellform
     if (breakup_cellforms) return;
@@ -69,7 +69,7 @@ void ONScripterLabel::buildBreakupCellforms()
     }
 }
 
-void ONScripterLabel::buildBreakupMask()
+void ONScripter::buildBreakupMask()
 {
 // build the cell area mask for the breakup effect
     int w = BREAKUP_CELLWIDTH * BREAKUP_MAX_CELL_X;
@@ -151,7 +151,7 @@ void ONScripterLabel::buildBreakupMask()
     SDL_UnlockSurface( effect_src_surface );
 }
 
-void ONScripterLabel::initBreakup( char *params )
+void ONScripter::initBreakup( char *params )
 {
     while (*params != 0 && *params != '/') params++;
     if (*params == '/') params++;
@@ -219,7 +219,7 @@ void ONScripterLabel::initBreakup( char *params )
     }
 }
 
-void ONScripterLabel::effectBreakup( char *params, int duration )
+void ONScripter::effectBreakup( char *params, int duration )
 {
     while (*params != 0 && *params != '/') params++;
     if (*params == '/') params++;

@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel_image.cpp - Image processing in ONScripter
+ *  ONScripter_image.cpp - Image processing in ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,11 +21,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 #include <new>
 #include "resize_image.h"
 
-SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *location)
+SDL_Surface *ONScripter::loadImage(char *filename, bool *has_alpha, int *location)
 {
     if (!filename) return NULL;
 
@@ -54,7 +54,7 @@ SDL_Surface *ONScripterLabel::loadImage(char *filename, bool *has_alpha, int *lo
     return ret;
 }
 
-SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename, bool *has_alpha)
+SDL_Surface *ONScripter::createRectangleSurface(char *filename, bool *has_alpha)
 {
     int c=1, w=0, h=0;
     while (filename[c] != 0x0a && filename[c] != 0x00){
@@ -112,7 +112,7 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename, bool *has_a
     return tmp;
 }
 
-SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, bool *has_alpha, int *location)
+SDL_Surface *ONScripter::createSurfaceFromFile(char *filename, bool *has_alpha, int *location)
 {
     unsigned long length = script_h.cBR->getFileLength( filename );
 
@@ -176,7 +176,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, bool *has_al
 }
 
 // resize 32bit surface to 32bit surface
-int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
+int ONScripter::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
 {
     SDL_LockSurface( dst );
     SDL_LockSurface( src );
@@ -227,7 +227,7 @@ int ONScripterLabel::resizeSurface( SDL_Surface *src, SDL_Surface *dst )
 // dst: accumulation_surface
 // src1: effect_src_surface
 // src2: effect_dst_surface
-void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
+void ONScripter::alphaBlend( SDL_Surface *mask_surface,
                                   int trans_mode, Uint32 mask_value, SDL_Rect *clip )
 {
     SDL_Rect rect = {0, 0, screen_width, screen_height};
@@ -333,7 +333,7 @@ void ONScripterLabel::alphaBlend( SDL_Surface *mask_surface,
 // alphaBlendText
 // dst: ONSBuf surface (accumulation_surface)
 // src: 8bit surface (TTF_RenderGlyph_Shaded())
-void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
+void ONScripter::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
                                       SDL_Surface *src_surface, SDL_Color &color, SDL_Rect *clip, bool rotate_flag )
 {
     int x2=0, y2=0;
@@ -402,7 +402,7 @@ void ONScripterLabel::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rec
     SDL_UnlockSurface( dst_surface );
 }
 
-void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip )
+void ONScripter::makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip )
 {
     SDL_LockSurface( surface );
     ONSBuf *buf = (ONSBuf *)surface->pixels + clip.y * surface->w + clip.x;
@@ -417,7 +417,7 @@ void ONScripterLabel::makeNegaSurface( SDL_Surface *surface, SDL_Rect &clip )
     SDL_UnlockSurface( surface );
 }
 
-void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &clip )
+void ONScripter::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &clip )
 {
     SDL_LockSurface( surface );
     ONSBuf *buf = (ONSBuf *)surface->pixels + clip.y * surface->w + clip.x, c;
@@ -438,7 +438,7 @@ void ONScripterLabel::makeMonochromeSurface( SDL_Surface *surface, SDL_Rect &cli
     SDL_UnlockSurface( surface );
 }
 
-void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int refresh_mode )
+void ONScripter::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int refresh_mode )
 {
     if (refresh_mode == REFRESH_NONE_MODE) return;
 
@@ -541,7 +541,7 @@ void ONScripterLabel::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, 
     }
 }
 
-void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_no,
+void ONScripter::refreshSprite( int sprite_no, bool active_flag, int cell_no,
                                      SDL_Rect *check_src_rect, SDL_Rect *check_dst_rect )
 {
     if ( sprite_info[sprite_no].image_name && 
@@ -559,7 +559,7 @@ void ONScripterLabel::refreshSprite( int sprite_no, bool active_flag, int cell_n
     }
 }
 
-void ONScripterLabel::createBackground()
+void ONScripter::createBackground()
 {
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;

@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  ONScripterLabel.h - Execution block parser of ONScripter
+ *  ONScripter.h - Execution block parser of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,8 +21,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __ONSCRIPTER_LABEL_H__
-#define __ONSCRIPTER_LABEL_H__
+#ifndef __ONSCRIPTER_H__
+#define __ONSCRIPTER_H__
 
 #include "ScriptParser.h"
 #include "DirtyRect.h"
@@ -54,13 +54,13 @@
 
 #define NUM_GLYPH_CACHE 30
 
-class ONScripterLabel : public ScriptParser
+class ONScripter : public ScriptParser
 {
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
     
-    ONScripterLabel();
-    ~ONScripterLabel();
+    ONScripter();
+    ~ONScripter();
 
     // ----------------------------------------
     // start-up options

@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  *
- *  ONScripterLabel_file2.cpp - FILE I/O of ONScripter
+ *  ONScripter_file2.cpp - FILE I/O of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,9 +21,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
-int ONScripterLabel::loadSaveFile2( int file_version )
+int ONScripter::loadSaveFile2( int file_version )
 {
     deleteNestInfo();
     
@@ -449,7 +449,7 @@ int ONScripterLabel::loadSaveFile2( int file_version )
     return 0;
 }
 
-void ONScripterLabel::saveSaveFile2( bool output_flag )
+void ONScripter::saveSaveFile2( bool output_flag )
 {
     int i, j;
     

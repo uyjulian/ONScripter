@@ -2,7 +2,7 @@
  *
  *  LUAHandler.h - LUA handler for ONScripter
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -26,7 +26,7 @@
 
 #include <lua.hpp>
 
-class ONScripterLabel;
+class ONScripter;
 class ScriptHandler;
 
 class LUAHandler{
@@ -47,7 +47,7 @@ public:
     LUAHandler();
     ~LUAHandler();
 
-    void init(ONScripterLabel *onsl, ScriptHandler *sh);
+    void init(ONScripter *ons, ScriptHandler *sh);
     void addCallback(const char *label);
 
     void callback(int name);
@@ -60,7 +60,7 @@ public:
     int remaining_time;
     
     //private:
-    ONScripterLabel *onsl;
+    ONScripter *ons;
     lua_State *state;
     ScriptHandler *sh;
 

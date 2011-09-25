@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  *
- *  ONScripterLabel_file.cpp - FILE I/O of ONScripter
+ *  ONScripter_file.cpp - FILE I/O of ONScripter
  *
  *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "ONScripterLabel.h"
+#include "ONScripter.h"
 
 #if defined(LINUX) || defined(MACOSX)
 #include <sys/types.h>
@@ -44,7 +44,7 @@ extern "C" void c2pstrcpy(Str255 dst, const char *src);	//#include <TextUtils.h>
 
 #define READ_LENGTH 4096
 
-void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
+void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
 {
     char file_name[256];
 
@@ -150,7 +150,7 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     script_h.getStringFromInteger( save_file_info.sjis_minute, save_file_info.minute, 2, true );
 }
 
-char *ONScripterLabel::readSaveStrFromFile( int no )
+char *ONScripter::readSaveStrFromFile( int no )
 {
     char filename[16];
     sprintf( filename, "save%d.dat", no );
@@ -178,7 +178,7 @@ char *ONScripterLabel::readSaveStrFromFile( int no )
     return buf;
 }
 
-int ONScripterLabel::loadSaveFile( int no )
+int ONScripter::loadSaveFile( int no )
 {
     char filename[16];
     sprintf( filename, "save%d.dat", no );
@@ -186,37 +186,21 @@ int ONScripterLabel::loadSaveFile( int no )
         fprintf( stderr, "can't open save file %s\n", filename );
         return -1;
     }
-
-    int  i, file_version;
     
     /* ---------------------------------------- */
     /* Load magic number */
+    int i;
     for ( i=0 ; i<(int)strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
         if ( readChar() != SAVEFILE_MAGIC_NUMBER[i] ) break;
-    if ( i != (int)strlen( SAVEFILE_MAGIC_NUMBER ) ){ // if not ONS save file
+
+    if ( i != (int)strlen( SAVEFILE_MAGIC_NUMBER ) ){
         file_io_buf_ptr = 0;
-        // check for ONS version 0
-        bool ons_ver0_flag = false;
-        if ( readInt() != 1 ) ons_ver0_flag = true;
-        readInt();
-        readInt();
-        if ( readInt() != 0 ) ons_ver0_flag = true;
-        readInt();
-        if ( readInt() != 0xff ) ons_ver0_flag = true;
-        if ( readInt() != 0xff ) ons_ver0_flag = true;
-        if ( readInt() != 0xff ) ons_ver0_flag = true;
-        
-        file_io_buf_ptr = 0;
-        if ( !ons_ver0_flag ){
-            printf("Save file version is unknown\n" );
-            return loadSaveFile2( SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR );
-        }
-        file_version = 0;
+        printf("Save file version is unknown\n" );
+        return loadSaveFile2( SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR );
     }
-    else{
-        file_version = readChar() * 100;
-        file_version += readChar();
-    }
+    
+    int file_version = readChar() * 100;
+    file_version += readChar();
     printf("Save file version is %d.%d\n", file_version/100, file_version%100 );
     if ( file_version > SAVEFILE_VERSION_MAJOR*100 + SAVEFILE_VERSION_MINOR ){
         fprintf( stderr, "Save file is newer than %d.%d, please use the latest ONScripter.\n", SAVEFILE_VERSION_MAJOR, SAVEFILE_VERSION_MINOR );
@@ -231,7 +215,7 @@ int ONScripterLabel::loadSaveFile( int no )
     return -1;
 }
 
-void ONScripterLabel::saveMagicNumber( bool output_flag )
+void ONScripter::saveMagicNumber( bool output_flag )
 {
     for ( unsigned int i=0 ; i<strlen( SAVEFILE_MAGIC_NUMBER ) ; i++ )
         writeChar( SAVEFILE_MAGIC_NUMBER[i], output_flag );
@@ -239,7 +223,7 @@ void ONScripterLabel::saveMagicNumber( bool output_flag )
     writeChar( SAVEFILE_VERSION_MINOR, output_flag );
 }
 
-int ONScripterLabel::saveSaveFile( int no, const char *savestr )
+int ONScripter::saveSaveFile( int no, const char *savestr )
 {
     // make save data structure on memory
     if (no < 0 || (saveon_flag && internal_saveon_flag)){
