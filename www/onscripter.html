@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Sep. 24, 2011 (ソース更新)<br>
+Last updated: Sep. 25, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -89,7 +89,7 @@ href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscrip
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110924.tar.gz">onscripter-20110924.tar.gz</a>
+  <li> <a href="onscripter-20110925.tar.gz">onscripter-20110925.tar.gz</a>
   <li> <a href="onscripter-20110923.tar.gz">onscripter-20110923.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
@@ -490,24 +490,20 @@ ret = 2
 <div class="sub-content">
 <h3 id="truetype-font">TrueType font による文字表示</h3>
 
-<p> 文字を表示するためには、TrueType font を用意する必要があります。例えば Windows 2000 では \WinNT\Fonts の下に msgothic.ttc があり、またフリーの TrueType font として、kochi-gothic.ttf や wadalab-gothic.ttf があります。<br>
-
-ここで注意しなければいけないのは、TrueType font によっては正常に文字表示ができないということです。この原因は FreeType library か SDL_ttf の制約だと思いますが、以下に私が試した５つのフォントについて書きます。</p>
+<p> 文字を表示するためには、等幅の TrueType font を用意する必要があります。例えば Windows 7 には c:\Windows\Fonts の下に msgothic.ttc (ＭＳゴシック)があり、またフリーで手にはいるフォントには以下のものがあります。<br>
 
 <dl>
-  <dt> ＭＳゴシック (msgothic.ttc)
-  <dd> embedded bitmap を使っており、ゲームで 22pt 以下のフォントを要求すると正常に表示できません。
-  <dt> 東風ゴシックフォント (kochi-gothic.ttf)
-  <dd> embedded bitmap を使っており、ゲームで 17pt 以下のフォントを要求すると正常に表示できません。
-  <dt> 和田研ゴシック (wadalab-gothic.ttf)
-  <dd> embedded bitmap は使っていませんが、UNICODE で記述されていないため使えません。
-  <dt> HG ゴシック (hgrsmp.ttf)
-  <dd> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
-  <dt> <a href="http://mikachan-font.com/">みかちゃんフォント</a>(みかちゃん-pb.ttf)
-  <dd> embedded bitmap は使っておらず、全てのサイズのフォントを正常に表示できます。
+  <dt> <a href="http://mix-mplus-ipa.sourceforge.jp/">M+とIPAの合成フォント</a>
+  <dd> M+ フォントと IPA フォントを元にした再配布可能なフォントです。特に Migu-2M-bold.ttf がきれいな太字で見やすくお勧めです。
+
+  <dt> <a href="http://ossipedia.ipa.go.jp/ipafont/index.html">IPAフォント</a>
+  <dd> 再配布可能なゴシックと明朝のフォントです。
+
+  <dt> <a href="http://mikachan-font.com/">みかちゃんフォント</a>
+  <dd> 手書き風のフォントです。
 </dl>
 
-<p> まとめると、UNICODE で記述されておりかつ embedded bitmap を使っていないフォント(上の例では HG ゴシックやみかちゃんフォント)が一番問題がなく、大きなフォントしか使わないゲームでは embedded bitmap が使用されていても使える(上の例では ＭＳゴシックや東風ゴシック)といったところです。</p>
+<p> SDL_ttf の太字表示機能を使うと日本語の表示が汚くなってしまうため、ONScripter では太字指定を無視しています。そのため、特にスマートフォンなど画面が小さい機器では、上の Migu-2M-bold.ttf や HGゴシックE (HGRGE.TTC) など最初から太字のフォントを使用するとよいと思います。</p>
 
 <p> ONScripter を起動する前に、使用する TrueType font ファイルを、<STRONG>default.ttf</STRONG> という名前にしてゲームのスクリプトがある場所のコピーしておいてください。</p>
 

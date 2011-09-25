@@ -241,15 +241,19 @@ int ONScripter::playMIDI(bool loop_flag)
 
 int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 {
-    int ret = 0;
+    unsigned long length = script_h.cBR->getFileLength( filename );
+    if (length == 0){
+        fprintf( stderr, " *** can't find file [%s] ***\n", filename );
+        return 0;
+    }
 
 #ifdef ANDROID
     playVideoAndroid(filename);
-    return ret;
+    return 0;
 #endif
 
+    int ret = 0;
 #ifndef MP3_MAD
-    unsigned long length = script_h.cBR->getFileLength( filename );
     unsigned char *mpeg_buffer = new unsigned char[length];
     script_h.cBR->getFile( filename, mpeg_buffer );
     SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( mpeg_buffer, length ), NULL, 0 );
@@ -308,6 +312,12 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 
 int ONScripter::playAVI( const char *filename, bool click_flag )
 {
+    unsigned long length = script_h.cBR->getFileLength( filename );
+    if (length == 0){
+        fprintf( stderr, " *** can't find file [%s] ***\n", filename );
+        return 0;
+    }
+
 #ifdef ANDROID
     playVideoAndroid(filename);
     return 0;

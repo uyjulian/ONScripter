@@ -45,7 +45,7 @@ NSACONV_OBJS = nsaconv$(OBJSUFFIX) \
 	resize_image$(OBJSUFFIX) \
 	$(DECODER_OBJS)
 
-ONSCRIPTER_OBJS = onscripter$(OBJSUFFIX) \
+ONSCRIPTER_OBJS = onscripter_main$(OBJSUFFIX) \
 	$(DECODER_OBJS) \
 	ScriptHandler$(OBJSUFFIX) \
 	ScriptParser$(OBJSUFFIX) \
@@ -106,7 +106,7 @@ nsaconv$(OBJSUFFIX): BaseReader.h SarReader.h NsaReader.h
 simple_aviplay$(OBJSUFFIX): AVIWrapper.h
 conv_shared$(OBJSUFFIX): resize_image.h
 
-onscripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
+onscripter_main$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
 ONScripter$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripter_command$(OBJSUFFIX): $(ONSCRIPTER_HEADER) version.h
 ONScripter_text$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
