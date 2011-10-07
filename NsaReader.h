@@ -31,7 +31,7 @@
 class NsaReader : public SarReader
 {
 public:
-    NsaReader( int nsa_offset=0, char *path=NULL, const unsigned char *key_table=NULL );
+    NsaReader( int nsa_offset=0, char *path=NULL, int archive_type=ARCHIVE_TYPE_NSA, const unsigned char *key_table=NULL );
     ~NsaReader();
 
     int open( char *nsa_path=NULL );
@@ -40,7 +40,7 @@ public:
     
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
-    struct FileInfo getFileByIndex( unsigned int index );
+    FileInfo getFileByIndex( unsigned int index );
 
     int openForConvert( char *nsa_name, int archive_type=ARCHIVE_TYPE_NSA, int nsa_offset=0 );
     int writeHeader( FILE *fp, int archive_type=ARCHIVE_TYPE_NSA, int nsa_offset=0 );
@@ -49,12 +49,13 @@ public:
 private:
     bool sar_flag;
     int nsa_offset;
+    int archive_type;
     int num_of_nsa_archives;
     int num_of_ns2_archives;
     const char *nsa_archive_ext;
     const char *ns2_archive_ext;
-    struct ArchiveInfo archive_info2[MAX_EXTRA_ARCHIVE];
-    struct ArchiveInfo archive_info_ns2[MAX_NS2_ARCHIVE];
+    ArchiveInfo archive_info2[MAX_EXTRA_ARCHIVE];
+    ArchiveInfo archive_info_ns2[MAX_NS2_ARCHIVE];
 
     size_t getFileLengthSub( ArchiveInfo *ai, const char *file_name );
 };

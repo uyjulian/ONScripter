@@ -24,7 +24,7 @@
 #include "ScriptParser.h"
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2010 Studio O.G.A. All Rights Reserved."
+#define VERSION_STR2 "Copyright (C) 2001-2011 Studio O.G.A. All Rights Reserved."
 
 #define DEFAULT_SAVE_MENU_NAME "＜セーブ＞"
 #define DEFAULT_LOAD_MENU_NAME "＜ロード＞"
@@ -121,6 +121,7 @@ static struct FuncLUT{
     {"goto",     &ScriptParser::gotoCommand},
     {"gosub",    &ScriptParser::gosubCommand},
     {"globalon",    &ScriptParser::globalonCommand},
+    {"getparam2",    &ScriptParser::getparamCommand},
     {"getparam",    &ScriptParser::getparamCommand},
     //{"game",    &ScriptParser::gameCommand},
     {"for",   &ScriptParser::forCommand},
@@ -371,8 +372,12 @@ void ScriptParser::reset()
 
 int ScriptParser::open()
 {
-    script_h.cBR = new DirectReader( archive_path, key_table );
-    script_h.cBR->open();
+    script_h.cBR = new NsaReader( 0, archive_path, BaseReader::ARCHIVE_TYPE_NS2, key_table );
+    if (script_h.cBR->open( nsa_path )){
+        delete script_h.cBR;
+        script_h.cBR = new DirectReader( archive_path, key_table );
+        script_h.cBR->open();
+    }
     
     if ( script_h.readScript( archive_path ) ) return -1;
 

@@ -285,9 +285,14 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
                 script_h.pushCurrent( buffer );
                 anim->font_size_xy[0] = script_h.readInt();
                 anim->font_size_xy[1] = script_h.readInt();
-                anim->font_pitch = script_h.readInt() + anim->font_size_xy[0];
                 if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-                    script_h.readInt(); // 0 ... normal, 1 ... no anti-aliasing, 2 ... Fukuro
+                    anim->font_pitch = script_h.readInt() + anim->font_size_xy[0];
+                    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+                        script_h.readInt(); // 0 ... normal, 1 ... no anti-aliasing, 2 ... Fukuro
+                    }
+                }
+                else{
+                    anim->font_pitch = anim->font_size_xy[0];
                 }
                 buffer = script_h.getNext();
                 script_h.popCurrent();
@@ -331,7 +336,7 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
             while(buffer[0] != '/' && buffer[0] != ';' && buffer[0] != '\0') buffer++;
     }
 
-    if ( buffer[0] == '/' ){
+    if ( buffer[0] == '/' && anim->trans_mode != AnimationInfo::TRANS_STRING){
         buffer++;
         anim->num_of_cells = getNumberFromBuffer( (const char**)&buffer );
         buffer++;
@@ -364,7 +369,7 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
         while(buffer[0] != ';' && buffer[0] != '\0') buffer++;
     }
 
-    if ( buffer[0] == ';' ) buffer++;
+    if ( buffer[0] == ';' && anim->trans_mode != AnimationInfo::TRANS_STRING) buffer++;
 
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING && buffer[0] == '$' ){
         script_h.pushCurrent( buffer );

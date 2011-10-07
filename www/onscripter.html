@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Sep. 25, 2011 (ソース更新)<br>
+Last updated: Oct. 7, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -75,22 +75,16 @@ Last updated: Sep. 25, 2011 (ソース更新)<br>
 <div class="content">
 <h2 id="introduction">はじめに</h2>
 
-<p>ONScripter (オーエヌスクリプター)とは、<a href="http://www.nscripter.com/">NScripter</a>(<a href="http://ja.wikipedia.org/wiki/NScripter">解説</a>)用に作られたスクリプトを独自に解釈して実行するプログラムです。
+<p>ONScripter (オーエヌスクリプター)は <a href="http://www.nscripter.com/">NScripter</a> (<a href="http://ja.wikipedia.org/wiki/NScripter">解説</a>) 用に作られたスクリプトを独自に解釈して実行するプログラムです。
 
-<p>動作報告・バグ報告・機能追加要望・パッチは随時受け付けますので[<a
-href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscripter&amp;action=top">
-バグトラッキングシステム</a>]までお願いします。報告の際はオプション欄
-の中央のチェックボックスを外してから送信してください。「○○ゲームの×
-×場面がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。ペー
-ジの一番下に記載のあるメールアドレスまで直接送っていただいても構いませ
-ん。</p>
+<p>動作報告・バグ報告・機能追加要望・パッチは随時受け付けますので[<a href="http://onscripter.sourceforge.jp/cgi-bin/kagemai/guest.cgi?project=onscripter&amp;action=top">バグトラッキングシステム</a>]までお願いします。報告の際はオプション欄の中央のチェックボックスを外してから送信してください。「○○ゲームの××場面がなんかおかしい」という程度でも結構ですのでお気軽にどうぞ。ページの一番下に記載のあるメールアドレスまで直接送っていただいても構いません。</p>
 
 
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20110925.tar.gz">onscripter-20110925.tar.gz</a>
-  <li> <a href="onscripter-20110923.tar.gz">onscripter-20110923.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20111007.tar.gz">onscripter-20111007.tar.gz</a>
+  <li> <a href="onscripter-20110925.tar.gz">onscripter-20110925.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -157,7 +151,7 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えます。
   <li> CD Audio の演奏を音楽ファイル(MP3, Ogg)の演奏に振り替える機能があります。
   <li> マルチプラットフォームに対応しており、Windows, Linux, MacOS X, MacOS 9, <a href="android/android.html">Android</a>(1.6 以上), iPhone, PSP, <a href="zaurus/index.html">Zaurus</a>(SL-5500,SL-A300,SL-B500,SL-C700), FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/2Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作が確認されています。それ以外のプラットフォームでも、<a href="#environment">動作環境</a>が準備できれば動作するはずです。<br>
-  <li> --wide オプションを指定することによりワイドスクリーンモードになります。ONScripter ではゲーム画面の比率は通常 4:3 に固定されていますが、ワイドスクリーンモードではこの比率が 16:9 になります。ゲーム画面の横幅は、スクリプトから 320, 400, 640, 800 のいずれかに指定できます(デフォルトは 640)。
+  <li> --wide オプションを指定することによりワイドスクリーンモードになります。ゲーム画面の比率は通常 4:3 に固定されていますが、ワイドスクリーンモードではこの比率が 16:9 になります。いずれの場合も、ゲーム画面の横幅はスクリプトから 320, 400, 640, 800 のいずれかに指定できます(デフォルトは 640)。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによっては挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
 
@@ -399,8 +393,7 @@ ONScripter がサポートする最新のフォーマットでバージョン番号なしのセー
 
 <pre>
 [getreg の２番目の引数（ただし前後の""は除く）]
-getreg の３番目の引数 = 比較対象文字列
-（前後の""は必要です）  （前後の""は必要です）
+getreg の３番目の引数 = 比較対象文字列（前後の""は必要です）
 </pre>
 
 <p class="noindent">registry.txt の例</p>

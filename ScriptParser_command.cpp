@@ -450,7 +450,7 @@ int ScriptParser::nsaCommand()
     }
     
     delete script_h.cBR;
-    script_h.cBR = new NsaReader( nsa_offset, archive_path, key_table );
+    script_h.cBR = new NsaReader( nsa_offset, archive_path, BaseReader::ARCHIVE_TYPE_NSA|BaseReader::ARCHIVE_TYPE_NS2, key_table );
     if ( script_h.cBR->open( nsa_path ) ){
         fprintf( stderr, " *** failed to open nsa or ns2 archive, ignored.  ***\n");
     }
@@ -986,9 +986,14 @@ int ScriptParser::getparamCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "getparam: not in a subroutine" );
 
-    int end_status;
+    bool getparam2_flag = false;
+    if ( script_h.isName( "getparam2") ) getparam2_flag = true;
+    
+    int end_status, end_status2;
     do{
         script_h.readVariable();
+        end_status2 = script_h.getEndStatus();
+        
         script_h.pushVariable();
         
         script_h.pushCurrent(last_nest_info->next_script);
@@ -1013,6 +1018,24 @@ int ScriptParser::getparamCommand()
     }
     while(end_status & ScriptHandler::END_COMMA);
 
+    if (getparam2_flag){
+        while (end_status2 & ScriptHandler::END_COMMA){
+            script_h.readVariable();
+            end_status2 = script_h.getEndStatus();
+
+            if ( script_h.current_variable.type & ScriptHandler::VAR_PTR ){
+                script_h.setInt( &script_h.current_variable, 0 );
+            }
+            else if ( script_h.current_variable.type & ScriptHandler::VAR_INT ||
+                      script_h.current_variable.type & ScriptHandler::VAR_ARRAY ){
+                script_h.setInt( &script_h.current_variable, 0 );
+            }
+            else if ( script_h.current_variable.type & ScriptHandler::VAR_STR ){
+                setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, NULL );
+            }
+        }
+    }
+    
     return RET_CONTINUE;
 }
 

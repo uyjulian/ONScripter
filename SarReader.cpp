@@ -61,7 +61,7 @@ int SarReader::open( char *name )
     return 0;
 }
 
-void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset )
+void SarReader::readArchive( ArchiveInfo *ai, int archive_type, int offset )
 {
     unsigned int i;
     
@@ -82,18 +82,19 @@ void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offse
 
         // need to parse the whole header to see how many files there are
         ai->num_of_files = 0;
-        long unsigned int cur_offset = offset + 5;
+        long unsigned int cur_offset = offset + 4;
         // there's an extra byte at the end of the header, not sure what for
-        while (cur_offset < ai->base_offset){
-            //skip the beginning double-quote
+        while(1){
             unsigned char ch = key_table[fgetc( ai->file_handle )];
+            if (ch != '"') break;
             cur_offset++;
             do cur_offset++;
             while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' );
             cur_offset += 4;
+            readLong( ai->file_handle );
             ai->num_of_files++;
         }
-        ai->fi_list = new struct FileInfo[ ai->num_of_files ];
+        ai->fi_list = new FileInfo[ ai->num_of_files ];
 
         // now go back to the beginning and read the file info
         cur_offset = ai->base_offset;
@@ -117,7 +118,7 @@ void SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offse
         // old NSA filename def: filename, ending '\0' byte , compr-type byte,
         // start (4byte), length (4byte))
         ai->num_of_files = readShort( ai->file_handle );
-        ai->fi_list = new struct FileInfo[ ai->num_of_files ];
+        ai->fi_list = new FileInfo[ ai->num_of_files ];
     
         ai->base_offset = readLong( ai->file_handle );
         ai->base_offset += offset;
@@ -367,7 +368,7 @@ size_t SarReader::getFile( const char *file_name, unsigned char *buf, int *locat
     return j;
 }
 
-struct SarReader::FileInfo SarReader::getFileByIndex( unsigned int index )
+SarReader::FileInfo SarReader::getFileByIndex( unsigned int index )
 {
     ArchiveInfo *info = archive_info.next;
     for ( int i=0 ; i<num_of_sar_archives ; i++ ){

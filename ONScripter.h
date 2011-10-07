@@ -183,6 +183,7 @@ public:
     int gettagCommand();
     int gettabCommand();
     int getspsizeCommand();
+    int getspposCommand();
     int getspmodeCommand();
     int getsevolCommand();
     int getscreenshotCommand();

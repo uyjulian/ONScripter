@@ -1969,6 +1969,19 @@ int ONScripter::getspsizeCommand()
     return RET_CONTINUE;
 }
 
+int ONScripter::getspposCommand()
+{
+    int no = script_h.readInt();
+    
+    script_h.readVariable();
+    script_h.setInt( &script_h.current_variable, sprite_info[no].orig_pos.x );
+
+    script_h.readVariable();
+    script_h.setInt( &script_h.current_variable, sprite_info[no].orig_pos.y );
+
+    return RET_CONTINUE;
+}
+
 int ONScripter::getspmodeCommand()
 {
     script_h.readVariable();

@@ -59,7 +59,7 @@ struct BaseReader
         ARCHIVE_TYPE_NONE = 0,
         ARCHIVE_TYPE_SAR  = 1,
         ARCHIVE_TYPE_NSA  = 2,
-        ARCHIVE_TYPE_NS2  = 3   //new format since NScr2.91, uses ext ".ns2"
+        ARCHIVE_TYPE_NS2  = 4   //new format since NScr2.91, uses ext ".ns2"
     };
 
     struct FileInfo{
@@ -71,11 +71,11 @@ struct BaseReader
     };
 
     struct ArchiveInfo{
-        struct ArchiveInfo *next;
+        ArchiveInfo *next;
         FILE *file_handle;
         int power_resume_number; // currently only for PSP
         char *file_name;
-        struct FileInfo *fi_list;
+        FileInfo *fi_list;
         unsigned int num_of_files;
         unsigned long base_offset;
 
@@ -103,7 +103,7 @@ struct BaseReader
     virtual int  getNumFiles() = 0;
     virtual void registerCompressionType( const char *ext, int type ) = 0;
 
-    virtual struct FileInfo getFileByIndex( unsigned int index ) = 0;
+    virtual FileInfo getFileByIndex( unsigned int index ) = 0;
     virtual size_t getFileLength( const char *file_name ) = 0;
     virtual size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL ) = 0;
 };

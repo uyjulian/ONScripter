@@ -39,14 +39,14 @@ public:
     
     size_t getFileLength( const char *file_name );
     size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
-    struct FileInfo getFileByIndex( unsigned int index );
+    FileInfo getFileByIndex( unsigned int index );
 
     int writeHeader( FILE *fp );
     size_t putFile( FILE *fp, int no, size_t offset, size_t length, size_t original_length, bool modified_flag, unsigned char *buffer );
     
 protected:
-    struct ArchiveInfo archive_info;
-    struct ArchiveInfo *root_archive_info, *last_archive_info;
+    ArchiveInfo archive_info;
+    ArchiveInfo *root_archive_info, *last_archive_info;
     int num_of_sar_archives;
 
     void readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR, int offset=0 );

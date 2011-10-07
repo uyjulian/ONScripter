@@ -165,6 +165,7 @@ static struct FuncLUT{
     {"gettag", &ONScripter::gettagCommand},
     {"gettab", &ONScripter::gettabCommand},
     {"getspsize", &ONScripter::getspsizeCommand},
+    {"getsppos", &ONScripter::getspposCommand},
     {"getspmode", &ONScripter::getspmodeCommand},
     {"getsevol", &ONScripter::getsevolCommand},
     {"getscreenshot", &ONScripter::getscreenshotCommand},
