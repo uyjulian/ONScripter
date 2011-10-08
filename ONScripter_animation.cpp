@@ -132,7 +132,8 @@ void ONScripter::resetRemainingTime( int t )
 
 void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
 {
-    if (anim->file_name && anim->surface_name &&
+    if (anim->trans_mode != AnimationInfo::TRANS_STRING &&
+        anim->file_name && anim->surface_name &&
         strcmp(anim->file_name, anim->surface_name) == 0 &&
         (!anim->mask_file_name && !anim->mask_surface_name ||
          anim->mask_file_name && !anim->mask_surface_name &&

@@ -2386,11 +2386,17 @@ int ONScripter::exec_dllCommand()
 int ONScripter::exbtnCommand()
 {
     int sprite_no=-1, no=0;
-    ButtonLink *button;
+    ButtonLink *bl;
     
-    if ( script_h.isName( "exbtn_d" ) ){
-        button = &exbtn_d_button_link;
-        if ( button->exbtn_ctl ) delete[] button->exbtn_ctl;
+    if ( script_h.isName( "exbtn_d" ) ||
+         script_h.isName( "bdef" )){
+        bl = &exbtn_d_button_link;
+        for (int i=0 ; i<3 ; i++){
+            if ( bl->exbtn_ctl[i] ){
+                delete[] bl->exbtn_ctl[i];
+                bl->exbtn_ctl[i] = NULL;
+            }
+        }
     }
     else{
         bool cellcheck_flag = false;
@@ -2407,23 +2413,22 @@ int ONScripter::exbtnCommand()
             return RET_CONTINUE;
         }
         
-        button = new ButtonLink();
-        root_button_link.insert( button );
+        bl = new ButtonLink();
+        root_button_link.insert( bl );
         is_exbtn_enabled = true;
     }
 
     const char *buf = script_h.readStr();
     
-    button->button_type = ButtonLink::EX_SPRITE_BUTTON;
-    button->sprite_no   = sprite_no;
-    button->no          = no;
-    button->exbtn_ctl   = new char[ strlen( buf ) + 1 ];
-    strcpy( button->exbtn_ctl, buf );
+    bl->button_type = ButtonLink::SPRITE_BUTTON;
+    bl->sprite_no   = sprite_no;
+    bl->no          = no;
+    setStr( &bl->exbtn_ctl[1], buf );
     
     if ( sprite_no >= 0 &&
          ( sprite_info[ sprite_no ].image_surface ||
            sprite_info[ sprite_no ].trans_mode == AnimationInfo::TRANS_STRING ) )
-        button->image_rect = button->select_rect = sprite_info[ sprite_no ].pos;
+        bl->image_rect = bl->select_rect = sprite_info[ sprite_no ].pos;
 
     return RET_CONTINUE;
 }
@@ -2878,6 +2883,8 @@ int ONScripter::captionCommand()
 int ONScripter::btnwaitCommand()
 {
     bool del_flag=false, textbtn_flag=false;
+    bool bexec_int_flag=false;
+    bexec_flag = false;
 
     if ( script_h.isName( "btnwait2" ) ){
         if (erase_text_window_mode > 0) display_mode = DISPLAY_MODE_NORMAL;
@@ -2889,32 +2896,53 @@ int ONScripter::btnwaitCommand()
     else if ( script_h.isName( "textbtnwait" ) ){
         textbtn_flag = true;
     }
-
-    script_h.readInt();
-
-    if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl){
-        SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
-        if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect );
+    else if ( script_h.isName( "bexec" ) ){
+        bexec_flag = true;
     }
 
-    ButtonLink *p_button_link = root_button_link.next;
-    while( p_button_link ){
-        p_button_link->show_flag = 0;
-        if ( p_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
-             p_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-            sprite_info[ p_button_link->sprite_no ].visible = true;
-            sprite_info[ p_button_link->sprite_no ].setCell(0);
+    if (bexec_flag){
+        script_h.readStr();
+        script_h.pushVariable();
+        if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
+            bexec_int_flag = true;
+            script_h.readInt();
         }
-        else if ( p_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
-            p_button_link->show_flag = 1;
-            sprite_info[ p_button_link->sprite_no ].visible = true;
-            sprite_info[ p_button_link->sprite_no ].setCell(0);
+        getpageup_flag = true;
+        getpagedown_flag = true;
+        getfunction_flag = true;
+    }
+    else{
+        script_h.readInt();
+    }
+
+    if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl[1]){
+        SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
+        if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl[1], &check_src_rect );
+    }
+
+    ButtonLink *bl = root_button_link.next;
+    while( bl ){
+        bl->show_flag = 0;
+        if ( bl->button_type == ButtonLink::SPRITE_BUTTON ){
+            sprite_info[ bl->sprite_no ].visible = true;
+            if ( bl->exbtn_ctl[0] ){
+                SDL_Rect check_src_rect = bl->image_rect;
+                SDL_Rect check_dst_rect = {0, 0, 0, 0};
+                decodeExbtnControl( bl->exbtn_ctl[0], &check_src_rect, &check_dst_rect );
+            }
+            else
+                sprite_info[ bl->sprite_no ].setCell(0);
         }
-        else if ( p_button_link->anim[1] != NULL ){
-            p_button_link->show_flag = 2;
+        else if ( bl->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
+            bl->show_flag = 1;
+            sprite_info[ bl->sprite_no ].visible = true;
+            sprite_info[ bl->sprite_no ].setCell(0);
         }
-        dirty_rect.add( p_button_link->image_rect );
-        p_button_link = p_button_link->next;
+        else if ( bl->anim[1] != NULL ){
+            bl->show_flag = 2;
+        }
+        dirty_rect.add( bl->image_rect );
+        bl = bl->next;
     }
 
     leaveTextDisplayMode();
@@ -2973,7 +3001,18 @@ int ONScripter::btnwaitCommand()
     btnwait_time = SDL_GetTicks() - internal_button_timer;
     num_chars_in_sentence = 0;
 
-    script_h.setInt( &script_h.current_variable, current_button_state.button );
+    if (bexec_flag){
+        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, current_button_state.str );
+        if (bexec_int_flag){
+            if (current_button_state.button > 0)
+                script_h.setInt( &script_h.current_variable, current_button_state.button );
+            else
+                script_h.setInt( &script_h.current_variable, -1);
+        }
+    }
+    else{
+        script_h.setInt( &script_h.current_variable, current_button_state.button );
+    }
 
     if ( current_button_state.button >= 1 && del_flag ){
         deleteButtonLink();
@@ -2982,10 +3021,10 @@ int ONScripter::btnwaitCommand()
     event_mode = IDLE_EVENT_MODE;
     disableGetButtonFlag();
         
-    p_button_link = root_button_link.next;
-    while( p_button_link ){
-        p_button_link->show_flag = 0;
-        p_button_link = p_button_link->next;
+    bl = root_button_link.next;
+    while( bl ){
+        bl->show_flag = 0;
+        bl = bl->next;
     }
             
     return RET_CONTINUE;
@@ -2993,12 +3032,20 @@ int ONScripter::btnwaitCommand()
 
 int ONScripter::btntimeCommand()
 {
-    if ( script_h.isName( "btntime2" ) )
+    bool btime_flag = false;
+    if ( script_h.isName( "btime" )){
+        btime_flag = true;
+        btntime2_flag = false;
+    }
+    else if ( script_h.isName( "btntime2" ) )
         btntime2_flag = true;
     else
         btntime2_flag = false;
     
     btntime_value = script_h.readInt();
+
+    if ( btime_flag && script_h.getEndStatus() & ScriptHandler::END_COMMA )
+        if (script_h.readInt() == 1) btntime2_flag = true;
     
     return RET_CONTINUE;
 }
@@ -3012,7 +3059,9 @@ int ONScripter::btndownCommand()
 
 int ONScripter::btndefCommand()
 {
-    if (script_h.compareString("clear")){
+    if (script_h.isName( "bclear" )){
+    }
+    else if (script_h.compareString("clear")){
         script_h.readLabel();
     }
     else{
@@ -3074,6 +3123,28 @@ int ONScripter::btnCommand()
     ai->copySurface( btndef_info.image_surface, &src_rect );
     
     root_button_link.insert( button );
+
+    return RET_CONTINUE;
+}
+
+int ONScripter::bspCommand()
+{
+    int no = script_h.readInt();
+
+    ButtonLink *bl = new ButtonLink();
+    root_button_link.insert( bl );
+
+    bl->button_type = ButtonLink::SPRITE_BUTTON;
+    bl->sprite_no   = no;
+    bl->no          = no;
+
+    if ( sprite_info[no].image_surface ||
+         sprite_info[no].trans_mode == AnimationInfo::TRANS_STRING )
+        bl->image_rect = bl->select_rect = sprite_info[no].pos;
+
+    for (int i=0 ; i<3 ; i++)
+        if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
+            setStr( &bl->exbtn_ctl[i], script_h.readStr() );
 
     return RET_CONTINUE;
 }

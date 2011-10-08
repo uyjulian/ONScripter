@@ -533,11 +533,11 @@ void ONScripter::refreshSurface( SDL_Surface *surface, SDL_Rect *clip_src, int r
             drawTaggedSurface( surface, &cursor_info[1], clip );
     }
 
-    ButtonLink *p_button_link = root_button_link.next;
-    while( p_button_link ){
-        if (p_button_link->show_flag > 0)
-            drawTaggedSurface( surface, p_button_link->anim[p_button_link->show_flag-1], clip );
-        p_button_link = p_button_link->next;
+    ButtonLink *bl = root_button_link.next;
+    while( bl ){
+        if (bl->show_flag > 0)
+            drawTaggedSurface( surface, bl->anim[bl->show_flag-1], clip );
+        bl = bl->next;
     }
 }
 

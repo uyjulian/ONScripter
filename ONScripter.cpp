@@ -224,6 +224,7 @@ static struct FuncLUT{
     {"cellcheckexbtn", &ONScripter::exbtnCommand},
     {"cell", &ONScripter::cellCommand},
     {"caption", &ONScripter::captionCommand},
+    {"btrans",   &ONScripter::transbtnCommand},
     {"btnwait2", &ONScripter::btnwaitCommand},
     {"btnwait", &ONScripter::btnwaitCommand},
     {"btntime2", &ONScripter::btntimeCommand},
@@ -231,6 +232,8 @@ static struct FuncLUT{
     {"btndown",  &ONScripter::btndownCommand},
     {"btndef",  &ONScripter::btndefCommand},
     {"btn",     &ONScripter::btnCommand},
+    {"btime", &ONScripter::btntimeCommand},
+    {"bsp",     &ONScripter::bspCommand},
     {"br",      &ONScripter::brCommand},
     {"blt",      &ONScripter::bltCommand},
     {"bgmvol", &ONScripter::mp3volCommand},
@@ -240,6 +243,11 @@ static struct FuncLUT{
     {"bgcpy",      &ONScripter::bgcopyCommand},
     {"bgcopy",      &ONScripter::bgcopyCommand},
     {"bg",      &ONScripter::bgCommand},
+    {"bexec", &ONScripter::btnwaitCommand},
+    {"bdown",  &ONScripter::btndownCommand},
+    {"bdef", &ONScripter::exbtnCommand},
+    {"bcursor", &ONScripter::getcursorCommand},
+    {"bclear",  &ONScripter::btndefCommand},
     {"barclear",      &ONScripter::barclearCommand},
     {"bar",      &ONScripter::barCommand},
     {"avi",      &ONScripter::aviCommand},
@@ -866,8 +874,7 @@ void ONScripter::mouseOverCheck( int x, int y )
             }
             else{
                 unsigned char alpha = 0;
-                if ( ((bl->button_type == ButtonLink::SPRITE_BUTTON || 
-                       bl->button_type == ButtonLink::EX_SPRITE_BUTTON) &&
+                if ( (bl->button_type == ButtonLink::SPRITE_BUTTON &&
                       max_alpha < (alpha = sprite_info[ bl->sprite_no ].getAlpha(x, y))) ||
                      (bl->button_type == ButtonLink::NORMAL_BUTTON &&
                       max_alpha < (alpha = bl->anim[0]->getAlpha(x, y))) ){
@@ -893,27 +900,30 @@ void ONScripter::mouseOverCheck( int x, int y )
 
         SDL_Rect check_src_rect = {0, 0, 0, 0};
         SDL_Rect check_dst_rect = {0, 0, 0, 0};
+        ButtonLink *cbl = current_button_link;
         if ( current_over_button != 0 ){
-            current_button_link->show_flag = 0;
-            check_src_rect = current_button_link->image_rect;
-            if ( current_button_link->button_type == ButtonLink::SPRITE_BUTTON || 
-                 current_button_link->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                sprite_info[ current_button_link->sprite_no ].visible = true;
-                sprite_info[ current_button_link->sprite_no ].setCell(0);
+            cbl->show_flag = 0;
+            check_src_rect = cbl->image_rect;
+            if ( cbl->button_type == ButtonLink::SPRITE_BUTTON ){
+                sprite_info[ cbl->sprite_no ].visible = true;
+                if ( cbl->exbtn_ctl[0] )
+                    decodeExbtnControl( cbl->exbtn_ctl[0], &check_src_rect, &check_dst_rect );
+                else
+                    sprite_info[ cbl->sprite_no ].setCell(0);
             }
-            else if ( current_button_link->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
-                current_button_link->show_flag = 1;
-                current_button_link->anim[0]->visible = true;
-                current_button_link->anim[0]->setCell(0);
+            else if ( cbl->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
+                cbl->show_flag = 1;
+                cbl->anim[0]->visible = true;
+                cbl->anim[0]->setCell(0);
             }
-            else if ( current_button_link->anim[1] != NULL ){
-                current_button_link->show_flag = 2;
+            else if ( cbl->anim[1] != NULL ){
+                cbl->show_flag = 2;
             }
-            dirty_rect.add( current_button_link->image_rect );
+            dirty_rect.add( cbl->image_rect );
         }
 
-        if ( is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl ){
-            decodeExbtnControl( exbtn_d_button_link.exbtn_ctl, &check_src_rect, &check_dst_rect );
+        if ( is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl[1] ){
+            decodeExbtnControl( exbtn_d_button_link.exbtn_ctl[1], &check_src_rect, &check_dst_rect );
         }
         
         if ( bl ){
@@ -928,13 +938,12 @@ void ONScripter::mouseOverCheck( int x, int y )
                               SOUND_CHUNK, false, MIX_WAVE_CHANNEL);
             }
             check_dst_rect = bl->image_rect;
-            if ( bl->button_type == ButtonLink::SPRITE_BUTTON || 
-                 bl->button_type == ButtonLink::EX_SPRITE_BUTTON ){
+            if ( bl->button_type == ButtonLink::SPRITE_BUTTON ){
                 sprite_info[ bl->sprite_no ].setCell(1);
-                sprite_info[ bl->sprite_no ].visible = true;
-                if ( bl->button_type == ButtonLink::EX_SPRITE_BUTTON ){
-                    decodeExbtnControl( bl->exbtn_ctl, &check_src_rect, &check_dst_rect );
-                }
+                if ( bl->exbtn_ctl[1] )
+                    decodeExbtnControl( bl->exbtn_ctl[1], &check_src_rect, &check_dst_rect );
+                else
+                    sprite_info[ bl->sprite_no ].visible = true;
             }
             else if ( bl->button_type == ButtonLink::TMP_SPRITE_BUTTON ){
                 bl->show_flag = 1;
@@ -1073,9 +1082,13 @@ void ONScripter::deleteButtonLink()
         delete b2;
     }
     root_button_link.next = NULL;
-
-    if ( exbtn_d_button_link.exbtn_ctl ) delete[] exbtn_d_button_link.exbtn_ctl;
-    exbtn_d_button_link.exbtn_ctl = NULL;
+    
+    for (int i=0 ; i<3 ; i++){
+        if ( exbtn_d_button_link.exbtn_ctl[i] ){
+            delete[] exbtn_d_button_link.exbtn_ctl[i];
+            exbtn_d_button_link.exbtn_ctl[i] = NULL;
+        }
+    }
     is_exbtn_enabled = false;
 }
 
@@ -1421,6 +1434,7 @@ void ONScripter::quit()
 
 void ONScripter::disableGetButtonFlag()
 {
+    bexec_flag = false;
     btndown_flag = false;
 
     getzxc_flag = false;

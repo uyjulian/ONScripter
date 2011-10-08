@@ -402,6 +402,7 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
          ((rmode_flag && event_mode & WAIT_TEXT_MODE) ||
           (event_mode & (WAIT_BUTTON_MODE | WAIT_RCLICK_MODE))) ){
         current_button_state.button = -1;
+        sprintf(current_button_state.str, "RCLICK");
         if (event_mode & WAIT_TEXT_MODE){
             if (root_rmenu_link.next)
                 system_menu_mode = SYSTEM_MENU;
@@ -412,25 +413,34 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
     else if ( event->button == SDL_BUTTON_LEFT &&
               ( event->type == SDL_MOUSEBUTTONUP || btndown_flag ) ){
         current_button_state.button = current_over_button;
+        if (current_over_button == 0)
+            sprintf(current_button_state.str, "LCLICK");
+        else
+            sprintf(current_button_state.str, "S%d", current_over_button);
+            
         if ( event->type == SDL_MOUSEBUTTONDOWN )
             current_button_state.down_flag = true;
     }
 #if SDL_VERSION_ATLEAST(1, 2, 5)
     else if (event->button == SDL_BUTTON_WHEELUP &&
-             ((event_mode & WAIT_TEXT_MODE) ||
+             (bexec_flag ||
+              (event_mode & WAIT_TEXT_MODE) ||
               (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
               system_menu_mode == SYSTEM_LOOKBACK)){
         current_button_state.button = -2;
+        sprintf(current_button_state.str, "WHEELUP");
         if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
     }
     else if ( event->button == SDL_BUTTON_WHEELDOWN &&
-              ((enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
+              (bexec_flag ||
+               (enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
                (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
                system_menu_mode == SYSTEM_LOOKBACK ) ){
         if (event_mode & WAIT_TEXT_MODE)
             current_button_state.button = 0;
         else
             current_button_state.button = -3;
+        sprintf(current_button_state.str, "WHEELDOWN");
     }
 #endif
     else return false;
@@ -622,9 +632,11 @@ bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
         ctrl_pressed_status  |= 0x01;
+        sprintf(current_button_state.str, "CTRL");
         goto ctrl_pressed;
       case SDLK_LCTRL:
         ctrl_pressed_status  |= 0x02;
+        sprintf(current_button_state.str, "CTRL");
         goto ctrl_pressed;
       case SDLK_RSHIFT:
         shift_pressed_status |= 0x01;
@@ -717,11 +729,16 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
              event->keysym.sym == SDLK_KP_ENTER ||
              (spclclk_flag && event->keysym.sym == SDLK_SPACE) ){
             current_button_state.button = current_over_button;
+            if (current_over_button == 0)
+                sprintf(current_button_state.str, "RETURN");
+            else
+                sprintf(current_button_state.str, "S%d", current_over_button);
             if ( event->type == SDL_KEYDOWN )
                 current_button_state.down_flag = true;
         }
         else{
             current_button_state.button = 0;
+            sprintf(current_button_state.str, "SPACE");
         }
         playClickVoice();
         stopAnimation( clickstr_state );
@@ -782,9 +799,11 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
         }
         else if ( getpageup_flag && event->keysym.sym == SDLK_PAGEUP ){
             current_button_state.button  = -12;
+            sprintf(current_button_state.str, "PAGEUP");
         }
         else if ( getpagedown_flag && event->keysym.sym == SDLK_PAGEDOWN ){
             current_button_state.button  = -13;
+            sprintf(current_button_state.str, "PAGEDOWN");
         }
         else if ( getenter_flag && event->keysym.sym == SDLK_RETURN ||
                   getenter_flag && event->keysym.sym == SDLK_KP_ENTER ){
@@ -795,15 +814,19 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
         }
         else if ( getcursor_flag && event->keysym.sym == SDLK_UP ){
             current_button_state.button  = -40;
+            sprintf(current_button_state.str, "UP");
         }
         else if ( getcursor_flag && event->keysym.sym == SDLK_RIGHT ){
             current_button_state.button  = -41;
+            sprintf(current_button_state.str, "RIGHT");
         }
         else if ( getcursor_flag && event->keysym.sym == SDLK_DOWN ){
             current_button_state.button  = -42;
+            sprintf(current_button_state.str, "DOWN");
         }
         else if ( getcursor_flag && event->keysym.sym == SDLK_LEFT ){
             current_button_state.button  = -43;
+            sprintf(current_button_state.str, "LEFT");
         }
         else if ( getinsert_flag && event->keysym.sym == SDLK_INSERT ){
             current_button_state.button  = -50;
@@ -817,32 +840,27 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
         else if ( getzxc_flag && event->keysym.sym == SDLK_c ){
             current_button_state.button  = -53;
         }
-        else if ( getfunction_flag ){
-            if      ( event->keysym.sym == SDLK_F1 )
-                current_button_state.button = -21;
-            else if ( event->keysym.sym == SDLK_F2 )
-                current_button_state.button = -22;
-            else if ( event->keysym.sym == SDLK_F3 )
-                current_button_state.button = -23;
-            else if ( event->keysym.sym == SDLK_F4 )
-                current_button_state.button = -24;
-            else if ( event->keysym.sym == SDLK_F5 )
-                current_button_state.button = -25;
-            else if ( event->keysym.sym == SDLK_F6 )
-                current_button_state.button = -26;
-            else if ( event->keysym.sym == SDLK_F7 )
-                current_button_state.button = -27;
-            else if ( event->keysym.sym == SDLK_F8 )
-                current_button_state.button = -28;
-            else if ( event->keysym.sym == SDLK_F9 )
-                current_button_state.button = -29;
-            else if ( event->keysym.sym == SDLK_F10 )
-                current_button_state.button = -30;
-            else if ( event->keysym.sym == SDLK_F11 )
-                current_button_state.button = -31;
-            else if ( event->keysym.sym == SDLK_F12 )
-                current_button_state.button = -32;
+        else if ( getfunction_flag && 
+                  event->keysym.sym >= SDLK_F1 && event->keysym.sym <= SDLK_F12 ){
+            current_button_state.button = -21-(event->keysym.sym - SDLK_F1);
+            sprintf(current_button_state.str, "F%d", event->keysym.sym - SDLK_F1+1);
         }
+        else if ( bexec_flag && 
+                  event->keysym.sym >= SDLK_0 && event->keysym.sym <= SDLK_9 ){
+            current_button_state.button = -1; // dummy
+            sprintf(current_button_state.str, "%d", event->keysym.sym - SDLK_0);
+        }
+        else if ( bexec_flag && 
+                  event->keysym.sym >= SDLK_a && event->keysym.sym <= SDLK_z ){
+            current_button_state.button = -1; // dummy
+            sprintf(current_button_state.str, "%c", 'A' + event->keysym.sym - SDLK_a);
+        }
+        else if ( bexec_flag && 
+                  event->keysym.sym == SDLK_RSHIFT || event->keysym.sym == SDLK_LSHIFT ){
+            current_button_state.button = -1; // dummy
+            sprintf(current_button_state.str, "SHIFT");
+        }
+        
         if ( current_button_state.button != 0 ){
             stopAnimation( clickstr_state );
 
@@ -1056,10 +1074,14 @@ void ONScripter::runEventLoop()
 
             if (automode_flag || autoclick_time>0)
                 current_button_state.button = 0;
-            else if ( usewheel_flag )
+            else if ( usewheel_flag ){
                 current_button_state.button = -5;
-            else
+                sprintf(current_button_state.str, "TIMEOUT");
+            }
+            else{
                 current_button_state.button = -2;
+                sprintf(current_button_state.str, "TIMEOUT");
+            }
 
             if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) && 
                 ( clickstr_state == CLICK_WAIT || 

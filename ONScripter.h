@@ -238,6 +238,7 @@ public:
     int btndownCommand();
     int btndefCommand();
     int btnCommand();
+    int bspCommand();
     int brCommand();
     int bltCommand();
     int bgcopyCommand();
@@ -393,22 +394,22 @@ private:
 
     struct ButtonState{
         int x, y, button;
+        char str[16];
         bool down_flag;
     } current_button_state, last_mouse_state, shelter_mouse_state;
 
     struct ButtonLink{
-        typedef enum { NORMAL_BUTTON        = 0,
-                       SPRITE_BUTTON        = 1,
-                       EX_SPRITE_BUTTON     = 2,
-                       LOOKBACK_BUTTON      = 3,
-                       TMP_SPRITE_BUTTON    = 4
+        typedef enum { NORMAL_BUTTON     = 0,
+                       SPRITE_BUTTON     = 1,
+                       LOOKBACK_BUTTON   = 2,
+                       TMP_SPRITE_BUTTON = 3
         } BUTTON_TYPE;
 
         struct ButtonLink *next;
         BUTTON_TYPE button_type;
         int no;
         int sprite_no;
-        char *exbtn_ctl;
+        char *exbtn_ctl[3];
         SDL_Rect select_rect;
         SDL_Rect image_rect;
         AnimationInfo *anim[2];
@@ -417,14 +418,15 @@ private:
         ButtonLink(){
             button_type = NORMAL_BUTTON;
             next = NULL;
-            exbtn_ctl = NULL;
+            exbtn_ctl[0] = exbtn_ctl[1] = exbtn_ctl[2] = NULL;
             anim[0] = anim[1] = NULL;
             show_flag = 0;
         };
         ~ButtonLink(){
             if ((button_type == NORMAL_BUTTON ||
                  button_type == TMP_SPRITE_BUTTON) && anim[0]) delete anim[0];
-            if ( exbtn_ctl ) delete[] exbtn_ctl;
+            for (int i=0 ; i<3 ; i++)
+                if ( exbtn_ctl[i] ) delete[] exbtn_ctl[i];
         };
         void insert( ButtonLink *button ){
             button->next = this->next;
@@ -434,8 +436,7 @@ private:
             ButtonLink *p = this;
             while(p->next){
                 if ( p->next->sprite_no == no &&
-                     ( p->next->button_type == SPRITE_BUTTON ||
-                       p->next->button_type == EX_SPRITE_BUTTON ) ){
+                     p->next->button_type == SPRITE_BUTTON ){
                     ButtonLink *p2 = p->next;
                     p->next = p->next->next;
                     delete p2;
@@ -450,6 +451,7 @@ private:
 
     int current_over_button;
 
+    bool bexec_flag;
     bool getzxc_flag;
     bool gettab_flag;
     bool getpageup_flag;
