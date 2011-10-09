@@ -158,6 +158,7 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING ){
         FontInfo f_info = sentence_font;
         if (info) f_info = *info;
+        f_info.rubyon_flag = anim->is_ruby_drawable;
 
         if ( anim->font_size_xy[0] >= 0 ){ // in case of Sprite, not rclick menu
             f_info.setTateyokoMode(0);
@@ -204,7 +205,6 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         anim->allocImage( anim->pos.w*anim->num_of_cells, anim->pos.h );
         anim->fill( 0, 0, 0, 0 );
         
-        f_info.setRubyOnFlag(anim->is_ruby_drawable);
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
         for ( int i=0 ; i<anim->num_of_cells ; i++ ){
             f_info.clear();

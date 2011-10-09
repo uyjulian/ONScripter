@@ -312,7 +312,7 @@ int ScriptParser::rubyonCommand()
             setStr( &ruby_struct.font_name, NULL );
         }
     }
-    sentence_font.setRubyOnFlag(true);
+    sentence_font.rubyon_flag = true;
 
     return RET_CONTINUE;
 }
@@ -320,7 +320,7 @@ int ScriptParser::rubyonCommand()
 int ScriptParser::rubyoffCommand()
 {
     rubyon_flag = false;
-    sentence_font.setRubyOnFlag(false);
+    sentence_font.rubyon_flag = false;
 
     return RET_CONTINUE;
 }

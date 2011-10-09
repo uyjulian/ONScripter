@@ -1072,7 +1072,7 @@ void ONScripter::runEventLoop()
                 break;
             }
 
-            if (automode_flag || autoclick_time>0)
+            if (automode_flag || autoclick_time > 0)
                 current_button_state.button = 0;
             else if ( usewheel_flag ){
                 current_button_state.button = -5;

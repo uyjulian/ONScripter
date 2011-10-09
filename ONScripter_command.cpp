@@ -2200,12 +2200,10 @@ int ONScripter::getcursorposCommand()
     }
 
     script_h.readInt();
-    //script_h.setInt( &script_h.current_variable, fi.x() );
-    script_h.setInt( &script_h.current_variable, fi.x()-fi.ruby_offset_xy[0] ); // workaround for possibly a bug in the original
+    script_h.setInt( &script_h.current_variable, fi.x(false) );
     
     script_h.readInt();
-    //script_h.setInt( &script_h.current_variable, fi.y() );
-    script_h.setInt( &script_h.current_variable, fi.y()-fi.ruby_offset_xy[1] ); // workaround for possibly a bug in the original
+    script_h.setInt( &script_h.current_variable, fi.y(false) );
     
     return RET_CONTINUE;
 }
@@ -2736,7 +2734,7 @@ int ONScripter::cselbtnCommand()
     int button_no = script_h.readInt();
 
     FontInfo csel_info = sentence_font;
-    csel_info.setRubyOnFlag(false);
+    csel_info.rubyon_flag = false;
     csel_info.top_xy[0] = script_h.readInt();
     csel_info.top_xy[1] = script_h.readInt();
 

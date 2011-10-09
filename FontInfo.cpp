@@ -70,7 +70,6 @@ FontInfo::FontInfo()
 void FontInfo::reset()
 {
     tateyoko_mode = YOKO_MODE;
-    ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
     clear();
 
     is_bold = true;
@@ -139,14 +138,20 @@ int FontInfo::getRemainingLine()
         return num_xy[1] - num_xy[0] + xy[0]/2 + 1;
 }
 
-int FontInfo::x()
+int FontInfo::x(bool use_ruby_offset)
 {
-    return xy[0]*pitch_xy[0]/2 + top_xy[0] + line_offset_xy[0] + ruby_offset_xy[0];
+    int x = xy[0]*pitch_xy[0]/2 + top_xy[0] + line_offset_xy[0];
+    if (use_ruby_offset && rubyon_flag && tateyoko_mode == TATE_MODE) 
+        x += font_size_xy[0] - pitch_xy[0];
+    return x;
 }
 
-int FontInfo::y()
+int FontInfo::y(bool use_ruby_offset)
 {
-    return xy[1]*pitch_xy[1]/2 + top_xy[1] + line_offset_xy[1] + ruby_offset_xy[1];
+    int y = xy[1]*pitch_xy[1]/2 + top_xy[1] + line_offset_xy[1];
+    if (use_ruby_offset && rubyon_flag && tateyoko_mode == YOKO_MODE) 
+        y += pitch_xy[1] - font_size_xy[1];
+    return y;
 }
 
 void FontInfo::setXY( int x, int y )
@@ -162,7 +167,6 @@ void FontInfo::clear()
     else
         setXY(num_xy[0]-1, 0);
     line_offset_xy[0] = line_offset_xy[1] = 0;
-    setRubyOnFlag(rubyon_flag);
 }
 
 void FontInfo::newLine()
@@ -208,14 +212,6 @@ void FontInfo::addLineOffset(int offset)
     line_offset_xy[tateyoko_mode] += offset;
 }
 
-void FontInfo::setRubyOnFlag(bool flag)
-{
-    rubyon_flag = flag;
-    ruby_offset_xy[0] = ruby_offset_xy[1] = 0;
-    if (rubyon_flag && tateyoko_mode == TATE_MODE) ruby_offset_xy[0] = font_size_xy[0]-pitch_xy[0];
-    if (rubyon_flag && tateyoko_mode == YOKO_MODE) ruby_offset_xy[1] = pitch_xy[1] - font_size_xy[1];
-}
-
 SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2])
 {
     SDL_Rect rect;
@@ -231,10 +227,12 @@ SDL_Rect FontInfo::calcUpdatedArea(int start_xy[2])
         }
         rect.y = top_xy[1] + start_xy[1]*pitch_xy[1]/2;
         rect.h = pitch_xy[1]*(xy[1]-start_xy[1]+2)/2;
+        if (rubyon_flag) rect.h += pitch_xy[1] - font_size_xy[1];
     }
     else{
         rect.x = top_xy[0] + pitch_xy[0]*xy[0]/2;
         rect.w = pitch_xy[0]*(start_xy[0]-xy[0]+2)/2;
+        if (rubyon_flag) rect.w += font_size_xy[0]-pitch_xy[0];
         if (start_xy[0] == xy[0]){
             rect.y = top_xy[1] + pitch_xy[1]*start_xy[1]/2;
             rect.h = pitch_xy[1]*(xy[1]-start_xy[1])/2+1;

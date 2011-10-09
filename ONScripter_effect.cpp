@@ -387,7 +387,8 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
 
     event_mode = WAIT_INPUT_MODE;
     waitEvent(0);
-    if ( !(usewheel_flag  && current_button_state.button == -5 ||
+    if ( !((automode_flag || autoclick_time > 0) ||
+           usewheel_flag  && current_button_state.button == -5 ||
            !usewheel_flag && current_button_state.button == -2) ){
         effect_counter = effect_duration; // interrupted
     }

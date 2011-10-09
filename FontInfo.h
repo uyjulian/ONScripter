@@ -49,7 +49,6 @@ public:
     uchar3  window_color;
 
     int line_offset_xy[2]; // ruby offset for each line
-    int ruby_offset_xy[2]; // ruby offset for the whole sentence
     bool rubyon_flag;
     int tateyoko_mode;
 
@@ -60,8 +59,8 @@ public:
     int getTateyokoMode();
     int getRemainingLine();
     
-    int x();
-    int y();
+    int x(bool use_ruby_offset=true);
+    int y(bool use_ruby_offset=true);
     void setXY( int x=-1, int y=-1 );
     void clear();
     void newLine();

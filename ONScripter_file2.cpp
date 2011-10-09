@@ -346,10 +346,10 @@ int ONScripter::loadSaveFile2( int file_version )
     if ( file_version >= 201 ){
         if ( readInt() == 1 ) rubyon_flag = true;
         else                  rubyon_flag = false;
+        sentence_font.rubyon_flag = rubyon_flag;
         ruby_struct.font_size_xy[0] = readInt();
         ruby_struct.font_size_xy[1] = readInt();
         readStr( &ruby_struct.font_name );
-        sentence_font.setRubyOnFlag(rubyon_flag);
     }
 
     if (file_version >= 204){
