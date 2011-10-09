@@ -118,9 +118,11 @@ static struct FuncLUT{
     {"msp", &ONScripter::mspCommand},
     {"mpegplay", &ONScripter::mpegplayCommand},
     {"mp3vol", &ONScripter::mp3volCommand},
-    {"mp3stop", &ONScripter::playstopCommand},
+    {"mp3stop", &ONScripter::mp3stopCommand},
     {"mp3save", &ONScripter::mp3Command},
     {"mp3loop", &ONScripter::mp3Command},
+    {"mp3fadeout", &ONScripter::mp3fadeoutCommand},
+    {"mp3fadein", &ONScripter::mp3fadeinCommand},
     {"mp3", &ONScripter::mp3Command},
     {"movie", &ONScripter::movieCommand},
     {"movemousecursor", &ONScripter::movemousecursorCommand},
@@ -237,8 +239,10 @@ static struct FuncLUT{
     {"br",      &ONScripter::brCommand},
     {"blt",      &ONScripter::bltCommand},
     {"bgmvol", &ONScripter::mp3volCommand},
-    {"bgmstop", &ONScripter::playstopCommand},
+    {"bgmstop", &ONScripter::mp3stopCommand},
     {"bgmonce", &ONScripter::mp3Command}, 
+    {"bgmfadeout", &ONScripter::mp3fadeoutCommand},
+    {"bgmfadein", &ONScripter::mp3fadeinCommand},
     {"bgm", &ONScripter::mp3Command}, 
     {"bgcpy",      &ONScripter::bgcopyCommand},
     {"bgcopy",      &ONScripter::bgcopyCommand},
@@ -740,6 +744,9 @@ void ONScripter::reset()
     music_play_loop_flag = false;
     cd_play_loop_flag = false;
     mp3save_flag = false;
+    mp3fade_start = 0;
+    mp3fadeout_duration = 0;
+    mp3fadein_duration = 0;
     current_cd_track = -1;
     
     resetSub();

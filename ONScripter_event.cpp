@@ -34,12 +34,19 @@
 #define ONS_CHUNK_EVENT   (SDL_USEREVENT+4)
 #define ONS_BREAK_EVENT   (SDL_USEREVENT+5)
 
+// This sets up the fade event flag for use in bgm fadeout and fadein.
+#define BGM_FADEOUT 0
+#define BGM_FADEIN  1
+#define ONS_BGMFADE_EVENT (SDL_USEREVENT+6)
+
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "MP3 vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)"
 
 static SDL_TimerID timer_id = NULL;
 static SDL_TimerID break_id = NULL;
 SDL_TimerID timer_cdaudio_id = NULL;
+SDL_TimerID timer_bgmfade_id = NULL;
+
 bool ext_music_play_once_flag = false;
 
 /* **************************************** *
@@ -83,6 +90,16 @@ extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 
     SDL_Event event;
     event.type = ONS_CDAUDIO_EVENT;
+    SDL_PushEvent( &event );
+
+    return interval;
+}
+
+extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
+{
+    SDL_Event event;
+    event.type = ONS_BGMFADE_EVENT;
+    event.user.code = (param == NULL) ? BGM_FADEOUT : BGM_FADEIN;
     SDL_PushEvent( &event );
 
     return interval;
@@ -241,6 +258,64 @@ void ONScripter::flushEventSub( SDL_Event &event )
         }
         else{
             stopBGM( false );
+        }
+    }
+    else if ((event.type == ONS_BGMFADE_EVENT) &&
+             (event.user.code == BGM_FADEOUT)){
+        Uint32 cur_fade_duration = mp3fadeout_duration;
+        if (skip_mode & (SKIP_NORMAL | SKIP_TO_EOP) ||
+            ctrl_pressed_status) {
+            cur_fade_duration = 0;
+            Mix_VolumeMusic( 0 );
+        }
+        Uint32 tmp = SDL_GetTicks() - mp3fade_start;
+        if ( tmp < cur_fade_duration ) {
+            tmp = cur_fade_duration - tmp;
+            tmp *= music_volume;
+            tmp /= cur_fade_duration;
+
+            Mix_VolumeMusic( tmp * MIX_MAX_VOLUME / 100 );
+        } else {
+            SDL_RemoveTimer( timer_bgmfade_id );
+            timer_bgmfade_id = NULL;
+
+            event_mode &= ~WAIT_TIMER_MODE;
+            stopBGM( false );
+            //set break event to return to script processing
+            SDL_RemoveTimer( break_id );
+            break_id = NULL;
+
+            SDL_Event event;
+            event.type = ONS_BREAK_EVENT;
+            SDL_PushEvent( &event );
+        }
+    }
+    else if ((event.type == ONS_BGMFADE_EVENT) &&
+             (event.user.code == BGM_FADEIN)){
+        Uint32 cur_fade_duration = mp3fadein_duration;
+        if (skip_mode & (SKIP_NORMAL | SKIP_TO_EOP) ||
+            ctrl_pressed_status) {
+            cur_fade_duration = 0;
+            Mix_VolumeMusic( music_volume * MIX_MAX_VOLUME / 100 );
+        }
+        Uint32 tmp = SDL_GetTicks() - mp3fade_start;
+        if ( tmp < cur_fade_duration ) {
+            tmp *= music_volume;
+            tmp /= cur_fade_duration;
+
+            Mix_VolumeMusic( tmp * MIX_MAX_VOLUME / 100 );
+        } else {
+            SDL_RemoveTimer( timer_bgmfade_id );
+            timer_bgmfade_id = NULL;
+
+            event_mode &= ~WAIT_TIMER_MODE;
+            //set break event to return to script processing
+            SDL_RemoveTimer( break_id );
+            break_id = NULL;
+
+            SDL_Event event;
+            event.type = ONS_BREAK_EVENT;
+            SDL_PushEvent( &event );
         }
     }
     else if ( event.type == ONS_CDAUDIO_EVENT ){
@@ -1053,6 +1128,7 @@ void ONScripter::runEventLoop()
             break;
 
           case ONS_MUSIC_EVENT:
+          case ONS_BGMFADE_EVENT:
           case ONS_CDAUDIO_EVENT:
           case ONS_MIDI_EVENT:
             flushEventSub( event );

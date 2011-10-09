@@ -28,6 +28,9 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+extern SDL_TimerID timer_bgmfade_id;
+extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
+
 #define CONTINUOUS_PLAY
 
 int ONScripter::yesnoboxCommand()
@@ -366,7 +369,7 @@ int ONScripter::strspCommand()
 
 int ONScripter::stopCommand()
 {
-    stopBGM( false );
+    mp3stopCommand();
     wavestopCommand();
     
     return RET_CONTINUE;
@@ -1000,7 +1003,11 @@ int ONScripter::resettimerCommand()
 
 int ONScripter::resetCommand()
 {
+    int fadeout = mp3fadeout_duration;
+    mp3fadeout_duration = 0; //don't use fadeout during a reset
     resetSub();
+    mp3fadeout_duration = fadeout;
+
     clearCurrentPage();
     
     setCurrentLabel( "start" );
@@ -1137,6 +1144,7 @@ int ONScripter::printCommand()
 int ONScripter::playstopCommand()
 {
     stopBGM( false );
+
     return RET_CONTINUE;
 }
 
@@ -1252,6 +1260,37 @@ int ONScripter::mp3volCommand()
     return RET_CONTINUE;
 }
 
+int ONScripter::mp3stopCommand()
+{
+    if (Mix_PlayingMusic() == 1 && mp3fadeout_duration > 0 &&
+        system_menu_mode == SYSTEM_NULL){
+        // do a bgm fadeout
+        mp3fade_start = SDL_GetTicks();
+        timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback, 0);
+
+        event_mode = WAIT_TIMER_MODE;
+        waitEvent(-1);
+    }
+
+    stopBGM( false );
+
+    return RET_CONTINUE;
+}
+
+int ONScripter::mp3fadeoutCommand()
+{
+    mp3fadeout_duration = script_h.readInt();
+
+    return RET_CONTINUE;
+}
+
+int ONScripter::mp3fadeinCommand()
+{
+    mp3fadein_duration = script_h.readInt();
+
+    return RET_CONTINUE;
+}
+
 int ONScripter::mp3Command()
 {
     bool loop_flag = false;
@@ -1270,15 +1309,34 @@ int ONScripter::mp3Command()
         mp3save_flag = false;
     }
 
-    stopBGM( false );
+    mp3stopCommand();
+
     music_play_loop_flag = loop_flag;
 
     const char *buf = script_h.readStr();
     if (buf[0] != '\0'){
+        int tmp = music_volume;
         setStr(&music_file_name, buf);
+
+        if (mp3fadein_duration > 0)
+            music_volume = 0;
+
         playSound(music_file_name, 
                   SOUND_MUSIC | SOUND_MIDI | SOUND_CHUNK,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
+
+        music_volume = tmp;
+
+        if (mp3fadein_duration > 0) {
+            // do a bgm fadein
+            mp3fade_start = SDL_GetTicks();
+
+            timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback,
+                                            (void*)&timer_bgmfade_id);
+
+            event_mode = WAIT_TIMER_MODE;
+            waitEvent(-1);
+        }
     }
         
     return RET_CONTINUE;
@@ -1626,8 +1684,9 @@ int ONScripter::loadgameCommand()
     if ( no < 0 )
         errorAndExit( "loadgame: save number is less than 0." );
 
-    if ( loadSaveFile( no ) ) return RET_CONTINUE;
-    else {
+    int fadeout = mp3fadeout_duration;
+    mp3fadeout_duration = 0; //don't use fadeout during a load
+    if ( !loadSaveFile( no ) ){
         dirty_rect.fill( screen_width, screen_height );
         refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
         flush( refreshMode() );
@@ -1649,9 +1708,11 @@ int ONScripter::loadgameCommand()
 
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
-        
-        return RET_CONTINUE;
     }
+
+    mp3fadeout_duration = fadeout;
+
+    return RET_CONTINUE;
 }
 
 int ONScripter::ldCommand()

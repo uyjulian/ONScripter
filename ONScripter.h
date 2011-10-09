@@ -148,6 +148,9 @@ public:
     int mspCommand();
     int mpegplayCommand();
     int mp3volCommand();
+    int mp3stopCommand();
+    int mp3fadeoutCommand();
+    int mp3fadeinCommand();
     int mp3Command();
     int movieCommand();
     int movemousecursorCommand();
@@ -636,6 +639,9 @@ private:
     char *music_file_name;
     unsigned char *music_buffer; // for looped music
     long music_buffer_length;
+    Uint32 mp3fade_start;
+    Uint32 mp3fadeout_duration;
+    Uint32 mp3fadein_duration;
     Mix_Music *music_info;
     char *loop_bgm_name[2];
     
