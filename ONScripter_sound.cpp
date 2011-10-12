@@ -103,6 +103,9 @@ extern "C"{
 extern void midiCallback( int sig );
 extern SDL_TimerID timer_cdaudio_id;
 
+extern SDL_TimerID timer_bgmfade_id;
+extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
+
 #define TMP_MUSIC_FILE "tmp.mus"
 
 int ONScripter::playSound(const char *filename, int format, bool loop_flag, int channel)
@@ -354,6 +357,9 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
 
 void ONScripter::stopBGM( bool continue_flag )
 {
+    if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
+    timer_bgmfade_id = NULL;
+
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
 

@@ -276,18 +276,19 @@ void ONScripter::flushEventSub( SDL_Event &event )
 
             Mix_VolumeMusic( tmp * MIX_MAX_VOLUME / 100 );
         } else {
-            SDL_RemoveTimer( timer_bgmfade_id );
-            timer_bgmfade_id = NULL;
+            char *ext = NULL;
+            if (music_file_name) ext = strrchr(music_file_name, '.');
+            if (ext && (strcmp(ext+1, "OGG") && strcmp(ext+1, "ogg"))){
+                // set break event to return to script processing when playing music other than ogg
+                SDL_RemoveTimer( break_id );
+                break_id = NULL;
 
-            event_mode &= ~WAIT_TIMER_MODE;
+                SDL_Event event;
+                event.type = ONS_BREAK_EVENT;
+                SDL_PushEvent( &event );
+            }
+
             stopBGM( false );
-            //set break event to return to script processing
-            SDL_RemoveTimer( break_id );
-            break_id = NULL;
-
-            SDL_Event event;
-            event.type = ONS_BREAK_EVENT;
-            SDL_PushEvent( &event );
         }
     }
     else if ((event.type == ONS_BGMFADE_EVENT) &&
@@ -305,17 +306,20 @@ void ONScripter::flushEventSub( SDL_Event &event )
 
             Mix_VolumeMusic( tmp * MIX_MAX_VOLUME / 100 );
         } else {
-            SDL_RemoveTimer( timer_bgmfade_id );
+            if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
             timer_bgmfade_id = NULL;
 
-            event_mode &= ~WAIT_TIMER_MODE;
-            //set break event to return to script processing
-            SDL_RemoveTimer( break_id );
-            break_id = NULL;
+            char *ext = NULL;
+            if (music_file_name) ext = strrchr(music_file_name, '.');
+            if (ext && (strcmp(ext+1, "OGG") && strcmp(ext+1, "ogg"))){
+                // set break event to return to script processing when playing music other than ogg
+                SDL_RemoveTimer( break_id );
+                break_id = NULL;
 
-            SDL_Event event;
-            event.type = ONS_BREAK_EVENT;
-            SDL_PushEvent( &event );
+                SDL_Event event;
+                event.type = ONS_BREAK_EVENT;
+                SDL_PushEvent( &event );
+            }
         }
     }
     else if ( event.type == ONS_CDAUDIO_EVENT ){

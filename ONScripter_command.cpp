@@ -894,10 +894,10 @@ int ONScripter::savescreenshotCommand()
     }
 
     const char *buf = script_h.readStr();
-    char filename[256];
-    
-    const char *ext = strrchr( buf, '.' );
+    const char *ext = NULL;
+    if (buf) ext = strrchr( buf, '.' );
     if ( ext && (!strcmp( ext+1, "BMP" ) || !strcmp( ext+1, "bmp" ) ) ){
+        char filename[256];
         sprintf( filename, "%s%s", archive_path, buf );
         for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
             if ( filename[i] == '/' || filename[i] == '\\' )
@@ -1265,11 +1265,24 @@ int ONScripter::mp3stopCommand()
     if (Mix_PlayingMusic() == 1 && mp3fadeout_duration > 0 &&
         system_menu_mode == SYSTEM_NULL){
         // do a bgm fadeout
+        if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
         mp3fade_start = SDL_GetTicks();
         timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback, 0);
 
-        event_mode = WAIT_TIMER_MODE;
-        waitEvent(-1);
+        char *ext = NULL;
+        if (music_file_name) ext = strrchr(music_file_name, '.');
+        if (ext && (!strcmp(ext+1, "OGG") || !strcmp(ext+1, "ogg"))){
+            // do not wait until fadout is finished when playing ogg
+            event_mode = IDLE_EVENT_MODE;
+            waitEvent(0);
+
+            return RET_CONTINUE;
+        }
+        else{
+            // wait until fadout is finished when playing music other than ogg
+            event_mode = WAIT_TIMER_MODE;
+            waitEvent(-1);
+        }
     }
 
     stopBGM( false );
@@ -1310,6 +1323,7 @@ int ONScripter::mp3Command()
     }
 
     mp3stopCommand();
+    stopBGM( false );
 
     music_play_loop_flag = loop_flag;
 
@@ -1330,12 +1344,21 @@ int ONScripter::mp3Command()
         if (mp3fadein_duration > 0) {
             // do a bgm fadein
             mp3fade_start = SDL_GetTicks();
-
             timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback,
                                             (void*)&timer_bgmfade_id);
 
-            event_mode = WAIT_TIMER_MODE;
-            waitEvent(-1);
+            char *ext = NULL;
+            if (music_file_name) ext = strrchr(music_file_name, '.');
+            if (ext && (!strcmp(ext+1, "OGG") || !strcmp(ext+1, "ogg"))){
+                // do not wait until fadin is finished when playing ogg
+                event_mode = IDLE_EVENT_MODE;
+                waitEvent(0);
+            }
+            else{
+                // wait until fadin is finished when playing music other than ogg
+                event_mode = WAIT_TIMER_MODE;
+                waitEvent(-1);
+            }
         }
     }
         
