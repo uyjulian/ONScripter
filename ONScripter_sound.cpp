@@ -359,6 +359,7 @@ void ONScripter::stopBGM( bool continue_flag )
 {
     if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
     timer_bgmfade_id = NULL;
+    mp3fadeout_duration_internal = 0;
 
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;

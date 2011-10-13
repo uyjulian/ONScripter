@@ -642,6 +642,8 @@ private:
     Uint32 mp3fade_start;
     Uint32 mp3fadeout_duration;
     Uint32 mp3fadein_duration;
+    Uint32 mp3fadeout_duration_internal;
+    Uint32 mp3fadein_duration_internal;
     Mix_Music *music_info;
     char *loop_bgm_name[2];
     

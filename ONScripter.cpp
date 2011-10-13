@@ -747,6 +747,8 @@ void ONScripter::reset()
     mp3fade_start = 0;
     mp3fadeout_duration = 0;
     mp3fadein_duration = 0;
+    mp3fadeout_duration_internal = 0;
+    mp3fadein_duration_internal = 0;
     current_cd_track = -1;
     
     resetSub();

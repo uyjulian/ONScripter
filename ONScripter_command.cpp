@@ -135,6 +135,8 @@ int ONScripter::vCommand()
 
 int ONScripter::trapCommand()
 {
+    bool is_clicked = trap_mode & TRAP_CLICKED;
+    
     if      ( script_h.isName( "lr_trap" ) ){
         trap_mode = TRAP_LEFT_CLICK | TRAP_RIGHT_CLICK;
     }
@@ -157,8 +159,7 @@ int ONScripter::trapCommand()
     }
     else if ( script_h.compareString("resume") ){
         script_h.readLabel();
-        trap_mode &= ~TRAP_STOP;
-        if (trap_mode & TRAP_CLICKED) trapHandler();
+        if (is_clicked) trapHandler();
         return RET_CONTINUE;
     }
 
@@ -1262,10 +1263,12 @@ int ONScripter::mp3volCommand()
 
 int ONScripter::mp3stopCommand()
 {
-    if (Mix_PlayingMusic() == 1 && mp3fadeout_duration > 0 &&
-        system_menu_mode == SYSTEM_NULL){
+    if (Mix_PlayingMusic() == 1 && timer_bgmfade_id && mp3fadeout_duration_internal > 0) // already in fadeout
+        return RET_CONTINUE;
+    
+    if (Mix_PlayingMusic() == 1 && mp3fadeout_duration > 0){
         // do a bgm fadeout
-        if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
+        mp3fadeout_duration_internal = mp3fadeout_duration;
         mp3fade_start = SDL_GetTicks();
         timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback, 0);
 
@@ -1343,6 +1346,7 @@ int ONScripter::mp3Command()
 
         if (mp3fadein_duration > 0) {
             // do a bgm fadein
+            mp3fadein_duration_internal = mp3fadein_duration;
             mp3fade_start = SDL_GetTicks();
             timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback,
                                             (void*)&timer_bgmfade_id);

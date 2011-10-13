@@ -262,7 +262,7 @@ void ONScripter::flushEventSub( SDL_Event &event )
     }
     else if ((event.type == ONS_BGMFADE_EVENT) &&
              (event.user.code == BGM_FADEOUT)){
-        Uint32 cur_fade_duration = mp3fadeout_duration;
+        Uint32 cur_fade_duration = mp3fadeout_duration_internal;
         if (skip_mode & (SKIP_NORMAL | SKIP_TO_EOP) ||
             ctrl_pressed_status) {
             cur_fade_duration = 0;
@@ -293,7 +293,7 @@ void ONScripter::flushEventSub( SDL_Event &event )
     }
     else if ((event.type == ONS_BGMFADE_EVENT) &&
              (event.user.code == BGM_FADEIN)){
-        Uint32 cur_fade_duration = mp3fadein_duration;
+        Uint32 cur_fade_duration = mp3fadein_duration_internal;
         if (skip_mode & (SKIP_NORMAL | SKIP_TO_EOP) ||
             ctrl_pressed_status) {
             cur_fade_duration = 0;
@@ -308,6 +308,7 @@ void ONScripter::flushEventSub( SDL_Event &event )
         } else {
             if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
             timer_bgmfade_id = NULL;
+            mp3fadeout_duration_internal = 0;
 
             char *ext = NULL;
             if (music_file_name) ext = strrchr(music_file_name, '.');
@@ -466,6 +467,7 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         automode_flag = false;
         return false;
     }
+
     if ( (event->button == SDL_BUTTON_RIGHT && trap_mode & TRAP_RIGHT_CLICK) ||
          (event->button == SDL_BUTTON_LEFT  && trap_mode & TRAP_LEFT_CLICK) ){
         if (trapHandler()) return true;
