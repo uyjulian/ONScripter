@@ -285,6 +285,8 @@ protected:
     void timerEvent(int count=-1);
     void flushEventSub( SDL_Event &event );
     void flushEvent();
+    void removeEvent(int type);
+    void removeBGMFadeEvent();
     void advancePhase( int count=0 );
     void waitEventSub(int count);
     bool waitEvent(int count);

@@ -357,6 +357,7 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
 
 void ONScripter::stopBGM( bool continue_flag )
 {
+    removeBGMFadeEvent();
     if (timer_bgmfade_id) SDL_RemoveTimer( timer_bgmfade_id );
     timer_bgmfade_id = NULL;
     mp3fadeout_duration_internal = 0;

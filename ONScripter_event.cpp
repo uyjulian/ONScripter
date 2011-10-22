@@ -357,6 +357,21 @@ void ONScripter::flushEvent()
         flushEventSub( event );
 }
 
+void ONScripter::removeEvent(int type)
+{
+    SDL_Event event;
+#if SDL_VERSION_ATLEAST(1, 3, 0)
+    while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, type, type) > 0);
+#else
+    while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, SDL_EVENTMASK(type) ) > 0 );
+#endif
+}
+
+void ONScripter::removeBGMFadeEvent()
+{
+    removeEvent(ONS_BGMFADE_EVENT);
+}
+
 void ONScripter::advancePhase( int count )
 {
     if ( timer_id != NULL ){
@@ -386,13 +401,7 @@ void ONScripter::waitEventSub(int count)
     
     runEventLoop();
 
-    // flush ONS Break event
-    SDL_Event event;
-#if SDL_VERSION_ATLEAST(1, 3, 0)
-    while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, ONS_BREAK_EVENT, ONS_BREAK_EVENT) > 0);
-#else
-    while(SDL_PeepEvents( &event, 1, SDL_GETEVENT, SDL_EVENTMASK(ONS_BREAK_EVENT) ) > 0);
-#endif
+    removeEvent( ONS_BREAK_EVENT );
     
     if (break_id) SDL_RemoveTimer(break_id);
     break_id = NULL;
