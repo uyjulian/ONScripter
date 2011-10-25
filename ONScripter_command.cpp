@@ -3001,11 +3001,6 @@ int ONScripter::btnwaitCommand()
         script_h.readInt();
     }
 
-    if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl[1]){
-        SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
-        if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl[1], &check_src_rect );
-    }
-
     ButtonLink *bl = root_button_link.next;
     while( bl ){
         bl->show_flag = 0;
@@ -3029,6 +3024,11 @@ int ONScripter::btnwaitCommand()
         }
         dirty_rect.add( bl->image_rect );
         bl = bl->next;
+    }
+
+    if (is_exbtn_enabled && exbtn_d_button_link.exbtn_ctl[1]){
+        SDL_Rect check_src_rect = {0, 0, screen_width, screen_height};
+        if (is_exbtn_enabled) decodeExbtnControl( exbtn_d_button_link.exbtn_ctl[1], &check_src_rect );
     }
 
     leaveTextDisplayMode();
