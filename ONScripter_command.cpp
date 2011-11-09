@@ -1268,6 +1268,7 @@ int ONScripter::mp3stopCommand()
     
     if (Mix_PlayingMusic() == 1 && mp3fadeout_duration > 0){
         // do a bgm fadeout
+        Mix_HookMusicFinished( NULL );
         mp3fadeout_duration_internal = mp3fadeout_duration;
         mp3fade_start = SDL_GetTicks();
         timer_bgmfade_id = SDL_AddTimer(20, bgmfadeCallback, 0);
