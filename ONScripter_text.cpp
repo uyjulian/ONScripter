@@ -461,7 +461,7 @@ bool ONScripter::clickWait( char *out_text )
                script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
 
         if ( textgosub_label ){
-            saveoffCommand();
+            saveon_flag = false;
 
             textgosub_clickstr_state = CLICK_WAIT;
             if (script_h.getStringBuffer()[string_buffer_offset] == 0x0)
@@ -516,7 +516,7 @@ bool ONScripter::clickNewPage( char *out_text )
                script_h.getStringBuffer()[ string_buffer_offset ] == '\t' ) string_buffer_offset ++;
 
         if ( textgosub_label ){
-            saveoffCommand();
+            saveon_flag = false;
 
             textgosub_clickstr_state = CLICK_NEWPAGE;
             gosubReal( textgosub_label, script_h.getNext(), true );

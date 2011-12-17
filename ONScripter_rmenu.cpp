@@ -406,6 +406,7 @@ void ONScripter::executeSystemSave()
     if ( current_button_state.button > 0 ){
         int file_no = current_button_state.button;
         if (executeSystemYesNo( SYSTEM_SAVE, file_no )){
+            if (saveon_flag && internal_saveon_flag) saveSaveFile(-1);
             saveSaveFile( file_no );
             leaveSystemCall();
         }

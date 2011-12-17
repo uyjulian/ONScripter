@@ -63,7 +63,6 @@ public:
 
     void reset();
     int open();
-    int parseLine();
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false );
 

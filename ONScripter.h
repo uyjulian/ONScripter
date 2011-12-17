@@ -87,6 +87,18 @@ public:
 
     /* ---------------------------------------- */
     /* Commands */
+    typedef int (ONScripter::*FuncList)();
+    struct FuncLUT{
+        char command[30];
+        FuncList method;
+    };
+    struct FuncHash{
+        FuncLUT *func;
+        int num;
+    } func_hash['z'-'a'+1];
+
+    void makeFuncLUT();
+
     int yesnoboxCommand();
     int wavestopCommand();
     int waveCommand();

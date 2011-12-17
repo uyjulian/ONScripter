@@ -12,6 +12,7 @@ GUI_OBJS = ONScripter$(OBJSUFFIX) \
 	ONScripter_file$(OBJSUFFIX) \
 	ONScripter_file2$(OBJSUFFIX) \
 	ONScripter_image$(OBJSUFFIX) \
+	ONScripter_lut$(OBJSUFFIX) \
 	ONScripter_rmenu$(OBJSUFFIX) \
 	ONScripter_sound$(OBJSUFFIX) \
 	ONScripter_text$(OBJSUFFIX) \
@@ -119,6 +120,7 @@ ONScripter_sound$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripter_file$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripter_file2$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 ONScripter_image$(OBJSUFFIX): $(ONSCRIPTER_HEADER) resize_image.h
+ONScripter_lut$(OBJSUFFIX): $(ONSCRIPTER_HEADER)
 AnimationInfo$(OBJSUFFIX): AnimationInfo.h
 FontInfo$(OBJSUFFIX): FontInfo.h
 DirtyRect$(OBJSUFFIX) : DirtyRect.h

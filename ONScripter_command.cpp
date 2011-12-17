@@ -924,6 +924,8 @@ int ONScripter::saveonCommand()
 
 int ONScripter::saveoffCommand()
 {
+    if (saveon_flag && internal_saveon_flag) saveSaveFile(-1);
+    
     saveon_flag = false;
 
     return RET_CONTINUE;
@@ -943,8 +945,10 @@ int ONScripter::savegameCommand()
 
     if ( no < 0 )
         errorAndExit("savegame: save number is less than 0.");
-    else
+    else{
+        if (saveon_flag && internal_saveon_flag) saveSaveFile(-1);
         saveSaveFile( no, savestr ); 
+    }
 
     return RET_CONTINUE;
 }

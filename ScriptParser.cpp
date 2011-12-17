@@ -36,128 +36,6 @@
 
 #define MAX_PAGE_LIST 16
 
-typedef int (ScriptParser::*FuncList)();
-static struct FuncLUT{
-    char command[30];
-    FuncList method;
-} func_lut[] = {
-    {"zenkakko", &ScriptParser::zenkakkoCommand},
-    {"windoweffect", &ScriptParser::effectCommand},
-    {"windowchip", &ScriptParser::windowchipCommand},
-    {"windowback", &ScriptParser::windowbackCommand},
-    {"versionstr", &ScriptParser::versionstrCommand},
-    {"usewheel", &ScriptParser::usewheelCommand},
-    {"useescspc", &ScriptParser::useescspcCommand},
-    {"underline", &ScriptParser::underlineCommand},
-    {"transmode", &ScriptParser::transmodeCommand},
-    {"time", &ScriptParser::timeCommand},
-    {"textgosub", &ScriptParser::textgosubCommand},
-    {"tan", &ScriptParser::tanCommand},
-    {"sub", &ScriptParser::subCommand},
-    {"stralias", &ScriptParser::straliasCommand},
-    {"spi", &ScriptParser::soundpressplginCommand},
-    {"soundpressplgin", &ScriptParser::soundpressplginCommand},
-    {"skip",     &ScriptParser::skipCommand},
-    {"sin", &ScriptParser::sinCommand},
-    {"shadedistance",     &ScriptParser::shadedistanceCommand},
-    {"setkinsoku",     &ScriptParser::setkinsokuCommand},
-    {"selectvoice",     &ScriptParser::selectvoiceCommand},
-    {"selectcolor",     &ScriptParser::selectcolorCommand},
-    {"savenumber",     &ScriptParser::savenumberCommand},
-    {"savename",     &ScriptParser::savenameCommand},
-    {"sar",    &ScriptParser::nsaCommand},
-    {"rubyon",    &ScriptParser::rubyonCommand},
-    {"rubyoff",    &ScriptParser::rubyoffCommand},
-    {"roff",    &ScriptParser::roffCommand},
-    {"rmenu",    &ScriptParser::rmenuCommand},
-    {"return",   &ScriptParser::returnCommand},
-    {"pretextgosub", &ScriptParser::pretextgosubCommand},
-    {"pagetag", &ScriptParser::pagetagCommand},
-    {"numalias", &ScriptParser::numaliasCommand},
-    {"nsadir",    &ScriptParser::nsadirCommand},
-    {"nsa",    &ScriptParser::nsaCommand},
-    {"notif",    &ScriptParser::ifCommand},
-    {"next",    &ScriptParser::nextCommand},
-    {"nsa",    &ScriptParser::arcCommand},
-    {"ns3",    &ScriptParser::nsaCommand},
-    {"ns2",    &ScriptParser::nsaCommand},
-    {"mul",      &ScriptParser::mulCommand},
-    {"movl",      &ScriptParser::movCommand},
-    {"mov10",      &ScriptParser::movCommand},
-    {"mov9",      &ScriptParser::movCommand},
-    {"mov8",      &ScriptParser::movCommand},
-    {"mov7",      &ScriptParser::movCommand},
-    {"mov6",      &ScriptParser::movCommand},
-    {"mov5",      &ScriptParser::movCommand},
-    {"mov4",      &ScriptParser::movCommand},
-    {"mov3",      &ScriptParser::movCommand},
-    {"mov",      &ScriptParser::movCommand},
-    {"mode_saya", &ScriptParser::mode_sayaCommand},
-    {"mode_ext", &ScriptParser::mode_extCommand},
-    {"mod",      &ScriptParser::modCommand},
-    {"mid",      &ScriptParser::midCommand},
-    {"menusetwindow",      &ScriptParser::menusetwindowCommand},
-    {"menuselectvoice",      &ScriptParser::menuselectvoiceCommand},
-    {"menuselectcolor",      &ScriptParser::menuselectcolorCommand},
-    {"maxkaisoupage",      &ScriptParser::maxkaisoupageCommand},
-    {"luasub",      &ScriptParser::luasubCommand},
-    {"luacall",      &ScriptParser::luacallCommand},
-    {"lookbacksp",      &ScriptParser::lookbackspCommand},
-    {"lookbackcolor",      &ScriptParser::lookbackcolorCommand},
-    //{"lookbackbutton",      &ScriptParser::lookbackbuttonCommand},
-    {"loadgosub",      &ScriptParser::loadgosubCommand},
-    {"linepage2",    &ScriptParser::linepageCommand},
-    {"linepage",    &ScriptParser::linepageCommand},
-    {"len",      &ScriptParser::lenCommand},
-    {"labellog",      &ScriptParser::labellogCommand},
-    {"kidokuskip", &ScriptParser::kidokuskipCommand},
-    {"kidokumode", &ScriptParser::kidokumodeCommand},
-    {"itoa2", &ScriptParser::itoaCommand},
-    {"itoa", &ScriptParser::itoaCommand},
-    {"intlimit", &ScriptParser::intlimitCommand},
-    {"inc",      &ScriptParser::incCommand},
-    {"if",       &ScriptParser::ifCommand},
-    {"humanz",       &ScriptParser::humanzCommand},
-    {"goto",     &ScriptParser::gotoCommand},
-    {"gosub",    &ScriptParser::gosubCommand},
-    {"globalon",    &ScriptParser::globalonCommand},
-    {"getparam2",    &ScriptParser::getparamCommand},
-    {"getparam",    &ScriptParser::getparamCommand},
-    //{"game",    &ScriptParser::gameCommand},
-    {"for",   &ScriptParser::forCommand},
-    {"filelog",   &ScriptParser::filelogCommand},
-    {"english",   &ScriptParser::englishCommand},
-    {"effectcut",   &ScriptParser::effectcutCommand},
-    {"effectblank",   &ScriptParser::effectblankCommand},
-    {"effect",   &ScriptParser::effectCommand},
-    {"div",   &ScriptParser::divCommand},
-    {"dim",   &ScriptParser::dimCommand},
-    {"defvoicevol",   &ScriptParser::defvoicevolCommand},
-    {"defsub",   &ScriptParser::defsubCommand},
-    {"defsevol",   &ScriptParser::defsevolCommand},
-    {"defmp3vol",   &ScriptParser::defmp3volCommand},
-    {"defaultspeed", &ScriptParser::defaultspeedCommand},
-    {"defaultfont", &ScriptParser::defaultfontCommand},
-    {"dec",   &ScriptParser::decCommand},
-    {"date",   &ScriptParser::dateCommand},
-    {"cos", &ScriptParser::cosCommand},
-    {"cmp",      &ScriptParser::cmpCommand},
-    {"clickvoice",   &ScriptParser::clickvoiceCommand},
-    {"clickstr",   &ScriptParser::clickstrCommand},
-    {"break",   &ScriptParser::breakCommand},
-    {"automode", &ScriptParser::mode_extCommand},
-    {"atoi",      &ScriptParser::atoiCommand},
-    {"arc",      &ScriptParser::arcCommand},
-    {"addkinsoku",      &ScriptParser::addkinsokuCommand},
-    {"add",      &ScriptParser::addCommand},
-    {"", NULL}
-};
-
-static struct FuncHash{
-    int start;
-    int end;
-} func_hash['z'-'a'+1];
-
 ScriptParser::ScriptParser()
 {
     debug_level = 0;
@@ -197,18 +75,6 @@ ScriptParser::ScriptParser()
     start_kinsoku = end_kinsoku = NULL;
     num_start_kinsoku = num_end_kinsoku = 0;
     setKinsoku(DEFAULT_START_KINSOKU, DEFAULT_END_KINSOKU, false);
-
-    for (i='z'-'a' ; i>=0 ; i--){
-        func_hash[i].start = -1;
-        func_hash[i].end = -2;
-    }
-    int idx = 0;
-    while (func_lut[idx].method){
-        int j = func_lut[idx].command[0]-'a';
-        if (func_hash[j].start == -1) func_hash[j].start = idx;
-        func_hash[j].end = idx;
-        idx++;
-    }
 }
 
 ScriptParser::~ScriptParser()
@@ -425,53 +291,6 @@ void ScriptParser::readColor( uchar3 *color, const char *buf ){
     (*color)[0] = convHexToDec( buf[1] ) << 4 | convHexToDec( buf[2] );
     (*color)[1] = convHexToDec( buf[3] ) << 4 | convHexToDec( buf[4] );
     (*color)[2] = convHexToDec( buf[5] ) << 4 | convHexToDec( buf[6] );
-}
-
-int ScriptParser::parseLine()
-{
-    if ( debug_level > 0 ) printf("ScriptParser::Parseline %s\n", script_h.getStringBuffer() );
-
-    const char *cmd = script_h.getStringBuffer();
-    if ( cmd[string_buffer_offset] == ';' ) return RET_CONTINUE;
-    else if ( cmd[string_buffer_offset] == '*' ) return RET_CONTINUE;
-    else if ( cmd[string_buffer_offset] == ':' ) return RET_CONTINUE;
-    else if ( script_h.isText() ) return RET_NOMATCH;
-
-    if (cmd[string_buffer_offset] != '_'){
-        if (cmd[0] >= 'a' && cmd[0] <= 'z'){
-            UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
-            UserFuncLUT *uf = ufh.root.next;
-            while(uf){
-                if (!strcmp( uf->command, cmd )){
-                    if (uf->lua_flag){
-#ifdef USE_LUA
-                        if (lua_handler.callFunction(false, cmd))
-                            errorAndExit( lua_handler.error_str );
-#endif
-                    }
-                    else{
-                        gosubReal( cmd, script_h.getNext() );
-                    }
-                    return RET_CONTINUE;
-                }
-                uf = uf->next;
-            }
-        }
-    }
-    else{
-        cmd++;
-    }
-
-    if (cmd[0] >= 'a' && cmd[0] <= 'z'){
-        FuncHash &fh = func_hash[cmd[0]-'a'];
-        for (int i=fh.start ; i<=fh.end ; i++){
-            if ( !strcmp( func_lut[i].command, cmd ) ){
-                return (this->*func_lut[i].method)();
-            }
-        }
-    }
-
-    return RET_NOMATCH;
 }
 
 void ScriptParser::deleteRMenuLink()
