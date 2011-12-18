@@ -263,7 +263,7 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
             info->newLine();
             str++;
         }
-        else{
+        else if (*str){
             if ( checkLineBreak( str, info ) ){
                 info->newLine();
                 for (int i=0 ; i<indent_offset ; i++){
@@ -272,7 +272,8 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
             }
 
             text[0] = *str++;
-            text[1] = *str++;
+            if (*str) text[1] = *str++;
+            else      text[1] = 0;
             drawChar( text, info, false, false, surface, cache_info );
         }
     }
