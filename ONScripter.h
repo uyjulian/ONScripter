@@ -180,6 +180,7 @@ public:
     int locateCommand();
     int loadgameCommand();
     int ldCommand();
+    int kinsokuCommand();
     int jumpfCommand();
     int jumpbCommand();
     int ispageCommand();
@@ -213,6 +214,7 @@ public:
     int getinsertCommand();
     int getfunctionCommand();
     int getenterCommand();
+    int getcursorpos2Command();
     int getcursorposCommand();
     int getcursorCommand();
     int getcselstrCommand();
@@ -525,6 +527,7 @@ private:
     
     /* ---------------------------------------- */
     /* Text related variables */
+    bool is_kinsoku;
     AnimationInfo text_info;
     AnimationInfo sentence_font_info;
     char *font_file;
@@ -547,7 +550,6 @@ private:
     SDL_Surface *renderGlyph(TTF_Font *font, Uint16 text);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
-    void drawDoubleChars( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
     void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, AnimationInfo *cache_info=NULL );
     void restoreTextBuffer(SDL_Surface *surface = NULL);
     void enterTextDisplayMode(bool text_flag = true);

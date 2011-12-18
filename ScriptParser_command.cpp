@@ -293,7 +293,7 @@ int ScriptParser::savenameCommand()
 
 int ScriptParser::rubyonCommand()
 {
-    rubyon_flag = true;
+    sentence_font.rubyon_flag = true;
 
     char *buf = script_h.getNext();
     if ( buf[0] == 0x0a || buf[0] == ':' || buf[0] == ';' ){
@@ -312,14 +312,12 @@ int ScriptParser::rubyonCommand()
             setStr( &ruby_struct.font_name, NULL );
         }
     }
-    sentence_font.rubyon_flag = true;
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::rubyoffCommand()
 {
-    rubyon_flag = false;
     sentence_font.rubyon_flag = false;
 
     return RET_CONTINUE;

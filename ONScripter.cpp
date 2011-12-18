@@ -539,6 +539,7 @@ void ONScripter::resetSub()
     saveon_flag = true;
     internal_saveon_flag = true;
 
+    is_kinsoku = true;
     textgosub_clickstr_state = CLICK_NONE;
     indent_offset = 0;
     line_enter_status = 0;
@@ -591,6 +592,9 @@ void ONScripter::resetSentenceFont()
     sentence_font_info.pos.y = 0;
     sentence_font_info.pos.w = screen_width+1;
     sentence_font_info.pos.h = screen_height+1;
+
+    old_xy[0] = sentence_font.x();
+    old_xy[1] = sentence_font.y();
 }
 
 void ONScripter::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )

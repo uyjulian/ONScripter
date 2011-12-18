@@ -124,7 +124,7 @@ void ScriptParser::reset()
     useescspc_flag = false;
     mode_saya_flag = false;
     mode_ext_flag = false;
-    rubyon_flag = false;
+    sentence_font.rubyon_flag = false;
     zenkakko_flag = false;
     pagetag_flag = false;
     windowchip_sprite_no = -1;

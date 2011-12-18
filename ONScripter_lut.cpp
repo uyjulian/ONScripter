@@ -211,6 +211,8 @@ static ONScripter::FuncLUT func_lut[] = {
     {"ld",				&ONScripter::ldCommand},
     {"labellog",		&ONScripter::labellogCommand},
 
+    {"kinsoku",			&ONScripter::kinsokuCommand},
+
     {"jumpf",			&ONScripter::jumpfCommand},
     {"jumpb",			&ONScripter::jumpbCommand},
 
@@ -261,6 +263,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"getinsert",		&ONScripter::getinsertCommand},
     {"getfunction",		&ONScripter::getfunctionCommand},
     {"getenter",		&ONScripter::getenterCommand},
+    {"getcursorpos2",	&ONScripter::getcursorpos2Command},
     {"getcursorpos",	&ONScripter::getcursorposCommand},
     {"getcursor",		&ONScripter::getcursorCommand},
     {"getcselstr",		&ONScripter::getcselstrCommand},

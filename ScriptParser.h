@@ -240,7 +240,6 @@ protected:
     bool mode_saya_flag;
     bool mode_ext_flag;
     bool force_button_shortcut_flag;
-    bool rubyon_flag;
     bool zenkakko_flag;
     bool pagetag_flag;
     int  windowchip_sprite_no;
@@ -371,6 +370,7 @@ protected:
     struct Kinsoku {
         char chr[2];
     } *start_kinsoku, *end_kinsoku;
+    bool is_kinsoku;
     int num_start_kinsoku, num_end_kinsoku;
     void setKinsoku(const char *start_chrs, const char *end_chrs, bool add);
     bool isStartKinsoku(const char *str);
@@ -434,6 +434,7 @@ protected:
         };
     } ruby_struct;
     int shade_distance[2];
+    int old_xy[2];
 
     /* ---------------------------------------- */
     /* RMenu related variables */

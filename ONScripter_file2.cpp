@@ -344,9 +344,8 @@ int ONScripter::loadSaveFile2( int file_version )
     }
 
     if ( file_version >= 201 ){
-        if ( readInt() == 1 ) rubyon_flag = true;
-        else                  rubyon_flag = false;
-        sentence_font.rubyon_flag = rubyon_flag;
+        if ( readInt() == 1 ) sentence_font.rubyon_flag = true;
+        else                  sentence_font.rubyon_flag = false;
         ruby_struct.font_size_xy[0] = readInt();
         ruby_struct.font_size_xy[1] = readInt();
         readStr( &ruby_struct.font_name );
@@ -637,7 +636,7 @@ void ONScripter::saveSaveFile2( bool output_flag )
     writeStr( loop_bgm_name[0], output_flag );
     writeStr( loop_bgm_name[1], output_flag );
 
-    writeInt( (rubyon_flag)?1:0, output_flag );
+    writeInt( (sentence_font.rubyon_flag)?1:0, output_flag );
     writeInt( ruby_struct.font_size_xy[0], output_flag );
     writeInt( ruby_struct.font_size_xy[1], output_flag );
     writeStr( ruby_struct.font_name, output_flag );
