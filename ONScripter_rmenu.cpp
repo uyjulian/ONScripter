@@ -315,6 +315,7 @@ bool ONScripter::executeSystemLoad()
 
         if (executeSystemYesNo( SYSTEM_LOAD, file_no )){
             current_font = &sentence_font;
+            system_menu_mode = NULL; // for fadeout in mp3stopCommand()
             if ( loadSaveFile( file_no ) )
                 return false;
 

@@ -192,19 +192,18 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
             flushDirect( dst_rect, REFRESH_NONE_MODE );
         }
 
-        if (IS_TWO_BYTE(text[0])) break;
-        text2[0] = text[1];
+        if (IS_TWO_BYTE(text[0])){
+            info->advanceCharInHankaku(2);
+            break;
+        }
         info->advanceCharInHankaku(1);
+        text2[0] = text[1];
+        if (text2[0] == 0) break;
     }
 
-    /* ---------------------------------------- */
-    /* Update text buffer */
-    if (IS_TWO_BYTE(text[0]))
-        info->advanceCharInHankaku(2);
-    
     if ( lookback_flag ){
         current_page->add( text[0] );
-        current_page->add( text[1] );
+        if (text[1]) current_page->add( text[1] );
     }
 }
 
@@ -259,11 +258,7 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
         }
 #endif
 
-        if (*str == 0x0a || (*str == '\\' && info->is_newline_accepted)){
-            info->newLine();
-            str++;
-        }
-        else if (*str){
+        if ( IS_TWO_BYTE(*str) ){
             if ( checkLineBreak( str, info ) ){
                 info->newLine();
                 for (int i=0 ; i<indent_offset ; i++){
@@ -272,8 +267,17 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
             }
 
             text[0] = *str++;
-            if (*str) text[1] = *str++;
-            else      text[1] = 0;
+            text[1] = *str++;
+            drawChar( text, info, false, false, surface, cache_info );
+        }
+        else if (*str == 0x0a || (*str == '\\' && info->is_newline_accepted)){
+            info->newLine();
+            str++;
+        }
+        else if (*str){
+            text[0] = *str++;
+            if (*str && *str != 0x0a) text[1] = *str++;
+            else                      text[1] = 0;
             drawChar( text, info, false, false, surface, cache_info );
         }
     }
@@ -330,13 +334,23 @@ void ONScripter::restoreTextBuffer(SDL_Surface *surface)
             }
 #endif
 
-            out_text[1] = current_page->text[i+1];
+            if (IS_TWO_BYTE(out_text[0])){
+                out_text[1] = current_page->text[i+1];
                 
-            if ( checkLineBreak( current_page->text+i, &f_info ) )
-                f_info.newLine();
-
+                if ( checkLineBreak( current_page->text+i, &f_info ) )
+                    f_info.newLine();
+                i++;
+            }
+            else{
+                out_text[1] = 0;
+                
+                if (i+1 != current_page->text_count &&
+                    current_page->text[i+1] != 0x0a){
+                    out_text[1] = current_page->text[i+1];
+                    i++;
+                }
+            }
             drawChar( out_text, &f_info, false, false, surface, &text_info );
-            i++;
         }
     }
 }
