@@ -72,13 +72,15 @@ public:
     void setArchivePath(const char *path);
     void setFullscreenMode();
     void setWindowMode();
-    void setWideScreenMode();
     void enableButtonShortCut();
     void enableWheelDownAdvance();
     void disableRescale();
     void enableEdit();
     void setKeyEXE(const char *path);
-    
+    int  getWidth(){ return screen_width;};
+    int  getHeight(){return screen_height;};
+        
+    int  openScript();
     int  init();
     void runEventLoop();
 
@@ -369,7 +371,6 @@ private:
     char wm_edit_string[256];
     bool fullscreen_mode;
     bool window_mode;
-    bool wide_screen_mode;
 
     bool btntime2_flag;
     long btntime_value;
@@ -389,7 +390,8 @@ private:
            REFRESH_TEXT_MODE        = 8,
            REFRESH_CURSOR_MODE      = 16
     };
-    
+
+    bool is_script_read;
     int refresh_shadow_text_mode;
     int display_mode;
     int event_mode;

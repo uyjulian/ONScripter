@@ -96,28 +96,17 @@ void ONScripter::initSDL()
     }
  	else{
         int width;
-        if (wide_screen_mode){
-            if (modes[0]->w * 9 > modes[0]->h * 16)
-                width = (modes[0]->h / 9) * 16;
-            else
-                width = (modes[0]->w / 16) * 16;
-        }
-        else{
-            if (modes[0]->w * 3 > modes[0]->h * 4)
-                width = (modes[0]->h / 3) * 4;
-            else
-                width = (modes[0]->w / 4) * 4;
-        }
+        if (modes[0]->w * screen_height > modes[0]->h * screen_width)
+            width = (modes[0]->h*screen_width/screen_height) & (~0x01); // to be 2 bytes aligned
+        else
+            width = modes[0]->w;
         screen_ratio1 = width;
         screen_ratio2 = screen_width;
         screen_width  = screen_width * screen_ratio1 / screen_ratio2;
     }
 #endif
 
-    if (wide_screen_mode)
-        screen_height = screen_width*9/16;
-    else
-        screen_height = screen_width*3/4;
+    screen_height = screen_width*script_h.screen_height/script_h.screen_width;
 
 #if defined(ANDROID)
     screen_device_width  = 0;
@@ -141,7 +130,7 @@ void ONScripter::initSDL()
         screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
-    underline_value = game_height;
+    underline_value = script_h.screen_height;
 
     if ( screen_surface == NULL ) {
         fprintf( stderr, "Couldn't set %dx%dx%d video mode: %s\n",
@@ -195,6 +184,8 @@ void ONScripter::openAudio()
 
 ONScripter::ONScripter()
 {
+    is_script_read = false;
+
     cdrom_drive_number = 0;
     cdaudio_flag = false;
     default_font = NULL;
@@ -209,7 +200,6 @@ ONScripter::ONScripter()
     key_exe_file = NULL;
     fullscreen_mode = false;
     window_mode = false;
-    wide_screen_mode = false;
     sprite_info  = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
     current_button_state.down_flag = false;
@@ -284,11 +274,6 @@ void ONScripter::setWindowMode()
     window_mode = true;
 }
 
-void ONScripter::setWideScreenMode()
-{
-    wide_screen_mode = true;
-}
-
 void ONScripter::enableButtonShortCut()
 {
     force_button_shortcut_flag = true;
@@ -314,8 +299,11 @@ void ONScripter::setKeyEXE(const char *filename)
     setStr(&key_exe_file, filename);
 }
 
-int ONScripter::init()
+int ONScripter::openScript()
 {
+    if (is_script_read) return 0;
+    is_script_read = true;
+
     if (archive_path == NULL) archive_path = "";
     
     if (key_exe_file){
@@ -323,7 +311,11 @@ int ONScripter::init()
         script_h.setKeyTable( key_table );
     }
 
-    if ( open() ) return -1;
+    return ScriptParser::openScript();
+}
+
+int ONScripter::init()
+{
 #ifdef USE_LUA
     lua_handler.init(this, &script_h);
 #endif    
@@ -514,7 +506,7 @@ void ONScripter::reset()
     /* Load global variables if available */
     if ( loadFileIOBuf( "gloval.sav" ) > 0 ||
          loadFileIOBuf( "global.sav" ) > 0 )
-        readVariables( script_h.global_variable_border, VARIABLE_RANGE );
+        readVariables( script_h.global_variable_border, script_h.variable_range );
 }
 
 void ONScripter::resetSub()
@@ -588,10 +580,12 @@ void ONScripter::resetSentenceFont()
     sentence_font.pitch_xy[1] = 2 + sentence_font.font_size_xy[1];
     sentence_font.wait_time = 20;
     sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0x99;
-    sentence_font_info.pos.x = 0;
-    sentence_font_info.pos.y = 0;
-    sentence_font_info.pos.w = screen_width+1;
-    sentence_font_info.pos.h = screen_height+1;
+    sentence_font_info.orig_pos.x = 0;
+    sentence_font_info.orig_pos.y = 0;
+    sentence_font_info.orig_pos.w = script_h.screen_width +1;
+    sentence_font_info.orig_pos.h = script_h.screen_height+1;
+    sentence_font_info.scalePosXY( screen_ratio1, screen_ratio2 );
+    sentence_font_info.scalePosWH( screen_ratio1, screen_ratio2 );
 
     old_xy[0] = sentence_font.x();
     old_xy[1] = sentence_font.y();

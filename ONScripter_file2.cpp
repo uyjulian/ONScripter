@@ -29,7 +29,7 @@ int ONScripter::loadSaveFile2( int file_version )
     
     int i, j;
     
-    readInt(); // 1
+    readInt(); // 1 ... < 2.96, 2 ... >= 2.96
     if ( readInt() == 1 ) sentence_font.is_bold = true;
     else                  sentence_font.is_bold = false;
     if ( readInt() == 1 ) sentence_font.is_shadow = true;
@@ -452,7 +452,7 @@ void ONScripter::saveSaveFile2( bool output_flag )
 {
     int i, j;
     
-    writeInt( 1, output_flag );
+    writeInt( 2, output_flag ); // changed in version 208
     writeInt( (sentence_font.is_bold?1:0), output_flag );
     writeInt( (sentence_font.is_shadow?1:0), output_flag );
 
@@ -669,9 +669,9 @@ void ONScripter::saveSaveFile2( bool output_flag )
     writeChar( 0, output_flag ); // added in version 205
 
     writeInt(   0, output_flag ); // added in version 206
-    writeInt( game_height/3,   output_flag ); // added in version 206
-    writeInt( game_height*2/3, output_flag ); // added in version 206
-    writeInt( game_height,     output_flag ); // added in version 206
+    writeInt( script_h.screen_width/4,   output_flag ); // added in version 206, changed in version 208
+    writeInt( script_h.screen_width/2,   output_flag ); // added in version 206, changed in version 208
+    writeInt( script_h.screen_width*3/4, output_flag ); // added in version 206, changed in version 208
     writeInt( underline_value, output_flag ); // changed in version 207
     
     Page *page = current_page;

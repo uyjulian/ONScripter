@@ -62,7 +62,7 @@ public:
     ~ScriptParser();
 
     void reset();
-    int open();
+    int  openScript();
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false );
 
@@ -257,7 +257,6 @@ protected:
     /* ---------------------------------------- */
     /* Global definitions */
     int screen_ratio1, screen_ratio2;
-    int game_width, game_height;
     int screen_width, screen_height;
     int screen_device_width, screen_device_height;
     int screen_bpp;

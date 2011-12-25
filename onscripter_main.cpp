@@ -24,6 +24,8 @@
 #include "ONScripter.h"
 #include "version.h"
 
+ONScripter ons;
+
 #if defined(PSP)
 #include <pspkernel.h>
 #include <psputility.h>
@@ -33,11 +35,10 @@
 PSP_HEAP_SIZE_KB(-1);
 
 int psp_power_resume_number = 0;
-ONScripter *g_ons;
 
 int exit_callback(int arg1, int arg2, void *common)
 {
-    g_ons->endCommand();
+    ons.endCommand();
     sceKernelExitGame();
     return 0;
 }
@@ -78,7 +79,6 @@ void optionHelp()
     printf( "  -r, --root path\tspecify the root path to the archives\n");
     printf( "      --fullscreen\tstart in fullscreen mode\n");
     printf( "      --window\t\tstart in windowed mode\n");
-    printf( "      --wide\t\tstart in wide screen (16:9) mode\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheel down\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives\n");
@@ -96,6 +96,33 @@ void optionVersion()
     printf("This is free software; see the source for copying conditions.\n");
     exit(0);
 }
+
+#ifdef ANDROID
+extern "C"
+{
+#include <jni.h>
+
+#ifndef SDL_JAVA_PACKAGE_PATH
+#error You have to define SDL_JAVA_PACKAGE_PATH to your package path with dots replaced with underscores, for example "com_example_SanAngeles"
+#endif
+#define JAVA_EXPORT_NAME2(name,package) Java_##package##_##name
+#define JAVA_EXPORT_NAME1(name,package) JAVA_EXPORT_NAME2(name,package)
+#define JAVA_EXPORT_NAME(name) JAVA_EXPORT_NAME1(name,SDL_JAVA_PACKAGE_PATH)
+
+JNIEXPORT jint JNICALL 
+JAVA_EXPORT_NAME(ONScripter_nativeGetWidth) ( JNIEnv*  env, jobject thiz )
+{
+	return ons.getWidth();
+}
+
+JNIEXPORT jint JNICALL 
+JAVA_EXPORT_NAME(ONScripter_nativeGetHeight) ( JNIEnv*  env, jobject thiz )
+{
+	return ons.getHeight();
+}
+}
+#endif
+
 #if defined(QWS) || defined(ANDROID)
 int SDL_main( int argc, char **argv )
 #elif defined(PSP)
@@ -106,12 +133,9 @@ int main( int argc, char **argv )
 {
     printf("ONScripter version %s(%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
 
-    ONScripter ons;
-
 #if defined(PSP)
     ons.disableRescale();
     ons.enableButtonShortCut();
-    g_ons = &ons;
     SetupCallbacks();
 #elif defined(WINCE)
     char currentDir[256];
@@ -175,9 +199,6 @@ int main( int argc, char **argv )
             else if ( !strcmp( argv[0]+1, "-window" ) ){
                 ons.setWindowMode();
             }
-            else if ( !strcmp( argv[0]+1, "-wide" ) ){
-                ons.setWideScreenMode();
-            }
             else if ( !strcmp( argv[0]+1, "-force-button-shortcut" ) ){
                 ons.enableButtonShortCut();
             }
@@ -195,6 +216,14 @@ int main( int argc, char **argv )
                 argv++;
                 ons.setKeyEXE(argv[0]);
             }
+#if defined(ANDROID) 
+            else if ( !strcmp( argv[0]+1, "-open-only" ) ){
+                argc--;
+                argv++;
+                if (ons.openScript()) exit(-1);
+                return 0;
+            }
+#endif
             else{
                 printf(" unknown option %s\n", argv[0] );
             }
@@ -209,6 +238,7 @@ int main( int argc, char **argv )
     // ----------------------------------------
     // Run ONScripter
 
+    if (ons.openScript()) exit(-1);
     if (ons.init()) exit(-1);
     ons.executeLabel();
     

@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -28,8 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "BaseReader.h"
-
-#define VARIABLE_RANGE 4096
 
 #define IS_TWO_BYTE(x) \
         ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
@@ -109,11 +107,11 @@ public:
     // basic parser function
     const char *readToken();
     const char *readLabel();
-    void readVariable( bool reread_flag=false );
     const char *readStr();
     int  readInt();
-    int  parseInt( char **buf );
     void skipToken();
+    int  parseInt( char **buf );
+    void readVariable( bool reread_flag=false );
 
     // function for string access
     inline char *getStringBuffer(){ return string_buffer; };
@@ -171,9 +169,7 @@ public:
 
     int  getStringFromInteger( char *buffer, int no, int num_column, bool is_zero_inserted=false );
 
-    int  readScriptSub( FILE *fp, char **buf, int encrypt_mode );
-    int  readScript( char *path );
-    int  labelScript();
+    int  openScript( char *path );
 
     LabelInfo lookupLabel( const char* label );
     LabelInfo lookupLabelNext( const char* label );
@@ -236,12 +232,9 @@ public:
     
     VariableInfo current_variable, pushed_variable;
     
-    int screen_size;
-    enum { SCREEN_SIZE_640x480 = 0,
-           SCREEN_SIZE_800x600 = 1,
-           SCREEN_SIZE_400x300 = 2,
-           SCREEN_SIZE_320x240 = 3
-    };
+    int screen_width;
+    int screen_height;
+    int variable_range;
     int global_variable_border;
 
     BaseReader *cBR;
@@ -286,6 +279,11 @@ private:
         };
     };
     
+    int  readScript(char *path);
+    int  readScriptSub(FILE *fp, char **buf, int encrypt_mode);
+    void readConfiguration();
+    int  labelScript();
+
     int findLabel( const char* label );
 
     char *checkComma( char *buf );

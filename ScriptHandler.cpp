@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -42,13 +42,15 @@ ScriptHandler::ScriptHandler()
     saved_string_buffer = new char[STRING_BUFFER_LENGTH];
     gosub_string_buffer = new char[STRING_BUFFER_LENGTH];
 
-    variable_data = new VariableData[VARIABLE_RANGE];
+    variable_data = NULL;
     extended_variable_data = NULL;
     num_extended_variable_data = 0;
     max_extended_variable_data = 1;
     root_array_variable = NULL;
     
-    screen_size = SCREEN_SIZE_640x480;
+    screen_width  = 640;
+    screen_height = 480;
+    variable_range = 4096;
     global_variable_border = 200;
 }
 
@@ -63,12 +65,12 @@ ScriptHandler::~ScriptHandler()
     delete[] str_string_buffer;
     delete[] saved_string_buffer;
     delete[] gosub_string_buffer;
-    delete[] variable_data;
+    if (variable_data) delete[] variable_data;
 }
 
 void ScriptHandler::reset()
 {
-    for (int i=0 ; i<VARIABLE_RANGE ; i++)
+    for (int i=0 ; i<variable_range ; i++)
         variable_data[i].reset(true);
 
     if (extended_variable_data) delete[] extended_variable_data;
@@ -790,209 +792,12 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column, b
 #endif    
 }
 
-int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
+int ScriptHandler::openScript(char *path)
 {
-    char magic[5] = {0x79, 0x57, 0x0d, 0x80, 0x04 };
-    int  magic_counter = 0;
-    bool newline_flag = true;
-    bool cr_flag = false;
-
-    if (encrypt_mode == 3 && !key_table_flag)
-        errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.");
-
-    size_t len=0, count=0;
-    while(1){
-        if (len == count){
-            len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
-            if (len == 0){
-                if (cr_flag) *(*buf)++ = 0x0a;
-                break;
-            }
-            count = 0;
-        }
-        char ch = tmp_script_buf[count++];
-        if      ( encrypt_mode == 1 ) ch ^= 0x84;
-        else if ( encrypt_mode == 2 ){
-            ch = (ch ^ magic[magic_counter++]) & 0xff;
-            if ( magic_counter == 5 ) magic_counter = 0;
-        }
-        else if ( encrypt_mode == 3){
-            ch = key_table[(unsigned char)ch] ^ 0x84;
-        }
-
-        if ( cr_flag && ch != 0x0a ){
-            *(*buf)++ = 0x0a;
-            newline_flag = true;
-            cr_flag = false;
-        }
-    
-        if ( ch == '*' && newline_flag ) num_of_labels++;
-        if ( ch == 0x0d ){
-            cr_flag = true;
-            continue;
-        }
-        if ( ch == 0x0a ){
-            *(*buf)++ = 0x0a;
-            newline_flag = true;
-            cr_flag = false;
-        }
-        else{
-            *(*buf)++ = ch;
-            if ( ch != ' ' && ch != '\t' )
-                newline_flag = false;
-        }
-    }
-
-    *(*buf)++ = 0x0a;
-    return 0;
-}
-
-int ScriptHandler::readScript( char *path )
-{
-    archive_path = new char[ strlen(path) + 1 ];
-    strcpy( archive_path, path );
-
-    FILE *fp = NULL;
-    char filename[10];
-    int i, encrypt_mode = 0;
-    if ((fp = fopen("0.txt", "rb")) != NULL){
-        encrypt_mode = 0;
-    }
-    else if ((fp = fopen("00.txt", "rb")) != NULL){
-        encrypt_mode = 0;
-    }
-    else if ((fp = fopen("nscr_sec.dat", "rb")) != NULL){
-        encrypt_mode = 2;
-    }
-    else if ((fp = fopen("nscript.___", "rb")) != NULL){
-        encrypt_mode = 3;
-    }
-    else if ((fp = fopen("nscript.dat", "rb")) != NULL){
-        encrypt_mode = 1;
-    }
-
-    if (fp == NULL){
-        fprintf( stderr, "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n" );
-        return -1;
-    }
-    
-    fseek( fp, 0, SEEK_END );
-    int estimated_buffer_length = ftell( fp ) + 1;
-
-    if (encrypt_mode == 0){
-        fclose(fp);
-        for (i=1 ; i<100 ; i++){
-            sprintf(filename, "%d.txt", i);
-            if ((fp = fopen(filename, "rb")) == NULL){
-                sprintf(filename, "%02d.txt", i);
-                fp = fopen(filename, "rb");
-            }
-            if (fp){
-                fseek( fp, 0, SEEK_END );
-                estimated_buffer_length += ftell(fp)+1;
-                fclose(fp);
-            }
-        }
-    }
-
-    if ( script_buffer ) delete[] script_buffer;
-    script_buffer = new char[ estimated_buffer_length ];
-
-    char *p_script_buffer;
-    current_script = p_script_buffer = script_buffer;
-    
-    tmp_script_buf = new char[TMP_SCRIPT_BUF_LEN];
-    if (encrypt_mode > 0){
-        fseek( fp, 0, SEEK_SET );
-        readScriptSub( fp, &p_script_buffer, encrypt_mode );
-        fclose( fp );
-    }
-    else{
-        for (i=0 ; i<100 ; i++){
-            sprintf(filename, "%d.txt", i);
-            if ((fp = fopen(filename, "rb")) == NULL){
-                sprintf(filename, "%02d.txt", i);
-                fp = fopen(filename, "rb");
-            }
-            if (fp){
-                readScriptSub( fp, &p_script_buffer, 0 );
-                fclose(fp);
-            }
-        }
-    }
-    delete[] tmp_script_buf;
-
-    script_buffer_length = p_script_buffer - script_buffer;
-    
-    /* ---------------------------------------- */
-    /* screen size and value check */
-    char *buf = script_buffer+1;
-    while( script_buffer[0] == ';' ){
-        if ( !strncmp( buf, "mode", 4 ) ){
-            buf += 4;
-            if      ( !strncmp( buf, "800", 3 ) )
-                screen_size = SCREEN_SIZE_800x600;
-            else if ( !strncmp( buf, "400", 3 ) )
-                screen_size = SCREEN_SIZE_400x300;
-            else if ( !strncmp( buf, "320", 3 ) )
-                screen_size = SCREEN_SIZE_320x240;
-            else
-                screen_size = SCREEN_SIZE_640x480;
-            buf += 3;
-        }
-        else if ( !strncmp( buf, "value", 5 ) ){
-            buf += 5;
-            SKIP_SPACE(buf);
-            global_variable_border = 0;
-            while ( *buf >= '0' && *buf <= '9' )
-                global_variable_border = global_variable_border * 10 + *buf++ - '0';
-        }
-        else{
-            break;
-        }
-        if ( *buf != ',' ) break;
-        buf++;
-    }
-
+    if (readScript(path) < 0) return -1;
+    readConfiguration();
+    variable_data = new VariableData[variable_range];
     return labelScript();
-}
-
-int ScriptHandler::labelScript()
-{
-    int label_counter = -1;
-    int current_line = 0;
-    char *buf = script_buffer;
-    label_info = new LabelInfo[ num_of_labels+1 ];
-
-    while ( buf < script_buffer + script_buffer_length ){
-        SKIP_SPACE( buf );
-        if ( *buf == '*' ){
-            setCurrent( buf );
-            readLabel();
-            label_info[ ++label_counter ].name = new char[ strlen(string_buffer) ];
-            strcpy( label_info[ label_counter ].name, string_buffer+1 );
-            label_info[ label_counter ].label_header = buf;
-            label_info[ label_counter ].num_of_lines = 1;
-            label_info[ label_counter ].start_line   = current_line;
-            buf = getNext();
-            if ( *buf == 0x0a ){
-                buf++;
-                current_line++;
-            }
-            label_info[ label_counter ].start_address = buf;
-        }
-        else{
-            if ( label_counter >= 0 )
-                label_info[ label_counter ].num_of_lines++;
-            while( *buf != 0x0a ) buf++;
-            buf++;
-            current_line++;
-        }
-    }
-
-    label_info[num_of_labels].start_address = NULL;
-    
-    return 0;
 }
 
 struct ScriptHandler::LabelInfo ScriptHandler::lookupLabel( const char *label )
@@ -1101,7 +906,7 @@ int ScriptHandler::popStringBuffer()
 
 ScriptHandler::VariableData &ScriptHandler::getVariableData(int no)
 {
-    if (no >= 0 && no < VARIABLE_RANGE)
+    if (no >= 0 && no < variable_range)
         return variable_data[no];
 
     for (int i=0 ; i<num_extended_variable_data ; i++)
@@ -1126,6 +931,256 @@ ScriptHandler::VariableData &ScriptHandler::getVariableData(int no)
 
 // ----------------------------------------
 // Private methods
+
+int ScriptHandler::readScript( char *path )
+{
+    archive_path = new char[strlen(path) + 1];
+    strcpy( archive_path, path );
+
+    FILE *fp = NULL;
+    char filename[10];
+    int i, encrypt_mode = 0;
+    if ((fp = fopen("0.txt", "rb")) != NULL){
+        encrypt_mode = 0;
+    }
+    else if ((fp = fopen("00.txt", "rb")) != NULL){
+        encrypt_mode = 0;
+    }
+    else if ((fp = fopen("nscr_sec.dat", "rb")) != NULL){
+        encrypt_mode = 2;
+    }
+    else if ((fp = fopen("nscript.___", "rb")) != NULL){
+        encrypt_mode = 3;
+    }
+    else if ((fp = fopen("nscript.dat", "rb")) != NULL){
+        encrypt_mode = 1;
+    }
+
+    if (fp == NULL){
+        fprintf( stderr, "can't open any of 0.txt, 00.txt, nscript.dat and nscript.___\n" );
+        return -1;
+    }
+    
+    fseek( fp, 0, SEEK_END );
+    int estimated_buffer_length = ftell( fp ) + 1;
+
+    if (encrypt_mode == 0){
+        fclose(fp);
+        for (i=1 ; i<100 ; i++){
+            sprintf(filename, "%d.txt", i);
+            if ((fp = fopen(filename, "rb")) == NULL){
+                sprintf(filename, "%02d.txt", i);
+                fp = fopen(filename, "rb");
+            }
+            if (fp){
+                fseek( fp, 0, SEEK_END );
+                estimated_buffer_length += ftell(fp)+1;
+                fclose(fp);
+            }
+        }
+    }
+
+    if ( script_buffer ) delete[] script_buffer;
+    script_buffer = new char[ estimated_buffer_length ];
+
+    char *p_script_buffer;
+    current_script = p_script_buffer = script_buffer;
+    
+    tmp_script_buf = new char[TMP_SCRIPT_BUF_LEN];
+    if (encrypt_mode > 0){
+        fseek( fp, 0, SEEK_SET );
+        readScriptSub( fp, &p_script_buffer, encrypt_mode );
+        fclose( fp );
+    }
+    else{
+        for (i=0 ; i<100 ; i++){
+            sprintf(filename, "%d.txt", i);
+            if ((fp = fopen(filename, "rb")) == NULL){
+                sprintf(filename, "%02d.txt", i);
+                fp = fopen(filename, "rb");
+            }
+            if (fp){
+                readScriptSub( fp, &p_script_buffer, 0 );
+                fclose(fp);
+            }
+        }
+    }
+    delete[] tmp_script_buf;
+
+    script_buffer_length = p_script_buffer - script_buffer;
+
+    return 0;
+}
+
+int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
+{
+    char magic[5] = {0x79, 0x57, 0x0d, 0x80, 0x04 };
+    int  magic_counter = 0;
+    bool newline_flag = true;
+    bool cr_flag = false;
+
+    if (encrypt_mode == 3 && !key_table_flag)
+        errorAndExit("readScriptSub: the EXE file must be specified with --key-exe option.");
+
+    size_t len=0, count=0;
+    while(1){
+        if (len == count){
+            len = fread(tmp_script_buf, 1, TMP_SCRIPT_BUF_LEN, fp);
+            if (len == 0){
+                if (cr_flag) *(*buf)++ = 0x0a;
+                break;
+            }
+            count = 0;
+        }
+        char ch = tmp_script_buf[count++];
+        if      ( encrypt_mode == 1 ) ch ^= 0x84;
+        else if ( encrypt_mode == 2 ){
+            ch = (ch ^ magic[magic_counter++]) & 0xff;
+            if ( magic_counter == 5 ) magic_counter = 0;
+        }
+        else if ( encrypt_mode == 3){
+            ch = key_table[(unsigned char)ch] ^ 0x84;
+        }
+
+        if ( cr_flag && ch != 0x0a ){
+            *(*buf)++ = 0x0a;
+            newline_flag = true;
+            cr_flag = false;
+        }
+    
+        if ( ch == '*' && newline_flag ) num_of_labels++;
+        if ( ch == 0x0d ){
+            cr_flag = true;
+            continue;
+        }
+        if ( ch == 0x0a ){
+            *(*buf)++ = 0x0a;
+            newline_flag = true;
+            cr_flag = false;
+        }
+        else{
+            *(*buf)++ = ch;
+            if ( ch != ' ' && ch != '\t' )
+                newline_flag = false;
+        }
+    }
+
+    *(*buf)++ = 0x0a;
+    return 0;
+}
+
+void ScriptHandler::readConfiguration()
+{
+    if (script_buffer[0] != ';') return;
+    
+    char *buf = script_buffer+1;
+
+    bool config_flag = false;
+    if (buf[0] == '$'){
+        config_flag = true;
+        buf++;
+    }
+
+    while (1){
+        SKIP_SPACE(buf);
+        if (!strncmp( buf, "mode", 4 )){
+            buf += 4;
+            if      (!strncmp( buf, "800", 3 )){
+                screen_width  = 800;
+                screen_height = 600;
+                buf += 3;
+            }
+            else if (!strncmp( buf, "400", 3 )){
+                screen_width  = 400;
+                screen_height = 300;
+                buf += 3;
+            }
+            else if (!strncmp( buf, "320", 3 )){
+                screen_width  = 320;
+                screen_height = 240;
+                buf += 3;
+            }
+            else
+                break;
+        }
+        else if (!strncmp( buf, "value", 5 ) ||
+                 *buf == 'g' || *buf == 'G'){
+            if (*buf == 'g' || *buf == 'G') buf++;
+            else                            buf += 5;
+            SKIP_SPACE(buf);
+            global_variable_border = 0;
+            while ( *buf >= '0' && *buf <= '9' )
+                global_variable_border = global_variable_border*10 + *buf++ - '0';
+        }
+        else if (*buf == 'v' || *buf == 'V'){
+            buf++;
+            SKIP_SPACE(buf);
+            variable_range = 0;
+            while (*buf >= '0' && *buf <= '9')
+                variable_range = variable_range*10 + *buf++ - '0';
+        }
+        else if (*buf == 's' || *buf == 'S'){
+            buf++;
+            screen_width = 0;
+            while (*buf >= '0' && *buf <= '9')
+                screen_width = screen_width*10 + *buf++ - '0';
+            while (*buf == ',' || *buf == ' ' || *buf == '\t') buf++;
+            screen_height = 0;
+            while (*buf >= '0' && *buf <= '9')
+                screen_height = screen_height*10 + *buf++ - '0';
+        }
+        else if (*buf == 'l' || *buf == 'L'){
+            buf++;
+            SKIP_SPACE(buf);
+            while (*buf >= '0' && *buf <= '9') buf++;
+        }
+        else{
+            break;
+        }
+
+        SKIP_SPACE(buf);
+        if (!config_flag && *buf != ',') break;
+        buf++;
+    }
+}
+
+int ScriptHandler::labelScript()
+{
+    int label_counter = -1;
+    int current_line = 0;
+    char *buf = script_buffer;
+    label_info = new LabelInfo[ num_of_labels+1 ];
+
+    while ( buf < script_buffer + script_buffer_length ){
+        SKIP_SPACE( buf );
+        if ( *buf == '*' ){
+            setCurrent( buf );
+            readLabel();
+            label_info[ ++label_counter ].name = new char[ strlen(string_buffer) ];
+            strcpy( label_info[ label_counter ].name, string_buffer+1 );
+            label_info[ label_counter ].label_header = buf;
+            label_info[ label_counter ].num_of_lines = 1;
+            label_info[ label_counter ].start_line   = current_line;
+            buf = getNext();
+            if ( *buf == 0x0a ){
+                buf++;
+                current_line++;
+            }
+            label_info[ label_counter ].start_address = buf;
+        }
+        else{
+            if ( label_counter >= 0 )
+                label_info[ label_counter ].num_of_lines++;
+            while( *buf != 0x0a ) buf++;
+            buf++;
+            current_line++;
+        }
+    }
+
+    label_info[num_of_labels].start_address = NULL;
+    
+    return 0;
+}
 
 int ScriptHandler::findLabel( const char *label )
 {

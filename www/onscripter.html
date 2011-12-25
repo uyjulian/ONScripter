@@ -18,7 +18,7 @@
 最近あまり時間がとれないため更新が非常に遅くなることがありますがご了承下さい。<br>
 Since: Feb. 6, 2002<br>
 <!--Last updated: Sep. 12, 2010 (サーバ移行)<br>-->
-Last updated: Dec. 22, 2011 (ソース更新)<br>
+Last updated: Dec. 25, 2011 (ソース更新)<br>
 <!--Last updated: May 25, 2010 (バイナリパッケージ追加・修正)<br>-->
 <!--Last updated: Jul. 12, 2009 (Experimental ソース更新)<br>-->
 </div> <!-- header -->
@@ -83,8 +83,8 @@ Last updated: Dec. 22, 2011 (ソース更新)<br>
 <div class="sub-content">
 <h3 id="package-source">ソースパッケージ</h3>
 <ul>
-  <li> <a href="onscripter-20111222.tar.gz">onscripter-20111222.tar.gz</a>
-  <li> <a href="onscripter-20111219.tar.gz">onscripter-20111219.tar.gz</a>(１つ前のバージョン)
+  <li> <a href="onscripter-20111225.tar.gz">onscripter-20111225.tar.gz</a>
+  <li> <a href="onscripter-20111222.tar.gz">onscripter-20111222.tar.gz</a>(１つ前のバージョン)
 <!--  <li> <a href="onscripter-exp-20090712.tar.gz">onscripter-exp-20090712.tar.gz</a>(実験版, バグ修正)-->
 </ul>
 </div> <!-- sub-content -->
@@ -147,11 +147,10 @@ ONScripter より充実しています。従来の日本語のスクリプトも問題なく実行
 <h3 id="feature">特長</h3>
 
 <ol>
-  <li> 現時点(2009/09/06)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。
+  <li> 現時点(2011/12/15)で最新の NScripter と互換性のあるセーブファイルを入出力することもできます。<a href="#save">異なるプラットフォーム上で同時に遊ぶ方法</a>を参照してください。
   <li> 全ての操作をキーボードから行えます。もちろんマウスも使えます。
   <li> CD Audio の演奏を音楽ファイル(MP3, Ogg)の演奏に振り替える機能があります。
   <li> マルチプラットフォームに対応しており、Windows, Linux, MacOS X, MacOS 9, <a href="android/android.html">Android</a>(1.6 以上), iPhone, PSP, <a href="zaurus/index.html">Zaurus</a>(SL-5500,SL-A300,SL-B500,SL-C700), FreeBSD, Solaris(on SPARC), Tru64 UNIX, OS/2Warp, iPod, PocketPC, Playstation3, Wii, GP2X, NetWalker, Dreamcast での動作が確認されています。それ以外のプラットフォームでも、<a href="#environment">動作環境</a>が準備できれば動作するはずです。<br>
-  <li> --wide オプションを指定することによりワイドスクリーンモードになります。ゲーム画面の比率は通常 4:3 に固定されていますが、ワイドスクリーンモードではこの比率が 16:9 になります。いずれの場合も、ゲーム画面の横幅はスクリプトから 320, 400, 640, 800 のいずれかに指定できます(デフォルトは 640)。
   <li> 全てのコマンド・仕様を実装していないため、ゲームによっては挙動がおかしくなります。その場合は上記バグトラッキングシステムまで御報告下さい。
 </ol>
 
@@ -298,7 +297,6 @@ avi コマンドを使ってムービーを再生する場合には入れてください。Linux で動作確認を
 <tr><td>-r,--root path</td><td>使用するゲームファイルのあるディレクトリを指定します。</td></tr>
 <tr><td>--fullscreen</td><td>フルスクリーンモードで起動します。</td></tr>
 <tr><td>--window</td><td>ウィンドウモードで起動します。</td></tr>
-<tr><td>--wide</td><td>ワイドスクリーン(16:9)モードで起動します。</td></tr>
 <tr><td>--force-button-shortcut</td><td>getenter と useescspc のコマンドを無視します。つまり、マウスのクリックを強制的に esc, space, return キーに割り付けます。</td></tr>
 <tr><td>--enable-wheeldown-advance</td><td>テキスト終端でのクリック待ちの際に、マウスのホイールダウン操作をクリック操作として扱います。textgosub でクリック待ちをカスタマイズしているときには効果はありません。</td></tr>
 <tr><td>--disable-rescale</td><td>-DPDA を付けてコンパイルした ONScripter で、画像の解像度を PDA 用に落としたアーカイブを使用する場合は、このオプションを設定してください。ONScripter 内で解像度を 320x240 用に変換することを抑制します。</td></tr>
@@ -371,7 +369,7 @@ ONScripter がサポートする最新のフォーマットでバージョン番号なしのセー
 
 <h4>注意点</h4>
 <ul>
-  <li> NScripter は、現時点(2009/09/06)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
+  <li> NScripter は、現時点(2011/12/15)で配布されている最新の nscr.exe を使用してください。古いものとは、セーブファイルの互換性がありません。
   <li>NScripter と ONScripter のデータ互換性は保証しませんが、私が試した限りは問題は生じておりません。
   <li>ONScripter は古いバージョンの NScripter が生成するセーブファイルを読み込むことができないため、<span style="color:red">ONScripter と NScripter を併用したい方は Windows 上では最初から上記の最新の nscr.exe を使用してください。</span>
   <li>ONScripter と NScripter を併用する場合には、あらかじめ sav というディレクトリを作成しておいてください。

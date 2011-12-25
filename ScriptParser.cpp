@@ -236,7 +236,7 @@ void ScriptParser::reset()
     current_mode = DEFINE_MODE;
 }
 
-int ScriptParser::open()
+int ScriptParser::openScript()
 {
     script_h.cBR = new NsaReader( 0, archive_path, BaseReader::ARCHIVE_TYPE_NS2, key_table );
     if (script_h.cBR->open( nsa_path )){
@@ -245,33 +245,12 @@ int ScriptParser::open()
         script_h.cBR->open();
     }
     
-    if ( script_h.readScript( archive_path ) ) return -1;
+    if ( script_h.openScript( archive_path ) ) return -1;
 
     screen_ratio1 = 1;
     screen_ratio2 = 1;
-
-    switch ( script_h.screen_size ){
-      case ScriptHandler::SCREEN_SIZE_800x600:
-        game_width  = 800;
-        game_height = 600;
-        break;
-      case ScriptHandler::SCREEN_SIZE_400x300:
-        game_width  = 400;
-        game_height = 300;
-        break;
-      case ScriptHandler::SCREEN_SIZE_320x240:
-        game_width  = 320;
-        game_height = 240;
-        break;
-      case ScriptHandler::SCREEN_SIZE_640x480:
-      default:
-        game_width  = 640;
-        game_height = 480;
-        break;
-    }
-
-    screen_width  = game_width;
-    screen_height = game_height;
+    screen_width  = script_h.screen_width;
+    screen_height = script_h.screen_height;
 
     return 0;
 }
@@ -329,9 +308,9 @@ void ScriptParser::saveGlovalData()
     if ( !globalon_flag ) return;
 
     file_io_buf_ptr = 0;
-    writeVariables( script_h.global_variable_border, VARIABLE_RANGE, false );
+    writeVariables( script_h.global_variable_border, script_h.variable_range, false );
     allocFileIOBuf();
-    writeVariables( script_h.global_variable_border, VARIABLE_RANGE, true );
+    writeVariables( script_h.global_variable_border, script_h.variable_range, true );
 
     if (saveFileIOBuf( "gloval.sav" )){
         fprintf( stderr, "can't open gloval.sav for writing\n");
