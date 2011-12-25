@@ -319,8 +319,14 @@ int ONScripter::strspCommand()
 {
     leaveTextDisplayMode();
     
+    bool v = true;
+    if ( script_h.isName( "strsph" ) ) v = false;
+
     int sprite_no = script_h.readInt();
     AnimationInfo *ai = &sprite_info[sprite_no];
+
+    if (ai->image_surface && ai->visible)
+        dirty_rect.add( ai->pos );
 
     ai->removeTag();
     setStr(&ai->file_name, script_h.readStr());
@@ -358,7 +364,7 @@ int ONScripter::strspCommand()
 
     ai->trans_mode = AnimationInfo::TRANS_STRING;
     ai->trans = 256;
-    ai->visible = true;
+    ai->visible = v;
     ai->is_single_line = false;
     ai->is_tight_region = false;
     ai->is_ruby_drawable = sentence_font.rubyon_flag;

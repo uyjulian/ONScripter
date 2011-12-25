@@ -67,6 +67,7 @@ static ONScripter::FuncLUT func_lut[] = {
 
     {"systemcall",		&ONScripter::systemcallCommand},
     {"sub",				&ONScripter::subCommand},
+    {"strsph",			&ONScripter::strspCommand},
     {"strsp",			&ONScripter::strspCommand},
     {"stralias",		&ONScripter::straliasCommand},
     {"stop",			&ONScripter::stopCommand},

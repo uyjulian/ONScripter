@@ -1081,7 +1081,7 @@ void ScriptHandler::readConfiguration()
         buf++;
     }
 
-    while (1){
+    while (*buf && *buf != 0x0a){
         SKIP_SPACE(buf);
         if (!strncmp( buf, "mode", 4 )){
             buf += 4;
@@ -1121,6 +1121,7 @@ void ScriptHandler::readConfiguration()
         }
         else if (*buf == 's' || *buf == 'S'){
             buf++;
+            if (!(*buf >= '0' && *buf <= '9')) break;
             screen_width = 0;
             while (*buf >= '0' && *buf <= '9')
                 screen_width = screen_width*10 + *buf++ - '0';
@@ -1134,13 +1135,12 @@ void ScriptHandler::readConfiguration()
             SKIP_SPACE(buf);
             while (*buf >= '0' && *buf <= '9') buf++;
         }
-        else{
+        else if (*buf != ',')
             break;
-        }
 
         SKIP_SPACE(buf);
         if (!config_flag && *buf != ',') break;
-        buf++;
+        if (*buf == ',') buf++;
     }
 }
 
