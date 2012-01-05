@@ -2,7 +2,7 @@
  *
  *  SarReader.cpp - Reader from a SAR archive
  *
- *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2012 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *

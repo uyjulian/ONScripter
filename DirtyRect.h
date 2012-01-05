@@ -2,7 +2,7 @@
  * 
  *  DirtyRect.h - Invalid region on text_surface which should be updated
  *
- *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2012 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *

@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2012 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -50,8 +50,8 @@ ScriptHandler::ScriptHandler()
     
     screen_width  = 640;
     screen_height = 480;
-    variable_range = 4096;
-    global_variable_border = 200;
+    variable_range = 0;
+    global_variable_border = 0;
 }
 
 ScriptHandler::~ScriptHandler()
@@ -1071,6 +1071,9 @@ int ScriptHandler::readScriptSub( FILE *fp, char **buf, int encrypt_mode )
 
 void ScriptHandler::readConfiguration()
 {
+    variable_range = 4096;
+    global_variable_border = 200;
+
     if (script_buffer[0] != ';') return;
     
     char *buf = script_buffer+1;

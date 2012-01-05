@@ -2,7 +2,7 @@
  *
  *  ScriptParser.cpp - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2011 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2012 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -24,7 +24,7 @@
 #include "ScriptParser.h"
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2011 Studio O.G.A. All Rights Reserved."
+#define VERSION_STR2 "Copyright (C) 2001-2012 Studio O.G.A. All Rights Reserved."
 
 #define DEFAULT_SAVE_MENU_NAME "＜セーブ＞"
 #define DEFAULT_LOAD_MENU_NAME "＜ロード＞"
@@ -41,6 +41,9 @@ ScriptParser::ScriptParser()
     debug_level = 0;
     srand( time(NULL) );
     rand();
+
+    screen_ratio1 = 1;
+    screen_ratio2 = 1;
 
     archive_path = NULL;
     version_str = NULL;
@@ -247,8 +250,6 @@ int ScriptParser::openScript()
     
     if ( script_h.openScript( archive_path ) ) return -1;
 
-    screen_ratio1 = 1;
-    screen_ratio2 = 1;
     screen_width  = script_h.screen_width;
     screen_height = script_h.screen_height;
 
