@@ -1193,7 +1193,11 @@ void ONScripter::runEventLoop()
             }
 #endif
           case SDL_VIDEOEXPOSE:
+#ifdef USE_SDL_RENDERER
+            SDL_RenderPresent(renderer);
+#else
             SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
+#endif
             break;
 
           case SDL_QUIT:

@@ -1197,7 +1197,18 @@ int ONScripter::playCommand()
 
 int ONScripter::ofscopyCommand()
 {
+#ifdef USE_SDL_RENDERER
+    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    SDL_LockSurface(accumulation_surface);
+#if defined(BPP16)
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_RGB565, accumulation_surface->pixels, accumulation_surface->pitch);
+#else
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, accumulation_surface->pixels, accumulation_surface->pitch);
+#endif
+    SDL_UnlockSurface(accumulation_surface);
+#else
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+#endif
 
     return RET_CONTINUE;
 }
@@ -2127,7 +2138,14 @@ int ONScripter::getscreenshotCommand()
 
     screenshot_w = w;
     screenshot_h = h;
+#ifdef USE_SDL_RENDERER
+    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    SDL_LockSurface(screenshot_surface);
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, screenshot_surface->pixels, screenshot_surface->pitch);
+    SDL_UnlockSurface(screenshot_surface);
+#else
     SDL_BlitSurface( screen_surface, NULL, screenshot_surface, NULL);
+#endif
 
     return RET_CONTINUE;
 }
@@ -3306,8 +3324,15 @@ int ONScripter::bltCommand()
         SDL_Rect src_rect = {sx,sy,sw,sh};
         SDL_Rect dst_rect = {dx,dy,dw,dh};
 
+#ifdef USE_SDL_RENDERER
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, btndef_info.image_surface);
+        SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+        SDL_RenderPresent(renderer);
+        SDL_DestroyTexture(texture);
+#else
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+#endif
         dirty_rect.clear();
     }
     else{
@@ -3365,7 +3390,18 @@ int ONScripter::bltCommand()
 
 int ONScripter::bgcopyCommand()
 {
+#ifdef USE_SDL_RENDERER
+    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    SDL_LockSurface(accumulation_surface);
+#if defined(BPP16)
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_RGB565, accumulation_surface->pixels, accumulation_surface->pitch);
+#else
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, accumulation_surface->pixels, accumulation_surface->pitch);
+#endif
+    SDL_UnlockSurface(accumulation_surface);
+#else
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+#endif
 
     setStr( &bg_info.file_name, "*bgcpy" );
     bg_info.num_of_cells = 1;

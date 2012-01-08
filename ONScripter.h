@@ -395,6 +395,10 @@ private:
     int refresh_shadow_text_mode;
     int display_mode;
     int event_mode;
+#ifdef USE_SDL_WINDOW
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+#endif
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (shadow + text_surface) used in leaveTextDisplayMode()
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
@@ -648,8 +652,10 @@ private:
     bool midi_play_loop_flag;
     char *midi_file_name;
     Mix_Music *midi_info;
-    
+
+#ifdef USE_CDROM    
     SDL_CD *cdrom_info;
+#endif
     int current_cd_track;
     bool cd_play_loop_flag;
     bool music_play_loop_flag;

@@ -181,11 +181,13 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
 void ONScripter::playCDAudio()
 {
     if ( cdaudio_flag ){
+#ifdef USE_CDROM
         if ( cdrom_info ){
             int length = cdrom_info->track[current_cd_track - 1].length / 75;
             SDL_CDPlayTracks( cdrom_info, current_cd_track - 1, 0, 1, 0 );
             timer_cdaudio_id = SDL_AddTimer( length * 1000, cdaudioCallback, NULL );
         }
+#endif
     }
     else{
         char filename[256];
@@ -256,7 +258,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 #endif
 
     int ret = 0;
-#ifndef MP3_MAD
+#if !defined(MP3_MAD) && !defined(USE_SDL_RENDERER)
     unsigned char *mpeg_buffer = new unsigned char[length];
     script_h.cBR->getFile( filename, mpeg_buffer );
     SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( mpeg_buffer, length ), NULL, 0 );
@@ -326,7 +328,7 @@ int ONScripter::playAVI( const char *filename, bool click_flag )
     return 0;
 #endif
 
-#if defined(USE_AVIFILE)
+#if defined(USE_AVIFILE) && !defined(USE_SDL_RENDERER)
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
     sprintf( absolute_filename, "%s%s", archive_path, filename );
     for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
@@ -362,6 +364,7 @@ void ONScripter::stopBGM( bool continue_flag )
     timer_bgmfade_id = NULL;
     mp3fadeout_duration_internal = 0;
 
+#ifdef USE_CDROM
     if ( cdaudio_flag && cdrom_info ){
         extern SDL_TimerID timer_cdaudio_id;
 
@@ -372,6 +375,7 @@ void ONScripter::stopBGM( bool continue_flag )
         if (SDL_CDStatus( cdrom_info ) >= CD_PLAYING )
             SDL_CDStop( cdrom_info );
     }
+#endif
 
     if ( wave_sample[MIX_BGM_CHANNEL] ){
         Mix_Pause( MIX_BGM_CHANNEL );

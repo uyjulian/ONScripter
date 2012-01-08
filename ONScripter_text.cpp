@@ -99,8 +99,9 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_ROTATION_REQUIRED(text) ) rotate_flag = true;
     
     dst_rect.x = xy[0] + minx;
-    //dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
-    dst_rect.y = xy[1] + info->font_size_xy[1]*screen_ratio1/screen_ratio2 - maxy;
+    dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+    dst_rect.y -= (TTF_FontHeight((TTF_Font*)info->ttf_font) - info->font_size_xy[1]*screen_ratio1/screen_ratio2)/2;
+
     if ( rotate_flag ) dst_rect.x += miny - minx;
         
     if ( info->getTateyokoMode() == FontInfo::TATE_MODE && IS_TRANSLATION_REQUIRED(text) ){

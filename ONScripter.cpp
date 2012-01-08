@@ -55,10 +55,12 @@ void ONScripter::initSDL()
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
+#ifdef USE_CDROM
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
         fprintf( stderr, "Couldn't initialize CD-ROM: %s\n", SDL_GetError() );
         exit(-1);
     }
+#endif
 
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
         printf( "Initialize JOYSTICK\n");
@@ -116,11 +118,17 @@ void ONScripter::initSDL()
     screen_device_height = screen_height;
 #endif
 
+#ifdef USE_SDL_RENDERER
+    window = SDL_CreateWindow(NULL, 0, 0, screen_device_width, screen_device_height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS);
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_RenderClear(renderer);
+#else
     screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
-    
+#endif
+
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
-#if (PDA_WIDTH==640)
+#if !defined(USE_SDL_RENDERER) && (PDA_WIDTH==640)
     if ( screen_surface == NULL ){
         screen_ratio1 /= 2;
         screen_width  /= 2;
@@ -132,11 +140,13 @@ void ONScripter::initSDL()
 #endif
     underline_value = script_h.screen_height;
 
+#ifndef USE_SDL_RENDERER
     if ( screen_surface == NULL ) {
         fprintf( stderr, "Couldn't set %dx%dx%d video mode: %s\n",
                  screen_width, screen_height, screen_bpp, SDL_GetError() );
         exit(-1);
     }
+#endif
     printf("Display: %d x %d (%d bpp)\n", screen_width, screen_height, screen_bpp);
     dirty_rect.setDimension(screen_width, screen_height);
     
@@ -147,8 +157,6 @@ void ONScripter::initSDL()
     wm_icon_string = new char[ strlen(DEFAULT_WM_ICON) + 1 ];
     memcpy( wm_icon_string, DEFAULT_WM_TITLE, strlen(DEFAULT_WM_ICON) + 1 );
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
-
-    openAudio();
 }
 
 void ONScripter::openAudio()
@@ -321,6 +329,7 @@ int ONScripter::init()
 #endif    
 
     initSDL();
+    openAudio();
 
     image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
     
@@ -333,9 +342,9 @@ int ONScripter::init()
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
 
-    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_surface->w, screen_surface->h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
-    screenshot_w = screen_surface->w;
-    screenshot_h = screen_surface->h;
+    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_width, screen_height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+    screenshot_w = screen_width;
+    screenshot_h = screen_height;
 
     tmp_image_buf = NULL;
     tmp_image_buf_length = 0;
@@ -390,6 +399,7 @@ int ONScripter::init()
     // ----------------------------------------
     // Sound related variables
     this->cdaudio_flag = cdaudio_flag;
+#ifdef USE_CDROM
     cdrom_info = NULL;
     if ( cdaudio_flag ){
         if ( cdrom_drive_number >= 0 && cdrom_drive_number < SDL_CDNumDrives() )
@@ -403,7 +413,8 @@ int ONScripter::init()
             cdrom_info = NULL;
         }
     }
-    
+#endif
+
     wave_file_name = NULL;
     midi_file_name = NULL;
     midi_info  = NULL;
@@ -612,8 +623,15 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
     SDL_Rect dst_rect = rect;
+#ifdef USE_SDL_RENDERER
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
+    SDL_RenderCopy(renderer, texture, &dst_rect, &dst_rect);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture(texture);
+#else
     SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &dst_rect );
     SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+#endif
 }
 
 void ONScripter::mouseOverCheck( int x, int y )
@@ -1198,11 +1216,14 @@ int ONScripter::refreshMode()
 void ONScripter::quit()
 {
     saveAll();
-    
+
+#ifdef USE_CDROM
     if ( cdrom_info ){
         SDL_CDStop( cdrom_info );
         SDL_CDClose( cdrom_info );
     }
+#endif
+
     if ( midi_info ){
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
