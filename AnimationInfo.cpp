@@ -29,16 +29,15 @@
 
 #if defined(BPP16)
 #define BPP 16
-#define RMASK 0xf800
+#define RMASK 0x001f
 #define GMASK 0x07e0
-#define BMASK 0x001f
+#define BMASK 0xf800
 #define AMASK 0
 #else
 #define BPP 32
-// the mask is the same as the one used in TTF_RenderGlyph_Blended
-#define RMASK 0x00ff0000
+#define RMASK 0x000000ff
 #define GMASK 0x0000ff00
-#define BMASK 0x000000ff
+#define BMASK 0x00ff0000
 #define AMASK 0xff000000
 #define RBMASK (RMASK|BMASK)
 #endif
@@ -585,13 +584,13 @@ void AnimationInfo::blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_C
     
 #if defined(BPP16)
     int total_width = image_surface->pitch / 2;
-    Uint32 src_color = ((color.r & 0xf8) << 8 |
+    Uint32 src_color = ((color.r & 0xf8) >> 3 |
                         (color.g & 0xfc) << 3 |
-                        (color.b & 0xf8) >> 3);
+                        (color.b & 0xf8) << 8);
     src_color = (src_color | src_color << 16) & 0x07e0f81f;
 #else
     int total_width = image_surface->pitch / 4;
-    Uint32 src_color1 = color.r << 16 | color.b;
+    Uint32 src_color1 = color.b << 16 | color.r;
     Uint32 src_color2 = color.g << 8;
     Uint32 src_color3 = src_color1 | src_color2 | 0xff000000;
 #endif    
@@ -766,7 +765,7 @@ void AnimationInfo::fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a )
     SDL_LockSurface( image_surface );
     ONSBuf *dst_buffer = (ONSBuf *)image_surface->pixels;
 
-    Uint32 rgb = (r << 16)|(g << 8)|b;
+    Uint32 rgb = (b << 16)|(g << 8)|r;
     unsigned char *alphap = NULL;
 #if defined(BPP16)    
     alphap = alpha_buf;

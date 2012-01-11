@@ -84,8 +84,8 @@ void ONScripter::initSDL()
     
 #if defined(PDA_WIDTH)
     screen_ratio1 = PDA_WIDTH;
-    screen_ratio2 = screen_width;
-    screen_width  = screen_width  * screen_ratio1 / screen_ratio2;
+    screen_ratio2 = script_h.screen_width;
+    screen_width  = PDA_WIDTH;
 #elif defined(PDA_AUTOSIZE)
     SDL_Rect **modes;
     modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
@@ -103,22 +103,33 @@ void ONScripter::initSDL()
         else
             width = modes[0]->w;
         screen_ratio1 = width;
-        screen_ratio2 = screen_width;
-        screen_width  = screen_width * screen_ratio1 / screen_ratio2;
+        screen_ratio2 = script_h.screen_width;
+        screen_width  = width;
     }
 #endif
 
     screen_height = screen_width*script_h.screen_height/script_h.screen_width;
 
-#if defined(ANDROID)
-    screen_device_width  = 0;
-    screen_device_height = 0;
-#else
     screen_device_width  = screen_width;
     screen_device_height = screen_height;
+#if defined(USE_SDL_RENDERER)
+    if (screen_device_width > script_h.screen_width){ // use hardware scaling
+        screen_ratio1 = 1;
+        screen_ratio2 = 1;
+        screen_width  = script_h.screen_width;
+        screen_height = script_h.screen_height;
+    }
 #endif
 
 #ifdef USE_SDL_RENDERER
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
     window = SDL_CreateWindow(NULL, 0, 0, screen_device_width, screen_device_height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS);
     renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_RenderClear(renderer);
@@ -161,7 +172,7 @@ void ONScripter::initSDL()
 
 void ONScripter::openAudio()
 {
-#if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE)
+#if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE) && !defined(IOS)
     if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
     if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
@@ -331,7 +342,7 @@ int ONScripter::init()
     initSDL();
     openAudio();
 
-    image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+    image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
     
     accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height );
     backup_surface       = AnimationInfo::allocSurface( screen_width, screen_height );
@@ -341,10 +352,14 @@ int ONScripter::init()
     SDL_SetAlpha( backup_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
-
-    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_width, screen_height, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+    
+    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_device_width, screen_device_height, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
     screenshot_w = screen_width;
     screenshot_h = screen_height;
+
+#ifdef USE_SDL_RENDERER
+    texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
+#endif    
 
     tmp_image_buf = NULL;
     tmp_image_buf_length = 0;
@@ -622,15 +637,17 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
     
     refreshSurface( accumulation_surface, &rect, refresh_mode );
-    SDL_Rect dst_rect = rect;
 #ifdef USE_SDL_RENDERER
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, accumulation_surface);
-    SDL_RenderCopy(renderer, texture, &dst_rect, &dst_rect);
+    SDL_Rect src_rect = {0, 0, screen_width, screen_height};
+    SDL_Rect dst_rect = {0, 0, screen_device_width, screen_device_height};
+    SDL_LockSurface(accumulation_surface);
+    SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels+accumulation_surface->pitch*rect.y+rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
+    SDL_UnlockSurface(accumulation_surface);
+    SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
     SDL_RenderPresent(renderer);
-    SDL_DestroyTexture(texture);
 #else
-    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &dst_rect );
-    SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
+    SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
 #endif
 }
 

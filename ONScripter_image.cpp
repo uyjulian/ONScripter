@@ -255,9 +255,9 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
     if ( trans_mode == ALPHA_BLEND_FADE_MASK )
         overflow_mask = 0xffffffff;
     else
-        overflow_mask = ~fmt->Bmask;
+        overflow_mask = ~fmt->Rmask;
 
-    mask_value >>= fmt->Bloss;
+    mask_value >>= fmt->Rloss;
 
     if ( (trans_mode == ALPHA_BLEND_FADE_MASK ||
           trans_mode == ALPHA_BLEND_CROSSFADE_MASK) && mask_surface ){
@@ -267,10 +267,10 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
             int j2 = rect.x;
             for ( j=0 ; j<rect.w ; j++ ){
                 Uint32 mask2 = 0;
-                Uint32 mask = *(mask_buffer + j2) & fmt->Bmask;
+                Uint32 mask = *(mask_buffer + j2) & fmt->Rmask;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
-                    if ( mask2 & overflow_mask ) mask2 = fmt->Bmask;
+                    if ( mask2 & overflow_mask ) mask2 = fmt->Rmask;
                 }
                 BLEND_PIXEL_MASK();
                 src1_buffer++; src2_buffer++; dst_buffer++;
@@ -283,7 +283,7 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
             dst_buffer  += screen_width - rect.w;
         }
     }else{ // ALPHA_BLEND_CONST
-        Uint32 mask2 = mask_value & fmt->Bmask;
+        Uint32 mask2 = mask_value & fmt->Rmask;
 
         for ( i=0; i<rect.h ; i++ ) {
             for ( j=rect.w ; j!=0 ; j-- ){
@@ -362,12 +362,12 @@ void ONScripter::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_LockSurface( src_surface );
 
 #if defined(BPP16)    
-    Uint32 src_color = ((color.r & 0xf8) << 8 |
+    Uint32 src_color = ((color.r & 0xf8) >> 3 |
                         (color.g & 0xfc) << 3 |
-                        (color.b & 0xf8) >> 3);
+                        (color.b & 0xf8) << 8);
     src_color = (src_color | src_color << 16) & 0x07e0f81f;
 #else
-    Uint32 src_color1 = color.r << 16 | color.b;
+    Uint32 src_color1 = color.b << 16 | color.r;
     Uint32 src_color2 = color.g << 8;
     Uint32 src_color3 = src_color1 | src_color2;
 #endif    

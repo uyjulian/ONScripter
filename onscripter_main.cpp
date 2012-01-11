@@ -26,6 +26,11 @@
 
 ONScripter ons;
 
+#if defined(IOS)
+#import <Foundation/NSArray.h>
+#import <UIKit/UIKit.h>
+#endif
+
 #if defined(PSP)
 #include <pspkernel.h>
 #include <psputility.h>
@@ -152,6 +157,17 @@ int main( int argc, char **argv )
     ons.enableButtonShortCut();
 #elif defined(ANDROID) 
     ons.enableButtonShortCut();
+#endif
+
+#if defined(IOS)
+    NSArray* paths;
+    NSString* path;
+    paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    path = [paths objectAtIndex:0];
+    char filename[256];
+    strcpy(filename, [path UTF8String]);
+    strcat(filename, "/ons");
+    ons.setArchivePath(filename);
 #endif
 
     // ----------------------------------------

@@ -395,9 +395,10 @@ private:
     int refresh_shadow_text_mode;
     int display_mode;
     int event_mode;
-#ifdef USE_SDL_WINDOW
+#ifdef USE_SDL_RENDERER
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Texture *texture;
 #endif
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (shadow + text_surface) used in leaveTextDisplayMode()

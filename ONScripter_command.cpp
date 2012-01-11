@@ -913,7 +913,7 @@ int ONScripter::savescreenshotCommand()
             if ( filename[i] == '/' || filename[i] == '\\' )
                 filename[i] = DELIMITER;
 
-        SDL_Surface *surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screenshot_w, screenshot_h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+        SDL_Surface *surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screenshot_w, screenshot_h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
         resizeSurface( screenshot_surface, surface );
         SDL_SaveBMP( surface, filename );
         SDL_FreeSurface( surface );
@@ -1200,11 +1200,7 @@ int ONScripter::ofscopyCommand()
 #ifdef USE_SDL_RENDERER
     SDL_Rect rect = {0, 0, screen_width, screen_height};
     SDL_LockSurface(accumulation_surface);
-#if defined(BPP16)
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_RGB565, accumulation_surface->pixels, accumulation_surface->pitch);
-#else
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, accumulation_surface->pixels, accumulation_surface->pitch);
-#endif
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, accumulation_surface->pixels, accumulation_surface->pitch);
     SDL_UnlockSurface(accumulation_surface);
 #else
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
@@ -2139,9 +2135,9 @@ int ONScripter::getscreenshotCommand()
     screenshot_w = w;
     screenshot_h = h;
 #ifdef USE_SDL_RENDERER
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
+    SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
     SDL_LockSurface(screenshot_surface);
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, screenshot_surface->pixels, screenshot_surface->pitch);
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, screenshot_surface->pixels, screenshot_surface->pitch);
     SDL_UnlockSurface(screenshot_surface);
 #else
     SDL_BlitSurface( screen_surface, NULL, screenshot_surface, NULL);
@@ -3307,10 +3303,10 @@ int ONScripter::bltCommand()
     int dx,dy,dw,dh;
     int sx,sy,sw,sh;
 
-    dx = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dy = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dw = script_h.readInt() * screen_ratio1 / screen_ratio2;
-    dh = script_h.readInt() * screen_ratio1 / screen_ratio2;
+    dx = script_h.readInt() * screen_ratio1 / screen_ratio2 * screen_device_width / screen_width;
+    dy = script_h.readInt() * screen_ratio1 / screen_ratio2 * screen_device_width / screen_width;
+    dw = script_h.readInt() * screen_ratio1 / screen_ratio2 * screen_device_width / screen_width;
+    dh = script_h.readInt() * screen_ratio1 / screen_ratio2 * screen_device_width / screen_width;
     sx = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sy = script_h.readInt() * screen_ratio1 / screen_ratio2;
     sw = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -3391,14 +3387,13 @@ int ONScripter::bltCommand()
 int ONScripter::bgcopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
-    SDL_LockSurface(accumulation_surface);
-#if defined(BPP16)
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_RGB565, accumulation_surface->pixels, accumulation_surface->pitch);
-#else
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ARGB8888, accumulation_surface->pixels, accumulation_surface->pitch);
-#endif
-    SDL_UnlockSurface(accumulation_surface);
+    SDL_Surface *tmp_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_device_width, screen_device_height, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+    SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
+    SDL_LockSurface(tmp_surface);
+    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, tmp_surface->pixels, tmp_surface->pitch);
+    SDL_UnlockSurface(tmp_surface);
+    resizeSurface( tmp_surface, accumulation_surface );
+    SDL_FreeSurface(tmp_surface);
 #else
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
 #endif
