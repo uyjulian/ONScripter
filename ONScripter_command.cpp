@@ -913,7 +913,7 @@ int ONScripter::savescreenshotCommand()
             if ( filename[i] == '/' || filename[i] == '\\' )
                 filename[i] = DELIMITER;
 
-        SDL_Surface *surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screenshot_w, screenshot_h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+        SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h );
         resizeSurface( screenshot_surface, surface );
         SDL_SaveBMP( surface, filename );
         SDL_FreeSurface( surface );
@@ -3387,7 +3387,7 @@ int ONScripter::bltCommand()
 int ONScripter::bgcopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-    SDL_Surface *tmp_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_device_width, screen_device_height, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height );
     SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
     SDL_LockSurface(tmp_surface);
     SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, tmp_surface->pixels, tmp_surface->pitch);

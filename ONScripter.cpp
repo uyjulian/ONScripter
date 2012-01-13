@@ -342,8 +342,7 @@ int ONScripter::init()
     initSDL();
     openAudio();
 
-    image_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, 1, 1, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
-    
+    image_surface        = AnimationInfo::alloc32bitSurface( 1, 1 );
     accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height );
     backup_surface       = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
@@ -353,7 +352,7 @@ int ONScripter::init()
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
     
-    screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, screen_device_width, screen_device_height, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+    screenshot_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height );
     screenshot_w = screen_width;
     screenshot_h = screen_height;
 

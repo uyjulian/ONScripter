@@ -252,12 +252,19 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
 
     SDL_PixelFormat *fmt = accumulation_surface->format;
     Uint32 overflow_mask;
+#ifdef USE_SDL_RENDERER
+    Uint32 lowest_mask = fmt->Rmask; // ABGR8888
+    Uint8  lowest_loss = fmt->Rloss;
+#else
+    Uint32 lowest_mask = fmt->Bmask; // ARGB8888 or RGB565
+    Uint8  lowest_loss = fmt->Bloss;
+#endif
     if ( trans_mode == ALPHA_BLEND_FADE_MASK )
         overflow_mask = 0xffffffff;
     else
-        overflow_mask = ~fmt->Rmask;
+        overflow_mask = ~lowest_mask;
 
-    mask_value >>= fmt->Rloss;
+    mask_value >>= lowest_loss;
 
     if ( (trans_mode == ALPHA_BLEND_FADE_MASK ||
           trans_mode == ALPHA_BLEND_CROSSFADE_MASK) && mask_surface ){
@@ -267,10 +274,10 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
             int j2 = rect.x;
             for ( j=0 ; j<rect.w ; j++ ){
                 Uint32 mask2 = 0;
-                Uint32 mask = *(mask_buffer + j2) & fmt->Rmask;
+                Uint32 mask = *(mask_buffer + j2) & lowest_mask;
                 if ( mask_value > mask ){
                     mask2 = mask_value - mask;
-                    if ( mask2 & overflow_mask ) mask2 = fmt->Rmask;
+                    if ( mask2 & overflow_mask ) mask2 = lowest_mask;
                 }
                 BLEND_PIXEL_MASK();
                 src1_buffer++; src2_buffer++; dst_buffer++;
@@ -283,7 +290,7 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
             dst_buffer  += screen_width - rect.w;
         }
     }else{ // ALPHA_BLEND_CONST
-        Uint32 mask2 = mask_value & fmt->Rmask;
+        Uint32 mask2 = mask_value & lowest_mask;
 
         for ( i=0; i<rect.h ; i++ ) {
             for ( j=rect.w ; j!=0 ; j-- ){

@@ -137,6 +137,7 @@ public:
     void calcAffineMatrix();
     
     static SDL_Surface *allocSurface( int w, int h );
+    static SDL_Surface *alloc32bitSurface( int w, int h );
     void allocImage( int w, int h );
     void copySurface( SDL_Surface *surface, SDL_Rect *src_rect, SDL_Rect *dst_rect = NULL );
     void fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a );

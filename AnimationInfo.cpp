@@ -29,15 +29,21 @@
 
 #if defined(BPP16)
 #define BPP 16
-#define RMASK 0x001f
+#define RMASK 0xf800
 #define GMASK 0x07e0
-#define BMASK 0xf800
+#define BMASK 0x001f
 #define AMASK 0
 #else
 #define BPP 32
+#ifdef USE_SDL_RENDERER
 #define RMASK 0x000000ff
 #define GMASK 0x0000ff00
 #define BMASK 0x00ff0000
+#else
+#define RMASK 0x00ff0000
+#define GMASK 0x0000ff00
+#define BMASK 0x000000ff
+#endif
 #define AMASK 0xff000000
 #define RBMASK (RMASK|BMASK)
 #endif
@@ -516,7 +522,7 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
 {\
     Uint32 mask2 = *src_buffer;                                         \
     if (mask2 == 255){													\
-    	*dst_buffer = src_color3;										\
+    	*dst_buffer = src_color;										\
     }																	\
     else if (mask2 != 0){                                               \
         Uint32 alpha = *dst_buffer >> 24;                               \
@@ -582,18 +588,16 @@ void AnimationInfo::blendText( SDL_Surface *surface, int dst_x, int dst_y, SDL_C
     SDL_LockSurface( surface );
     SDL_LockSurface( image_surface );
     
+    SDL_PixelFormat *fmt = image_surface->format;
+
+    int total_width = image_surface->pitch / sizeof(ONSBuf);
+    Uint32 src_color1 = (((color.r >> fmt->Rloss) << fmt->Rshift) |
+                         ((color.b >> fmt->Bloss) << fmt->Bshift));
+    Uint32 src_color2 =  ((color.g >> fmt->Gloss) << fmt->Gshift);
+    Uint32 src_color  = src_color1 | src_color2 | fmt->Amask;
 #if defined(BPP16)
-    int total_width = image_surface->pitch / 2;
-    Uint32 src_color = ((color.r & 0xf8) >> 3 |
-                        (color.g & 0xfc) << 3 |
-                        (color.b & 0xf8) << 8);
     src_color = (src_color | src_color << 16) & 0x07e0f81f;
-#else
-    int total_width = image_surface->pitch / 4;
-    Uint32 src_color1 = color.b << 16 | color.r;
-    Uint32 src_color2 = color.g << 8;
-    Uint32 src_color3 = src_color1 | src_color2 | 0xff000000;
-#endif    
+#endif
 
     ONSBuf *dst_buffer = (ONSBuf *)image_surface->pixels + total_width * dst_rect.y + image_surface->w*current_cell/num_of_cells + dst_rect.x;
 #if defined(BPP16)
@@ -685,6 +689,15 @@ void AnimationInfo::calcAffineMatrix()
 SDL_Surface *AnimationInfo::allocSurface( int w, int h )
 {
     return SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, BPP, RMASK, GMASK, BMASK, AMASK);
+}
+
+SDL_Surface *AnimationInfo::alloc32bitSurface( int w, int h )
+{
+#ifdef USE_SDL_RENDERER
+    return SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 ); // ABGR8888
+#else
+    return SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 ); // ARGB8888
+#endif
 }
 
 void AnimationInfo::allocImage( int w, int h )
