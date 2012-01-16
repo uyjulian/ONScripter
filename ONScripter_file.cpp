@@ -23,7 +23,7 @@
 
 #include "ONScripter.h"
 
-#if defined(LINUX) || defined(MACOSX)
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -49,7 +49,7 @@ void ONScripter::searchSaveFile( SaveFileInfo &save_file_info, int no )
     char file_name[256];
 
     script_h.getStringFromInteger( save_file_info.sjis_no, no, (num_save_file >= 10)?2:1 );
-#if defined(LINUX) || defined(MACOSX)
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
     sprintf( file_name, "%ssave%d.dat", archive_path, no );
     struct stat buf;
     struct tm *tm;

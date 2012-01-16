@@ -29,6 +29,7 @@ ONScripter ons;
 #if defined(IOS)
 #import <Foundation/NSArray.h>
 #import <UIKit/UIKit.h>
+#import "DataDownloader.h"
 #endif
 
 #if defined(PSP)
@@ -166,8 +167,11 @@ int main( int argc, char **argv )
     path = [paths objectAtIndex:0];
     char filename[256];
     strcpy(filename, [path UTF8String]);
-    strcat(filename, "/ons");
     ons.setArchivePath(filename);
+
+#if defined(ZIP_URL)
+    if ([[[DataDownloader alloc] init] download]) exit(-1);
+#endif
 #endif
 
     // ----------------------------------------
