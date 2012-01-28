@@ -1066,10 +1066,29 @@ void ONScripter::runEventLoop()
         }
 
         switch (event.type) {
+#ifdef IOS
+          case SDL_FINGERDOWN:
+            latest_button = SDL_BUTTON_LEFT;
+            if (num_finger == 2){
+                tmp_event.key.keysym.sym = SDLK_LCTRL;
+                ret = keyDownEvent( &tmp_event.key );
+                if (ret) return;
+            }
+            else if (num_finger == 1){
+                latest_button = SDL_BUTTON_RIGHT;
+            }
+            num_finger++;
+            break;
+          case SDL_FINGERUP:
+            num_finger = 0;
+            tmp_event.key.keysym.sym = SDLK_LCTRL;
+            keyUpEvent( &tmp_event.key );
+            break;
+#endif
           case SDL_MOUSEMOTION:
-            mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
+            mouseMoveEvent( &event.motion );
             if (btndown_flag){
-                SDL_MouseMotionEvent *me = (SDL_MouseMotionEvent*)&event;
+                SDL_MouseMotionEvent *me = &event.motion;
                 SDL_MouseButtonEvent be;
 
                 if (me->state & SDL_BUTTON(SDL_BUTTON_LEFT))
@@ -1090,7 +1109,13 @@ void ONScripter::runEventLoop()
           case SDL_MOUSEBUTTONDOWN:
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
-            ret = mousePressEvent( (SDL_MouseButtonEvent*)&event );
+#ifdef IOS
+            if (event.type == SDL_MOUSEBUTTONUP && num_finger == 0)
+                break;
+            else
+                event.button.button = latest_button;
+#endif
+            ret = mousePressEvent( &event.button );
             if (ret) return;
             break;
 
@@ -1102,9 +1127,9 @@ void ONScripter::runEventLoop()
             
           case SDL_KEYDOWN:
             event.key.keysym.sym = transKey(event.key.keysym.sym);
-            ret = keyDownEvent( (SDL_KeyboardEvent*)&event );
+            ret = keyDownEvent( &event.key );
             if ( btndown_flag )
-                ret |= keyPressEvent( (SDL_KeyboardEvent*)&event );
+                ret |= keyPressEvent( &event.key );
             if (ret) return;
             break;
 
@@ -1116,8 +1141,8 @@ void ONScripter::runEventLoop()
             
           case SDL_KEYUP:
             event.key.keysym.sym = transKey(event.key.keysym.sym);
-            keyUpEvent( (SDL_KeyboardEvent*)&event );
-            ret = keyPressEvent( (SDL_KeyboardEvent*)&event );
+            keyUpEvent( &event.key );
+            ret = keyPressEvent( &event.key );
             if (ret) return;
             break;
 

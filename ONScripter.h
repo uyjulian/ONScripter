@@ -696,6 +696,8 @@ private:
     TTF_Font *text_font;
     bool new_line_skip_flag;
     int text_speed_no;
+    int num_finger; // numbur of fingers touching on the screen
+    Uint8 latest_button;
 
     void shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip );
     void clearCurrentPage();

@@ -53,7 +53,10 @@ void ONScripter::initSDL()
         fprintf( stderr, "Couldn't initialize SDL: %s\n", SDL_GetError() );
         exit(-1);
     }
+
+#ifdef __OS2__
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
+#endif
 
 #ifdef USE_CDROM
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
@@ -501,6 +504,7 @@ void ONScripter::reset()
     }
 
     current_over_button = 0;
+    num_finger = 0;
     variable_edit_mode = NOT_EDIT_MODE;
 
     new_line_skip_flag = false;

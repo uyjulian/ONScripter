@@ -75,7 +75,7 @@ bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool u
     effect_counter = 0;
 
     effect_duration = effect->duration;
-    if (skip_mode & SKIP_NORMAL){
+    if (skip_mode & SKIP_NORMAL || ctrl_pressed_status){
         // shorten the duration of effects while skipping
         if ( effect_cut_flag ) effect_duration = 0;
         else if (effect_duration > 100){
