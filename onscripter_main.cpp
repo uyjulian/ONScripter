@@ -30,6 +30,7 @@ ONScripter ons;
 #import <Foundation/NSArray.h>
 #import <UIKit/UIKit.h>
 #import "DataDownloader.h"
+#import "ScriptSelector.h"
 #endif
 
 #if defined(PSP)
@@ -164,7 +165,7 @@ int main( int argc, char **argv )
     NSArray* paths;
     NSString* path;
     paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    path = [paths objectAtIndex:0];
+    path = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"ONS"];
     char filename[256];
     strcpy(filename, [path UTF8String]);
     ons.setArchivePath(filename);
@@ -172,6 +173,12 @@ int main( int argc, char **argv )
 #if defined(ZIP_URL)
     if ([[[DataDownloader alloc] init] download]) exit(-1);
 #endif
+
+#if defined(USE_SELECTOR)
+    strcpy(filename, [[[[ScriptSelector alloc] initWithStyle:UITableViewStylePlain] select] UTF8String]);
+    ons.setArchivePath(filename);
+#endif
+
 #endif
 
     // ----------------------------------------
