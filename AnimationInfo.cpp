@@ -28,26 +28,17 @@
 #endif
 
 #if defined(BPP16)
-#define BPP 16
 #define RMASK 0xf800
 #define GMASK 0x07e0
 #define BMASK 0x001f
 #define AMASK 0
 #else
-#define BPP 32
-#ifdef USE_SDL_RENDERER
-#define RMASK 0x000000ff
-#define GMASK 0x0000ff00
-#define BMASK 0x00ff0000
-#else
 #define RMASK 0x00ff0000
 #define GMASK 0x0000ff00
 #define BMASK 0x000000ff
-#endif
 #define AMASK 0xff000000
 #define RBMASK (RMASK|BMASK)
 #endif
-#define RGBMASK 0x00ffffff
 
 #if !defined(BPP16)
 static bool is_inv_alpha_lut_initialized = false;
@@ -686,28 +677,32 @@ void AnimationInfo::calcAffineMatrix()
     inv_mat[1][1] =  mat[0][0] * 10000 / denom;
 }
 
-SDL_Surface *AnimationInfo::allocSurface( int w, int h )
+SDL_Surface *AnimationInfo::allocSurface( int w, int h, Uint32 texture_format )
 {
-    return SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, BPP, RMASK, GMASK, BMASK, AMASK);
+    if (texture_format == SDL_PIXELFORMAT_RGB565)
+        return SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 16, 0xf800, 0x07e0, 0x001f, 0);
+    else if (texture_format == SDL_PIXELFORMAT_ABGR8888)
+        return SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+    else // texture_format == SDL_PIXELFORMAT_ARGB8888
+        return SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 }
 
-SDL_Surface *AnimationInfo::alloc32bitSurface( int w, int h )
+SDL_Surface *AnimationInfo::alloc32bitSurface( int w, int h, Uint32 texture_format )
 {
-#ifdef USE_SDL_RENDERER
-    return SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 ); // ABGR8888
-#else
-    return SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 ); // ARGB8888
-#endif
+    if (texture_format == SDL_PIXELFORMAT_RGB565)
+        return allocSurface(w, h, SDL_PIXELFORMAT_ARGB8888);
+    else
+        return allocSurface(w, h, texture_format);
 }
 
-void AnimationInfo::allocImage( int w, int h )
+void AnimationInfo::allocImage( int w, int h, Uint32 texture_format )
 {
     if (!image_surface ||
         image_surface->w != w ||
         image_surface->h != h){
         deleteSurface(false);
 
-        image_surface = allocSurface( w, h );
+        image_surface = allocSurface( w, h, texture_format );
 #if defined(BPP16)    
         alpha_buf = new unsigned char[w*h];
 #endif        
@@ -758,19 +753,6 @@ void AnimationInfo::copySurface( SDL_Surface *surface, SDL_Rect *src_rect, SDL_R
     SDL_UnlockSurface( surface );
 }
 
-#if defined(BPP16)
-#define SET_PIXEL(rgb, alpha) {\
-    *dst_buffer++ = (((rgb)&0xf80000) >> 8) | (((rgb)&0xfc00) >> 5) | (((rgb)&0xf8) >> 3);\
-    *alphap++ = (alpha);\
-}
-#else
-#define SET_PIXEL(rgb, alpha) {\
-    *dst_buffer++ = (rgb);\
-    *alphap = (alpha);\
-    alphap += 4;\
-}
-#endif
-
 void AnimationInfo::fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a )
 {
     if (!image_surface) return;
@@ -778,7 +760,11 @@ void AnimationInfo::fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a )
     SDL_LockSurface( image_surface );
     ONSBuf *dst_buffer = (ONSBuf *)image_surface->pixels;
 
-    Uint32 rgb = (b << 16)|(g << 8)|r;
+    SDL_PixelFormat *fmt = image_surface->format;
+    Uint32 rgb = (((r >> fmt->Rloss) << fmt->Rshift) |
+                  ((g >> fmt->Gloss) << fmt->Gshift) |
+                  ((b >> fmt->Bloss) << fmt->Bshift) |
+                  ((a >> fmt->Aloss) << fmt->Ashift));
     unsigned char *alphap = NULL;
 #if defined(BPP16)    
     alphap = alpha_buf;
@@ -793,8 +779,12 @@ void AnimationInfo::fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a )
 #endif
 
     for (int i=image_surface->h ; i!=0 ; i--){
-        for (int j=image_surface->w ; j!=0 ; j--)
-            SET_PIXEL(rgb, a);
+        for (int j=image_surface->w ; j!=0 ; j--){
+            *dst_buffer++ = rgb;
+#if defined(BPP16)
+            *alphap++ = a;
+#endif
+        }
         dst_buffer += dst_margin;
     }
     SDL_UnlockSurface( image_surface );
@@ -833,7 +823,7 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
             direct_color[1] << fmt->Gshift |
             direct_color[2] << fmt->Bshift;
     }
-    ref_color &= RGBMASK;
+    ref_color &= 0xffffff;
 
     int i, j, c;
     if ( trans_mode == TRANS_ALPHA && !has_alpha ){
@@ -897,7 +887,7 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
               trans_mode == TRANS_DIRECT ){
         for (i=h ; i!=0 ; i--){
             for (j=w ; j!=0 ; j--, buffer++, alphap+=4){
-                if ( (*buffer & RGBMASK) == ref_color )
+                if ( (*buffer & 0xffffff) == ref_color )
                     *alphap = 0x00;
                 else
                     *alphap = 0xff;
@@ -922,14 +912,14 @@ SDL_Surface *AnimationInfo::setupImageAlpha( SDL_Surface *surface, SDL_Surface *
     return surface;
 }
 
-void AnimationInfo::setImage( SDL_Surface *surface )
+void AnimationInfo::setImage( SDL_Surface *surface, Uint32 texture_format )
 {
     if (surface == NULL) return;
 
 #if !defined(BPP16)    
-    image_surface = surface;
+    image_surface = surface; // deleteSurface() should be called beforehand
 #endif
-    allocImage(surface->w, surface->h);
+    allocImage(surface->w, surface->h, texture_format);
 
 #if defined(BPP16)    
     SDL_LockSurface( surface );
@@ -940,8 +930,13 @@ void AnimationInfo::setImage( SDL_Surface *surface )
     int dst_margin = surface->w % 2;
 
     for (int i=surface->h ; i!=0 ; i--){
-        for (int j=surface->w ; j!=0 ; j--, buffer++)
-            SET_PIXEL(*buffer, *buffer >> 24);
+        for (int j=surface->w ; j!=0 ; j--, buffer++){
+            // ARGB8888 -> RGB565 + alpha
+            *dst_buffer++ = ((((*buffer)&0xf80000) >> 8) | 
+                             (((*buffer)&0x00fc00) >> 5) | 
+                             (((*buffer)&0x0000f8) >> 3));
+            *alphap++ = ((*buffer) >> 24);
+        }
         dst_buffer += dst_margin;
     }
     

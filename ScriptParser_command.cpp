@@ -913,8 +913,8 @@ int ScriptParser::ifCommand()
             continue;
         }
 
-        if (condition_status == 2 && !condition_flag || 
-            condition_status != 2 && !f)
+        if ((condition_status == 2 && !condition_flag) || 
+            (condition_status != 2 && !f))
             return RET_SKIP_LINE;
 
         if ( op_buf[0] == '&' ){

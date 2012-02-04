@@ -400,6 +400,10 @@ private:
     SDL_Renderer *renderer;
     SDL_Texture *texture;
 #endif
+    // format = SDL_PIXELFORMAT_ABGR8888 for OpenGL ES 1.x, OpenGL ES 2.x (Android, iOS)
+    // format = SDL_PIXELFORMAT_ARGB8888 for OpenGL, Direct3D (Windows, Linux, MacOSX) or for any 32bit surface without SDL_Renderer
+    // format = SDL_PIXELFORMAT_RGB565 for any 16bit surface without SDL_Renderer (Android, Zaurus)
+    Uint32 texture_format;
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ shadow + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (shadow + text_surface) used in leaveTextDisplayMode()
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
@@ -696,8 +700,7 @@ private:
     TTF_Font *text_font;
     bool new_line_skip_flag;
     int text_speed_no;
-    int num_finger; // numbur of fingers touching on the screen
-    Uint8 latest_button;
+    int num_fingers; // numbur of fingers touching on the screen
 
     void shadowTextDisplay( SDL_Surface *surface, SDL_Rect &clip );
     void clearCurrentPage();

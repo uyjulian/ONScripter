@@ -135,9 +135,9 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     if (anim->trans_mode != AnimationInfo::TRANS_STRING &&
         anim->file_name && anim->surface_name &&
         strcmp(anim->file_name, anim->surface_name) == 0 &&
-        (!anim->mask_file_name && !anim->mask_surface_name ||
-         anim->mask_file_name && !anim->mask_surface_name &&
-         strcmp(anim->mask_file_name, anim->mask_surface_name) == 0)) return;
+        ((!anim->mask_file_name && !anim->mask_surface_name) ||
+         (anim->mask_file_name && !anim->mask_surface_name &&
+          strcmp(anim->mask_file_name, anim->mask_surface_name) == 0))) return;
 
     anim->deleteSurface();
     anim->abs_flag = true;
@@ -202,7 +202,7 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
         anim->orig_pos.w = pos.w;
         anim->orig_pos.h = pos.h;
         anim->scalePosWH( screen_ratio1, screen_ratio2 );
-        anim->allocImage( anim->pos.w*anim->num_of_cells, anim->pos.h );
+        anim->allocImage( anim->pos.w*anim->num_of_cells, anim->pos.h, texture_format );
         anim->fill( 0, 0, 0, 0 );
         
         f_info.top_xy[0] = f_info.top_xy[1] = 0;
@@ -240,7 +240,7 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
             SDL_FreeSurface(src_s);
         }
 
-        anim->setImage( surface );
+        anim->setImage( surface, texture_format );
 
         if ( surface_m ) SDL_FreeSurface(surface_m);
     }

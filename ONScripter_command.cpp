@@ -913,7 +913,7 @@ int ONScripter::savescreenshotCommand()
             if ( filename[i] == '/' || filename[i] == '\\' )
                 filename[i] = DELIMITER;
 
-        SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h );
+        SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
         resizeSurface( screenshot_surface, surface );
         SDL_SaveBMP( surface, filename );
         SDL_FreeSurface( surface );
@@ -3257,7 +3257,7 @@ int ONScripter::btnCommand()
     ai->trans_mode = AnimationInfo::TRANS_COPY;
     ai->pos.x = button->image_rect.x;
     ai->pos.y = button->image_rect.y;
-    ai->allocImage( button->image_rect.w, button->image_rect.h );
+    ai->allocImage( button->image_rect.w, button->image_rect.h, texture_format );
     ai->fill( 0, 0, 0, 0 );
     ai->copySurface( btndef_info.image_surface, &src_rect );
     
@@ -3387,7 +3387,7 @@ int ONScripter::bltCommand()
 int ONScripter::bgcopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height );
+    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height, texture_format );
     SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
     SDL_LockSurface(tmp_surface);
     SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, tmp_surface->pixels, tmp_surface->pitch);
@@ -3487,7 +3487,7 @@ int ONScripter::barCommand()
     if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
 
     ai->scalePosWH( screen_ratio1, screen_ratio2 );
-    ai->allocImage( ai->pos.w, ai->pos.h );
+    ai->allocImage( ai->pos.w, ai->pos.h, texture_format );
     ai->fill( ai->color[0], ai->color[1], ai->color[2], 0xff );
     dirty_rect.add( ai->pos );
 

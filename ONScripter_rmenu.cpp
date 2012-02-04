@@ -67,7 +67,7 @@ void ONScripter::leaveSystemCall( bool restore_flag )
     if ( restore_flag ){
         
         current_page = cached_page;
-        restoreTextBuffer(false);
+        restoreTextBuffer();
         root_button_link.next = shelter_button_link;
         root_select_link.next = shelter_select_link;
 

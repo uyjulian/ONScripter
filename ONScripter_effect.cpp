@@ -35,7 +35,8 @@ bool ONScripter::setEffect( EffectLink *effect, bool generate_effect_dst, bool u
         refreshSurface(backup_surface, &dirty_rect.bounding_box, REFRESH_NORMAL_MODE);
     
     int effect_no = effect->effect;
-    if ( effect_cut_flag && skip_mode & SKIP_NORMAL ) effect_no = 1;
+    if (effect_cut_flag && (skip_mode & SKIP_NORMAL || ctrl_pressed_status)) 
+        effect_no = 1;
 
     SDL_BlitSurface( accumulation_surface, NULL, effect_src_surface, NULL );
         
@@ -99,7 +100,8 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
     effect_start_time_old = effect_start_time;
     
     int effect_no = effect->effect;
-    if ( effect_cut_flag && skip_mode & SKIP_NORMAL ) effect_no = 1;
+    if (effect_cut_flag && (skip_mode & SKIP_NORMAL || ctrl_pressed_status)) 
+        effect_no = 1;
 
     int i, amp;
     int width, width2;
@@ -388,8 +390,8 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
     event_mode = WAIT_INPUT_MODE;
     waitEvent(0);
     if ( !((automode_flag || autoclick_time > 0) ||
-           usewheel_flag  && current_button_state.button == -5 ||
-           !usewheel_flag && current_button_state.button == -2) ){
+           (usewheel_flag  && current_button_state.button == -5) ||
+           (!usewheel_flag && current_button_state.button == -2)) ){
         effect_counter = effect_duration; // interrupted
     }
 

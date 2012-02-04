@@ -863,24 +863,24 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
             current_button_state.button = -2;
             if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
         }
-        else if ((!getcursor_flag && event->keysym.sym == SDLK_RIGHT ||
+        else if (((!getcursor_flag && event->keysym.sym == SDLK_RIGHT) ||
                   event->keysym.sym == SDLK_l) &&
-                 (enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE ||
-                  usewheel_flag && event_mode & WAIT_BUTTON_MODE || 
+                 ((enable_wheeldown_advance_flag && event_mode & WAIT_TEXT_MODE) ||
+                  (usewheel_flag && event_mode & WAIT_BUTTON_MODE) || 
                   system_menu_mode == SYSTEM_LOOKBACK)){
             if (event_mode & WAIT_TEXT_MODE)
                 current_button_state.button = 0;
             else
                 current_button_state.button = -3;
         }
-        else if ((!getcursor_flag && event->keysym.sym == SDLK_UP ||
+        else if (((!getcursor_flag && event->keysym.sym == SDLK_UP) ||
                   event->keysym.sym == SDLK_k ||
                   event->keysym.sym == SDLK_p) &&
                  event_mode & WAIT_BUTTON_MODE){
             shiftCursorOnButton(1);
             return false;
         }
-        else if ((!getcursor_flag && event->keysym.sym == SDLK_DOWN ||
+        else if (((!getcursor_flag && event->keysym.sym == SDLK_DOWN) ||
                   event->keysym.sym == SDLK_j ||
                   event->keysym.sym == SDLK_n) &&
                  event_mode & WAIT_BUTTON_MODE){
@@ -895,8 +895,8 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
             current_button_state.button  = -13;
             sprintf(current_button_state.str, "PAGEDOWN");
         }
-        else if ( getenter_flag && event->keysym.sym == SDLK_RETURN ||
-                  getenter_flag && event->keysym.sym == SDLK_KP_ENTER ){
+        else if ( (getenter_flag && event->keysym.sym == SDLK_RETURN) ||
+                  (getenter_flag && event->keysym.sym == SDLK_KP_ENTER) ){
             current_button_state.button  = -19;
         }
         else if ( gettab_flag && event->keysym.sym == SDLK_TAB ){
@@ -1066,42 +1066,84 @@ void ONScripter::runEventLoop()
         }
 
         switch (event.type) {
-#ifdef IOS
+#if defined(IOS) // || defined(ANDROID)
+          case SDL_FINGERMOTION:
+            {
+                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
+                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres;
+                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres;
+                mouseMoveEvent( &tmp_event.motion );
+                if (btndown_flag){
+                    event.button.type = SDL_MOUSEBUTTONDOWN;
+                    event.button.button = SDL_BUTTON_LEFT;
+                    if (touch->num_fingers >= 2)
+                        event.button.button = SDL_BUTTON_RIGHT;
+                    event.button.x = tmp_event.motion.x;
+                    event.button.y = tmp_event.motion.y;
+                    ret = mousePressEvent( &event.button );
+                    if (ret) return;
+                }
+            }
+            break;
           case SDL_FINGERDOWN:
-            latest_button = SDL_BUTTON_LEFT;
-            if (num_finger == 2){
-                tmp_event.key.keysym.sym = SDLK_LCTRL;
-                ret = keyDownEvent( &tmp_event.key );
-                if (ret) return;
+	    {
+                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
+                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres;
+                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres;
+                mouseMoveEvent( &tmp_event.motion );
+	    }
+            if ( btndown_flag ){
+                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
+                tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
+                tmp_event.button.button = SDL_BUTTON_LEFT;
+                if (touch->num_fingers >= 2)
+                    tmp_event.button.button = SDL_BUTTON_RIGHT;
+                tmp_event.button.x = device_width *event.tfinger.x/touch->xres;
+                tmp_event.button.y = device_height*event.tfinger.y/touch->yres;
+                ret = mousePressEvent( &tmp_event.button );
             }
-            else if (num_finger == 1){
-                latest_button = SDL_BUTTON_RIGHT;
+            {
+                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
+                num_fingers = touch->num_fingers;
+                if (num_fingers >= 3){
+                    tmp_event.key.keysym.sym = SDLK_LCTRL;
+                    ret |= keyDownEvent( &tmp_event.key );
+                }
             }
-            num_finger++;
+            if (ret) return;
             break;
           case SDL_FINGERUP:
-            num_finger = 0;
+            if (num_fingers == 0) break;
+            {
+                SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
+                tmp_event.button.type = SDL_MOUSEBUTTONUP;
+                tmp_event.button.button = SDL_BUTTON_LEFT;
+                if (touch->num_fingers >= 1)
+                    tmp_event.button.button = SDL_BUTTON_RIGHT;
+                tmp_event.button.x = device_width *event.tfinger.x/touch->xres;
+                tmp_event.button.y = device_height*event.tfinger.y/touch->yres;
+                ret = mousePressEvent( &tmp_event.button );
+            }
             tmp_event.key.keysym.sym = SDLK_LCTRL;
             keyUpEvent( &tmp_event.key );
+            num_fingers = 0;
+            if (ret) return;
             break;
-#endif
+#else
           case SDL_MOUSEMOTION:
             mouseMoveEvent( &event.motion );
             if (btndown_flag){
-                SDL_MouseMotionEvent *me = &event.motion;
-                SDL_MouseButtonEvent be;
-
-                if (me->state & SDL_BUTTON(SDL_BUTTON_LEFT))
-                    be.button = SDL_BUTTON_LEFT;
-                else if (me->state & SDL_BUTTON(SDL_BUTTON_RIGHT))
-                    be.button = SDL_BUTTON_RIGHT;
+                if (event.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT))
+                    tmp_event.button.button = SDL_BUTTON_LEFT;
+                else if (event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT))
+                    tmp_event.button.button = SDL_BUTTON_RIGHT;
                 else
                     break;
 
-                be.type = SDL_MOUSEBUTTONDOWN;
-                be.x = me->x;
-                be.y = me->y;
-                ret = mousePressEvent( &be );
+                tmp_event.button.type = SDL_MOUSEBUTTONDOWN;
+                tmp_event.button.x = event.motion.x;
+                tmp_event.button.y = event.motion.y;
+                ret = mousePressEvent( &tmp_event.button );
                 if (ret) return;
             }
             break;
@@ -1109,16 +1151,10 @@ void ONScripter::runEventLoop()
           case SDL_MOUSEBUTTONDOWN:
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
-#ifdef IOS
-            if (event.type == SDL_MOUSEBUTTONUP && num_finger == 0)
-                break;
-            else
-                event.button.button = latest_button;
-#endif
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;
-
+#endif
           case SDL_JOYBUTTONDOWN:
             event.key.type = SDL_KEYDOWN;
             event.key.keysym.sym = transJoystickButton(event.jbutton.button);

@@ -134,10 +134,21 @@ void ONScripter::initSDL()
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     window = SDL_CreateWindow(NULL, 0, 0, screen_device_width, screen_device_height, SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS);
+    SDL_GetWindowSize(window, &device_width, &device_height);
     renderer = SDL_CreateRenderer(window, -1, 0);
+    texture_format = SDL_PIXELFORMAT_ARGB8888;
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(renderer, &info);
+    if (info.texture_formats[0] == SDL_PIXELFORMAT_ABGR8888)
+        texture_format = SDL_PIXELFORMAT_ABGR8888;
     SDL_RenderClear(renderer);
 #else
     screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+#ifdef BPP16
+    texture_format = SDL_PIXELFORMAT_RGB565;
+#else
+    texture_format = SDL_PIXELFORMAT_ARGB8888;
+#endif
 #endif
 
     /* ---------------------------------------- */
@@ -345,17 +356,17 @@ int ONScripter::init()
     initSDL();
     openAudio();
 
-    image_surface        = AnimationInfo::alloc32bitSurface( 1, 1 );
-    accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height );
-    backup_surface       = AnimationInfo::allocSurface( screen_width, screen_height );
-    effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
-    effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
+    image_surface        = AnimationInfo::alloc32bitSurface( 1, 1, texture_format );
+    accumulation_surface = AnimationInfo::allocSurface( screen_width, screen_height, texture_format );
+    backup_surface       = AnimationInfo::allocSurface( screen_width, screen_height, texture_format );
+    effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height, texture_format );
+    effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height, texture_format );
     SDL_SetAlpha( accumulation_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( backup_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
     SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
     
-    screenshot_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height );
+    screenshot_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height, texture_format );
     screenshot_w = screen_width;
     screenshot_h = screen_height;
 
@@ -369,7 +380,7 @@ int ONScripter::init()
     num_loaded_images = 10; // to suppress temporal increase at the start-up
 
     text_info.num_of_cells = 1;
-    text_info.allocImage( screen_width, screen_height );
+    text_info.allocImage( screen_width, screen_height, texture_format );
     text_info.fill(0, 0, 0, 0);
 
     // ----------------------------------------
@@ -504,7 +515,7 @@ void ONScripter::reset()
     }
 
     current_over_button = 0;
-    num_finger = 0;
+    num_fingers = 0;
     variable_edit_mode = NOT_EDIT_MODE;
 
     new_line_skip_flag = false;

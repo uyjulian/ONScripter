@@ -267,7 +267,7 @@ int ONScripter::loadSaveFile2( int file_version )
             if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
 
             ai->scalePosWH( screen_ratio1, screen_ratio2 );
-            ai->allocImage( ai->pos.w, ai->pos.h );
+            ai->allocImage( ai->pos.w, ai->pos.h, texture_format );
             ai->fill( ai->color[0], ai->color[1], ai->color[2], 0xff );
         }
         else{

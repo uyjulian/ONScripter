@@ -43,7 +43,8 @@ SDL_Surface *ONScripter::loadImage(char *filename, bool *has_alpha, int *locatio
        (tmp->format->BitsPerPixel == image_surface->format->BitsPerPixel) && 
        (tmp->format->Rmask == image_surface->format->Rmask) &&
        (tmp->format->Gmask == image_surface->format->Gmask) &&
-       (tmp->format->Bmask == image_surface->format->Bmask)){
+       (tmp->format->Bmask == image_surface->format->Bmask) &&
+       (tmp->format->Amask == image_surface->format->Amask)){
         ret = tmp;
     }
     else{
@@ -368,14 +369,15 @@ void ONScripter::alphaBlendText( SDL_Surface *dst_surface, SDL_Rect dst_rect,
     SDL_LockSurface( dst_surface );
     SDL_LockSurface( src_surface );
 
+    SDL_PixelFormat *fmt = accumulation_surface->format;
 #if defined(BPP16)    
-    Uint32 src_color = ((color.r & 0xf8) >> 3 |
-                        (color.g & 0xfc) << 3 |
-                        (color.b & 0xf8) << 8);
+    Uint32 src_color = (((color.r >> fmt->Rloss) << fmt->Rshift) |
+                        ((color.g >> fmt->Gloss) << fmt->Gshift) |
+                        ((color.b >> fmt->Bloss) << fmt->Bshift));
     src_color = (src_color | src_color << 16) & 0x07e0f81f;
 #else
-    Uint32 src_color1 = color.b << 16 | color.r;
-    Uint32 src_color2 = color.g << 8;
+    Uint32 src_color1 = (color.r << fmt->Rshift) | (color.b << fmt->Bshift);
+    Uint32 src_color2 = (color.g << fmt->Gshift);
     Uint32 src_color3 = src_color1 | src_color2;
 #endif    
 
@@ -572,7 +574,7 @@ void ONScripter::createBackground()
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
     bg_info.pos.x = 0;
     bg_info.pos.y = 0;
-    bg_info.allocImage( screen_width, screen_height );
+    bg_info.allocImage( screen_width, screen_height, texture_format );
 
     if ( !strcmp( bg_info.file_name, "white" ) ){
         bg_info.color[0] = bg_info.color[1] = bg_info.color[2] = 0xff;

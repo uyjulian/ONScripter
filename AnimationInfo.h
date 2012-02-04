@@ -27,6 +27,12 @@
 #include <SDL.h>
 #include <string.h>
 
+#ifndef _SDL_pixels_h
+#define SDL_PIXELFORMAT_RGB565   0
+#define SDL_PIXELFORMAT_ABGR8888 1
+#define SDL_PIXELFORMAT_ARGB8888 2
+#endif
+
 typedef unsigned char uchar3[3];
 
 class AnimationInfo{
@@ -136,13 +142,13 @@ public:
                     SDL_Color &color, SDL_Rect *clip, bool rotate_flag );
     void calcAffineMatrix();
     
-    static SDL_Surface *allocSurface( int w, int h );
-    static SDL_Surface *alloc32bitSurface( int w, int h );
-    void allocImage( int w, int h );
+    static SDL_Surface *allocSurface( int w, int h, Uint32 texture_format );
+    static SDL_Surface *alloc32bitSurface( int w, int h, Uint32 texture_format );
+    void allocImage( int w, int h, Uint32 texture_format );
     void copySurface( SDL_Surface *surface, SDL_Rect *src_rect, SDL_Rect *dst_rect = NULL );
     void fill( Uint8 r, Uint8 g, Uint8 b, Uint8 a );
     SDL_Surface *setupImageAlpha( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha );
-    void setImage( SDL_Surface *surface );
+    void setImage( SDL_Surface *surface, Uint32 texture_format );
     unsigned char getAlpha(int x, int y);
 };
 
