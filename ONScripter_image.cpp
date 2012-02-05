@@ -252,14 +252,18 @@ void ONScripter::alphaBlend( SDL_Surface *mask_surface,
     ONSBuf *dst_buffer  = (ONSBuf *)accumulation_surface->pixels + accumulation_surface->w * rect.y + rect.x;
 
     SDL_PixelFormat *fmt = accumulation_surface->format;
+    Uint32 lowest_mask;
+    Uint8  lowest_loss;
+    if (fmt->Rmask < fmt->Bmask){
+        lowest_mask = fmt->Rmask; // ABGR8888
+        lowest_loss = fmt->Rloss;
+    }
+    else{
+        lowest_mask = fmt->Bmask; // ARGB8888 or RGB565
+        lowest_loss = fmt->Bloss;
+    }
+
     Uint32 overflow_mask;
-#ifdef USE_SDL_RENDERER
-    Uint32 lowest_mask = fmt->Rmask; // ABGR8888
-    Uint8  lowest_loss = fmt->Rloss;
-#else
-    Uint32 lowest_mask = fmt->Bmask; // ARGB8888 or RGB565
-    Uint8  lowest_loss = fmt->Bloss;
-#endif
     if ( trans_mode == ALPHA_BLEND_FADE_MASK )
         overflow_mask = 0xffffffff;
     else

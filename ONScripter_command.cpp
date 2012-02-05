@@ -404,9 +404,9 @@ int ONScripter::sp_rgb_gradationCommand()
 
     SDL_PixelFormat *fmt = surface->format;
     
-    ONSBuf key_mask = (key_r >> fmt->Rloss) << fmt->Rshift |
-        (key_g >> fmt->Gloss) << fmt->Gshift |
-        (key_b >> fmt->Bloss) << fmt->Bshift;
+    ONSBuf key_mask = (((key_r >> fmt->Rloss) << fmt->Rshift) |
+                       ((key_g >> fmt->Gloss) << fmt->Gshift) |
+                       ((key_b >> fmt->Bloss) << fmt->Bshift));
     ONSBuf rgb_mask = fmt->Rmask | fmt->Gmask | fmt->Bmask;
 
     SDL_LockSurface(surface);
@@ -1198,10 +1198,13 @@ int ONScripter::playCommand()
 int ONScripter::ofscopyCommand()
 {
 #ifdef USE_SDL_RENDERER
-    SDL_Rect rect = {0, 0, screen_width, screen_height};
-    SDL_LockSurface(accumulation_surface);
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, accumulation_surface->pixels, accumulation_surface->pitch);
-    SDL_UnlockSurface(accumulation_surface);
+    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height, texture_format );
+    SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
+    SDL_LockSurface(tmp_surface);
+    SDL_RenderReadPixels(renderer, &rect, tmp_surface->format->format, tmp_surface->pixels, tmp_surface->pitch);
+    SDL_UnlockSurface(tmp_surface);
+    resizeSurface( tmp_surface, accumulation_surface );
+    SDL_FreeSurface(tmp_surface);
 #else
     SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
 #endif
@@ -2137,7 +2140,7 @@ int ONScripter::getscreenshotCommand()
 #ifdef USE_SDL_RENDERER
     SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
     SDL_LockSurface(screenshot_surface);
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, screenshot_surface->pixels, screenshot_surface->pitch);
+    SDL_RenderReadPixels(renderer, &rect, screenshot_surface->format->format, screenshot_surface->pixels, screenshot_surface->pitch);
     SDL_UnlockSurface(screenshot_surface);
 #else
     SDL_BlitSurface( screen_surface, NULL, screenshot_surface, NULL);
@@ -3386,18 +3389,8 @@ int ONScripter::bltCommand()
 
 int ONScripter::bgcopyCommand()
 {
-#ifdef USE_SDL_RENDERER
-    SDL_Surface *tmp_surface = AnimationInfo::alloc32bitSurface( screen_device_width, screen_device_height, texture_format );
-    SDL_Rect rect = {0, 0, screen_device_width, screen_device_height};
-    SDL_LockSurface(tmp_surface);
-    SDL_RenderReadPixels(renderer, &rect, SDL_PIXELFORMAT_ABGR8888, tmp_surface->pixels, tmp_surface->pitch);
-    SDL_UnlockSurface(tmp_surface);
-    resizeSurface( tmp_surface, accumulation_surface );
-    SDL_FreeSurface(tmp_surface);
-#else
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
-#endif
-
+    ofscopyCommand();
+    
     setStr( &bg_info.file_name, "*bgcpy" );
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
