@@ -324,7 +324,7 @@ void ONScripter::restoreTextBuffer(SDL_Surface *surface)
                 f_info.addLineOffset(ruby_struct.margin);
                 i = ruby_struct.ruby_end - current_page->text - 1;
                 if (*ruby_struct.ruby_end == ')'){
-                    endRuby(false, false, NULL, &text_info);
+                    endRuby(false, false, surface, &text_info);
                     i++;
                 }
                 continue;
