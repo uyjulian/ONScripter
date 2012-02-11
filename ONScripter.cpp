@@ -660,8 +660,10 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
     SDL_RenderPresent(renderer);
 #else
-    SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-    SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
+    SDL_Rect dst_rect = rect, clip_rect = {0, 0, screen_width, screen_height};
+    if (AnimationInfo::doClipping(&dst_rect, &clip_rect)) return;
+    SDL_BlitSurface( accumulation_surface, &dst_rect, screen_surface, &dst_rect );
+    SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
 #endif
 }
 
