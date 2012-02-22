@@ -653,7 +653,9 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
     refreshSurface( accumulation_surface, &rect, refresh_mode );
 #ifdef USE_SDL_RENDERER
     SDL_Rect src_rect = {0, 0, screen_width, screen_height};
-    SDL_Rect dst_rect = {0, 0, screen_device_width, screen_device_height};
+    SDL_Rect dst_rect = {(device_width -screen_device_width )/2, 
+                         (device_height-screen_device_height)/2,
+                         screen_device_width, screen_device_height};
     SDL_LockSurface(accumulation_surface);
     SDL_UpdateTexture(texture, &rect, (unsigned char*)accumulation_surface->pixels+accumulation_surface->pitch*rect.y+rect.x*sizeof(ONSBuf), accumulation_surface->pitch);
     SDL_UnlockSurface(accumulation_surface);

@@ -1070,8 +1070,8 @@ void ONScripter::runEventLoop()
           case SDL_FINGERMOTION:
             {
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres;
-                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres;
+                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
+                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 mouseMoveEvent( &tmp_event.motion );
                 if (btndown_flag){
                     event.button.type = SDL_MOUSEBUTTONDOWN;
@@ -1088,8 +1088,8 @@ void ONScripter::runEventLoop()
           case SDL_FINGERDOWN:
 	    {
                 SDL_Touch *touch = SDL_GetTouch(event.tfinger.touchId);
-                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres;
-                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres;
+                tmp_event.motion.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
+                tmp_event.motion.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 mouseMoveEvent( &tmp_event.motion );
 	    }
             if ( btndown_flag ){
@@ -1098,8 +1098,8 @@ void ONScripter::runEventLoop()
                 tmp_event.button.button = SDL_BUTTON_LEFT;
                 if (touch->num_fingers >= 2)
                     tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.button.x = device_width *event.tfinger.x/touch->xres;
-                tmp_event.button.y = device_height*event.tfinger.y/touch->yres;
+                tmp_event.button.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
+                tmp_event.button.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 ret = mousePressEvent( &tmp_event.button );
             }
             {
@@ -1120,8 +1120,8 @@ void ONScripter::runEventLoop()
                 tmp_event.button.button = SDL_BUTTON_LEFT;
                 if (touch->num_fingers >= 1)
                     tmp_event.button.button = SDL_BUTTON_RIGHT;
-                tmp_event.button.x = device_width *event.tfinger.x/touch->xres;
-                tmp_event.button.y = device_height*event.tfinger.y/touch->yres;
+                tmp_event.button.x = device_width *event.tfinger.x/touch->xres - (device_width -screen_device_width)/2;
+                tmp_event.button.y = device_height*event.tfinger.y/touch->yres - (device_height-screen_device_height)/2;
                 ret = mousePressEvent( &tmp_event.button );
             }
             tmp_event.key.keysym.sym = SDLK_LCTRL;

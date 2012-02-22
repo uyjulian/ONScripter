@@ -293,3 +293,16 @@ margin: 5px;
 padding: 5px;
 border-top: solid 1px #888;
 }
+
+div.figure{ 
+/*float: right;*/
+width: 80%;
+border: thin silver solid;
+margin: 0.2em;
+padding: 0.2em;
+}
+
+div.figure p{ 
+text-align: center;
+text-indent: 0;
+}
