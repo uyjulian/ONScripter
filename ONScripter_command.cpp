@@ -1143,12 +1143,9 @@ int ONScripter::prnumCommand()
 
 int ONScripter::printCommand()
 {
-    EffectLink *el = parseEffect(true);
-    
-    if (!(display_mode & DISPLAY_MODE_UPDATED)) return RET_CONTINUE;
-    
     leaveTextDisplayMode();
 
+    EffectLink *el = parseEffect(true);
     if (setEffect(el, true, true)) return RET_CONTINUE;
     while (doEffect(el));
 

@@ -946,7 +946,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
             sprintf(current_button_state.str, "%c", 'A' + event->keysym.sym - SDLK_a);
         }
         else if ( bexec_flag && 
-                  event->keysym.sym == SDLK_RSHIFT || event->keysym.sym == SDLK_LSHIFT ){
+                  (event->keysym.sym == SDLK_RSHIFT || event->keysym.sym == SDLK_LSHIFT) ){
             current_button_state.button = -1; // dummy
             sprintf(current_button_state.str, "SHIFT");
         }

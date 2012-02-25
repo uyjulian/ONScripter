@@ -312,8 +312,7 @@ protected:
     
 private:
     enum { DISPLAY_MODE_NORMAL  = 0, 
-           DISPLAY_MODE_TEXT    = 1,
-           DISPLAY_MODE_UPDATED = 2
+           DISPLAY_MODE_TEXT    = 1
     };
     enum { IDLE_EVENT_MODE      = 0,
            WAIT_RCLICK_MODE     = 1, // for lrclick

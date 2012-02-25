@@ -389,8 +389,6 @@ void ONScripter::leaveTextDisplayMode(bool force_leave_flag)
 
         display_mode = DISPLAY_MODE_NORMAL;
     }
-
-    display_mode |= DISPLAY_MODE_UPDATED;
 }
 
 bool ONScripter::doClickEnd()

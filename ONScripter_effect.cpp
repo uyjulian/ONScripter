@@ -405,7 +405,6 @@ bool ONScripter::doEffect( EffectLink *effect, bool clear_dirty_region )
 
         if ( effect_no != 0 ) flush(REFRESH_NONE_MODE, NULL, clear_dirty_region);
         if ( effect_no == 1 ) effect_counter = 0;
-        display_mode &= ~DISPLAY_MODE_UPDATED;
         skip_mode &= ~SKIP_TO_EOL;
 
         event_mode = IDLE_EVENT_MODE;
