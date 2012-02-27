@@ -1262,10 +1262,12 @@ void ONScripter::quit()
     if ( midi_info ){
         Mix_HaltMusic();
         Mix_FreeMusic( midi_info );
+        midi_info = NULL;
     }
     if ( music_info ){
         Mix_HaltMusic();
         Mix_FreeMusic( music_info );
+        music_info = NULL;
     }
 }
 
