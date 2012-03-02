@@ -164,7 +164,7 @@ int main( int argc, char **argv )
 #if defined(IOS)
     NSArray* paths;
     NSString* path;
-    paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     path = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"ONS"];
     char filename[256];
     strcpy(filename, [path UTF8String]);
