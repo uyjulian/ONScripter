@@ -29,6 +29,7 @@ ONScripter ons;
 #if defined(IOS)
 #import <Foundation/NSArray.h>
 #import <UIKit/UIKit.h>
+#import "DataCopier.h"
 #import "DataDownloader.h"
 #import "ScriptSelector.h"
 #endif
@@ -162,10 +163,12 @@ int main( int argc, char **argv )
 #endif
 
 #if defined(IOS)
-    NSArray* paths;
-    NSString* path;
-    paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    path = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"ONS"];
+#if defined(HAVE_CONTENTS)
+    if ([[[DataCopier alloc] init] copy]) exit(-1);
+#endif
+
+    NSArray* paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+    NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"ONS"];
     char filename[256];
     strcpy(filename, [path UTF8String]);
     ons.setArchivePath(filename);
