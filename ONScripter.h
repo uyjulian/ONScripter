@@ -546,7 +546,6 @@ private:
     bool draw_cursor_flag;
     int  textgosub_clickstr_state;
     int  indent_offset;
-    char *pretext_tag;
     struct GlyphCache{
         GlyphCache *next;
         Uint16 text;

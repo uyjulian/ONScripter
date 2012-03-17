@@ -576,7 +576,6 @@ void ONScripter::resetSub()
     indent_offset = 0;
     line_enter_status = 0;
     page_enter_status = 0;
-    pretext_tag = NULL;
     
     resetSentenceFont();
 

@@ -1078,7 +1078,6 @@ int ONScripter::puttextCommand()
 
     int s = line_enter_status;
     while(processText());
-    processEOT();
     line_enter_status = s;
 
     return RET_CONTINUE;
@@ -2028,7 +2027,14 @@ int ONScripter::gettagCommand()
     if ( !last_nest_info->previous || last_nest_info->nest_mode != NestInfo::LABEL )
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
-    char *buf = pretext_tag;
+    char *buf = *pretext_buf;
+
+    if (buf[0] == '[')
+        buf++;
+    else if (zenkakko_flag && buf[0] == "¡Ú"[0] && buf[1] == "¡Ú"[1])
+        buf += 2;
+    else
+        buf = NULL;
     
     int end_status;
     do{
@@ -2039,14 +2045,15 @@ int ONScripter::gettagCommand()
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
              script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
             if (buf)
-                script_h.setInt( &script_h.pushed_variable, script_h.parseInt(&buf));
+                script_h.setInt( &script_h.pushed_variable, script_h.parseIntExpression(&buf));
             else
                 script_h.setInt( &script_h.pushed_variable, 0);
         }
         else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
             if (buf){
                 const char *buf_start = buf;
-                while(*buf != '/' && *buf != 0){
+                while(*buf != '/' && *buf != 0 && *buf != ']' && 
+                      (!zenkakko_flag || buf[0] != "¡Û"[0] || buf[1] != "¡Û"[1])){
                     if (IS_TWO_BYTE(*buf))
                         buf += 2;
                     else
@@ -2059,12 +2066,19 @@ int ONScripter::gettagCommand()
             }
         }
 
+        if (buf) *pretext_buf = buf;
         if (buf && *buf == '/')
             buf++;
         else
             buf = NULL;
     }
     while(end_status & ScriptHandler::END_COMMA);
+
+    if ((*pretext_buf)[0] == ']')
+        (*pretext_buf)++;
+    else if (zenkakko_flag && 
+             (*pretext_buf)[0] == "¡Û"[0] && (*pretext_buf)[1] == "¡Û"[1])
+        *pretext_buf += 2;
 
     return RET_CONTINUE;
 }

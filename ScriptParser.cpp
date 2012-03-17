@@ -149,6 +149,7 @@ void ScriptParser::reset()
 
     textgosub_label = NULL;
     pretextgosub_label = NULL;
+    pretext_buf = NULL;
     loadgosub_label = NULL;
 
     /* ---------------------------------------- */

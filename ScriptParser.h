@@ -481,6 +481,7 @@ protected:
     /* System customize related variables */
     char *textgosub_label;
     char *pretextgosub_label;
+    char **pretext_buf;
     char *loadgosub_label;
 
     ScriptHandler script_h;

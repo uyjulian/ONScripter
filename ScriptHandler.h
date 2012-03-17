@@ -111,6 +111,7 @@ public:
     int  readInt();
     void skipToken();
     int  parseInt( char **buf );
+    int  parseIntExpression( char **buf );
     void readVariable( bool reread_flag=false );
 
     // function for string access
@@ -288,7 +289,6 @@ private:
 
     char *checkComma( char *buf );
     void parseStr( char **buf );
-    int  parseIntExpression( char **buf );
     void readNextOp( char **buf, int *op, int *num );
     int  calcArithmetic( int num1, int op, int num2 );
     int  parseArray( char **buf, ArrayVariable &array );

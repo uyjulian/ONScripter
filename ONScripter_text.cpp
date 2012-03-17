@@ -150,14 +150,12 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
 
     if ( info->isEndOfLine() ){
         info->newLine();
-        for (int i=0 ; i<indent_offset ; i++)
-            info->advanceCharInHankaku(2);
-
-        if ( lookback_flag ){
-            for (int i=0 ; i<indent_offset ; i++){
+        for (int i=0 ; i<indent_offset ; i++){
+            if (lookback_flag){
                 current_page->add(0x81);
                 current_page->add(0x40);
             }
+            info->advanceCharInHankaku(2);
         }
     }
 
@@ -262,9 +260,8 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
         if ( IS_TWO_BYTE(*str) ){
             if ( checkLineBreak( str, info ) ){
                 info->newLine();
-                for (int i=0 ; i<indent_offset ; i++){
-                    sentence_font.advanceCharInHankaku(2);
-                }
+                for (int i=0 ; i<indent_offset ; i++)
+                    info->advanceCharInHankaku(2);
             }
 
             text[0] = *str++;
@@ -640,7 +637,6 @@ int ONScripter::textCommand()
             current_page->tag = NULL;
         }
 
-        pretext_tag = current_page->tag;
         gosubReal( pretextgosub_label, script_h.getCurrent() );
         line_enter_status = 1;
 
@@ -745,6 +741,7 @@ bool ONScripter::processText()
         /* Kinsoku process */
         if ( checkLineBreak( script_h.getStringBuffer() + string_buffer_offset, &sentence_font ) ){
             sentence_font.newLine();
+            current_page->add(0x0a);
             for (int i=0 ; i<indent_offset ; i++){
                 current_page->add(0x81);
                 current_page->add(0x40);
