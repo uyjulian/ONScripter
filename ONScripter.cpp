@@ -954,7 +954,7 @@ void ONScripter::clearCurrentPage()
 
     int num = (sentence_font.num_xy[0]*2+1)*sentence_font.num_xy[1];
     if (sentence_font.getTateyokoMode() == FontInfo::TATE_MODE)
-        num = (sentence_font.num_xy[1]*2+1)*sentence_font.num_xy[1];
+        num = (sentence_font.num_xy[1]*2+1)*sentence_font.num_xy[0];
     
     if ( current_page->text &&
          current_page->max_text != num ){
