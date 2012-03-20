@@ -846,16 +846,16 @@ int ONScripter::parseLine( )
     if (debug_level > 0) printf("ONScripter::Parseline %s\n", script_h.getStringBuffer() );
 
     const char *cmd = script_h.getStringBuffer();
-    if      (cmd[string_buffer_offset] == ';') return RET_CONTINUE;
-    else if (cmd[string_buffer_offset] == '*') return RET_CONTINUE;
-    else if (cmd[string_buffer_offset] == ':') return RET_CONTINUE;
+    if      (cmd[0] == ';') return RET_CONTINUE;
+    else if (cmd[0] == '*') return RET_CONTINUE;
+    else if (cmd[0] == ':') return RET_CONTINUE;
 
     if (script_h.isText()){
         if ( current_mode == DEFINE_MODE ) errorAndExit( "text cannot be displayed in define section." );
         return textCommand();
     }
 
-    if (cmd[string_buffer_offset] != '_'){
+    if (cmd[0] != '_'){
         if (cmd[0] >= 'a' && cmd[0] <= 'z'){
             UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
             UserFuncLUT *uf = ufh.root.next;
