@@ -519,6 +519,10 @@ bool ONScripter::mousePressEvent( SDL_MouseButtonEvent *event )
         sprintf(current_button_state.str, "WHEELDOWN");
     }
 #endif
+    else if ( getmclick_flag && event->button == SDL_BUTTON_MIDDLE ){
+        current_button_state.button = -70;
+        sprintf(current_button_state.str, "MCLICK");
+    }
     else return false;
 
     if ( event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE) ){
@@ -708,6 +712,23 @@ void ONScripter::shiftCursorOnButton( int diff )
 
 bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
 {
+    if (event->keysym.sym == SDLK_ESCAPE){
+        current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+        current_button_state.event_button = SDL_BUTTON_RIGHT;
+    }
+    else if (event->keysym.sym == SDLK_KP_ENTER){
+        current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+        current_button_state.event_button = SDL_BUTTON_LEFT;
+    }
+    else if (event->keysym.sym == SDLK_LEFT){
+        current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+        current_button_state.event_button = SDL_BUTTON_WHEELUP;
+    }
+    else if (event->keysym.sym == SDLK_RIGHT){
+        current_button_state.event_type = SDL_MOUSEBUTTONDOWN;
+        current_button_state.event_button = SDL_BUTTON_WHEELDOWN;
+    }
+
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
         ctrl_pressed_status  |= 0x01;
@@ -739,6 +760,23 @@ bool ONScripter::keyDownEvent( SDL_KeyboardEvent *event )
 
 void ONScripter::keyUpEvent( SDL_KeyboardEvent *event )
 {
+    if (event->keysym.sym == SDLK_ESCAPE){
+        current_button_state.event_type = SDL_MOUSEBUTTONUP;
+        current_button_state.event_button = SDL_BUTTON_RIGHT;
+    }
+    else if (event->keysym.sym == SDLK_KP_ENTER){
+        current_button_state.event_type = SDL_MOUSEBUTTONUP;
+        current_button_state.event_button = SDL_BUTTON_LEFT;
+    }
+    else if (event->keysym.sym == SDLK_LEFT){
+        current_button_state.event_type = SDL_MOUSEBUTTONUP;
+        current_button_state.event_button = SDL_BUTTON_WHEELUP;
+    }
+    else if (event->keysym.sym == SDLK_RIGHT){
+        current_button_state.event_type = SDL_MOUSEBUTTONUP;
+        current_button_state.event_button = SDL_BUTTON_WHEELDOWN;
+    }
+
     switch ( event->keysym.sym ) {
       case SDLK_RCTRL:
         ctrl_pressed_status  &= ~0x01;
@@ -1174,8 +1212,12 @@ void ONScripter::runEventLoop()
             break;
             
           case SDL_MOUSEBUTTONDOWN:
+            current_button_state.event_type = event.type;
+            current_button_state.event_button = event.button.button;
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
+            current_button_state.event_type = event.type;
+            current_button_state.event_button = event.button.button;
             ret = mousePressEvent( &event.button );
             if (ret) return;
             break;

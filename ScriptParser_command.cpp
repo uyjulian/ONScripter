@@ -976,7 +976,6 @@ void ScriptParser::gosubReal( const char *label, char *next_script, bool textgos
 
     last_nest_info = last_nest_info->next;
     last_nest_info->next_script = next_script;
-    pretext_buf = &last_nest_info->next_script;
 
     if (textgosub_flag){
         last_nest_info->textgosub_flag = true;
