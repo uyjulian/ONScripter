@@ -1038,7 +1038,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                 return true;
             }
         }
-        else if ( event->keysym.sym == SDLK_a && mode_ext_flag && !automode_flag ){
+        else if ( event->keysym.sym == SDLK_a && !automode_flag ){
             automode_flag = true;
             skip_mode &= ~SKIP_NORMAL;
             printf("change to automode\n");
