@@ -2,7 +2,7 @@
  * 
  *  ONScripter_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -288,6 +288,8 @@ int ONScripter::texecCommand()
         processEOT();
         page_enter_status = 0;
     }
+
+    saveonCommand();
     
     return RET_CONTINUE;
 }
@@ -978,7 +980,7 @@ int ONScripter::saveonCommand()
 
 int ONScripter::saveoffCommand()
 {
-    if (saveon_flag && internal_saveon_flag) saveSaveFile(false);
+    if (saveon_flag && internal_saveon_flag) storeSaveFile();
     
     saveon_flag = false;
 
@@ -997,8 +999,8 @@ int ONScripter::savegameCommand()
     if (savegame2_flag)
         savestr = script_h.readStr();
 
-    if (saveon_flag && internal_saveon_flag) saveSaveFile(false);
-    saveSaveFile( true, no, savestr ); 
+    if (saveon_flag && internal_saveon_flag) storeSaveFile();
+    writeSaveFile( no, savestr ); 
 
     return RET_CONTINUE;
 }
@@ -1072,7 +1074,7 @@ int ONScripter::resetCommand()
         script_h.getVariableData(i).reset(false);
 
     setCurrentLabel( "start" );
-    saveSaveFile(false);
+    storeSaveFile();
     
     return RET_CONTINUE;
 }
@@ -3438,8 +3440,12 @@ int ONScripter::bspCommand()
 {
     int no = script_h.readInt();
     if (no < 0 || no >= MAX_SPRITE_NUM || 
-        sprite_info[no].image_surface == NULL)
+        sprite_info[no].image_surface == NULL){
+        for (int i=0 ; i<3 ; i++)
+            if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
+                script_h.readStr();
         return RET_CONTINUE;
+    }
 
     ButtonLink *bl = new ButtonLink();
     root_button_link.insert( bl );
