@@ -2,7 +2,7 @@
  * 
  *  ONScripter.cpp - Execution block parser of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -37,13 +37,6 @@ extern "C" void waveCallback( int channel );
 #define DEFAULT_ENV_FONT "ÇlÇr ÉSÉVÉbÉN"
 #define DEFAULT_AUTOMODE_TIME 1000
 
-#ifdef __OS2__
-static void SDL_Quit_Wrapper()
-{
-    SDL_Quit();
-}
-#endif
-
 void ONScripter::initSDL()
 {
     /* ---------------------------------------- */
@@ -54,9 +47,7 @@ void ONScripter::initSDL()
         exit(-1);
     }
 
-#ifdef __OS2__
-    atexit(SDL_Quit_Wrapper); // work-around for OS/2
-#endif
+    atexit(SDL_Quit);
 
 #ifdef USE_CDROM
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){

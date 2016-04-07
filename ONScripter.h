@@ -168,6 +168,7 @@ public:
     int okcancelboxCommand();
     int ofscopyCommand();
     int negaCommand();
+    int nextcselCommand();
     int mspCommand();
     int mpegplayCommand();
     int mp3volCommand();

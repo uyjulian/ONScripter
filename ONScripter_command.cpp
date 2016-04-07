@@ -1270,6 +1270,25 @@ int ONScripter::negaCommand()
     return RET_CONTINUE;
 }
 
+int ONScripter::nextcselCommand()
+{
+    script_h.readInt();
+
+    if (last_nest_info != &root_nest_info &&
+        last_nest_info->nest_mode == NestInfo::LABEL){
+        char *buf = last_nest_info->next_script;
+        while (*buf == ' ' || *buf == '\t' || *buf == 0x0a) buf++;
+        if (strncmp( buf, "csel", 4) == 0)
+            script_h.setInt( &script_h.current_variable, 1 );
+        else
+            script_h.setInt( &script_h.current_variable, 0 );
+    }
+    else
+        script_h.setInt( &script_h.current_variable, 0 );
+
+    return RET_CONTINUE;
+}
+
 int ONScripter::mspCommand()
 {
     leaveTextDisplayMode();
