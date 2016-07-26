@@ -965,8 +965,11 @@ int ONScripter::savescreenshotCommand()
 
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
-    SDL_SaveBMP( surface, filename );
-    SDL_FreeSurface( surface );
+
+    FILE *fp = fopen(filename, "wb");
+    SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
+    SDL_SaveBMP_RW(surface, rwops, 1);
+    SDL_FreeSurface(surface);
 
     return RET_CONTINUE;
 }

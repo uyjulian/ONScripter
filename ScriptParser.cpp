@@ -2,7 +2,7 @@
  *
  *  ScriptParser.cpp - Define block parser of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -152,6 +152,7 @@ void ScriptParser::reset()
     pretextgosub_label = NULL;
     pretext_buf = NULL;
     loadgosub_label = NULL;
+    textgosub_clickstr_state = CLICK_NONE;
 
     /* ---------------------------------------- */
     /* Lookback related variables */

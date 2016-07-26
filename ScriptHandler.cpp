@@ -24,7 +24,7 @@
 #include "ScriptHandler.h"
 
 #define TMP_SCRIPT_BUF_LEN 4096
-#define STRING_BUFFER_LENGTH 2048
+#define STRING_BUFFER_LENGTH 4096
 
 #define SKIP_SPACE(p) while ( *(p) == ' ' || *(p) == '\t' ) (p)++
 
