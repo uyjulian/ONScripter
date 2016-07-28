@@ -956,17 +956,11 @@ int ONScripter::savescreenshotCommand()
     else if ( script_h.isName( "savescreenshot2" ) ){
     }
 
-    const char *buf = script_h.readStr();
-    char filename[256];
-    sprintf( filename, "%s%s", archive_path, buf );
-    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
-        if ( filename[i] == '/' || filename[i] == '\\' )
-            filename[i] = DELIMITER;
-
     SDL_Surface *surface = AnimationInfo::alloc32bitSurface( screenshot_w, screenshot_h, texture_format );
     resizeSurface( screenshot_surface, surface );
 
-    FILE *fp = fopen(filename, "wb");
+    const char *buf = script_h.readStr();
+    FILE *fp = fopen(buf, "wb");
     SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
     SDL_SaveBMP_RW(surface, rwops, 1);
     SDL_FreeSurface(surface);

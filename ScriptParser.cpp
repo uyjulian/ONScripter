@@ -24,7 +24,7 @@
 #include "ScriptParser.h"
 
 #define VERSION_STR1 "ONScripter"
-#define VERSION_STR2 "Copyright (C) 2001-2014 Studio O.G.A. All Rights Reserved."
+#define VERSION_STR2 "Copyright (C) 2001-2016 Studio O.G.A. All Rights Reserved."
 
 #define DEFAULT_SAVE_MENU_NAME "＜セーブ＞"
 #define DEFAULT_LOAD_MENU_NAME "＜ロード＞"
@@ -706,6 +706,10 @@ FILE *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
         sprintf( filename, "%s%s", save_dir, path );
     else
         sprintf( filename, "%s%s", archive_path, path );
+
+    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
+        if ( filename[i] == '/' || filename[i] == '\\' )
+            filename[i] = DELIMITER;
 
     return ::fopen( filename, mode );
 }
