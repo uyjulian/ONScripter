@@ -39,6 +39,7 @@
 
 #define MAX_SPRITE_NUM 1000
 #define MAX_SPRITE2_NUM 256
+#define MAX_TEXTURE_NUM 16
 #define MAX_PARAM_NUM 100
 #define MAX_EFFECT_NUM 256
 
@@ -147,6 +148,7 @@ public:
     int setcursorCommand();
     int selectCommand();
     int savetimeCommand();
+    int savepointCommand();
     int saveonCommand();
     int saveoffCommand();
     int savegameCommand();
@@ -288,6 +290,13 @@ public:
     int allsp2hideCommand();
     int allsphideCommand();
     int amspCommand();
+
+    void NSDDeleteCommand(int texnum);
+    void NSDLoadCommand(int texnum, const char *str);
+    void NSDPresentRectCommand(int x1, int y1, int x2, int y2);
+    void NSDSp2Command(int texnum, int dcx, int dcy, int sx, int sy, int w, int h,
+                       int xs, int ys, int rot, int alpha);
+    void NSDSetSpriteCommand(int spnum, int texnum, const char *tag);
     
 private:
     // ----------------------------------------
@@ -418,6 +427,7 @@ private:
     AnimationInfo btndef_info, bg_info, cursor_info[2];
     AnimationInfo tachi_info[3]; // 0 ... left, 1 ... center, 2 ... right
     AnimationInfo *sprite_info, *sprite2_info;
+    AnimationInfo texture_info[MAX_TEXTURE_NUM];
     AnimationInfo *bar_info[MAX_PARAM_NUM], *prnum_info[MAX_PARAM_NUM];
     AnimationInfo lookback_info[4];
     AnimationInfo dialog_info;
@@ -487,7 +497,9 @@ private:
     void flushEvent();
     void removeEvent(int type);
     void removeBGMFadeEvent();
+public:
     void waitEventSub(int count);
+private:
     bool waitEvent(int count);
     bool trapHandler();
     bool mouseMoveEvent( SDL_MouseMotionEvent *event );
@@ -555,7 +567,7 @@ private:
     size_t resize_buffer_size;
 
     SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL, int *location=NULL);
-    SDL_Surface *createRectangleSurface(char *filename, bool *has_alpha);
+    SDL_Surface *createRectangleSurface(char *filename, bool *has_alpha, unsigned char alpha=0xff);
     SDL_Surface *createSurfaceFromFile(char *filename,bool *has_alpha, int *location);
 
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );

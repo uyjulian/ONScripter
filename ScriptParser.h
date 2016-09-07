@@ -66,6 +66,7 @@ public:
     int  openScript();
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false );
+    int getStringBufferOffset(){return string_buffer_offset;};
 
     FILE *fopen(const char *path, const char *mode, bool use_save_dir=false);
     void saveGlovalData();
@@ -157,6 +158,7 @@ public:
     int clickvoiceCommand();
     int clickstrCommand();
     int breakCommand();
+    int autosaveoffCommand();
     int atoiCommand();
     int arcCommand();
     int addkinsokuCommand();
@@ -234,6 +236,7 @@ protected:
     bool filelog_flag;
     bool kidokuskip_flag;
     bool kidokumode_flag;
+    bool autosaveoff_flag;
 
     int z_order;
     bool rmode_flag;

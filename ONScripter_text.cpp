@@ -195,8 +195,8 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
         }
     }
 
-    info->old_xy[0] = info->x();
-    info->old_xy[1] = info->y();
+    info->old_xy[0] = info->x(false);
+    info->old_xy[1] = info->y(false);
 
     char text2[2] = {text[0], 0};
     if (IS_TWO_BYTE(text[0])) text2[1] = text[1];
@@ -711,9 +711,15 @@ int ONScripter::textCommand()
 
     enterTextDisplayMode();
 
-    line_enter_status = 2;
-    if (pagetag_flag) page_enter_status = 1;
-
+#ifdef USE_LUA
+    if (lua_handler.isCallbackEnabled(LUAHandler::LUA_TEXT))
+    {
+        if (lua_handler.callFunction(true, "text"))
+            errorAndExit( lua_handler.error_str );
+        processEOT();
+    }
+    else
+#endif    
     while(processText());
 
     return RET_CONTINUE;
@@ -769,7 +775,7 @@ void ONScripter::processEOT()
         sentence_font.newLine();
     }
 
-    if (!new_line_skip_flag && !pagetag_flag) line_enter_status = 0;
+    if (!new_line_skip_flag && !pagetag_flag && line_enter_status == 2) line_enter_status = 0;
 }
 
 bool ONScripter::processText()
@@ -787,6 +793,9 @@ bool ONScripter::processText()
         processEOT();
         return false;
     }
+
+    line_enter_status = 2;
+    if (pagetag_flag) page_enter_status = 1;
 
     new_line_skip_flag = false;
     

@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.h - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2013 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -52,8 +52,6 @@ public:
            TRANS_MASK           = 8
     };
 
-    bool is_copy; // allocated buffers should not be deleted from a copied instance
-    
     /* variables set from the image tag */
     int trans_mode;
     uchar3 direct_color;
@@ -61,6 +59,7 @@ public:
     uchar3 color;
     SDL_Rect orig_pos; // position and size of the image before resizing
     SDL_Rect pos; // position and size of the current cell
+    SDL_Rect affine_pos; // topleft position and width/height for affince transformation
 
     int num_of_cells;
     int current_cell;
@@ -86,6 +85,8 @@ public:
     char *mask_surface_name; // used to avoid reloading images
     SDL_Surface *image_surface;
     unsigned char *alpha_buf;
+    Uint32 texture_format;
+        
     /* Variables for extended sprite (lsp2, drawsp2, etc.) */
     int scale_x, scale_y, rot;
     int mat[2][2], inv_mat[2][2];

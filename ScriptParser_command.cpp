@@ -1342,6 +1342,16 @@ int ScriptParser::breakCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::autosaveoffCommand()
+{
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "autosaveoff: not in the define section" );
+
+    autosaveoff_flag = true;
+    
+    return RET_CONTINUE;
+}
+
 int ScriptParser::atoiCommand()
 {
     script_h.readInt();

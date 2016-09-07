@@ -100,6 +100,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"savetime",		&ONScripter::savetimeCommand},
     {"savescreenshot2",	&ONScripter::savescreenshotCommand},
     {"savescreenshot",	&ONScripter::savescreenshotCommand},
+    {"savepoint",		&ONScripter::savepointCommand},
     {"saveon",			&ONScripter::saveonCommand},
     {"saveoff",			&ONScripter::saveoffCommand},
     {"savenumber",		&ONScripter::savenumberCommand},
@@ -374,6 +375,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"bar",				&ONScripter::barCommand},
 
     {"avi",				&ONScripter::aviCommand},
+    {"autosaveoff",		&ONScripter::autosaveoffCommand},
     {"automode_time",	&ONScripter::automode_timeCommand},
     {"automode",		&ONScripter::mode_extCommand},
     {"autoclick",		&ONScripter::autoclickCommand},

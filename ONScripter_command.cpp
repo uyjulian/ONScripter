@@ -686,8 +686,8 @@ void ONScripter::setwindowCore()
         sentence_font.window_color[0] = sentence_font.window_color[1] = sentence_font.window_color[2] = 0xff;
     }
 
-    sentence_font.old_xy[0] = sentence_font.x();
-    sentence_font.old_xy[1] = sentence_font.y();
+    sentence_font.old_xy[0] = sentence_font.x(false);
+    sentence_font.old_xy[1] = sentence_font.y(false);
 }
 
 int ONScripter::setwindow3Command()
@@ -968,18 +968,28 @@ int ONScripter::savescreenshotCommand()
     return RET_CONTINUE;
 }
 
+int ONScripter::savepointCommand()
+{
+    storeSaveFile();
+
+    return RET_CONTINUE;
+}
+
 int ONScripter::saveonCommand()
 {
-    saveon_flag = true;
+    if (!autosaveoff_flag)
+        saveon_flag = true;
 
     return RET_CONTINUE;
 }
 
 int ONScripter::saveoffCommand()
 {
-    if (saveon_flag && internal_saveon_flag) storeSaveFile();
+    if (!autosaveoff_flag){
+        if (saveon_flag && internal_saveon_flag) storeSaveFile();
     
-    saveon_flag = false;
+        saveon_flag = false;
+    }
 
     return RET_CONTINUE;
 }
@@ -1859,6 +1869,13 @@ int ONScripter::loadgameCommand()
 
         flushEvent();
 
+#ifdef USE_LUA
+        if (lua_handler.isCallbackEnabled(LUAHandler::LUA_LOAD)){
+            if (lua_handler.callFunction(true, "load", &no))
+                errorAndExit( lua_handler.error_str );
+        }
+#endif
+
         if (loadgosub_label)
             gosubReal( loadgosub_label, script_h.getCurrent() );
     }
@@ -2151,7 +2168,7 @@ int ONScripter::gettagCommand()
         if ( script_h.pushed_variable.type & ScriptHandler::VAR_INT ||
              script_h.pushed_variable.type & ScriptHandler::VAR_ARRAY ){
             if (buf)
-                script_h.setInt( &script_h.pushed_variable, script_h.parseIntExpression(&buf));
+                script_h.setInt( &script_h.pushed_variable, script_h.parseInt(&buf));
             else
                 script_h.setInt( &script_h.pushed_variable, 0);
         }
@@ -3681,8 +3698,9 @@ int ONScripter::barCommand()
     const char *buf = script_h.readStr();
     readColor( &ai->color, buf );
 
-    int w = ai->max_width * ai->param / ai->max_param;
-    if ( ai->max_width > 0 && w > 0 ) ai->orig_pos.w = w;
+    int w = 0;
+    if (ai->max_param != 0) w = ai->max_width * ai->param / ai->max_param;
+    if (ai->max_width > 0 && w > 0) ai->orig_pos.w = w;
 
     ai->scalePosWH( screen_ratio1, screen_ratio2 );
     ai->allocImage( ai->pos.w, ai->pos.h, texture_format );
@@ -3825,3 +3843,111 @@ int ONScripter::allsphideCommand()
     return RET_CONTINUE;
 }
 
+void ONScripter::NSDDeleteCommand(int texnum)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    texture_info[texnum].remove();
+}
+
+void ONScripter::NSDLoadCommand(int texnum, const char *str)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ai = &texture_info[texnum];
+    if (str[0] != '*'){
+        ai->setImageName( str );
+        ai->trans = -1;
+    }
+    else{
+        int c=1, n=0, val[6]={0}; // val[6] = {width, height, R, G, B, alpha}
+        val[5] = -1;
+
+        while(str[c] != 0 && n<6){
+            if (str[c] >= '0' && str[c] <= '9')
+                val[n] = val[n]*10 + str[c] - '0';
+            if (str[c] == ',') n++;
+            c++;
+        }
+
+        char buf[32];
+        sprintf(buf, ">%d,%d,#%x%x%x", val[0], val[1], val[2], val[3], val[4]);
+        ai->setImageName( buf );
+        ai->trans = val[5];
+    }
+
+    ai->visible = true;
+    parseTaggedString( ai );
+    ai->trans_mode = AnimationInfo::TRANS_ALPHA;
+    setupAnimationInfo( ai );
+}
+
+void ONScripter::NSDPresentRectCommand(int x1, int y1, int x2, int y2)
+{
+    SDL_Rect clip_src;
+    clip_src.x = x1;
+    clip_src.y = y1;
+    clip_src.w = x2-x1+1;
+    clip_src.h = y2-y1+1;
+    
+    SDL_Rect clip;
+    clip.x = clip.y = 0;
+    clip.w = accumulation_surface->w;
+    clip.h = accumulation_surface->h;
+    if ( AnimationInfo::doClipping( &clip, &clip_src ) ) return;
+
+    for (int i=MAX_TEXTURE_NUM-1 ; i>0 ; i--)
+        if (texture_info[i].image_surface && texture_info[i].visible)
+            drawTaggedSurface( accumulation_surface, &texture_info[i], clip );
+
+    flushDirect(clip, REFRESH_NONE_MODE);
+}
+
+void ONScripter::NSDSp2Command(int texnum, int dcx, int dcy, int sx, int sy, int w, int h,
+                               int xs, int ys, int rot, int alpha)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ai = &texture_info[texnum];
+    ai->orig_pos.x = dcx;
+    ai->orig_pos.y = dcy;
+    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+    ai->scale_x = xs;
+    ai->scale_y = ys;
+    ai->rot     = rot;
+    ai->trans = alpha;
+
+    ai->affine_pos.x = sx*screen_ratio1/screen_ratio2;
+    ai->affine_pos.y = sy*screen_ratio1/screen_ratio2;
+    ai->affine_pos.w =  w*screen_ratio1/screen_ratio2;
+    ai->affine_pos.h =  h*screen_ratio1/screen_ratio2;
+    ai->calcAffineMatrix();
+    ai->affine_flag = true;
+}
+
+void ONScripter::NSDSetSpriteCommand(int spnum, int texnum, const char *tag)
+{
+    if (spnum < 0 || spnum >= MAX_SPRITE_NUM) return;
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    AnimationInfo *ais = &sprite_info[spnum];
+    AnimationInfo *ait = &texture_info[texnum];
+    *ais = *ait;
+
+    char buf[256];
+    if (tag)
+        sprintf(buf, "%s%s", tag, ait->file_name);
+    else
+        sprintf(buf, ":a;%s", ait->file_name);
+    ais->setImageName(buf);
+    parseTaggedString(ais);
+
+    if (ais->affine_flag){
+        ais->orig_pos.x = ait->orig_pos.x;
+        if (ait->num_of_cells > 0)
+            ais->orig_pos.x -= ait->orig_pos.w/ait->num_of_cells/2;
+        ais->orig_pos.y = ait->orig_pos.y - ait->orig_pos.h/2;
+        ais->scalePosXY( screen_ratio1, screen_ratio2 );
+        ais->affine_flag = false;
+    }
+}

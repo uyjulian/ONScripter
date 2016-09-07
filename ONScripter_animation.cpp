@@ -2,7 +2,7 @@
  * 
  *  ONScripter_animation.cpp - Methods to manipulate AnimationInfo
  *
- *  Copyright (c) 2001-2014 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -383,7 +383,7 @@ void ONScripter::parseTaggedString( AnimationInfo *anim )
         }
         else{
             for ( i=0 ; i<anim->num_of_cells ; i++ )
-                anim->duration_list[0] = 0;
+                anim->duration_list[i] = 0;
             anim->loop_mode = 3; // 3...no animation
         }
         if ( anim->loop_mode != 3 ) anim->is_animatable = true;

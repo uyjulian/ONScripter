@@ -122,7 +122,16 @@ void ScriptHandler::reset()
         delete[] clickstr_list;
         clickstr_list = NULL;
     }
-    internal_current_script = NULL;
+
+    is_internal_script = false;
+    ScriptContext *sc = root_script_context.next;
+    while (sc){
+        ScriptContext *tmp = sc;
+        sc = sc->next;
+        delete tmp;
+    };
+    last_script_context = &root_script_context;
+    last_script_context->next = NULL;
 }
 
 void ScriptHandler::setSaveDir(const char *path)
@@ -434,28 +443,40 @@ void ScriptHandler::popCurrent()
 
 void ScriptHandler::enterExternalScript(char *pos)
 {
-    internal_current_script = current_script;
+    ScriptContext *sc = new ScriptContext;
+    last_script_context->next = sc;
+    sc->prev = last_script_context;
+    last_script_context = sc;
+    
+    is_internal_script = true;
+    sc->current_script = current_script;
     current_script = pos;
-    internal_next_script = next_script;
+    sc->next_script = next_script;
     next_script = pos;
-    internal_end_status = end_status;
-    internal_current_variable = current_variable;
-    internal_pushed_variable = pushed_variable;
+    sc->end_status = end_status;
+    sc->current_variable = current_variable;
+    sc->pushed_variable = pushed_variable;
 }
 
 void ScriptHandler::leaveExternalScript()
 {
-    current_script = internal_current_script;
-    internal_current_script = NULL;
-    next_script = internal_next_script;
-    end_status = internal_end_status;
-    current_variable = internal_current_variable;
-    pushed_variable = internal_pushed_variable;
+    ScriptContext *sc = last_script_context;
+    last_script_context = sc->prev;
+    last_script_context->next = NULL;
+    if (last_script_context->prev == NULL)
+        is_internal_script = false;
+
+    current_script = sc->current_script;
+    next_script = sc->next_script;
+    end_status = sc->end_status;
+    current_variable = sc->current_variable;
+    pushed_variable = sc->pushed_variable;
+    delete sc;
 }
 
 bool ScriptHandler::isExternalScript()
 {
-    return (internal_current_script != NULL);
+    return !is_internal_script;
 }
 
 int ScriptHandler::getOffset( char *pos )
@@ -561,7 +582,7 @@ bool ScriptHandler::isKidoku()
 
 void ScriptHandler::markAsKidoku( char *address )
 {
-    if (!kidokuskip_flag || internal_current_script != NULL) return;
+    if (!kidokuskip_flag || is_internal_script) return;
 
     int offset = current_script - script_buffer;
     if ( address ) offset = address - script_buffer;
@@ -1521,12 +1542,12 @@ void ScriptHandler::readNextOp( char **buf, int *op, int *num )
         else                 (*buf)++;
         SKIP_SPACE(*buf);
     }
-    else{
-        if ( (*buf)[0] == '-' ){
-            minus_flag = true;
-            (*buf)++;
-            SKIP_SPACE(*buf);
-        }
+
+    SKIP_SPACE(*buf);
+    if ( (*buf)[0] == '-' ){
+        minus_flag = true;
+        (*buf)++;
+        SKIP_SPACE(*buf);
     }
 
     if ( (*buf)[0] == '(' ){

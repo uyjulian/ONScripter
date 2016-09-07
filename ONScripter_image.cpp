@@ -2,7 +2,7 @@
  * 
  *  ONScripter_image.cpp - Image processing in ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -55,7 +55,7 @@ SDL_Surface *ONScripter::loadImage(char *filename, bool *has_alpha, int *locatio
     return ret;
 }
 
-SDL_Surface *ONScripter::createRectangleSurface(char *filename, bool *has_alpha)
+SDL_Surface *ONScripter::createRectangleSurface(char *filename, bool *has_alpha, unsigned char alpha)
 {
     int c=1, w=0, h=0;
     bool decimal_flag = false;
@@ -109,7 +109,7 @@ SDL_Surface *ONScripter::createRectangleSurface(char *filename, bool *has_alpha)
         rect.w = w*(i+1)/n - rect.x;
         if (i == n-1) rect.w = w - rect.x;
         rect.h = h;
-        SDL_FillRect(tmp, &rect, SDL_MapRGBA( tmp->format, col[0], col[1], col[2], 0xff));
+        SDL_FillRect(tmp, &rect, SDL_MapRGBA( tmp->format, col[0], col[1], col[2], alpha));
     }
 
     if (has_alpha) *has_alpha = false;

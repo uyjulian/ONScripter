@@ -2,7 +2,7 @@
  * 
  *  AnimationInfo.cpp - General image storage class of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -47,8 +47,6 @@ static Uint32 inv_alpha_lut[256];
 
 AnimationInfo::AnimationInfo()
 {
-    is_copy = false;
-    
     image_name = NULL;
     surface_name = NULL;
     mask_surface_name = NULL;
@@ -77,20 +75,56 @@ AnimationInfo::AnimationInfo()
 
 AnimationInfo::AnimationInfo(const AnimationInfo &anim)
 {
-    memcpy(this, &anim, sizeof(AnimationInfo));
-    is_copy = true;
+    *this = anim;
 }
 
 AnimationInfo::~AnimationInfo()
 {
-    if (!is_copy) reset();
+    reset();
 }
 
 AnimationInfo& AnimationInfo::operator =(const AnimationInfo &anim)
 {
     if (this != &anim){
         memcpy(this, &anim, sizeof(AnimationInfo));
-        is_copy = true;
+
+        if (image_name){
+            image_name = new char[ strlen(anim.image_name) + 1 ];
+            strcpy( image_name, anim.image_name );
+        }
+        if (surface_name){
+            surface_name = new char[ strlen(anim.surface_name) + 1 ];
+            strcpy( surface_name, anim.surface_name );
+        }
+        if (mask_surface_name){
+            mask_surface_name = new char[ strlen(anim.mask_surface_name) + 1 ];
+            strcpy( mask_surface_name, anim.mask_surface_name );
+        }
+        if (file_name){
+            file_name = new char[ strlen(anim.file_name) + 1 ];
+            strcpy( file_name, anim.file_name );
+        }
+        if (mask_file_name){
+            mask_file_name = new char[ strlen(anim.mask_file_name) + 1 ];
+            strcpy( mask_file_name, anim.mask_file_name );
+        }
+        if (color_list){
+            color_list = new uchar3[ anim.num_of_cells ];
+            memcpy(color_list, anim.color_list, sizeof(uchar3)*anim.num_of_cells);
+        }
+        if (duration_list){
+            duration_list = new int[ anim.num_of_cells ];
+            memcpy(duration_list, anim.duration_list, sizeof(int)*anim.num_of_cells);
+        }
+        
+        if (image_surface){
+            image_surface = allocSurface( anim.image_surface->w, anim.image_surface->h, texture_format );
+            SDL_BlitSurface(anim.image_surface, NULL, image_surface, NULL);
+#if defined(BPP16)    
+            alpha_buf = new unsigned char[image_surface->w*image_surface->h];
+            memcpy(alpha_buf, anim.alpha_buf, image_surface->w*image_surface->h);
+#endif
+        }
     }
 
     return *this;
@@ -142,13 +176,15 @@ void AnimationInfo::deleteSurface(bool delete_surface_name)
     alpha_buf = NULL;
 }
 
-void AnimationInfo::remove(){
+void AnimationInfo::remove()
+{
     deleteImageName();
     deleteSurface();
     removeTag();
 }
 
-void AnimationInfo::removeTag(){
+void AnimationInfo::removeTag()
+{
     if ( duration_list ){
         delete[] duration_list;
         duration_list = NULL;
@@ -443,6 +479,8 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     
     alpha &= 0xff;
     int pitch = image_surface->pitch / sizeof(ONSBuf);
+    int cx2 = affine_pos.x*2 + affine_pos.w; // center x multiplied by 2
+    int cy2 = affine_pos.y*2 + affine_pos.h; // center y multiplied by 2
     // set pixel by inverse-projection with raster scan
     for (y=min_xy[1] ; y<= max_xy[1] ; y++){
         // calculate the start and end point for each raster scan
@@ -465,14 +503,14 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
         ONSBuf *dst_buffer = (ONSBuf *)dst_surface->pixels + dst_surface->w * y + raster_min;
 
         // inverse-projection
-        int x_offset2 = (inv_mat[0][1] * (y-dst_y) >> 9) + pos.w;
-        int y_offset2 = (inv_mat[1][1] * (y-dst_y) >> 9) + pos.h;
+        int x_offset2 = (inv_mat[0][1] * (y-dst_y) >> 9) + cx2;
+        int y_offset2 = (inv_mat[1][1] * (y-dst_y) >> 9) + cy2;
         for (x=raster_min-dst_x ; x<=raster_max-dst_x ; x++, dst_buffer++){
             int x2 = ((inv_mat[0][0] * x >> 9) + x_offset2) >> 1;
             int y2 = ((inv_mat[1][0] * x >> 9) + y_offset2) >> 1;
 
-            if (x2 < 0 || x2 >= pos.w ||
-                y2 < 0 || y2 >= pos.h) continue;
+            if (x2 < affine_pos.x || x2 >= affine_pos.x+affine_pos.w ||
+                y2 < affine_pos.y || y2 >= affine_pos.y+affine_pos.h) continue;
 
             ONSBuf *src_buffer = (ONSBuf *)image_surface->pixels + pitch * y2 + x2 + pos.w*current_cell;
 #if defined(BPP16)    
@@ -659,8 +697,8 @@ void AnimationInfo::calcAffineMatrix()
     // calculate bounding box
     int min_xy[2] = { 0, 0 }, max_xy[2] = { 0, 0 };
     for (int i=0 ; i<4 ; i++){
-        int c_x = (i<2)?(-pos.w/2):(pos.w/2);
-        int c_y = ((i+1)&2)?(pos.h/2):(-pos.h/2);
+        int c_x = (i<2)?(-affine_pos.w/2):(affine_pos.w/2);
+        int c_y = ((i+1)&2)?(affine_pos.h/2):(-affine_pos.h/2);
         if (scale_x < 0) c_x = -c_x;
         if (scale_y < 0) c_y = -c_y;
         corner_xy[i][0] = (mat[0][0] * c_x + mat[0][1] * c_y) / 1024 + pos.x;
@@ -720,6 +758,7 @@ void AnimationInfo::allocImage( int w, int h, Uint32 texture_format )
         image_surface->h != h){
         deleteSurface(false);
 
+        this->texture_format = texture_format;
         image_surface = allocSurface( w, h, texture_format );
 #if defined(BPP16)    
         alpha_buf = new unsigned char[w*h];
@@ -729,6 +768,11 @@ void AnimationInfo::allocImage( int w, int h, Uint32 texture_format )
     abs_flag = true;
     pos.w = w / num_of_cells;
     pos.h = h;
+
+    affine_pos.x = 0;
+    affine_pos.y = 0;
+    affine_pos.w = pos.w;
+    affine_pos.h = pos.h;
 }
 
 void AnimationInfo::copySurface( SDL_Surface *surface, SDL_Rect *src_rect, SDL_Rect *dst_rect )
@@ -928,6 +972,7 @@ void AnimationInfo::setImage( SDL_Surface *surface, Uint32 texture_format )
 {
     if (surface == NULL) return;
 
+    this->texture_format = texture_format;
 #if !defined(BPP16)    
     image_surface = surface; // deleteSurface() should be called beforehand
 #endif

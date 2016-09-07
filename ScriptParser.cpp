@@ -22,6 +22,13 @@
  */
 
 #include "ScriptParser.h"
+#ifdef ANDROID
+extern "C"
+{
+#include <jni.h>
+#include <android/log.h>
+}
+#endif
 
 #define VERSION_STR1 "ONScripter"
 #define VERSION_STR2 "Copyright (C) 2001-2016 Studio O.G.A. All Rights Reserved."
@@ -123,6 +130,7 @@ void ScriptParser::reset()
     filelog_flag = false;
     kidokuskip_flag = false;
     kidokumode_flag = true;
+    autosaveoff_flag = false;
 
     rmode_flag = true;
     windowback_flag = false;
@@ -324,10 +332,8 @@ void ScriptParser::saveGlovalData()
     allocFileIOBuf();
     writeVariables( script_h.global_variable_border, script_h.variable_range, true );
 
-    if (saveFileIOBuf( "gloval.sav" )){
-        fprintf( stderr, "can't open gloval.sav for writing\n");
-        exit(-1);
-    }
+    if (saveFileIOBuf( "gloval.sav" ))
+        errorAndExit("can't open gloval.sav for writing.");
 }
 
 void ScriptParser::allocFileIOBuf()
@@ -581,16 +587,18 @@ void ScriptParser::readLog( ScriptHandler::LogInfo &info )
 
 void ScriptParser::errorAndExit( const char *str, const char *reason )
 {
-    if ( reason )
-        fprintf( stderr, " *** Parse error at %s:%d [%s]; %s ***\n",
-                 current_label_info.name,
-                 current_line,
-                 str, reason );
-    else
-        fprintf( stderr, " *** Parse error at %s:%d [%s] ***\n",
-                 current_label_info.name,
-                 current_line,
-                 str );
+#ifdef ANDROID
+    __android_log_print( ANDROID_LOG_ERROR, "ONS",
+                         " *** Error at %s:%d [%s]; %s ***\n",
+                         current_label_info.name,
+                         current_line,
+                         str, reason?reason:"" );
+#else    
+    fprintf( stderr, " *** Error at %s:%d [%s]; %s ***\n",
+             current_label_info.name,
+             current_line,
+             str, reason?reason:"" );
+#endif    
     exit(-1);
 }
 
