@@ -119,7 +119,7 @@ AnimationInfo& AnimationInfo::operator =(const AnimationInfo &anim)
         
         if (image_surface){
             image_surface = allocSurface( anim.image_surface->w, anim.image_surface->h, texture_format );
-            SDL_BlitSurface(anim.image_surface, NULL, image_surface, NULL);
+            memcpy(image_surface->pixels, anim.image_surface->pixels, anim.image_surface->pitch*anim.image_surface->h);
 #if defined(BPP16)    
             alpha_buf = new unsigned char[image_surface->w*image_surface->h];
             memcpy(alpha_buf, anim.alpha_buf, image_surface->w*image_surface->h);
@@ -135,6 +135,7 @@ void AnimationInfo::reset()
     remove();
 
     trans = -1;
+    default_alpha = 0xff;
     orig_pos.x = orig_pos.y = 0;
     pos.x = pos.y = 0;
     visible = false;

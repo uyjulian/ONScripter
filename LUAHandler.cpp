@@ -29,6 +29,8 @@
 #define INIT_SCRIPT "system.lua"
 
 static char cmd_buf[256];
+static char *conv_buf = NULL;
+static size_t conv_buf_len = 0;
 
 int NL_dofile(lua_State *state)
 {
@@ -94,6 +96,56 @@ int NSDDelete(lua_State *state)
     lh->ons->NSDDeleteCommand(no);
         
     return 0;
+}
+
+int NSDCall(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    int num = luaL_checkinteger( state, 1 );
+    const char *str1 = luaL_checkstring( state, 2 );
+    int proc = luaL_checkinteger( state, 3 );
+    const char *str2 = luaL_checkstring( state, 4 );
+
+    lh->ons->NSDCallCommand(num, str1, proc, str2);
+
+    return 0;
+}
+
+int NSDDLL(lua_State *state)
+{
+    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
+    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+
+    const char *str1 = luaL_checkstring( state, 1 );
+    const char *str2 = luaL_checkstring( state, 2 );
+
+    struct DllFuncTable{
+        const char *name1, *name2;
+    } dll_func_table[] = {
+        {"deffontd.dll", "Font"},
+        {NULL, NULL},
+    };
+
+    int idx=0;
+    while(dll_func_table[idx].name1){
+        size_t len = strlen(dll_func_table[idx].name1);
+        if (strlen(str1) >= len &&
+            strncmp(str1+strlen(str1)-len, dll_func_table[idx].name1, len) == 0 &&
+            strcmp(str2, dll_func_table[idx].name2) == 0)
+            break;
+        idx++;
+    }
+
+    if (dll_func_table[idx].name1)
+        idx++;
+    else
+        idx = 0;
+
+    lua_pushinteger( state, idx );
+
+    return 1;
 }
 
 int NSDLoad(lua_State *state)
@@ -860,8 +912,8 @@ int lua_dummy(lua_State *state)
 static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NL_dofile),
     LUA_FUNC_LUT(NSCheckComma),
-    LUA_FUNC_LUT_DUMMY(NSDCall),
-    LUA_FUNC_LUT_DUMMY(NSDDLL),
+    LUA_FUNC_LUT(NSDCall),
+    LUA_FUNC_LUT(NSDDLL),
     LUA_FUNC_LUT(NSDDelete),
     LUA_FUNC_LUT(NSDLoad),
     LUA_FUNC_LUT(NSDPresentRect),
@@ -921,11 +973,14 @@ static int nsutf_from_ansi(lua_State *state)
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
     const char *str = luaL_checkstring( state, 1 );
-    size_t len = strlen(str);
-    char *buf2 = new char[len*3+1];
-    DirectReader::convertFromSJISToUTF8(buf2, str);
-    lua_pushstring( state, buf2 );
-    delete[] buf2;
+    size_t len = strlen(str)*3+1;
+    if (conv_buf_len < len){
+        if (conv_buf) delete[] conv_buf;
+        conv_buf = new char[len];
+        conv_buf_len = len;
+    }
+    DirectReader::convertFromSJISToUTF8(conv_buf, str);
+    lua_pushstring( state, conv_buf );
 
     return 1;
 }
@@ -935,9 +990,15 @@ static int nsutf_to_ansi(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    // dummy imprementation
     const char *str = luaL_checkstring( state, 1 );
-    lua_pushstring( state, str );
+    size_t len = strlen(str)*2+1;
+    if (conv_buf_len < len){
+        if (conv_buf) delete[] conv_buf;
+        conv_buf = new char[len];
+        conv_buf_len = len;
+    }
+    DirectReader::convertFromUTF8ToSJIS(conv_buf, str);
+    lua_pushstring( state, conv_buf );
 
     return 1;
 }

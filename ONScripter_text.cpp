@@ -240,7 +240,7 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
     }
 }
 
-void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info )
+void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect, AnimationInfo *cache_info, bool pack_hankaku)
 {
     int i;
 
@@ -321,8 +321,8 @@ void ONScripter::drawString( const char *str, uchar3 color, FontInfo *info, bool
         }
         else if (*str){
             text[0] = *str++;
-            if (*str && *str != 0x0a) text[1] = *str++;
-            else                      text[1] = 0;
+            if (*str && *str != 0x0a && pack_hankaku) text[1] = *str++;
+            else                                      text[1] = 0;
             drawChar( text, info, false, false, surface, cache_info );
         }
     }

@@ -269,6 +269,7 @@ static ONScripter::FuncLUT func_lut[] = {
     {"getmousepos",		&ONScripter::getmouseposCommand},
     {"getmouseover",	&ONScripter::getmouseoverCommand},
     {"getmclick",		&ONScripter::getmclickCommand},
+    {"getlogtext",		&ONScripter::getlogCommand},
     {"getlog",			&ONScripter::getlogCommand},
     {"getinsert",		&ONScripter::getinsertCommand},
     {"getfunction",		&ONScripter::getfunctionCommand},

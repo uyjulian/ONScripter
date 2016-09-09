@@ -2434,6 +2434,11 @@ int ONScripter::getmouseoverCommand()
 
 int ONScripter::getlogCommand()
 {
+    bool getlogtext_flag=false;
+    
+    if ( script_h.isName( "getlogtext" ) )
+        getlogtext_flag = true;
+
     script_h.readVariable();
     script_h.pushVariable();
 
@@ -2447,8 +2452,27 @@ int ONScripter::getlogCommand()
 
     if (page_no > 0)
         setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, NULL );
-    else
-        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, page->text, page->text_count );
+    else{
+        char *buf = page->text;
+        int count = page->text_count;
+        if (getlogtext_flag){
+            char *p = page->text;
+            char *p2 = buf = new char[page->text_count];
+            count = 0;
+            for (int i=0 ; i<page->text_count ; i++){
+                if (IS_TWO_BYTE(*p)){
+                    p2[count++] = *p++;
+                    p2[count++] = *p++;
+                }
+                else if (*p != 0x0a)
+                    p2[count++] = *p++;
+            }
+        }
+    
+        setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, buf, count );
+
+        if (getlogtext_flag) delete[] buf;
+    }
 
     return RET_CONTINUE;
 }
@@ -3843,6 +3867,84 @@ int ONScripter::allsphideCommand()
     return RET_CONTINUE;
 }
 
+void ONScripter::NSDCallCommand(int texnum, const char *str1, int proc, const char *str2)
+{
+    if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
+
+    NSDLoadCommand(texnum, str1);
+
+    if (proc == 1){ // deffontd.dll, Font
+        FontInfo f_info = sentence_font;
+        f_info.rubyon_flag = false;
+        f_info.setTateyokoMode(0);
+        f_info.top_xy[0] = f_info.top_xy[1] = 0;
+        f_info.clear();
+            
+        f_info.ttf_font[0] = NULL;
+        f_info.ttf_font[1] = NULL;
+        
+        RubyStruct rs_old = ruby_struct;
+        ruby_struct.font_name = NULL;
+
+        const char *start[8];
+        start[0] = str2;
+        int i=0, num_param=1;
+        while(str2[i] && num_param<8) if (str2[i++]==',') start[num_param++] = str2+i;
+        switch(num_param){
+          case 8: case 7:
+            for (i=0 ; i<2 ; i++){
+                int j=0;
+                ruby_struct.font_size_xy[i] = 0;
+                while(start[4+i][j]>='0' && start[4+i][j]<='9')
+                    ruby_struct.font_size_xy[i] = ruby_struct.font_size_xy[i]*10 + start[4+i][j++] - '0';
+            }
+          case 5:
+            i=0;
+            while(start[3][i] != ',' && start[3][i] != 0){
+                if (start[3][i++] == 'r'){
+                    f_info.rubyon_flag = true;
+                    break;
+                }
+            }
+          case 4: case 3:
+            for (i=0 ; i<2 ; i++){
+                int j=0;
+                f_info.font_size_xy[i] = 0;
+                while(start[i][j]>='0' && start[i][j]<='9')
+                    f_info.font_size_xy[i] = f_info.font_size_xy[i]*10 + start[i][j++] - '0';
+            }
+            f_info.font_size_xy[0] *= 2;
+            f_info.pitch_xy[0] = f_info.font_size_xy[0];
+            f_info.pitch_xy[1] = f_info.font_size_xy[1];
+        }
+        uchar3 color = {0xff, 0xff, 0xff};
+        char *p = (char*)start[num_param-1], *p2 = (char*)start[num_param-1];
+        while(*p){
+            if (IS_TWO_BYTE(*p)){
+                *p2++ = *p++;
+                *p2++ = *p++;
+            }
+            else if (*p == '%'){
+                p++;
+                if (*p == '%' || *p == '(' || *p == ')') // fix me later
+                    *p2++ = *p++;
+                else if (*p == '#'){
+                    readColor( &color, p );
+                    p += 7;
+                }
+            }
+            else{
+                *p2++ = *p++;
+            }
+        }
+        *p2 = 0;
+
+        drawString(start[num_param-1], color, &f_info, false, NULL, NULL, &texture_info[texnum], false);
+
+        ruby_struct = rs_old;
+    }
+}
+
 void ONScripter::NSDDeleteCommand(int texnum)
 {
     if (texnum < 0 || texnum >= MAX_TEXTURE_NUM) return;
@@ -3861,7 +3963,6 @@ void ONScripter::NSDLoadCommand(int texnum, const char *str)
     }
     else{
         int c=1, n=0, val[6]={0}; // val[6] = {width, height, R, G, B, alpha}
-        val[5] = -1;
 
         while(str[c] != 0 && n<6){
             if (str[c] >= '0' && str[c] <= '9')
@@ -3871,9 +3972,9 @@ void ONScripter::NSDLoadCommand(int texnum, const char *str)
         }
 
         char buf[32];
-        sprintf(buf, ">%d,%d,#%x%x%x", val[0], val[1], val[2], val[3], val[4]);
+        sprintf(buf, ">%d,%d,#%02x%02x%02x", val[0], val[1], val[2], val[3], val[4]);
         ai->setImageName( buf );
-        ai->trans = val[5];
+        ai->default_alpha = val[5];
     }
 
     ai->visible = true;
@@ -3933,6 +4034,7 @@ void ONScripter::NSDSetSpriteCommand(int spnum, int texnum, const char *tag)
     AnimationInfo *ais = &sprite_info[spnum];
     AnimationInfo *ait = &texture_info[texnum];
     *ais = *ait;
+    ais->visible = true;
 
     char buf[256];
     if (tag)
@@ -3946,6 +4048,8 @@ void ONScripter::NSDSetSpriteCommand(int spnum, int texnum, const char *tag)
         ais->orig_pos.x = ait->orig_pos.x;
         if (ait->num_of_cells > 0)
             ais->orig_pos.x -= ait->orig_pos.w/ait->num_of_cells/2;
+        else
+            ais->orig_pos.x -= ait->orig_pos.w/2;
         ais->orig_pos.y = ait->orig_pos.y - ait->orig_pos.h/2;
         ais->scalePosXY( screen_ratio1, screen_ratio2 );
         ais->affine_flag = false;

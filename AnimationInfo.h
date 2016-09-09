@@ -54,6 +54,7 @@ public:
 
     /* variables set from the image tag */
     int trans_mode;
+    unsigned char default_alpha;
     uchar3 direct_color;
     int pallette_number;
     uchar3 color;

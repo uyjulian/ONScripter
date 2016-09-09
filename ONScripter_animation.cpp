@@ -228,7 +228,7 @@ void ONScripter::setupAnimationInfo( AnimationInfo *anim, FontInfo *info )
     else{
         bool has_alpha;
         int location;
-        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha, &location );
+        SDL_Surface *surface = loadImage( anim->file_name, &has_alpha, &location, &anim->default_alpha );
 
         SDL_Surface *surface_m = NULL;
         if (anim->trans_mode == AnimationInfo::TRANS_MASK)

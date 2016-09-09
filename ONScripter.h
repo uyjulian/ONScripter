@@ -291,6 +291,7 @@ public:
     int allsphideCommand();
     int amspCommand();
 
+    void NSDCallCommand(int texnum, const char *str1, int proc, const char *str2);
     void NSDDeleteCommand(int texnum);
     void NSDLoadCommand(int texnum, const char *str);
     void NSDPresentRectCommand(int x1, int y1, int x2, int y2);
@@ -566,8 +567,8 @@ private:
     unsigned char *resize_buffer;
     size_t resize_buffer_size;
 
-    SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL, int *location=NULL);
-    SDL_Surface *createRectangleSurface(char *filename, bool *has_alpha, unsigned char alpha=0xff);
+    SDL_Surface *loadImage(char *filename, bool *has_alpha=NULL, int *location=NULL, unsigned char *alpha=NULL);
+    SDL_Surface *createRectangleSurface(char *filename, bool *has_alpha, unsigned char *alpha=NULL);
     SDL_Surface *createSurfaceFromFile(char *filename,bool *has_alpha, int *location);
 
     int  resizeSurface( SDL_Surface *src, SDL_Surface *dst );
@@ -723,7 +724,7 @@ private:
     void shiftHalfPixelY(SDL_Surface *surface);
     void drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char *text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect );
     void drawChar( char* text, FontInfo *info, bool flush_flag, bool lookback_flag, SDL_Surface *surface, AnimationInfo *cache_info, SDL_Rect *clip=NULL );
-    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, AnimationInfo *cache_info=NULL );
+    void drawString( const char *str, uchar3 color, FontInfo *info, bool flush_flag, SDL_Surface *surface, SDL_Rect *rect = NULL, AnimationInfo *cache_info=NULL, bool pack_hankaku=true );
     void restoreTextBuffer(SDL_Surface *surface = NULL);
     void enterTextDisplayMode(bool text_flag = true);
     void leaveTextDisplayMode(bool force_leave_flag = false);
