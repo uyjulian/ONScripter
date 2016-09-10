@@ -69,7 +69,7 @@ void ONScripter::shiftHalfPixelY(SDL_Surface *surface)
     SDL_UnlockSurface( surface );
 }
 
-void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], bool shadow_flag, AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
+void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color &color, char* text, int xy[2], AnimationInfo *cache_info, SDL_Rect *clip, SDL_Rect &dst_rect )
 {
     unsigned short unicode;
     if (IS_TWO_BYTE(text[0])){
@@ -95,8 +95,16 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
     static SDL_Color fcol={0xff, 0xff, 0xff}, bcol={0, 0, 0};
     SDL_Surface *tmp_surface = TTF_RenderGlyph_Shaded((TTF_Font*)info->ttf_font[0], unicode, fcol, bcol);
     
+    SDL_Color scolor = {0, 0, 0};
     SDL_Surface *tmp_surface_s = tmp_surface;
-    if (shadow_flag && render_font_outline){
+    if (info->is_shadow && render_font_outline){
+        unsigned char max_color = color.r;
+        if (max_color < color.g) max_color = color.g;
+        if (max_color < color.b) max_color = color.b;
+        if (max_color < 0x80) scolor.r = 0xff;
+        else                  scolor.r = 0;
+        scolor.g = scolor.b = scolor.r;
+
         tmp_surface_s = TTF_RenderGlyph_Shaded((TTF_Font*)info->ttf_font[1], unicode, fcol, bcol);
         if (tmp_surface && tmp_surface_s){
             if ((tmp_surface_s->w-tmp_surface->w) & 1) shiftHalfPixelX(tmp_surface_s);
@@ -118,7 +126,7 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
         dst_rect.y -= info->font_size_xy[0]/2;
     }
 
-    if (shadow_flag && tmp_surface_s){
+    if (info->is_shadow && tmp_surface_s){
         SDL_Rect dst_rect_s = dst_rect;
         if (render_font_outline){
             dst_rect_s.x -= (tmp_surface_s->w - tmp_surface->w)/2;
@@ -139,10 +147,10 @@ void ONScripter::drawGlyph( SDL_Surface *dst_surface, FontInfo *info, SDL_Color 
         }
 
         if (cache_info)
-            cache_info->blendText( tmp_surface_s, dst_rect_s.x, dst_rect_s.y, bcol, clip, rotate_flag );
+            cache_info->blendText( tmp_surface_s, dst_rect_s.x, dst_rect_s.y, scolor, clip, rotate_flag );
         
         if (dst_surface)
-            alphaBlendText( dst_surface, dst_rect_s, tmp_surface_s, bcol, clip, rotate_flag );
+            alphaBlendText( dst_surface, dst_rect_s, tmp_surface_s, scolor, clip, rotate_flag );
     }
 
     if ( tmp_surface ){
@@ -208,7 +216,7 @@ void ONScripter::drawChar( char* text, FontInfo *info, bool flush_flag, bool loo
     
         SDL_Color color = {info->color[0], info->color[1], info->color[2]};
         SDL_Rect dst_rect;
-        drawGlyph( surface, info, color, text2, xy, info->is_shadow, cache_info, clip, dst_rect );
+        drawGlyph( surface, info, color, text2, xy, cache_info, clip, dst_rect );
 
         if ( surface == accumulation_surface &&
              !flush_flag &&
@@ -731,7 +739,7 @@ bool ONScripter::checkLineBreak(const char *buf, FontInfo *fi)
     
     // check start kinsoku
     if (isStartKinsoku( buf+2 ) ||
-        buf[2]=='_' && isStartKinsoku( buf+3 )){
+        (buf[2]=='_' && isStartKinsoku( buf+3 ))){
         const char *buf2 = buf;
         if (buf2[2] == '_') buf2++;
         int i = 2;
