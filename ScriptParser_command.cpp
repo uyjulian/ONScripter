@@ -23,6 +23,9 @@
 
 #include "ScriptParser.h"
 #include <math.h>
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+#include <sys/stat.h>
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -237,6 +240,18 @@ int ScriptParser::shadedistanceCommand()
     return RET_CONTINUE;
 }
 
+int ScriptParser::setlayerCommand()
+{
+    if ( current_mode != DEFINE_MODE )
+        errorAndExit( "setlayer: not in the define section" );
+
+    int no = script_h.readInt();
+    layer_info[no].duration = script_h.readInt();
+    setStr(&layer_info[no].str, script_h.readStr());
+    
+    return RET_CONTINUE;
+}
+
 int ScriptParser::setkinsokuCommand()
 {
     if ( current_mode != DEFINE_MODE )
@@ -304,6 +319,18 @@ int ScriptParser::savedirCommand()
         // a workaround not to overwrite save_dir given in command line options
         save_dir = new char[ strlen(archive_path) + strlen(path) + 2 ];
         sprintf( save_dir, "%s%s%c", archive_path, path, DELIMITER );
+
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+        struct stat buf;
+        if ( stat( save_dir, &buf ) != 0 ){
+            fprintf(stderr, "savedir: %s doesn't exist.\n", save_dir);
+            delete[] save_dir;
+            save_dir = NULL;
+        
+            return RET_CONTINUE;
+        }
+#endif
+        
         script_h.setSaveDir(save_dir);
         setStr(&save_dir_envdata, path);
     }

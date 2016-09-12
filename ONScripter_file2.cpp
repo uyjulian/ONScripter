@@ -25,6 +25,7 @@
 
 int ONScripter::loadSaveFile2( int file_version )
 {
+    stopSMPEG();
     deleteNestInfo();
     
     int i, j;

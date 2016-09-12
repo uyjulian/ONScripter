@@ -2,7 +2,7 @@
  * 
  *  ONScripter_event.cpp - Event handler of ONScripter
  *
- *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -63,9 +63,9 @@ extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
     SDL_RemoveTimer( timer_id );
     timer_id = NULL;
 
-	SDL_Event event;
-	event.type = ONS_TIMER_EVENT;
-	SDL_PushEvent( &event );
+    SDL_Event event;
+    event.type = ONS_TIMER_EVENT;
+    SDL_PushEvent( &event );
 
     return 0;
 }
@@ -1113,6 +1113,11 @@ void ONScripter::runEventLoop()
     SDL_Event event, tmp_event;
 
     while ( SDL_WaitEvent(&event) ) {
+#if defined(USE_SMPEG)
+        // required to repeat the movie
+        if (layer_smpeg_sample)
+            SMPEG_status(layer_smpeg_sample);
+#endif    
         bool ret = false;
         // ignore continous SDL_MOUSEMOTION
         while (event.type == SDL_MOUSEMOTION){

@@ -52,6 +52,7 @@ AnimationInfo::AnimationInfo()
     mask_surface_name = NULL;
     image_surface = NULL;
     alpha_buf = NULL;
+    mutex = SDL_CreateMutex();
 
     duration_list = NULL;
     color_list = NULL;
@@ -81,12 +82,15 @@ AnimationInfo::AnimationInfo(const AnimationInfo &anim)
 AnimationInfo::~AnimationInfo()
 {
     reset();
+    if (mutex) SDL_DestroyMutex(mutex);
 }
 
 AnimationInfo& AnimationInfo::operator =(const AnimationInfo &anim)
 {
     if (this != &anim){
         memcpy(this, &anim, sizeof(AnimationInfo));
+
+        mutex = SDL_CreateMutex();
 
         if (image_name){
             image_name = new char[ strlen(anim.image_name) + 1 ];
@@ -171,8 +175,10 @@ void AnimationInfo::deleteSurface(bool delete_surface_name)
         if ( mask_surface_name ) delete[] mask_surface_name;
         mask_surface_name = NULL;
     }
+    SDL_mutexP(mutex);
     if ( image_surface ) SDL_FreeSurface( image_surface );
     image_surface = NULL;
+    SDL_mutexV(mutex);
     if (alpha_buf) delete[] alpha_buf;
     alpha_buf = NULL;
 }
@@ -230,13 +236,16 @@ bool AnimationInfo::proceedAnimation()
     
     bool is_changed = false;
     
-    if ( loop_mode != 3 && num_of_cells > 1 ){
+    if ( loop_mode != 3 && num_of_cells > 0 ){
         current_cell += direction;
         is_changed = true;
     }
 
     if ( current_cell < 0 ){ // loop_mode must be 2
-        current_cell = 1;
+        if (num_of_cells == 1)
+            current_cell = 0;
+        else
+            current_cell = 1;
         direction = 1;
     }
     else if ( current_cell >= num_of_cells ){
@@ -249,6 +258,8 @@ bool AnimationInfo::proceedAnimation()
         }
         else{
             current_cell = num_of_cells - 2;
+            if (current_cell < 0)
+                current_cell = 0;
             direction = -1;
         }
     }
@@ -1026,4 +1037,56 @@ unsigned char AnimationInfo::getAlpha(int x, int y)
 #endif
 
     return alpha;
+}
+
+void AnimationInfo::convertFromYUV(SDL_Overlay *src)
+{
+    SDL_mutexP(mutex);
+    if (!image_surface){
+        SDL_mutexV(mutex);
+        return;
+    }
+    
+    SDL_Surface *ls = image_surface;
+
+    SDL_LockSurface(ls);
+    SDL_PixelFormat *fmt = ls->format;
+    for (int i=0 ; i<ls->h ; i++){
+        int i2 = src->h*i/ls->h;
+        int i3 = (src->h/2)*i/ls->h;
+        Uint8 *y = src->pixels[0]+src->pitches[0]*i2;
+        Uint8 *v = src->pixels[1]+src->pitches[1]*i3;
+        Uint8 *u = src->pixels[2]+src->pitches[2]*i3;
+        ONSBuf *p = (ONSBuf*)ls->pixels + (ls->pitch/sizeof(ONSBuf))*i;
+        
+        for (int j=0 ; j<ls->w ; j++){
+            int j2 = src->w*j/ls->w;
+            int j3 = (src->w/2)*j/ls->w;
+
+            Sint32 y2 = *(y+j2);
+            Sint32 u2 = *(u+j3)-128;
+            Sint32 v2 = *(v+j3)-128;
+
+            //Sint32 r = 1.0*y2            + 1.402*v2;
+            //Sint32 g = 1.0*y2 - 0.344*u2 - 0.714*v2;
+            //Sint32 b = 1.0*y2 + 1.772*u2;
+            y2 <<= 10;
+            Sint32 r = y2           + 1436*v2;
+            Sint32 g = y2 -  352*u2 -  731*v2;
+            Sint32 b = y2 + 1815*u2;
+
+            if (r < 0) r = 0;
+            if (g < 0) g = 0;
+            if (b < 0) b = 0;
+
+            *(p+j) =
+                (((r >> (10+fmt->Rloss)) & 0xff) << fmt->Rshift) |
+                (((g >> (10+fmt->Gloss)) & 0xff) << fmt->Gshift) |
+                (((b >> (10+fmt->Bloss)) & 0xff) << fmt->Bshift) |
+                AMASK;
+        }
+    }
+    SDL_UnlockSurface(ls);
+
+    SDL_mutexV(mutex);
 }

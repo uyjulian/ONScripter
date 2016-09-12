@@ -31,6 +31,9 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
+#if defined(USE_SMPEG)
+#include <smpeg.h>
+#endif    
 
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
@@ -91,7 +94,8 @@ public:
     int  getHeight(){return screen_height;};
     ButtonState &getCurrentButtonState(){return current_button_state;};
     int  getSkip(){return automode_flag?2:((skip_mode&SKIP_NORMAL)?1:0);};
-        
+    AnimationInfo *getSMPEGInfo(){return smpeg_info;};
+    
     int  openScript();
     int  init();
 
@@ -196,6 +200,7 @@ public:
     int locateCommand();
     int loadgameCommand();
     int ldCommand();
+    int layermessageCommand();
     int kinsokuCommand();
     int jumpfCommand();
     int jumpbCommand();
@@ -298,6 +303,8 @@ public:
     void NSDSp2Command(int texnum, int dcx, int dcy, int sx, int sy, int w, int h,
                        int xs, int ys, int rot, int alpha);
     void NSDSetSpriteCommand(int spnum, int texnum, const char *tag);
+
+    void stopSMPEG();
     
 private:
     // ----------------------------------------
@@ -428,7 +435,7 @@ private:
     AnimationInfo btndef_info, bg_info, cursor_info[2];
     AnimationInfo tachi_info[3]; // 0 ... left, 1 ... center, 2 ... right
     AnimationInfo *sprite_info, *sprite2_info;
-    AnimationInfo texture_info[MAX_TEXTURE_NUM];
+    AnimationInfo *texture_info;
     AnimationInfo *bar_info[MAX_PARAM_NUM], *prnum_info[MAX_PARAM_NUM];
     AnimationInfo lookback_info[4];
     AnimationInfo dialog_info;
@@ -660,6 +667,14 @@ private:
 
     char *midi_cmd;
 
+    unsigned char *layer_smpeg_buffer;
+    bool layer_smpeg_loop_flag;
+    AnimationInfo *smpeg_info;
+#if defined(USE_SMPEG)
+    SMPEG* layer_smpeg_sample;
+    SMPEG_Filter layer_smpeg_filter;
+#endif
+                                                                 
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
     int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);

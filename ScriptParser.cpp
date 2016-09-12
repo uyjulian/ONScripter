@@ -709,17 +709,7 @@ ScriptParser::EffectLink *ScriptParser::parseEffect(bool init_flag)
 
 FILE *ScriptParser::fopen(const char *path, const char *mode, bool use_save_dir)
 {
-    char filename[256];
-    if (use_save_dir && save_dir)
-        sprintf( filename, "%s%s", save_dir, path );
-    else
-        sprintf( filename, "%s%s", archive_path, path );
-
-    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
-        if ( filename[i] == '/' || filename[i] == '\\' )
-            filename[i] = DELIMITER;
-
-    return ::fopen( filename, mode );
+    return script_h.fopen(path, mode, use_save_dir);
 }
 
 void ScriptParser::createKeyTable( const char *key_exe )

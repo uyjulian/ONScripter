@@ -87,6 +87,7 @@ public:
     SDL_Surface *image_surface;
     unsigned char *alpha_buf;
     Uint32 texture_format;
+    SDL_mutex *mutex;
         
     /* Variables for extended sprite (lsp2, drawsp2, etc.) */
     int scale_x, scale_y, rot;
@@ -153,6 +154,8 @@ public:
     SDL_Surface *setupImageAlpha( SDL_Surface *surface, SDL_Surface *surface_m, bool has_alpha );
     void setImage( SDL_Surface *surface, Uint32 texture_format );
     unsigned char getAlpha(int x, int y);
+
+    void convertFromYUV(SDL_Overlay *src);
 };
 
 #endif // __ANIMATION_INFO_H__

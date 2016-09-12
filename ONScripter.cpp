@@ -241,6 +241,8 @@ ONScripter::ONScripter()
     window_mode = false;
     sprite_info  = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info = new AnimationInfo[MAX_SPRITE2_NUM];
+    texture_info = new AnimationInfo[MAX_TEXTURE_NUM];
+    smpeg_info = NULL;
     current_button_state.down_flag = false;
 
     int i;
@@ -466,6 +468,12 @@ int ONScripter::init()
     music_buffer = NULL;
     music_info = NULL;
 
+    layer_smpeg_buffer = NULL;
+    layer_smpeg_loop_flag = false;
+#if defined(USE_SMPEG)
+    layer_smpeg_sample = NULL;
+#endif
+    
     loop_bgm_name[0] = NULL;
     loop_bgm_name[1] = NULL;
 
@@ -600,6 +608,8 @@ void ONScripter::resetSub()
     stopAllDWAVE();
     setStr(&loop_bgm_name[1], NULL);
 
+    stopSMPEG();
+
     // ----------------------------------------
     // reset AnimationInfo
     btndef_info.reset();
@@ -609,6 +619,7 @@ void ONScripter::resetSub()
     for (i=0 ; i<3 ; i++) tachi_info[i].reset();
     for (i=0 ; i<MAX_SPRITE_NUM ; i++) sprite_info[i].reset();
     for (i=0 ; i<MAX_SPRITE2_NUM ; i++) sprite2_info[i].reset();
+    for (i=0 ; i<MAX_TEXTURE_NUM ; i++) texture_info[i].reset();
     barclearCommand();
     prnumclearCommand();
     for (i=0 ; i<2 ; i++) cursor_info[i].reset();

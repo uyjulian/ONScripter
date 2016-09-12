@@ -143,20 +143,17 @@ void ScriptHandler::setSaveDir(const char *path)
 
 FILE *ScriptHandler::fopen( const char *path, const char *mode, bool use_save_dir )
 {
-    char *filename;
-    if (use_save_dir && save_dir){
-        filename = new char[strlen(save_dir)+strlen(path)+1];
+    char filename[256];
+    if (use_save_dir && save_dir)
         sprintf( filename, "%s%s", save_dir, path );
-    }
-    else{
-        filename = new char[strlen(archive_path)+strlen(path)+1];
+    else
         sprintf( filename, "%s%s", archive_path, path );
-    }
 
-    FILE *fp = ::fopen( filename, mode );
-    delete[] filename;
+    for ( unsigned int i=0 ; i<strlen( filename ) ; i++ )
+        if ( filename[i] == '/' || filename[i] == '\\' )
+            filename[i] = DELIMITER;
 
-    return fp;
+    return ::fopen( filename, mode );
 }
 
 void ScriptHandler::setKeyTable( const unsigned char *key_table )

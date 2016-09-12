@@ -40,7 +40,6 @@ extern "C" void playVideoIOS(const char *filename, bool click_flag, bool loop_fl
 #endif
 
 #if defined(USE_SMPEG)
-#include <smpeg.h>
 extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 {
     SMPEG_playAudio( (SMPEG*)userdata, stream, len );

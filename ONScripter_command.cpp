@@ -30,7 +30,8 @@
 
 extern SDL_TimerID timer_bgmfade_id;
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
-
+extern "C" void smpegCallback();
+    
 #define CONTINUOUS_PLAY
 
 int ONScripter::yesnoboxCommand()
@@ -961,8 +962,10 @@ int ONScripter::savescreenshotCommand()
 
     const char *buf = script_h.readStr();
     FILE *fp = fopen(buf, "wb");
-    SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
-    SDL_SaveBMP_RW(surface, rwops, 1);
+    if (fp){
+        SDL_RWops *rwops = SDL_RWFromFP(fp, SDL_TRUE);
+        SDL_SaveBMP_RW(surface, rwops, 1);
+    }
     SDL_FreeSurface(surface);
 
     return RET_CONTINUE;
@@ -1691,17 +1694,51 @@ int ONScripter::lspCommand()
     ai->visible = v;
     
     const char *buf = script_h.readStr();
-    ai->setImageName( buf );
+    if (buf[0] == '*'){ // layer
+        int layer_num=0, c=1;
+        while (buf[c] >= '0' && buf[c] <= '9')
+            layer_num = layer_num*10 + buf[c++] - '0';
 
-    ai->orig_pos.x = script_h.readInt();
-    ai->orig_pos.y = script_h.readInt();
-    ai->scalePosXY( screen_ratio1, screen_ratio2 );
+        LayerInfo *li = &layer_info[layer_num];
+        if (!li->str){
+            fprintf(stderr, " lsp: layer %d is not configured.\n", layer_num);
+            return RET_CONTINUE;
+        }
 
-    if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
-        ai->trans = script_h.readInt();
-    else
-        ai->trans = -1;
+        int w=1, h=1;
+        size_t len = strlen("wcmpg.dll");
+        if (strlen(li->str) >= len &&
+            strncmp(li->str+strlen(li->str)-len, "wcmpg.dll", len) == 0){
+            printf("lsp: %d wcmpg.dll is enabled.\n", no);
+            smpeg_info = ai;
+            w = screen_width;
+            h = screen_height;
+        }
 
+        li->sprite_num = no;
+        char filename[64];
+        sprintf(filename, ":a/1,%d,0;>%d,%d,#000000", li->duration, w, h);
+        ai->setImageName( filename );
+        ai->orig_pos.x = 0;
+        ai->orig_pos.y = 0;
+        ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
+        ai->default_alpha = 0;
+        parseTaggedString( ai );
+        setupAnimationInfo( ai );
+    }
+    else{
+        ai->setImageName( buf );
+        ai->orig_pos.x = script_h.readInt();
+        ai->orig_pos.y = script_h.readInt();
+        ai->scalePosXY( screen_ratio1, screen_ratio2 );
+
+        if ( script_h.getEndStatus() & ScriptHandler::END_COMMA )
+            ai->trans = script_h.readInt();
+        else
+            ai->trans = -1;
+    }
+    
     parseTaggedString( ai );
     setupAnimationInfo( ai );
 
@@ -1918,6 +1955,88 @@ int ONScripter::ldCommand()
     EffectLink *el = parseEffect(true);
     if (setEffect(el, true, true)) return RET_CONTINUE;
     while (doEffect(el));
+
+    return RET_CONTINUE;
+}
+#if defined(USE_SMPEG)
+static void smpeg_filter_callback( SDL_Overlay * dst, SDL_Overlay * src, SDL_Rect * region, SMPEG_FilterInfo * filter_info, void * data )
+{
+    if (dst){
+        dst->w = 0;
+        dst->h = 0;
+    }
+
+    ONScripter *ons = (ONScripter*)data;
+    AnimationInfo *ai = ons->getSMPEGInfo();
+    if (!ai) return;
+
+    ai->convertFromYUV(src);
+}
+
+static void smpeg_filter_destroy( struct SMPEG_Filter * filter )
+{
+}
+#endif
+
+int ONScripter::layermessageCommand()
+{
+    int no = script_h.readInt();
+    const char *buf = script_h.readStr();
+
+    if (!layer_info[no].str) return RET_CONTINUE;
+    
+#if defined(USE_SMPEG)
+    if (&sprite_info[layer_info[no].sprite_num] == smpeg_info){
+        if (strncmp(buf, "open/",5) == 0){
+            unsigned long length = script_h.cBR->getFileLength( buf+5 );
+            if (length == 0){
+                fprintf( stderr, " *** can't find file [%s] ***\n", buf+5 );
+                return RET_CONTINUE;
+            }
+
+            stopSMPEG();
+
+            layer_smpeg_buffer = new unsigned char[length];
+            script_h.cBR->getFile( buf+5, layer_smpeg_buffer );
+
+            layer_smpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( layer_smpeg_buffer, length ), NULL, 0 );
+
+            if ( SMPEG_error( layer_smpeg_sample ) ) return RET_CONTINUE;
+
+            SMPEG_enableaudio( layer_smpeg_sample, 0 );
+            SMPEG_enablevideo( layer_smpeg_sample, 1 );
+#ifdef USE_SDL_RENDERER
+            // workaround to set a non-NULL value in the second argument
+            SMPEG_setdisplay( layer_smpeg_sample, accumulation_surface, NULL,  NULL);
+#else
+            SMPEG_setdisplay( layer_smpeg_sample, screen_surface, NULL,  NULL);
+#endif            
+        }
+        else if (strcmp(buf, "play") == 0){
+            smpeg_info->visible = true;
+            layer_smpeg_filter.data = this;
+            layer_smpeg_filter.callback = smpeg_filter_callback;
+            layer_smpeg_filter.destroy = smpeg_filter_destroy;
+            SMPEG_filter( layer_smpeg_sample, &layer_smpeg_filter );
+            SMPEG_loop( layer_smpeg_sample, layer_smpeg_loop_flag?1:0);
+            SMPEG_play( layer_smpeg_sample );
+        }
+        else if (strcmp(buf, "pause") == 0){
+            if (layer_smpeg_sample)
+                SMPEG_pause( layer_smpeg_sample );
+        }
+        else if (strcmp(buf, "close") == 0){
+            smpeg_info->visible = false;
+            stopSMPEG();
+        }
+        else if (strncmp(buf, "setloop/", 8) == 0){
+            if (buf[8] == '1')
+                layer_smpeg_loop_flag = true;
+            else
+                layer_smpeg_loop_flag = false;
+        }
+    }
+#endif        
 
     return RET_CONTINUE;
 }
@@ -2649,11 +2768,9 @@ int ONScripter::exec_dllCommand()
     }
     dll_name[c] = '\0';
 
-    printf("  reading %s for %s\n", dll_file, dll_name );
-
     FILE *fp;
     if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){
-        fprintf( stderr, "Cannot open file [%s]\n", dll_file );
+        fprintf( stderr, "Cannot open file [%s] while reading %s\n", dll_file, dll_name );
         return RET_CONTINUE;
     }
 
@@ -2766,6 +2883,7 @@ int ONScripter::erasetextwindowCommand()
 int ONScripter::endCommand()
 {
     quit();
+    stopSMPEG();
     exit(0);
     return RET_CONTINUE; // dummy
 }
@@ -4054,4 +4172,19 @@ void ONScripter::NSDSetSpriteCommand(int spnum, int texnum, const char *tag)
         ais->scalePosXY( screen_ratio1, screen_ratio2 );
         ais->affine_flag = false;
     }
+}
+
+void ONScripter::stopSMPEG()
+{
+#if defined(USE_SMPEG)
+    if (layer_smpeg_sample){
+        SMPEG_stop( layer_smpeg_sample );
+        SMPEG_delete( layer_smpeg_sample );
+        layer_smpeg_sample = NULL;
+    }
+    if (layer_smpeg_buffer){
+        delete[] layer_smpeg_buffer;
+        layer_smpeg_buffer = NULL;
+    }
+#endif        
 }

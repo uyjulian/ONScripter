@@ -54,6 +54,8 @@
 #define DEFAULT_START_KINSOKU "」』）］｝、。，．・？！ヽヾゝゞ々ー"
 #define DEFAULT_END_KINSOKU   "「『（［｛"
 
+#define MAX_LAYER_NUM 32
+
 typedef unsigned char uchar3[3];
 
 class ScriptParser
@@ -89,6 +91,7 @@ public:
     int skipCommand();
     int sinCommand();
     int shadedistanceCommand();
+    int setlayerCommand();
     int setkinsokuCommand();
     int selectvoiceCommand();
     int selectcolorCommand();
@@ -277,6 +280,19 @@ protected:
     
     void readToken();
 
+    /* ---------------------------------------- */
+    /* Layer related variables */
+    struct LayerInfo{
+        int sprite_num;
+        int duration;
+        char *str;
+        LayerInfo(){
+            sprite_num = 0;
+            duration = 0;
+            str = NULL;
+        };
+    } layer_info[MAX_LAYER_NUM];
+    
     /* ---------------------------------------- */
     /* Effect related variables */
     struct EffectLink{
