@@ -438,6 +438,29 @@ int NSOggClose(lua_State *state)
     return 0;
 }
 
+// Not implemented correctly, fix me later.
+int NSOggFade(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+
+    int no = luaL_checkinteger( state, 1 );
+    int startvol= luaL_checkinteger( state, 2 );
+    int endvol= luaL_checkinteger( state, 3 );
+    int dur = luaL_checkinteger( state, 4 );
+    int flag = lua_toboolean(state, 5);
+
+    if (flag)
+        sprintf(cmd_buf, "_dwavestop %d", no);
+    else
+        sprintf(cmd_buf, "_chvol %d %d", no, endvol);
+    lh->sh->enterExternalScript(cmd_buf);
+    lh->ons->runScript();
+    lh->sh->leaveExternalScript();
+
+    return 0;
+}
+
 int NSOggLoad(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
@@ -934,7 +957,7 @@ static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NSLuaAnimationInterval),
     LUA_FUNC_LUT(NSLuaAnimationMode),
     LUA_FUNC_LUT(NSOggClose),
-    LUA_FUNC_LUT_DUMMY(NSOggFade),
+    LUA_FUNC_LUT(NSOggFade),
     LUA_FUNC_LUT(NSOggLoad),
     LUA_FUNC_LUT(NSOggPlay),
     LUA_FUNC_LUT(NSOggVolume),

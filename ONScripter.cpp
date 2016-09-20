@@ -692,6 +692,18 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
 #endif
 }
 
+void ONScripter::flushDirectYUV(SDL_Overlay *overlay)
+{
+#ifdef USE_SDL_RENDERER
+    SDL_Rect dst_rect = {(device_width -screen_device_width )/2, 
+                         (device_height-screen_device_height)/2,
+                         screen_device_width, screen_device_height};
+    SDL_UpdateTexture(texture, &screen_rect, overlay->pixels[0], overlay->pitches[0]);
+    SDL_RenderCopy(renderer, texture, &screen_rect, &dst_rect);
+    SDL_RenderPresent(renderer);
+#endif    
+}
+
 void ONScripter::mouseOverCheck( int x, int y )
 {
     int c = 0, max_c = 0;
