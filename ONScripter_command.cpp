@@ -3470,10 +3470,9 @@ int ONScripter::btnwaitCommand()
                     }
                     //current_button_state.button = 0;
                 }
-                else if (autoclick_time > 0)
-                    if (t == -1 || t > autoclick_time){
+                else if (autoclick_time > 0 &&
+                         (t == -1 || t > autoclick_time))
                     t = autoclick_time;
-                }
             }
         }
 

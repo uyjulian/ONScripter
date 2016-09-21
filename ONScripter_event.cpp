@@ -357,7 +357,7 @@ void ONScripter::removeBGMFadeEvent()
 
 void ONScripter::waitEventSub(int count)
 {
-    remaining_time = count;
+    next_time = count;
     timerEvent();
 
     runEventLoop();
@@ -366,6 +366,8 @@ void ONScripter::waitEventSub(int count)
 
 bool ONScripter::waitEvent( int count )
 {
+    if (count > 0) count += SDL_GetTicks();
+    
     while(1){
         waitEventSub( count );
         if ( system_menu_mode == SYSTEM_NULL ) break;
@@ -1076,6 +1078,12 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
 
 void ONScripter::timerEvent()
 {
+    int remaining_time = next_time;
+    if (next_time > 0){
+        remaining_time -= SDL_GetTicks();
+        if (remaining_time < 0) remaining_time = 0;
+    }
+        
     if (remaining_time == 0){
         SDL_Event event;
         event.type = ONS_BREAK_EVENT;
@@ -1088,15 +1096,11 @@ void ONScripter::timerEvent()
         proceedAnimation();
         duration = calcDurationToNextAnimation();
     }
-            
+
     if (duration > 0){
-        if (remaining_time > duration){
-            remaining_time -= duration;
-        }
-        else if (remaining_time > 0){
+        if (duration > remaining_time && remaining_time > 0)
             duration = remaining_time;
-            remaining_time = 0;
-        }
+
         stepAnimation(duration);
         if (timer_id) SDL_RemoveTimer(timer_id);
         timer_id = SDL_AddTimer(duration, timerCallback, NULL);
@@ -1104,7 +1108,6 @@ void ONScripter::timerEvent()
     else if (remaining_time > 0){
         if (timer_id) SDL_RemoveTimer(timer_id);
         timer_id = SDL_AddTimer(remaining_time, timerCallback, NULL);
-        remaining_time = 0;
     }
 }
 
@@ -1292,7 +1295,7 @@ void ONScripter::runEventLoop()
 
           case ONS_BREAK_EVENT:
             if (event_mode & WAIT_VOICE_MODE && wave_sample[0]){
-                remaining_time = -1;
+                next_time = -1;
                 timerEvent();
                 break;
             }

@@ -493,7 +493,7 @@ private:
            EDIT_SE_VOLUME_MODE      = 6
     };
     
-    int  remaining_time;
+    int  next_time;
     int  variable_edit_mode;
     int  variable_edit_index;
     int  variable_edit_num;
@@ -675,7 +675,7 @@ private:
     SMPEG* layer_smpeg_sample;
     SMPEG_Filter layer_smpeg_filter;
 #endif
-                                                                 
+    
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
     int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);

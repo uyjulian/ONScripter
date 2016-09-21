@@ -109,7 +109,7 @@ void ONScripter::proceedAnimation()
             lua_handler.remaining_time = lua_handler.duration_time;
 
             int tmp_event_mode = event_mode;
-            int tmp_remaining_time = remaining_time;
+            int tmp_next_time = next_time;
             int tmp_string_buffer_offset = string_buffer_offset;
 
             char *current = script_h.getCurrent();
@@ -120,7 +120,7 @@ void ONScripter::proceedAnimation()
             readToken();
 
             string_buffer_offset = tmp_string_buffer_offset;
-            remaining_time = tmp_remaining_time;
+            next_time = tmp_next_time;
             event_mode = tmp_event_mode;
         }
     }

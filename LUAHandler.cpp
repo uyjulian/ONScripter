@@ -235,10 +235,7 @@ int NSExec(lua_State *state)
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
     LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
     
-    strcpy(cmd_buf, lua_tostring(state, 1));
-    //printf("NSExec [%s]\n", cmd_buf);
-
-    lh->sh->enterExternalScript(cmd_buf);
+    lh->sh->enterExternalScript((char*)lua_tostring(state, 1));
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
 
