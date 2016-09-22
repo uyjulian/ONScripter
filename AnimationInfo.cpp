@@ -493,6 +493,17 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
     int pitch = image_surface->pitch / sizeof(ONSBuf);
     int cx2 = affine_pos.x*2 + affine_pos.w; // center x multiplied by 2
     int cy2 = affine_pos.y*2 + affine_pos.h; // center y multiplied by 2
+
+    int src_rect[2][2]; // clipped source image bounding box
+    src_rect[0][0] = affine_pos.x;
+    src_rect[0][1] = affine_pos.y;
+    src_rect[1][0] = affine_pos.x + affine_pos.w - 1;
+    src_rect[1][1] = affine_pos.y + affine_pos.h - 1;
+    if (src_rect[0][0] < 0) src_rect[0][0] = 0;
+    if (src_rect[0][1] < 0) src_rect[0][1] = 0;
+    if (src_rect[1][0] >= pos.w) src_rect[1][0] = pos.w - 1;
+    if (src_rect[1][1] >= pos.h) src_rect[1][1] = pos.h - 1;
+    
     // set pixel by inverse-projection with raster scan
     for (y=min_xy[1] ; y<= max_xy[1] ; y++){
         // calculate the start and end point for each raster scan
@@ -521,8 +532,8 @@ void AnimationInfo::blendOnSurface2( SDL_Surface *dst_surface, int dst_x, int ds
             int x2 = ((inv_mat[0][0] * x >> 9) + x_offset2) >> 1;
             int y2 = ((inv_mat[1][0] * x >> 9) + y_offset2) >> 1;
 
-            if (x2 < affine_pos.x || x2 >= affine_pos.x+affine_pos.w ||
-                y2 < affine_pos.y || y2 >= affine_pos.y+affine_pos.h) continue;
+            if (x2 < src_rect[0][0] || x2 > src_rect[1][0] ||
+                y2 < src_rect[0][1] || y2 > src_rect[1][1]) continue;
 
             ONSBuf *src_buffer = (ONSBuf *)image_surface->pixels + pitch * y2 + x2 + pos.w*current_cell;
 #if defined(BPP16)    

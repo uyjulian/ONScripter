@@ -778,8 +778,9 @@ int NSSp2Move(lua_State *state)
     int sy = luaL_checkinteger( state, 5 );
     int r  = luaL_checkinteger( state, 6 );
     int alpha = luaL_checkinteger( state, 7 );
-    int opt = luaL_checkinteger( state, 8 ); // opt is not handled properly yet
+    int opt = luaL_checkinteger( state, 8 );
 
+    lh->ons->getSprite2Info(no)->blending_mode = opt;
     sprintf(cmd_buf, "_amsp2 %d, %d, %d, %d, %d, %d, %d", no, x, y, sx, sy, r, alpha);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();

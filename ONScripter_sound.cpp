@@ -293,7 +293,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
     SMPEG_setvolume( layer_smpeg_sample, music_volume );
     SMPEG_loop( layer_smpeg_sample, loop_flag?1:0 );
 
-    Mix_HookMusic( mp3callback, layer_smpeg_sample );
+    if (info.has_audio) Mix_HookMusic( mp3callback, layer_smpeg_sample );
     SMPEG_play( layer_smpeg_sample );
 
     bool done_flag = false;
