@@ -1724,8 +1724,6 @@ int ONScripter::lspCommand()
         ai->scalePosXY( screen_ratio1, screen_ratio2 );
 
         ai->default_alpha = 0;
-        parseTaggedString( ai );
-        setupAnimationInfo( ai );
     }
     else{
         ai->setImageName( buf );
@@ -2013,6 +2011,7 @@ int ONScripter::layermessageCommand()
 #endif            
         }
         else if (strcmp(buf, "play") == 0){
+            smpeg_info->fill(0, 0, 0, 0);
             smpeg_info->visible = true;
             layer_smpeg_filter.data = this;
             layer_smpeg_filter.callback = smpeg_filter_callback;
