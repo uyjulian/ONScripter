@@ -394,7 +394,7 @@ private:
     int  shortcut_mouse_line;
 
     void initSDL();
-    void openAudio();
+    void openAudio(int freq=-1);
     void reset(); // called on definereset
     void resetSub(); // called on reset
     void resetSentenceFont();

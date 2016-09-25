@@ -1332,6 +1332,7 @@ void ONScripter::runEventLoop()
 #ifdef ANDROID
             if (event.active.state == SDL_APPACTIVE){
                 screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+                SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
                 repaintCommand();
                 break;
             }

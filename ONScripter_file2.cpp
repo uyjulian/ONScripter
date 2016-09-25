@@ -127,6 +127,9 @@ int ONScripter::loadSaveFile2( int file_version )
         readInt(); // -1
     }
     
+    for (i=0 ; i<MAX_TEXTURE_NUM ; i++) texture_info[i].reset();
+    smpeg_info = NULL;
+
     for ( i=0 ; i<MAX_SPRITE_NUM ; i++ ){
         AnimationInfo *ai = &sprite_info[i];
         

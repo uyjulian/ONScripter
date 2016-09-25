@@ -1585,6 +1585,9 @@ int ONScripter::menu_windowCommand()
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+#ifdef ANDROID
+            SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
+#endif            
             flushDirect( screen_rect, refreshMode() );
         }
 #endif
@@ -1600,6 +1603,9 @@ int ONScripter::menu_fullCommand()
 #if !defined(PSP)
         if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
             screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+#ifdef ANDROID
+            SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
+#endif            
             flushDirect( screen_rect, refreshMode() );
         }
 #endif
@@ -2011,13 +2017,13 @@ int ONScripter::layermessageCommand()
 #endif            
         }
         else if (strcmp(buf, "play") == 0){
-            smpeg_info->fill(0, 0, 0, 0);
             smpeg_info->visible = true;
             layer_smpeg_filter.data = this;
             layer_smpeg_filter.callback = smpeg_filter_callback;
             layer_smpeg_filter.destroy = smpeg_filter_destroy;
             SMPEG_filter( layer_smpeg_sample, &layer_smpeg_filter );
             SMPEG_loop( layer_smpeg_sample, layer_smpeg_loop_flag?1:0);
+            SMPEG_renderFrame( layer_smpeg_sample, 1 );
             SMPEG_play( layer_smpeg_sample );
         }
         else if (strcmp(buf, "pause") == 0){

@@ -190,13 +190,14 @@ void ONScripter::initSDL()
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
 }
 
-void ONScripter::openAudio()
+void ONScripter::openAudio(int freq)
 {
+    Mix_CloseAudio();
 #if (defined(PDA_WIDTH) || defined(PDA_AUTOSIZE)) && !defined(PSP) && !defined(IPHONE) && !defined(IOS) && !defined(PANDORA)
-    if ( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
+    if ( Mix_OpenAudio( (freq<0)?22050:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
 #else        
-    if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
-#endif        
+    if ( Mix_OpenAudio( (freq<0)?44100:freq, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, DEFAULT_AUDIOBUF ) < 0 ){
+#endif
         fprintf(stderr, "Couldn't open audio device!\n"
                 "  reason: [%s].\n", SDL_GetError());
         audio_open_flag = false;
@@ -620,6 +621,7 @@ void ONScripter::resetSub()
     for (i=0 ; i<MAX_SPRITE_NUM ; i++) sprite_info[i].reset();
     for (i=0 ; i<MAX_SPRITE2_NUM ; i++) sprite2_info[i].reset();
     for (i=0 ; i<MAX_TEXTURE_NUM ; i++) texture_info[i].reset();
+    smpeg_info = NULL;
     barclearCommand();
     prnumclearCommand();
     for (i=0 ; i<2 ; i++) cursor_info[i].reset();

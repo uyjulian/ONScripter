@@ -255,6 +255,16 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 
     SMPEG_enableaudio( layer_smpeg_sample, 0 );
     if (audio_open_flag){
+        int mpegversion, frequency, layer, bitrate;
+        char mode[10];
+        sscanf(info.audio_string,
+               "MPEG-%d Layer %d %dkbit/s %dHz %s",
+               &mpegversion, &layer, &bitrate, &frequency, mode);
+        printf("MPEG-%d Layer %d %dkbit/s %dHz %s\n",
+               mpegversion, layer, bitrate, frequency, mode);
+        
+        openAudio(frequency);
+
         SMPEG_actualSpec( layer_smpeg_sample, &audio_format );
         SMPEG_enableaudio( layer_smpeg_sample, 1 );
     }
@@ -333,6 +343,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag)
 
     stopSMPEG();
     Mix_HookMusic( NULL, NULL );
+    openAudio();
 #if defined(USE_SDL_RENDERER)
     delete[] pixel_buf;
     SDL_DestroyMutex(oi.mutex);
