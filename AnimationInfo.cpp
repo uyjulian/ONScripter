@@ -210,7 +210,7 @@ void AnimationInfo::removeTag()
     }
     current_cell = 0;
     num_of_cells = 0;
-    remaining_time = 0;
+    next_time = 0;
     is_animatable = false;
     is_single_line = true;
     is_tight_region = true;
@@ -224,47 +224,48 @@ void AnimationInfo::removeTag()
 // 1 ... stop at the end
 // 2 ... reverse at the end
 // 3 ... no animation
-void AnimationInfo::stepAnimation(int t)
+bool AnimationInfo::proceedAnimation(int current_time)
 {
-    if (visible && is_animatable)
-        remaining_time -= t;
-}
+    if (!visible || !is_animatable || next_time > current_time) return false;
 
-bool AnimationInfo::proceedAnimation()
-{
-    if (!visible || !is_animatable || remaining_time > 0) return false;
-    
     bool is_changed = false;
     
-    if ( loop_mode != 3 && num_of_cells > 0 ){
-        current_cell += direction;
-        is_changed = true;
-    }
+    while(next_time <= current_time){
+        if ( loop_mode != 3 && num_of_cells > 0 ){
+            current_cell += direction;
+            is_changed = true;
+        }
 
-    if ( current_cell < 0 ){ // loop_mode must be 2
-        if (num_of_cells == 1)
-            current_cell = 0;
-        else
-            current_cell = 1;
-        direction = 1;
-    }
-    else if ( current_cell >= num_of_cells ){
-        if ( loop_mode == 0 ){
-            current_cell = 0;
-        }
-        else if ( loop_mode == 1 ){
-            current_cell = num_of_cells - 1;
-            is_changed = false;
-        }
-        else{
-            current_cell = num_of_cells - 2;
-            if (current_cell < 0)
+        if ( current_cell < 0 ){ // loop_mode must be 2
+            if (num_of_cells == 1)
                 current_cell = 0;
-            direction = -1;
+            else
+                current_cell = 1;
+            direction = 1;
+        }
+        else if ( current_cell >= num_of_cells ){
+            if ( loop_mode == 0 ){
+                current_cell = 0;
+            }
+            else if ( loop_mode == 1 ){
+                current_cell = num_of_cells - 1;
+                is_changed = false;
+            }
+            else{
+                current_cell = num_of_cells - 2;
+                if (current_cell < 0)
+                    current_cell = 0;
+                direction = -1;
+            }
+        }
+
+        next_time += duration_list[ current_cell ];
+
+        if (duration_list[ current_cell ] <= 0){
+            next_time = current_time;
+            break;
         }
     }
-
-    remaining_time = duration_list[ current_cell ];
 
     return is_changed;
 }
@@ -782,7 +783,9 @@ void AnimationInfo::allocImage( int w, int h, Uint32 texture_format )
         deleteSurface(false);
 
         this->texture_format = texture_format;
+        SDL_mutexP(mutex);
         image_surface = allocSurface( w, h, texture_format );
+        SDL_mutexV(mutex);
 #if defined(BPP16)    
         alpha_buf = new unsigned char[w*h];
 #endif        

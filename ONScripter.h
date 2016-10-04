@@ -447,8 +447,7 @@ private:
     bool show_dialog_flag;
     
     int  calcDurationToNextAnimation();
-    void stepAnimation(int t);
-    void proceedAnimation();
+    void proceedAnimation(int current_time);
     void setupAnimationInfo(AnimationInfo *anim, FontInfo *info=NULL);
     void parseTaggedString(AnimationInfo *anim );
     void drawTaggedSurface(SDL_Surface *dst_surface, AnimationInfo *anim, SDL_Rect &clip);

@@ -58,7 +58,7 @@ public:
 
     bool is_animatable;
     int duration_time;
-    int remaining_time;
+    int next_time;
     
     //private:
     ONScripter *ons;

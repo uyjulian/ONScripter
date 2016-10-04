@@ -230,6 +230,19 @@ int NSDoEvents(lua_State *state)
     return 1;
 }
 
+int NSEnd(lua_State *state)
+{
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    
+    sprintf(cmd_buf, "_end");
+    lh->sh->enterExternalScript(cmd_buf);
+    lh->ons->runScript();
+    lh->sh->leaveExternalScript();
+
+    return 0;
+}
+
 int NSExec(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
@@ -416,6 +429,7 @@ int NSLuaAnimationMode(lua_State *state)
     int val = lua_toboolean(state, 1);
     
     lh->is_animatable = (val==1);
+    if (lh->is_animatable) lh->next_time = SDL_GetTicks() + lh->duration_time;
 
     return 0;
 }
@@ -941,6 +955,7 @@ static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NSDSp2),
     LUA_FUNC_LUT(NSDSetSprite),
     LUA_FUNC_LUT(NSDoEvents),
+    LUA_FUNC_LUT(NSEnd),
     LUA_FUNC_LUT(NSExec),
     LUA_FUNC_LUT(NSExecAnimation),
     LUA_FUNC_LUT(NSGosub),
@@ -1043,7 +1058,7 @@ LUAHandler::LUAHandler()
 
     is_animatable = false;
     duration_time  = 15;
-    remaining_time = 15;
+    next_time = 0;
 
     screen_ratio1 = 1;
     screen_ratio2 = 1;

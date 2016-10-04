@@ -104,7 +104,7 @@ public:
 
     int font_size_xy[2]; // used by prnum and lsp string
     int font_pitch[2]; // used by lsp string
-    int remaining_time;
+    int next_time;
 
     int param; // used by prnum and bar
     int max_param; // used by bar
@@ -133,8 +133,7 @@ public:
     void remove();
     void removeTag();
 
-    void stepAnimation(int t);
-    bool proceedAnimation();
+    bool proceedAnimation(int current_time);
 
     void setCell(int cell);
     static int doClipping( SDL_Rect *dst, SDL_Rect *clip, SDL_Rect *clipped=NULL );

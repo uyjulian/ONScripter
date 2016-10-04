@@ -1078,9 +1078,10 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
 
 void ONScripter::timerEvent()
 {
+    int current_time = SDL_GetTicks();
     int remaining_time = next_time;
     if (next_time > 0){
-        remaining_time -= SDL_GetTicks();
+        remaining_time -= current_time;
         if (remaining_time < 0) remaining_time = 0;
     }
         
@@ -1093,15 +1094,15 @@ void ONScripter::timerEvent()
     
     int duration = 0;
     if (event_mode & WAIT_TIMER_MODE){
-        proceedAnimation();
-        duration = calcDurationToNextAnimation();
+        proceedAnimation(current_time);
+        duration = calcDurationToNextAnimation() - current_time;
+        if (duration < 0) duration = 0;
     }
 
     if (duration > 0){
         if (duration > remaining_time && remaining_time > 0)
             duration = remaining_time;
 
-        stepAnimation(duration);
         if (timer_id) SDL_RemoveTimer(timer_id);
         timer_id = SDL_AddTimer(duration, timerCallback, NULL);
     }
