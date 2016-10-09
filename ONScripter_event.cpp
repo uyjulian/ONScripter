@@ -909,6 +909,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                   (usewheel_flag && !getcursor_flag && event_mode & WAIT_BUTTON_MODE) || 
                   system_menu_mode == SYSTEM_LOOKBACK)){
             current_button_state.button = -2;
+            sprintf(current_button_state.str, "WHEELUP");
             if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
         }
         else if (((!getcursor_flag && event->keysym.sym == SDLK_RIGHT) ||
@@ -920,6 +921,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
                 current_button_state.button = 0;
             else
                 current_button_state.button = -3;
+            sprintf(current_button_state.str, "WHEELDOWN");
         }
         else if (((!getcursor_flag && event->keysym.sym == SDLK_UP) ||
                   event->keysym.sym == SDLK_k ||
