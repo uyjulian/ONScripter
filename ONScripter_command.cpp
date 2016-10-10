@@ -2587,9 +2587,12 @@ int ONScripter::getlogCommand()
                 if (IS_TWO_BYTE(*p)){
                     p2[count++] = *p++;
                     p2[count++] = *p++;
+                    i++;
                 }
                 else if (*p != 0x0a)
                     p2[count++] = *p++;
+                else
+                    p++;
             }
         }
     
