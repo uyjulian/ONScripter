@@ -517,7 +517,7 @@ private:
     bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
     bool keyPressEvent( SDL_KeyboardEvent *event );
-    void timerEvent();
+    void timerEvent(bool init_flag);
     void runEventLoop();
 
     // ----------------------------------------

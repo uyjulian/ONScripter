@@ -3660,7 +3660,7 @@ int ONScripter::brCommand()
 int ONScripter::bltCommand()
 {
     Sint16 dx,dy,sx,sy;
-    Uint16 dw,dh,sw,sh;
+    Sint16 dw,dh,sw,sh;
 
     dx = script_h.readInt() * screen_ratio1 / screen_ratio2;
     dy = script_h.readInt() * screen_ratio1 / screen_ratio2;
@@ -3676,8 +3676,8 @@ int ONScripter::bltCommand()
     
     if ( sw == dw && sw > 0 && sh == dh && sh > 0 ){
 
-        SDL_Rect src_rect = {sx,sy,sw,sh};
-        SDL_Rect dst_rect = {dx,dy,dw,dh};
+        SDL_Rect src_rect = {sx,sy,(Uint16)sw,(Uint16)sh};
+        SDL_Rect dst_rect = {dx,dy,(Uint16)dw,(Uint16)dh};
 
 #ifdef USE_SDL_RENDERER
         dst_rect.x = dst_rect.x * screen_device_width / screen_width + (device_width -screen_device_width )/2;
@@ -3707,44 +3707,50 @@ int ONScripter::bltCommand()
         int src_width = btndef_info.image_surface->pitch / 4;
 #endif    
 
-        int start_y = dy, end_y = dy+dh;
-        if (dh < 0){
-            start_y = dy+dh;
-            end_y = dy;
-        }
-        if (start_y < 0) start_y = 0;
-        if (end_y > screen_height) end_y = screen_height;
+        int step_y = 1;
+        if (dh < 0) step_y = -1;
         
-        int start_x = dx, end_x = dx+dw;
-        if (dw < 0){
-            start_x = dx+dw;
-            end_x = dx;
-        }
-        if (start_x < 0) start_x = 0;
-        if (end_x >= screen_width) end_x = screen_width;
+        int step_x = 1;
+        if (dw < 0) step_x = -1;
 
-        dst_buf += start_y*dst_width;
-        for (int i=start_y ; i<end_y ; i++){
+        dst_buf += dst_width*dy;
+        for (int i=dy ; i!=dy+dh ; i+=step_y){
+            if (i < 0 || i >= screen_height) continue;
             int y = sy+sh*(i-dy)/dh;
-            for (int j=start_x ; j<end_x ; j++){
 
+            for (int j=dx ; j!=dx+dw ; j+=step_x){
+                if (j < 0 || j >= screen_width) continue;
                 int x = sx+sw*(j-dx)/dw;
+                
                 if (x<0 || x>=btndef_info.image_surface->w ||
                     y<0 || y>=btndef_info.image_surface->h)
                     *(dst_buf+j) = 0;
                 else
                     *(dst_buf+j) = *(src_buf+y*src_width+x);
             }
-            dst_buf += dst_width;
+            dst_buf += dst_width*step_y;
         }
         SDL_UnlockSurface(btndef_info.image_surface);
         SDL_UnlockSurface(accumulation_surface);
         
         SDL_Rect dst_rect;
-        dst_rect.x = start_x;
-        dst_rect.y = start_y;
-        dst_rect.w = end_x-start_x;
-        dst_rect.h = end_y-start_y;
+        if (dw >= 0){
+            dst_rect.x = dx;
+            dst_rect.w = dw;
+        }
+        else{
+            dst_rect.x = dx+dw+1;
+            dst_rect.w = -dw;
+        }
+        if (dh >= 0){
+            dst_rect.y = dy;
+            dst_rect.h = dh;
+        }
+        else{
+            dst_rect.y = dy+dh+1;
+            dst_rect.h = -dh;
+        }
+
         flushDirect( dst_rect, REFRESH_NONE_MODE );
     }
 

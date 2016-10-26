@@ -358,7 +358,7 @@ void ONScripter::removeBGMFadeEvent()
 void ONScripter::waitEventSub(int count)
 {
     next_time = count;
-    timerEvent();
+    timerEvent(true);
 
     runEventLoop();
     removeEvent( ONS_BREAK_EVENT );
@@ -1078,7 +1078,7 @@ bool ONScripter::keyPressEvent( SDL_KeyboardEvent *event )
     return false;
 }
 
-void ONScripter::timerEvent()
+void ONScripter::timerEvent(bool init_flag)
 {
     int current_time = SDL_GetTicks();
     int remaining_time = next_time;
@@ -1086,8 +1086,9 @@ void ONScripter::timerEvent()
         remaining_time -= current_time;
         if (remaining_time < 0) remaining_time = 0;
     }
-        
-    if (remaining_time == 0){
+
+    // trick to increase frame rate
+    if (remaining_time == 0 && !init_flag){
         SDL_Event event;
         event.type = ONS_BREAK_EVENT;
         SDL_PushEvent(&event);
@@ -1101,6 +1102,14 @@ void ONScripter::timerEvent()
         if (duration < 0) duration = 0;
     }
 
+    // trick to increase frame rate
+    if (remaining_time == 0 && init_flag){
+        SDL_Event event;
+        event.type = ONS_BREAK_EVENT;
+        SDL_PushEvent(&event);
+        return;
+    }
+    
     if (duration > 0){
         if (duration > remaining_time && remaining_time > 0)
             duration = remaining_time;
@@ -1278,7 +1287,7 @@ void ONScripter::runEventLoop()
           }
 
           case ONS_TIMER_EVENT:
-            timerEvent();
+            timerEvent(false);
             break;
 
           case ONS_MUSIC_EVENT:
@@ -1299,7 +1308,7 @@ void ONScripter::runEventLoop()
           case ONS_BREAK_EVENT:
             if (event_mode & WAIT_VOICE_MODE && wave_sample[0]){
                 next_time = -1;
-                timerEvent();
+                timerEvent(false);
                 break;
             }
 
