@@ -2,7 +2,7 @@
  * 
  *  onscripter_main.cpp -- main function of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -178,8 +178,11 @@ void playVideoAndroid(const char *filename)
 #undef fopen
 FILE *fopen_ons(const char *path, const char *mode)
 {
+    int mode2 = 0;
+    if (mode[0] == 'w') mode2 = 1;
+
     FILE *fp = fopen(path, mode);
-    if (fp) return fp;
+    if (fp || mode2 ==0) return fp;
     
     JNIEnv * jniEnv = NULL;
     jniVM->AttachCurrentThread(&jniEnv, NULL);
@@ -194,8 +197,6 @@ FILE *fopen_ons(const char *path, const char *mode)
         jc[i] = path[i];
     jcharArray jca = jniEnv->NewCharArray(strlen(path));
     jniEnv->SetCharArrayRegion(jca, 0, strlen(path), jc);
-    int mode2 = 0;
-    if (mode[0] == 'w') mode2 = 1;
     int fd = jniEnv->CallIntMethod( JavaONScripter, JavaGetFD, jca, mode2 );
     jniEnv->DeleteLocalRef(jca);
     delete[] jc;

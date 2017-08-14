@@ -2,7 +2,7 @@
  * 
  *  ONScripter_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -290,7 +290,7 @@ int ONScripter::texecCommand()
         page_enter_status = 0;
     }
 
-    saveonCommand();
+    saveon_flag = true;
     
     return RET_CONTINUE;
 }
@@ -783,7 +783,8 @@ int ONScripter::selectCommand()
 
     bool comma_flag = true;
     if ( select_mode == SELECT_CSEL_MODE ){
-        saveoffCommand();
+        if (saveon_flag && internal_saveon_flag) storeSaveFile();
+        saveon_flag = false;
     }
     shortcut_mouse_line = -1;
 
