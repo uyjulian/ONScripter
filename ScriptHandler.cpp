@@ -2,7 +2,7 @@
  *
  *  ScriptHandler.cpp - Script manipulation class
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -116,7 +116,6 @@ void ScriptHandler::reset()
     text_flag = true;
     linepage_flag = false;
     english_mode = false;
-    textgosub_flag = false;
     skip_enabled = false;
     if (clickstr_list){
         delete[] clickstr_list;
@@ -643,11 +642,6 @@ void ScriptHandler::addStrVariable(char **buf)
             addStringBuffer( vd.str[i] );
         }
     }
-}
-
-void ScriptHandler::enableTextgosub(bool val)
-{
-    textgosub_flag = val;
 }
 
 void ScriptHandler::setClickstr(const char *list)

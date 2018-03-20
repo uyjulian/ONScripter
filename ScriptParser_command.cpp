@@ -2,7 +2,7 @@
  *
  *  ScriptParser_command.cpp - Define command executer of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -137,7 +137,6 @@ int ScriptParser::textgosubCommand()
         errorAndExit( "textgosub: not in the define section" );
 
     setStr( &textgosub_label, script_h.readStr()+1 );
-    script_h.enableTextgosub(true);
     
     return RET_CONTINUE;
 }

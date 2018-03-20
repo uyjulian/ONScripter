@@ -2,7 +2,7 @@
  * 
  *  ScriptHandler.h - Script manipulation class
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -120,7 +120,8 @@ public:
     char *saveStringBuffer();
     void addStringBuffer( char ch );
     
-    // function for direct manipulation of script address 
+    // function for direct manipulation of script address
+    inline char *getStart(){return script_buffer;};
     inline char *getCurrent(bool use_script=false){ return (use_script && is_internal_script)?last_script_context->current_script:current_script; };
     inline char *getNext(){ return next_script; };
     inline char *getWait(){ return wait_script?wait_script:next_script; };
@@ -159,7 +160,6 @@ public:
     void addIntVariable(char **buf);
     void declareDim();
 
-    void enableTextgosub(bool val);
     void setClickstr( const char *list );
     int  checkClickstr(const char *buf, bool recursive_flag=false);
 
@@ -342,7 +342,6 @@ private:
     bool text_flag; // true if the current token is text
     int  end_status;
     bool linepage_flag;
-    bool textgosub_flag;
     char *clickstr_list;
     bool english_mode;
 

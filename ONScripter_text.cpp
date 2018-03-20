@@ -2,7 +2,7 @@
  * 
  *  ONScripter_text.cpp - Text parser of ONScripter
  *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -694,7 +694,11 @@ int ONScripter::textCommand()
             string_buffer_offset++;
     }
 
-    if (pretextgosub_label && 
+    char *start_script = script_h.getStart();
+    char *current_script = script_h.getCurrent();
+    if (pretextgosub_label &&
+        current_script > start_script &&
+        (*(current_script-1) == 0x0a || *(current_script-1) == 0x0d) &&
         (!pagetag_flag || page_enter_status == 0) &&
         line_enter_status == 0){
 
