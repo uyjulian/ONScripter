@@ -694,10 +694,8 @@ int ONScripter::textCommand()
             string_buffer_offset++;
     }
 
-    char *start_script = script_h.getStart();
     char *current_script = script_h.getCurrent();
     if (pretextgosub_label &&
-        current_script > start_script &&
         (*(current_script-1) == 0x0a || *(current_script-1) == 0x0d) &&
         (!pagetag_flag || page_enter_status == 0) &&
         line_enter_status == 0){

@@ -121,7 +121,6 @@ public:
     void addStringBuffer( char ch );
     
     // function for direct manipulation of script address
-    inline char *getStart(){return script_buffer;};
     inline char *getCurrent(bool use_script=false){ return (use_script && is_internal_script)?last_script_context->current_script:current_script; };
     inline char *getNext(){ return next_script; };
     inline char *getWait(){ return wait_script?wait_script:next_script; };

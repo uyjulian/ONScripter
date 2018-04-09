@@ -116,6 +116,7 @@ static JavaVM *jniVM = NULL;
 static jobject JavaONScripter = NULL;
 static jmethodID JavaPlayVideo = NULL;
 static jmethodID JavaGetFD = NULL;
+static jmethodID JavaMkdir = NULL;
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -141,6 +142,7 @@ JNIEXPORT jint JNICALL JAVA_EXPORT_NAME(ONScripter_nativeInitJavaCallbacks) (JNI
     jclass JavaONScripterClass = jniEnv->GetObjectClass(JavaONScripter);
     JavaPlayVideo = jniEnv->GetMethodID(JavaONScripterClass, "playVideo", "([C)V");
     JavaGetFD = jniEnv->GetMethodID(JavaONScripterClass, "getFD", "([CI)I");
+    JavaMkdir = jniEnv->GetMethodID(JavaONScripterClass, "mkdir", "([C)I");
 }
 
 JNIEXPORT jint JNICALL 
@@ -202,6 +204,29 @@ FILE *fopen_ons(const char *path, const char *mode)
     delete[] jc;
 
     return fdopen(fd, mode);
+}
+
+#undef mkdir
+int mkdir_ons(const char *pathname, mode_t mode)
+{
+    JNIEnv * jniEnv = NULL;
+    jniVM->AttachCurrentThread(&jniEnv, NULL);
+
+    if (!jniEnv){
+        __android_log_print(ANDROID_LOG_ERROR, "ONS", "ONScripter::mkdir: Java VM AttachCurrentThread() failed");
+        return -1;
+    }
+
+    jchar *jc = new jchar[strlen(pathname)];
+    for (int i=0 ; i<strlen(pathname) ; i++)
+        jc[i] = pathname[i];
+    jcharArray jca = jniEnv->NewCharArray(strlen(pathname));
+    jniEnv->SetCharArrayRegion(jca, 0, strlen(pathname), jc);
+    int ret = jniEnv->CallIntMethod( JavaONScripter, JavaMkdir, jca );
+    jniEnv->DeleteLocalRef(jca);
+    delete[] jc;
+
+    return ret;
 }
 }
 #endif

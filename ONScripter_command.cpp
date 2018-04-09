@@ -2,7 +2,7 @@
  * 
  *  ONScripter_command.cpp - Command executer of ONScripter
  *
- *  Copyright (c) 2001-2017 Ogapee. All rights reserved.
+ *  Copyright (c) 2001-2018 Ogapee. All rights reserved.
  *
  *  ogapee@aqua.dti2.ne.jp
  *
@@ -22,6 +22,12 @@
  */
 
 #include "ONScripter.h"
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+#include <sys/types.h>
+#include <sys/stat.h>
+#elif defined(WIN32)
+#include <direct.h>
+#endif
 #include "version.h"
 
 #if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208)
@@ -2770,12 +2776,31 @@ int ONScripter::exec_dllCommand()
 {
     const char *buf = script_h.readStr();
     char dll_name[256];
-    unsigned int c=0;
-    while(buf[c] != '/'){
-        dll_name[c] = buf[c];
-        c++;
+    unsigned int c=0, c2=0;
+    while(buf[c] != '/' && buf[c] != 0x0){
+        if (buf[c] == '\\'){
+            c++;
+            c2 = 0;
+            continue;
+        }
+        dll_name[c2++] = buf[c++];
     }
-    dll_name[c] = '\0';
+    dll_name[c2] = '\0';
+
+    if (strcmp(dll_name, "fileutil.dll") == 0){
+        if (strncmp(buf+c, "/mkdir", 6) == 0){
+            c += 7;
+            char *dir = new char[strlen(archive_path) + strlen(buf+c) + 1];
+            sprintf(dir, "%s%s", archive_path, buf+c);
+#if defined(LINUX) || defined(MACOSX) || defined(IOS)
+            mkdir(dir, 0755);
+#elif defined(WIN32)
+            _mkdir(dir);
+#endif
+            delete[] dir;
+        }
+        return RET_CONTINUE;
+    }
 
     FILE *fp;
     if ( ( fp = fopen( dll_file, "r" ) ) == NULL ){

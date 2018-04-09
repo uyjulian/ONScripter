@@ -22,6 +22,9 @@
  */
 
 #include "ScriptHandler.h"
+#ifdef ANDROID
+#include <android/log.h>
+#endif
 
 #define TMP_SCRIPT_BUF_LEN 4096
 #define STRING_BUFFER_LENGTH 4096
@@ -915,7 +918,11 @@ void ScriptHandler::addStrAlias( const char *str1, const char *str2 )
 
 void ScriptHandler::errorAndExit( const char *str )
 {
+#ifdef ANDROID
+    __android_log_print(ANDROID_LOG_ERROR, "ONS", " **** Script error, %s [%s] ***", str, string_buffer );
+#else
     fprintf( stderr, " **** Script error, %s [%s] ***\n", str, string_buffer );
+#endif
     exit(-1);
 }
 
