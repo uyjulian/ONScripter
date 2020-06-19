@@ -2036,7 +2036,17 @@ int ONScripter::ldCommand()
 
     return RET_CONTINUE;
 }
-#if defined(USE_SMPEG)
+#if defined(USE_SMPEG) && SDL_VERSION_ATLEAST(2, 0, 0)
+static void smpeg_update_callback(void *data, SMPEG_Frame *frame)
+{
+    ONScripter *ons = (ONScripter*)data;
+    AnimationInfo *ai = ons->getSMPEGInfo();
+    if (!ai) return;
+
+    ai->convertFromYUV(frame);
+    ons->updateEffect();
+}
+#elif defined(USE_SMPEG) && !SDL_VERSION_ATLEAST(2, 0, 0)
 static void smpeg_filter_callback( SDL_Overlay * dst, SDL_Overlay * src, SDL_Rect * region, SMPEG_FilterInfo * filter_info, void * data )
 {
     if (dst){
@@ -2078,25 +2088,35 @@ int ONScripter::layermessageCommand()
             layer_smpeg_buffer = new unsigned char[length];
             script_h.cBR->getFile( buf+5, layer_smpeg_buffer );
 
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+            layer_smpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( layer_smpeg_buffer, length ), NULL, 0, 0 );
+#else
             layer_smpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( layer_smpeg_buffer, length ), NULL, 0 );
+#endif
 
             if ( SMPEG_error( layer_smpeg_sample ) ) return RET_CONTINUE;
 
             SMPEG_enableaudio( layer_smpeg_sample, 0 );
             SMPEG_enablevideo( layer_smpeg_sample, 1 );
 #ifdef USE_SDL_RENDERER
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+            SMPEG_setdisplay( layer_smpeg_sample, smpeg_update_callback, NULL,  NULL);
+#else
             // workaround to set a non-NULL value in the second argument
             SMPEG_setdisplay( layer_smpeg_sample, accumulation_surface, NULL,  NULL);
+#endif
 #else
             SMPEG_setdisplay( layer_smpeg_sample, screen_surface, NULL,  NULL);
 #endif            
         }
         else if (strcmp(buf, "play") == 0){
             smpeg_info->visible = true;
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
             layer_smpeg_filter.data = this;
             layer_smpeg_filter.callback = smpeg_filter_callback;
             layer_smpeg_filter.destroy = smpeg_filter_destroy;
             SMPEG_filter( layer_smpeg_sample, &layer_smpeg_filter );
+#endif
             SMPEG_loop( layer_smpeg_sample, layer_smpeg_loop_flag?1:0);
             SMPEG_renderFrame( layer_smpeg_sample, 1 );
             SMPEG_play( layer_smpeg_sample );

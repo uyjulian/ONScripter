@@ -1077,7 +1077,24 @@ unsigned char AnimationInfo::getAlpha(int x, int y)
     return alpha;
 }
 
-#if defined(USE_SMPEG) && !SDL_VERSION_ATLEAST(2, 0, 0)
+#if defined(USE_SMPEG) && SDL_VERSION_ATLEAST(2, 0, 0)
+void AnimationInfo::convertFromYUV(SMPEG_Frame *src)
+{
+    SDL_mutexP(mutex);
+    if (!image_surface){
+        SDL_mutexV(mutex);
+        return;
+    }
+    SDL_Surface *vs = SDL_CreateRGBSurfaceWithFormatFrom(src->image, src->image_width, src->image_height, 24, src->image_width * 3, SDL_PIXELFORMAT_YV12);
+    if (!vs){
+        SDL_mutexV(mutex);
+        return;
+    }
+    SDL_BlitSurface(vs, NULL, image_surface, NULL);
+    SDL_FreeSurface(vs);
+    SDL_mutexV(mutex);
+}
+#elif defined(USE_SMPEG) && !SDL_VERSION_ATLEAST(2, 0, 0)
 void AnimationInfo::convertFromYUV(SDL_Overlay *src)
 {
     SDL_mutexP(mutex);

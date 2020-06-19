@@ -692,7 +692,9 @@ private:
     unsigned char *layer_alpha_buf; // alpha component of (movie) layer
 #if defined(USE_SMPEG)
     SMPEG* layer_smpeg_sample;
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
     SMPEG_Filter layer_smpeg_filter;
+#endif
 #endif
     
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
