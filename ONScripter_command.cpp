@@ -3464,9 +3464,7 @@ int ONScripter::captionCommand()
     size_t len = strlen(buf);
 
     char *buf2 = new char[len*3+1];
-#if defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208) /* convert sjis to utf-8 */
-    DirectReader::convertFromSJISToUTF8(buf2, buf);
-#elif defined(LINUX) || (defined(WIN32) && defined(UTF8_CAPTION))
+#if defined(LINUX) || (defined(WIN32) && defined(UTF8_CAPTION)) || (defined(MACOSX) && (SDL_COMPILEDVERSION >= 1208))
 #if defined(UTF8_CAPTION)
     if (script_h.enc.getEncoding() == Encoding::CODE_UTF8)
         strcpy(buf2, buf);
