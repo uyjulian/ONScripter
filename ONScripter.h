@@ -66,6 +66,9 @@ public:
         unsigned int event_type;
         unsigned char event_button;
         int x, y, button;
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+        int wheel_x, wheel_y;
+#endif
         char str[16];
         bool down_flag;
     };
@@ -406,7 +409,9 @@ private:
     void resetSentenceFont();
     void flush( int refresh_mode, SDL_Rect *rect=NULL, bool clear_dirty_flag=true, bool direct_flag=false );
     void flushDirect( SDL_Rect &rect, int refresh_mode );
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
     void flushDirectYUV(SDL_Overlay *overlay);
+#endif
     void mouseOverCheck( int x, int y );
 public:
     void executeLabel();
@@ -522,6 +527,9 @@ private:
     bool trapHandler();
     bool mouseMoveEvent( SDL_MouseMotionEvent *event );
     bool mousePressEvent( SDL_MouseButtonEvent *event );
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+    bool mouseWheelEvent( SDL_MouseWheelEvent *event );
+#endif
     void variableEditMode( SDL_KeyboardEvent *event );
     void shiftCursorOnButton( int diff );
     bool keyDownEvent( SDL_KeyboardEvent *event );

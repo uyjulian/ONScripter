@@ -773,7 +773,11 @@ SDL_Surface *AnimationInfo::allocSurface( int w, int h, Uint32 texture_format )
     else // texture_format == SDL_PIXELFORMAT_ARGB8888
         surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+    SDL_SetSurfaceAlphaMod(surface, SDL_ALPHA_OPAQUE);
+#else
     SDL_SetAlpha(surface, 0, SDL_ALPHA_OPAQUE);
+#endif
 #if defined(USE_SDL_RENDERER) || defined(ANDROID)
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 #endif
@@ -1073,6 +1077,7 @@ unsigned char AnimationInfo::getAlpha(int x, int y)
     return alpha;
 }
 
+#if defined(USE_SMPEG) && !SDL_VERSION_ATLEAST(2, 0, 0)
 void AnimationInfo::convertFromYUV(SDL_Overlay *src)
 {
     SDL_mutexP(mutex);
@@ -1128,6 +1133,7 @@ void AnimationInfo::convertFromYUV(SDL_Overlay *src)
     
     SDL_mutexV(mutex);
 }
+#endif
 
 // Da = 1 - Sa2
 // Dc = (Sc1 - Sa2Sc2)/Da

@@ -157,7 +157,9 @@ public:
     void setImage( SDL_Surface *surface, Uint32 texture_format );
     unsigned char getAlpha(int x, int y);
 
+#if defined(USE_SMPEG) && !SDL_VERSION_ATLEAST(2, 0, 0)
     void convertFromYUV(SDL_Overlay *src);
+#endif
     void subtract( SDL_Surface *surface, AnimationInfo *layer_info, unsigned char *layer_alpha_buf);
 };
 

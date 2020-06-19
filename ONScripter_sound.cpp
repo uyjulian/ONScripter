@@ -84,7 +84,11 @@ int ONScripter::playSound(const char *filename, int format, bool loop_flag, int 
     }
     
     if (format & SOUND_MUSIC){
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+        music_info = Mix_LoadMUS_RW( SDL_RWFromMem( buffer, length ), 0 );
+#else
         music_info = Mix_LoadMUS_RW( SDL_RWFromMem( buffer, length ) );
+#endif
         Mix_VolumeMusic( music_volume );
         Mix_HookMusicFinished( musicFinishCallback );
         if ( Mix_PlayMusic( music_info, (music_play_loop_flag&&music_loopback_offset==0.0)?-1:0 ) == 0 ){
@@ -364,7 +368,7 @@ int ONScripter::playMPEG(const char *filename, bool click_flag, bool loop_flag, 
             }
         }
         
-#if defined(USE_SDL_RENDERER)
+#if defined(USE_SDL_RENDERER) && !SDL_VERSION_ATLEAST(2, 0, 0)
         SDL_mutexP(oi.mutex);
         flushDirectYUV(&oi.overlay);
         SDL_mutexV(oi.mutex);

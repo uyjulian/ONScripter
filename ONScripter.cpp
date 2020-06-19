@@ -184,7 +184,11 @@ void ONScripter::initSDL()
     memcpy( wm_title_string, DEFAULT_WM_TITLE, strlen(DEFAULT_WM_TITLE) + 1 );
     wm_icon_string = new char[ strlen(DEFAULT_WM_ICON) + 1 ];
     memcpy( wm_icon_string, DEFAULT_WM_TITLE, strlen(DEFAULT_WM_ICON) + 1 );
+#if defined(USE_SDL_RENDERER)
+    SDL_SetWindowTitle( window, wm_title_string );
+#elif !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+#endif
 }
 
 void ONScripter::openAudio(int freq)
@@ -690,6 +694,7 @@ void ONScripter::flushDirect( SDL_Rect &rect, int refresh_mode )
 #endif
 }
 
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
 void ONScripter::flushDirectYUV(SDL_Overlay *overlay)
 {
 #ifdef USE_SDL_RENDERER
@@ -701,6 +706,7 @@ void ONScripter::flushDirectYUV(SDL_Overlay *overlay)
     SDL_RenderPresent(renderer);
 #endif    
 }
+#endif
 
 void ONScripter::mouseOverCheck( int x, int y )
 {
@@ -975,7 +981,14 @@ void ONScripter::refreshMouseOverButton()
     shift_over_button = -1;
     current_button_link = root_button_link.next;
     SDL_GetMouseState( &mx, &my );
-    if (!(SDL_GetAppState() & SDL_APPMOUSEFOCUS)){
+#if defined(USE_SDL_RENDERER)
+    if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS))
+#elif !SDL_VERSION_ATLEAST(2, 0, 0)
+    if (!(SDL_GetAppState() & SDL_APPMOUSEFOCUS))
+#else
+    if (0)
+#endif
+    {
         mx = screen_device_width;
         my = screen_device_height;
     }

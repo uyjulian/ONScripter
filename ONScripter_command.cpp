@@ -1604,7 +1604,11 @@ int ONScripter::movemousecursorCommand()
     x = x * screen_device_width / screen_width;
     y = y * screen_device_width / screen_width;
 
-    SDL_WarpMouse(x, y);
+#if defined(USE_SDL_RENDERER)
+        SDL_WarpMouseInWindow(window, x, y);
+#else
+        SDL_WarpMouse(x, y);
+#endif
     
     return RET_CONTINUE;
 }
@@ -1635,13 +1639,18 @@ int ONScripter::menu_windowCommand()
 {
     if ( fullscreen_mode ){
 #if !defined(PSP)
-        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+#if defined(USE_SDL_RENDERER)
+        SDL_SetWindowFullscreen(window, 0);
+#else
+        if ( !SDL_WM_ToggleFullScreen( screen_surface ) )
+        {
             screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
 #ifdef ANDROID
             SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
 #endif            
             flushDirect( screen_rect, refreshMode() );
         }
+#endif
 #endif
         fullscreen_mode = false;
     }
@@ -1653,13 +1662,18 @@ int ONScripter::menu_fullCommand()
 {
     if ( !fullscreen_mode ){
 #if !defined(PSP)
-        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+#if defined(USE_SDL_RENDERER)
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+#else
+        if ( !SDL_WM_ToggleFullScreen( screen_surface ) )
+        {
             screen_surface = SDL_SetVideoMode( screen_device_width, screen_device_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
 #ifdef ANDROID
             SDL_SetSurfaceBlendMode(screen_surface, SDL_BLENDMODE_NONE);
 #endif            
             flushDirect( screen_rect, refreshMode() );
         }
+#endif
 #endif
         fullscreen_mode = true;
     }
@@ -3489,7 +3503,11 @@ int ONScripter::captionCommand()
     setStr( &wm_icon_string,  buf2 );
     delete[] buf2;
     
+#if defined(USE_SDL_RENDERER)
+    SDL_SetWindowTitle( window, wm_title_string );
+#elif !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+#endif
 
     return RET_CONTINUE;
 }
@@ -3695,7 +3713,11 @@ int ONScripter::btndefCommand()
             parseTaggedString( &btndef_info );
             btndef_info.trans_mode = AnimationInfo::TRANS_COPY;
             setupAnimationInfo( &btndef_info );
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+            SDL_SetSurfaceAlphaMod( btndef_info.image_surface, SDL_ALPHA_OPAQUE );
+#else
             SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+#endif
         }
     }
     

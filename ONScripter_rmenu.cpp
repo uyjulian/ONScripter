@@ -111,7 +111,11 @@ void ONScripter::leaveSystemCall( bool restore_flag )
         if ( event_mode & WAIT_BUTTON_MODE ){
             int x = shelter_mouse_state.x * screen_device_width / screen_width;
             int y = shelter_mouse_state.y * screen_device_width / screen_width;
+#if defined(USE_SDL_RENDERER)
+            SDL_WarpMouseInWindow(window, x, y);
+#else
             SDL_WarpMouse(x, y);
+#endif
         }
     }
     dirty_rect.fill( screen_width, screen_height );
